@@ -260,8 +260,10 @@ def main():
         import matplotlib.pyplot as plt
         fig, ax = plt.subplots(figsize=(8, 4))
         pnls = df['pnl_dollar'].values
-        ax.hist(pnls, bins=30, color=['#26a69a' if x > 0 else '#ef5350' for x in sorted(pnls)],
-                edgecolor='white', alpha=0.8)
+        pos = pnls[pnls > 0]; neg = pnls[pnls <= 0]
+        bins = np.linspace(pnls.min(), pnls.max(), 31)
+        ax.hist(neg, bins=bins, color='#ef5350', edgecolor='white', alpha=0.8, label='Loss')
+        ax.hist(pos, bins=bins, color='#26a69a', edgecolor='white', alpha=0.8, label='Win')
         ax.axvline(0, color='white', linestyle='--', alpha=0.5)
         ax.set_xlabel('PnL ($)')
         ax.set_ylabel('Frequence')
