@@ -511,7 +511,7 @@ def main():
                     tok_c = candles[candles['ts_dt'] < tok_e]
                     if len(tok_c) >= 5:
                         tok_close = tok_c.iloc[-1]['close']
-                        lon_open = candles.iloc[-1]['close']  # sera remplace par tick bid/ask
+                        lon_open = candles.iloc[-1]['open']  # OPEN de la bougie 8h00 (identique backtest)
                         gap = (lon_open - tok_close) / atr
                         if abs(gap) >= 0.5:
                             d = 'long' if gap > 0 else 'short'
