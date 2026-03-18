@@ -1,6 +1,6 @@
 """
 Optimisation v4 — TOUTES les strategies decouvertes.
-12 strats: B, D2, FADE, GAP, KZ, 2BAR + NY1st, TOKEND, FADENY + LON1st, TOK1st, 3BAR
+14 strats: B, D2, FADE, GAP, KZ, 2BAR + NY1st, TOKEND, FADENY + LON1st, TOK1st, 3BAR + FAILIB, NY1st_wick
 """
 import warnings; warnings.filterwarnings('ignore')
 import sys; sys.stdout.reconfigure(encoding='utf-8')
@@ -279,12 +279,57 @@ for day in trading_days:
         t.append({'date':day,'dir':d,'sl_atr':SL,'pnl_oz':pnl-get_sp(day),'atr':atr,'ei':pi,'xi':pi+b}); break
 S['L'] = t
 
+# ── M: Failed IB break Tokyo → reverse ──
+print("  FAILIB..."); t = []
+for day in trading_days:
+    p = candles[(candles['ts_dt'] >= pd.Timestamp(day.year,day.month,day.day,0,0,tz='UTC')) & (candles['ts_dt'] < pd.Timestamp(day.year,day.month,day.day,6,0,tz='UTC'))]
+    if len(p) < 18: continue
+    pd_ = prev_day(day); atr = daily_atr.get(pd_, global_atr) if pd_ else global_atr
+    if atr == 0: continue
+    ib_high = p.iloc[:12]['high'].max()
+    ib_low = p.iloc[:12]['low'].min()
+    for i in range(12, len(p)):
+        r = p.iloc[i]
+        # Break UP puis retour sous IB high = failed break → short
+        if r['high'] > ib_high and r['close'] < ib_high:
+            pi = candles.index.get_loc(p.index[i]); e = r['close']
+            b, ex = sim_trail(candles, pi, e, 'short', SL, atr, 24, ACT, TRAIL)
+            pnl = (e-ex)-get_sp(day)
+            t.append({'date':day,'dir':'short','sl_atr':SL,'pnl_oz':pnl,'atr':atr,'ei':pi,'xi':pi+b}); break
+        # Break DOWN puis retour au-dessus IB low = failed break → long
+        if r['low'] < ib_low and r['close'] > ib_low:
+            pi = candles.index.get_loc(p.index[i]); e = r['close']
+            b, ex = sim_trail(candles, pi, e, 'long', SL, atr, 24, ACT, TRAIL)
+            pnl = (ex-e)-get_sp(day)
+            t.append({'date':day,'dir':'long','sl_atr':SL,'pnl_oz':pnl,'atr':atr,'ei':pi,'xi':pi+b}); break
+S['M'] = t
+
+# ── N: NY1st wick<50% (filtre qualite) ──
+print("  NY1st_wick..."); t = []
+for day in trading_days:
+    p = candles[(candles['ts_dt'] >= pd.Timestamp(day.year,day.month,day.day,14,30,tz='UTC')) & (candles['ts_dt'] < pd.Timestamp(day.year,day.month,day.day,21,30,tz='UTC'))]
+    if len(p) < 6: continue
+    pd_ = prev_day(day); atr = daily_atr.get(pd_, global_atr) if pd_ else global_atr
+    if atr == 0: continue
+    first = p.iloc[0]; body = abs(first['close'] - first['open']); rng = first['high'] - first['low']
+    if rng == 0 or body < 0.3*atr: continue
+    wick = (rng - body) / body
+    if wick >= 0.5: continue  # trop de meche
+    d = 'long' if first['close'] > first['open'] else 'short'
+    if len(p) < 2: continue
+    pi = candles.index.get_loc(p.index[1]); e = p.iloc[1]['open']
+    b, ex = sim_trail(candles, pi, e, d, SL, atr, 24, ACT, TRAIL)
+    pnl = (ex-e) if d == 'long' else (e-ex)
+    t.append({'date':day,'dir':d,'sl_atr':SL,'pnl_oz':pnl-get_sp(day),'atr':atr,'ei':pi,'xi':pi+b})
+S['N'] = t
+
 # Legende
 LEGEND = {
     'A': 'IB_tok_1h_UP', 'B': 'D2_tok_5h_body', 'C': 'FADE_tok_lon',
     'D': 'GAP_tok_lon', 'E': 'KZ_lon_fade', 'F': '2BAR_tok_rev',
     'G': 'NY1st_candle', 'H': 'TOKEND_3b', 'I': 'FADENY_1h',
-    'J': 'LON1st_candle', 'K': 'TOK1st_candle', 'L': '3BAR_tok'
+    'J': 'LON1st_candle', 'K': 'TOK1st_candle', 'L': '3BAR_tok',
+    'M': 'FAILIB_tok', 'N': 'NY1st_wick50'
 }
 
 # Stats

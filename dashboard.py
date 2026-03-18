@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 import itertools
 
 LOG_FILE = "paper_trades.json"
-CAPITAL_INITIAL = 10000.0
+CAPITAL_INITIAL = 1000.0
 
 st.set_page_config(page_title="VP Swing Paper Trading", layout="wide", page_icon="📊")
 
@@ -41,7 +41,7 @@ def main():
     with st.sidebar:
         st.title("⚙️ Config")
         st.metric("Capital initial", "${:,.0f}".format(CAPITAL_INITIAL))
-        st.metric("Risque/trade", "0.3%")
+        st.metric("Risque/trade", "1.0%")
         st.divider()
         if st.button("🗑️ Reset paper trades", type="secondary"):
             reset = {
@@ -63,7 +63,7 @@ def main():
             st.divider()
             st.caption("ATR: {}".format("{:.2f}".format(cache['atr']) if cache.get('atr') else "—"))
             st.caption("Spread RT: {}".format("{:.3f}".format(cache['spread_rt']) if cache.get('spread_rt') else "—"))
-            st.caption("Strats: B, D2, FADE, GAP, KZ, 2BAR")
+            st.caption("Strats: A,C,D,E,F,G,H,I,J,O,P,Q,R,S")
 
         refresh = st.selectbox("Refresh", [10, 30, 60], index=1)
 
@@ -93,11 +93,15 @@ def main():
                       itertools.groupby(df['pnl_dollar'] < 0) if k), default=0)
         c5.metric("Max pertes consec", str(max_cl))
 
-        # DD
-        df['cum'] = CAPITAL_INITIAL + df['pnl_dollar'].cumsum()
-        df['peak'] = df['cum'].cummax()
-        df['dd_pct'] = (df['cum'] - df['peak']) / df['peak'] * 100
-        c6.metric("Max DD", "{:.2f}%".format(df['dd_pct'].min()))
+        # DD — equity = capital_after reel, avec capital initial comme point de depart
+        caps = [CAPITAL_INITIAL] + df['capital_after'].astype(float).tolist()
+        caps = pd.Series(caps)
+        peak = caps.cummax()
+        dd_all = (caps - peak) / peak * 100
+        max_dd = dd_all.min()
+        # Pour l'equity chart, garder cum sur df
+        df['cum'] = df['capital_after'].astype(float)
+        c6.metric("Max DD", "{:.2f}%".format(max_dd))
     else:
         c2.metric("Win Rate", "—")
         c3.metric("Profit Factor", "—")
@@ -152,6 +156,8 @@ def main():
 
     with col_chart2:
         st.subheader("📉 Drawdown")
+        df['peak'] = pd.concat([pd.Series([CAPITAL_INITIAL]), df['cum']]).cummax().iloc[1:].reset_index(drop=True)
+        df['dd_pct'] = (df['cum'] - df['peak']) / df['peak'] * 100
         dd_chart = df[['entry_time', 'dd_pct']].set_index('entry_time')
         dd_chart.columns = ['DD %']
         st.area_chart(dd_chart, width='stretch', color='#ff4b4b')
