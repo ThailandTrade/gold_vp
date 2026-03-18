@@ -329,7 +329,11 @@ def tab_trades(df):
 
     col1, col2 = st.columns([1,3])
     with col1:
-        n_show = st.slider("Nombre", 5, min(500, len(df)), min(50, len(df)))
+        total = len(df)
+        if total <= 5:
+            n_show = total
+        else:
+            n_show = st.slider("Nombre", 5, min(500, total), min(50, total))
         strat_filter = st.multiselect("Filtrer strats", sorted(df['strat'].unique()))
         dir_filter = st.radio("Direction", ['Tous','Long','Short'], horizontal=True)
         result_filter = st.radio("Resultat", ['Tous','Gagnants','Perdants'], horizontal=True)
