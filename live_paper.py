@@ -14,9 +14,7 @@ from dotenv import load_dotenv
 from collections import defaultdict
 load_dotenv()
 
-from phase1_poc_calculator import (
-    get_conn, compute_atr
-)
+from phase1_poc_calculator import get_conn
 
 
 def get_conn_autocommit():
@@ -537,18 +535,22 @@ def main():
                             trig[k] = True
 
             # 7. 2BAR — Tokyo two-bar reversal (body > 0.5 ATR, opposees, 2eme > 1ere)
+            #    Les deux bougies doivent etre dans la session Tokyo du jour (>= 0h today)
             if 0.0 <= hour < 6.0 and len(candles) >= 3:
                 k = str(today) + '_2BAR'
                 if k not in trig:
                     b1 = candles.iloc[-2]; b2 = candles.iloc[-1]
-                    b1b = b1['close'] - b1['open']
-                    b2b = b2['close'] - b2['open']
-                    if (abs(b1b) >= 0.5 * atr and abs(b2b) >= 0.5 * atr and
-                        b1b * b2b < 0 and abs(b2b) > abs(b1b)):
-                        d = 'long' if b2b > 0 else 'short'
-                        signals.append({'strat': '2BAR_tok_rev', 'dir': d,
-                                        'entry': b2['close']})
-                        trig[k] = True
+                    # Verifier que b1 est bien dans Tokyo aujourd'hui (pas la veille)
+                    b1_date = b1['ts_dt'].date() if hasattr(b1['ts_dt'], 'date') else pd.Timestamp(b1['ts_dt']).date()
+                    if b1_date == today:
+                        b1b = b1['close'] - b1['open']
+                        b2b = b2['close'] - b2['open']
+                        if (abs(b1b) >= 0.5 * atr and abs(b2b) >= 0.5 * atr and
+                            b1b * b2b < 0 and abs(b2b) > abs(b1b)):
+                            d = 'long' if b2b > 0 else 'short'
+                            signals.append({'strat': '2BAR_tok_rev', 'dir': d,
+                                            'entry': b2['close']})
+                            trig[k] = True
 
             # 5. Ouvrir les positions — prix MT5 reel (bid/ask)
             for sig in signals:
