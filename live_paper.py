@@ -15,8 +15,7 @@ from collections import defaultdict
 load_dotenv()
 
 from phase1_poc_calculator import (
-    get_conn, SESSIONS_CONFIG, compute_vp, load_ticks_for_period,
-    compute_atr, get_trading_days
+    get_conn, compute_atr
 )
 
 
@@ -59,12 +58,6 @@ log = logging.getLogger('paper')
 
 
 # ── HELPERS (identiques au backtest) ──────────────────
-
-def classify(p, vah, val):
-    if p > vah: return 'above'
-    elif p < val: return 'below'
-    return 'inside'
-
 
 def get_recent_candles(conn, n=500):
     """Charge les N dernieres candles 5m."""
@@ -112,69 +105,6 @@ def get_yesterday_atr(candles_df, today):
     return float(yesterday_candles['atr'].iloc[-1])
 
 
-def get_yesterday_va(conn, today):
-    """VA du jour precedent (ticks) — identique au backtest."""
-    for days_back in range(1, 5):
-        check_day = today - timedelta(days=days_back)
-        start = datetime(check_day.year, check_day.month, check_day.day, 0, 0)
-        end = start + timedelta(days=1)
-        prices, volumes = load_ticks_for_period(conn, start, end)
-        if len(prices) >= 100:
-            poc, vah, val, _ = compute_vp(prices, volumes)
-            if vah is not None:
-                return {'poc': poc, 'vah': vah, 'val': val,
-                        'width': vah - val, 'date': check_day}
-    return None
-
-
-def get_va_rolling_median(conn, today, window=60):
-    """Mediane rolling des VA widths — identique au backtest.
-    Calcule une seule fois par jour."""
-    widths = []
-    for days_back in range(1, window + 10):
-        check_day = today - timedelta(days=days_back)
-        if check_day.weekday() >= 5:  # skip weekends
-            continue
-        start = datetime(check_day.year, check_day.month, check_day.day, 0, 0)
-        end = start + timedelta(days=1)
-        prices, volumes = load_ticks_for_period(conn, start, end)
-        if len(prices) < 100:
-            continue
-        poc, vah, val, _ = compute_vp(prices, volumes)
-        if vah is None:
-            continue
-
-        # ATR de ce jour
-        candle_start = pd.Timestamp(check_day.year, check_day.month, check_day.day, 0, 0, tz='UTC')
-        candle_end = candle_start + pd.Timedelta(days=1)
-        # On a besoin des candles de ce jour pour l'ATR
-        # Approximation: utiliser la width brute / prix moyen comme proxy
-        # Ou mieux: charger les candles
-        cur = conn.cursor()
-        cur.execute("""SELECT open, high, low, close FROM candles_mt5_xauusd_5m
-                       WHERE ts >= %s AND ts < %s ORDER BY ts""",
-                    (int(candle_start.timestamp() * 1000), int(candle_end.timestamp() * 1000)))
-        rows = cur.fetchall()
-        cur.close()
-        if len(rows) < 20:
-            continue
-        cdf = pd.DataFrame(rows, columns=['open', 'high', 'low', 'close']).astype(float)
-        cdf['prev_close'] = cdf['close'].shift(1)
-        cdf['tr'] = np.maximum(cdf['high'] - cdf['low'],
-                               np.maximum(abs(cdf['high'] - cdf['prev_close']),
-                                          abs(cdf['low'] - cdf['prev_close'])))
-        cdf['atr'] = cdf['tr'].ewm(span=14, adjust=False).mean()
-        day_atr = float(cdf['atr'].iloc[-1])
-        if day_atr > 0:
-            widths.append((vah - val) / day_atr)
-        if len(widths) >= window:
-            break
-
-    if len(widths) < 10:
-        return None
-    return np.median(widths)
-
-
 def get_spread_rt(conn, today):
     """Spread round-trip reel du mois courant."""
     cur = conn.cursor()
@@ -200,10 +130,9 @@ def load_state():
         'trades': [],
         'open_positions': [],
         'ib_levels': {},
-        'prev_state_A': None,
-        'prev_va_ref_A': None,  # pour reset au changement de VA
-        'last_trade_A_ts': 0,   # cooldown strat A
-        'daily_cache': {},      # cache journalier (ATR, VA, median)
+        'daily_cache': {},
+        '_triggered': {},
+        'last_candle_ts': 0,
     }
 
 
@@ -413,49 +342,6 @@ def check_ib_signals(candles_df, state, atr, candle_time):
     return signals
 
 
-def check_strat_a(candles_df, state, atr, va, va_median, candle_time, last_candle_ts):
-    """Strat A — identique au backtest avec reset VA et cooldown."""
-    candle_date = candle_time.date()
-
-    # Pas le mercredi (date de la candle, pas horloge PC)
-    if candle_date.weekday() == 2:
-        return None
-    if va is None or va_median is None or atr is None:
-        return None
-
-    va_w = va['width'] / atr if atr > 0 else 999
-    if va_w > va_median:
-        return None
-
-    # Reset prev_state quand la VA change (identique backtest corrige)
-    va_ref = str(va['date'])
-    if state.get('prev_va_ref_A') != va_ref:
-        state['prev_state_A'] = None
-        state['prev_va_ref_A'] = va_ref
-
-    # Cooldown: au moins 6 bougies (30 min) apres le dernier trade A
-    if last_candle_ts - state.get('last_trade_A_ts', 0) < 6 * 5 * 60 * 1000:
-        # Mettre a jour le state quand meme
-        price = candles_df.iloc[-1]['close']
-        state['prev_state_A'] = classify(price, va['vah'], va['val'])
-        return None
-
-    price = candles_df.iloc[-1]['close']
-    pos = classify(price, va['vah'], va['val'])
-    prev_state = state.get('prev_state_A')
-    state['prev_state_A'] = pos
-
-    if pos == 'below' and prev_state == 'inside':
-        # Bearish momentum: 3 bougies precedentes
-        if len(candles_df) >= 4:
-            prev3 = candles_df.iloc[-4:-1]
-            bearish = (prev3['close'] < prev3['open']).sum()
-            if bearish >= 2:
-                state['last_trade_A_ts'] = last_candle_ts
-                return {'strat': 'A_VA_short', 'dir': 'short', 'entry': price}
-    return None
-
-
 # ── DASHBOARD ─────────────────────────────────────────
 
 def print_dashboard(state, cache, candle_time):
@@ -507,12 +393,9 @@ def reset_state():
         'trades': [],
         'open_positions': [],
         'ib_levels': {},
-        'prev_state_A': None,
-        'prev_va_ref_A': None,
-        'last_trade_A_ts': 0,
         'daily_cache': {},
-        'last_candle_ts': 0,
         '_triggered': {},
+        'last_candle_ts': 0,
     }
     save_state(state)
     log.info("RESET — Capital ${:,.2f}, 0 trades, 0 positions".format(CAPITAL_INITIAL))
