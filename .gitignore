@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.env
+paper_trades.json
+paper_trading.log
+paper_dashboard.txt
+*.output
