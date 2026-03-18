@@ -1,6 +1,6 @@
 """
-Paper Trading Live — Portfolio champion A+C+D+E+F+G+H+I+J+O+P+Q+R+S+V+Z
-16 strategies, trailing stop, bid/ask reel.
+Paper Trading Live — Portfolio champion A+C+D+E+F+G+H+I+J+O+P+Q+R+S+V+Z+AA+AC
+18 strategies, trailing stop, bid/ask reel.
 Usage: python live_paper.py [--reset]
 """
 import warnings; warnings.filterwarnings('ignore')
@@ -20,7 +20,7 @@ CHECK_INTERVAL = 1
 LOG_FILE = "paper_trades.json"
 SL, ACT, TRAIL, MAX_BARS = 0.75, 0.5, 0.3, 24  # trailing params (toutes strats)
 
-STRATS = ['A','C','D','E','F','G','H','I','J','O','P','Q','R','S','V','Z']
+STRATS = ['A','C','D','E','F','G','H','I','J','O','P','Q','R','S','V','Z','AA','AC']
 
 # ── LOGGING ───────────────────────────────────────────
 
@@ -360,6 +360,37 @@ def detect_signals(candles, state, atr, candle_time, today):
                         dirs.append(1 if dc.iloc[-1]['close'] > dc.iloc[0]['open'] else -1)
                 if len(dirs) == 3 and len(set(dirs)) == 1:
                     signals.append({'strat':'Z','dir':'short' if dirs[0] > 0 else 'long'}); trig[k] = True
+
+    # AA: Close near extreme London (close dans top/bottom 10% du range, body>0.2ATR)
+    if 8.0 <= hour < 14.5:
+        k = str(today)+'_AA'
+        if k not in trig:
+            lon = candles[(candles['ts_dt']>=pd.Timestamp(today.year,today.month,today.day,8,0,tz='UTC')) &
+                          (candles['ts_dt']<pd.Timestamp(today.year,today.month,today.day,14,30,tz='UTC'))]
+            if len(lon) >= 6:
+                r = lon.iloc[-1]; rng = r['high'] - r['low']
+                if rng >= 0.3*atr and abs(r['close']-r['open']) >= 0.2*atr:
+                    pos_in_range = (r['close'] - r['low']) / rng
+                    if pos_in_range >= 0.9:
+                        signals.append({'strat':'AA','dir':'long'}); trig[k] = True
+                    elif pos_in_range <= 0.1:
+                        signals.append({'strat':'AA','dir':'short'}); trig[k] = True
+
+    # AC: Absorption Tokyo (bougie couvre le range des 3 precedentes, body>0.5ATR)
+    if 0.0 <= hour < 6.0:
+        k = str(today)+'_AC'
+        if k not in trig:
+            tok = candles[(candles['ts_dt']>=pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')) &
+                          (candles['ts_dt']<pd.Timestamp(today.year,today.month,today.day,6,0,tz='UTC'))]
+            if len(tok) >= 6:
+                r = tok.iloc[-1]
+                if len(tok) >= 4:
+                    prev3_h = tok.iloc[-4:-1]['high'].max()
+                    prev3_l = tok.iloc[-4:-1]['low'].min()
+                    body = abs(r['close'] - r['open'])
+                    if r['high'] >= prev3_h and r['low'] <= prev3_l and body >= 0.5*atr:
+                        d = 'long' if r['close'] > r['open'] else 'short'
+                        signals.append({'strat':'AC','dir':d}); trig[k] = True
 
     return signals
 
