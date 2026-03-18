@@ -329,13 +329,14 @@ def check_ib_signals(candles_df, state, atr, candle_time):
     if 'D2_high' in ibs and 'D2_trig' not in ibs and 5.25 <= hour < 6.0:
         last = candles_df.iloc[-1]
         if last['close'] > ibs['D2_high']:
-            # Filtre body >= 50% du range de la bougie
+            # Identique backtest: la PREMIERE bougie qui casse decide.
+            # Si body < 50% → pas de trade ET on ne re-check plus (D2_trig = True)
             body = abs(last['close'] - last['open'])
             rng = last['high'] - last['low']
             if rng > 0 and body / rng >= 0.5:
                 signals.append({'strat': 'D2_tok_5h_body', 'dir': 'long',
                                 'entry': last['close']})
-                ibs['D2_trig'] = True
+            ibs['D2_trig'] = True  # marque comme traite meme si body insuffisant
 
     return signals
 
