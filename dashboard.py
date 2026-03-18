@@ -63,7 +63,7 @@ def main():
             st.divider()
             st.caption("ATR: {}".format("{:.2f}".format(cache['atr']) if cache.get('atr') else "—"))
             st.caption("Spread RT: {}".format("{:.3f}".format(cache['spread_rt']) if cache.get('spread_rt') else "—"))
-            st.caption("Strats: A,C,D,E,F,G,H,I,J,O,P,Q,R,S")
+            st.caption("Strats: A,C,D,E,F,G,H,I,J,O,P,Q,R,S,V,Z")
 
         refresh = st.selectbox("Refresh", [10, 30, 60], index=1)
 

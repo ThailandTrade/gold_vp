@@ -1,6 +1,6 @@
 """
-Paper Trading Live — Portfolio champion A+C+D+E+F+G+H+I+J+O+P+Q+R+S
-14 strategies, trailing stop, bid/ask reel.
+Paper Trading Live — Portfolio champion A+C+D+E+F+G+H+I+J+O+P+Q+R+S+V+Z
+16 strategies, trailing stop, bid/ask reel.
 Usage: python live_paper.py [--reset]
 """
 import warnings; warnings.filterwarnings('ignore')
@@ -20,7 +20,7 @@ CHECK_INTERVAL = 1
 LOG_FILE = "paper_trades.json"
 SL, ACT, TRAIL, MAX_BARS = 0.75, 0.5, 0.3, 24  # trailing params (toutes strats)
 
-STRATS = ['A','C','D','E','F','G','H','I','J','O','P','Q','R','S']
+STRATS = ['A','C','D','E','F','G','H','I','J','O','P','Q','R','S','V','Z']
 
 # ── LOGGING ───────────────────────────────────────────
 
@@ -327,6 +327,39 @@ def detect_signals(candles, state, atr, candle_time, today):
                     if total >= 0.5*atr:
                         # Reversal = direction opposee
                         signals.append({'strat':'S','dir':'short' if b3>0 else 'long'}); trig[k] = True
+
+    # V: Candle ratio 5/6 Tokyo → continuation
+    if 0.0 <= hour < 6.0:
+        k = str(today)+'_V'
+        if k not in trig:
+            tok = candles[(candles['ts_dt']>=pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')) &
+                          (candles['ts_dt']<pd.Timestamp(today.year,today.month,today.day,6,0,tz='UTC'))]
+            if len(tok) >= 12:
+                last6 = tok.iloc[-6:]
+                n_bull = (last6['close'] > last6['open']).sum()
+                if n_bull >= 5:
+                    signals.append({'strat':'V','dir':'long'}); trig[k] = True
+                elif n_bull <= 1:
+                    signals.append({'strat':'V','dir':'short'}); trig[k] = True
+
+    # Z: 3 jours consecutifs meme sens → reversal London open
+    if 8.0 <= hour < 8.1:
+        k = str(today)+'_Z'
+        if k not in trig:
+            # Trouver les 3 jours precedents
+            prev_days = []
+            for c_date in sorted(set(candles['date'].unique()), reverse=True):
+                if c_date < today:
+                    prev_days.append(c_date)
+                    if len(prev_days) == 3: break
+            if len(prev_days) == 3:
+                dirs = []
+                for pd_z in prev_days:
+                    dc = candles[candles['date'] == pd_z]
+                    if len(dc) >= 10:
+                        dirs.append(1 if dc.iloc[-1]['close'] > dc.iloc[0]['open'] else -1)
+                if len(dirs) == 3 and len(set(dirs)) == 1:
+                    signals.append({'strat':'Z','dir':'short' if dirs[0] > 0 else 'long'}); trig[k] = True
 
     return signals
 
