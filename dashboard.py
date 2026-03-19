@@ -9,7 +9,11 @@ import numpy as np
 from datetime import datetime, timezone
 import itertools
 
-LOG_FILE = "paper_trades.json"
+LOG_FILES = {
+    "Perso (18 strats, 1%)": "paper_perso.json",
+    "Prop Firm (6 strats, 0.5%)": "paper_propfirm.json",
+    "Legacy": "paper_trades.json",
+}
 CAPITAL_INITIAL = 1000.0
 
 STRAT_NAMES = {
@@ -27,10 +31,10 @@ st.markdown("""<style>
     [data-testid="stMetricValue"]{font-size:1.2rem;}
 </style>""", unsafe_allow_html=True)
 
-def load_state():
-    if os.path.exists(LOG_FILE):
-        mtime = os.path.getmtime(LOG_FILE)
-        with open(LOG_FILE, 'r') as f: state = json.load(f)
+def load_state(log_file):
+    if os.path.exists(log_file):
+        mtime = os.path.getmtime(log_file)
+        with open(log_file, 'r') as f: state = json.load(f)
         state['_mtime'] = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M:%S")
         return state
     return {'capital': CAPITAL_INITIAL, 'trades': [], 'open_positions': [],
@@ -48,16 +52,22 @@ def get_current_price():
     return None
 
 def main():
-    state = load_state()
+    # ── SIDEBAR ──
+    with st.sidebar:
+        st.title("VP Swing")
+        portfolio = st.selectbox("Portfolio", list(LOG_FILES.keys()))
+        LOG_FILE = LOG_FILES[portfolio]
+        st.divider()
+
+    state = load_state(LOG_FILE)
     capital = state['capital']
     trades = state['trades']
     positions = state['open_positions']
     pnl_total = capital - CAPITAL_INITIAL
     current_price = get_current_price()
 
-    # ── SIDEBAR ──
     with st.sidebar:
-        st.title("VP Swing")
+        st.caption(f"Fichier: {LOG_FILE}")
         st.caption(f"MAJ: {state.get('_mtime','—')}")
         cache = {}
         for k, v in state.get('daily_cache', {}).items(): cache = v; break
