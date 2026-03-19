@@ -472,7 +472,7 @@ def main():
                 except: pass
                 conn = get_conn_autocommit()
 
-            candles = get_recent_candles(conn, 500)
+            candles = get_recent_candles(conn, 1500)
             if len(candles) == 0: time.sleep(CHECK_INTERVAL); continue
 
             current_ts = int(candles.iloc[-1]['ts'])
