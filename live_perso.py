@@ -1,7 +1,7 @@
 """
-Paper Trading Live — Compte PERSO (18 strats, risk 1%)
-A+C+D+E+F+G+H+I+J+O+P+Q+R+S+V+Z+AA+AC
-PF 1.62, DD -23%, 13/13 mois+
+Paper Trading Live — Compte PERSO (17 strats, risk 1%)
+AA+AC+C+D+E+F+G+H+I+J+O+P+Q+R+S+V+Z
+No look-ahead backtest v7. A dropped (PF 1.02).
 Usage: python live_perso.py [--reset]
 """
 import warnings; warnings.filterwarnings('ignore')
@@ -21,7 +21,7 @@ CHECK_INTERVAL = 1
 LOG_FILE = "paper_perso.json"
 SL, ACT, TRAIL, MAX_BARS = 0.75, 0.5, 0.3, 24
 
-STRATS = ['A','C','D','E','F','G','H','I','J','O','P','Q','R','S','V','Z','AA','AC']
+STRATS = ['AA','AC','C','D','E','F','G','H','I','J','O','P','Q','R','S','V','Z']
 
 # ── LOGGING ───────────────────────────────────────────
 
@@ -207,7 +207,7 @@ def detect_signals(candles, state, atr, candle_time, today):
         if k not in trig:
             tok_f = candles[(candles['ts_dt']>=pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')) &
                             (candles['ts_dt']<pd.Timestamp(today.year,today.month,today.day,6,0,tz='UTC'))]
-            if len(tok_f) >= 8:
+            if len(tok_f) >= 2:  # F: 2 bougies min
                 b1 = tok_f.iloc[-2]; b2 = tok_f.iloc[-1]
                 b1b = b1['close']-b1['open']; b2b = b2['close']-b2['open']
                 if abs(b1b)>=0.5*atr and abs(b2b)>=0.5*atr and b1b*b2b<0 and abs(b2b)>abs(b1b):
@@ -258,7 +258,7 @@ def detect_signals(candles, state, atr, candle_time, today):
         if k not in trig:
             tok = candles[(candles['ts_dt']>=pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')) &
                           (candles['ts_dt']<pd.Timestamp(today.year,today.month,today.day,6,0,tz='UTC'))]
-            if len(tok) >= 6:
+            if len(tok) >= 1:  # O: 1 bougie min
                 r = candles.iloc[-1]; body = r['close'] - r['open']
                 if abs(body) >= 1.0 * atr:
                     signals.append({'strat':'O','dir':'long' if body>0 else 'short'}); trig[k] = True
@@ -287,7 +287,7 @@ def detect_signals(candles, state, atr, candle_time, today):
             # Filtrer bougies London du jour
             lon = candles[(candles['ts_dt']>=pd.Timestamp(today.year,today.month,today.day,8,0,tz='UTC')) &
                           (candles['ts_dt']<pd.Timestamp(today.year,today.month,today.day,14,30,tz='UTC'))]
-            if len(lon) >= 6:
+            if len(lon) >= 2:  # Q: 2 bougies min
                 prev_b = lon.iloc[-2]; cur_b = lon.iloc[-1]
                 # Bullish engulfing
                 if (prev_b['close'] < prev_b['open'] and cur_b['close'] > cur_b['open'] and
@@ -306,7 +306,7 @@ def detect_signals(candles, state, atr, candle_time, today):
         if k not in trig:
             tok = candles[(candles['ts_dt']>=pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')) &
                           (candles['ts_dt']<pd.Timestamp(today.year,today.month,today.day,6,0,tz='UTC'))]
-            if len(tok) >= 6:
+            if len(tok) >= 3:  # R: 3 bougies min
                 c1 = tok.iloc[-3]; c2 = tok.iloc[-2]; c3 = tok.iloc[-1]
                 b1 = c1['close']-c1['open']; b2 = c2['close']-c2['open']; b3 = c3['close']-c3['open']
                 if b1*b2 > 0 and b2*b3 > 0 and min(abs(b1),abs(b2),abs(b3)) > 0.1*atr:
@@ -320,7 +320,7 @@ def detect_signals(candles, state, atr, candle_time, today):
         if k not in trig:
             lon = candles[(candles['ts_dt']>=pd.Timestamp(today.year,today.month,today.day,8,0,tz='UTC')) &
                           (candles['ts_dt']<pd.Timestamp(today.year,today.month,today.day,14,30,tz='UTC'))]
-            if len(lon) >= 6:
+            if len(lon) >= 3:  # S: 3 bougies min
                 c1 = lon.iloc[-3]; c2 = lon.iloc[-2]; c3 = lon.iloc[-1]
                 b1 = c1['close']-c1['open']; b2 = c2['close']-c2['open']; b3 = c3['close']-c3['open']
                 if b1*b2 > 0 and b2*b3 > 0 and min(abs(b1),abs(b2),abs(b3)) > 0.1*atr:
@@ -335,7 +335,7 @@ def detect_signals(candles, state, atr, candle_time, today):
         if k not in trig:
             tok = candles[(candles['ts_dt']>=pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')) &
                           (candles['ts_dt']<pd.Timestamp(today.year,today.month,today.day,6,0,tz='UTC'))]
-            if len(tok) >= 12:
+            if len(tok) >= 7:  # V: 7 bougies min
                 last6 = tok.iloc[-6:]
                 n_bull = (last6['close'] > last6['open']).sum()
                 if n_bull >= 5:
@@ -368,7 +368,7 @@ def detect_signals(candles, state, atr, candle_time, today):
         if k not in trig:
             lon = candles[(candles['ts_dt']>=pd.Timestamp(today.year,today.month,today.day,8,0,tz='UTC')) &
                           (candles['ts_dt']<pd.Timestamp(today.year,today.month,today.day,14,30,tz='UTC'))]
-            if len(lon) >= 6:
+            if len(lon) >= 1:  # AA: 1 bougie min
                 r = lon.iloc[-1]; rng = r['high'] - r['low']
                 if rng >= 0.3*atr and abs(r['close']-r['open']) >= 0.2*atr:
                     pos_in_range = (r['close'] - r['low']) / rng
@@ -383,7 +383,7 @@ def detect_signals(candles, state, atr, candle_time, today):
         if k not in trig:
             tok = candles[(candles['ts_dt']>=pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')) &
                           (candles['ts_dt']<pd.Timestamp(today.year,today.month,today.day,6,0,tz='UTC'))]
-            if len(tok) >= 6:
+            if len(tok) >= 4:  # AC: 4 bougies min
                 r = tok.iloc[-1]
                 if len(tok) >= 4:
                     prev3_h = tok.iloc[-4:-1]['high'].max()
