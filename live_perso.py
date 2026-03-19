@@ -1,7 +1,8 @@
 """
-Paper Trading Live — Portfolio champion A+C+D+E+F+G+H+I+J+O+P+Q+R+S+V+Z+AA+AC
-18 strategies, trailing stop, bid/ask reel.
-Usage: python live_paper.py [--reset]
+Paper Trading Live — Compte PERSO (18 strats, risk 1%)
+A+C+D+E+F+G+H+I+J+O+P+Q+R+S+V+Z+AA+AC
+PF 1.62, DD -23%, 13/13 mois+
+Usage: python live_perso.py [--reset]
 """
 import warnings; warnings.filterwarnings('ignore')
 import sys; sys.stdout.reconfigure(encoding='utf-8')
@@ -17,8 +18,8 @@ from phase1_poc_calculator import get_conn
 CAPITAL_INITIAL = 1000.0
 RISK_PCT = 0.01
 CHECK_INTERVAL = 1
-LOG_FILE = "paper_trades.json"
-SL, ACT, TRAIL, MAX_BARS = 0.75, 0.5, 0.3, 24  # trailing params (toutes strats)
+LOG_FILE = "paper_perso.json"
+SL, ACT, TRAIL, MAX_BARS = 0.75, 0.5, 0.3, 24
 
 STRATS = ['A','C','D','E','F','G','H','I','J','O','P','Q','R','S','V','Z','AA','AC']
 
