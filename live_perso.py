@@ -21,7 +21,7 @@ CHECK_INTERVAL = 1
 LOG_FILE = "paper_perso.json"
 SL, ACT, TRAIL, MAX_BARS = 0.75, 0.5, 0.3, 24
 
-STRATS = ['AA','AC','C','D','E','F','G','H','I','J','O','P','Q','R','S','V','Z']
+STRATS = ['AA','AC','C','D','E','F','G','H','I','J','O','P','Q','R','S','V']  # A,Z dropped
 
 # ── LOGGING ───────────────────────────────────────────
 

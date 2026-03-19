@@ -1,7 +1,7 @@
 """
-Paper Trading Live — Compte PROP FIRM (6 strats, risk 0.5%, PF 2.27)
-AA+C+D+E+H+Z
-No look-ahead backtest v7. DD -16.3%, 13/13 mois+.
+Paper Trading Live — Compte PROP FIRM (6 strats, risk 0.5%, PF 2.12)
+AA+AC+C+D+E+H
+No look-ahead backtest v7. DD -15.1%, 12/13 mois+.
 Usage: python live_propfirm.py [--reset]
 """
 import warnings; warnings.filterwarnings('ignore')
@@ -16,12 +16,12 @@ from phase1_poc_calculator import get_conn
 # ── CONFIG ────────────────────────────────────────────
 
 CAPITAL_INITIAL = 1000.0
-RISK_PCT = 0.005  # 0.5% pour limiter DD sous 5-8%
+RISK_PCT = 0.005
 CHECK_INTERVAL = 1
 LOG_FILE = "paper_propfirm.json"
 SL, ACT, TRAIL, MAX_BARS = 0.75, 0.5, 0.3, 24
 
-STRATS = ['AA','C','D','E','H','Z']
+STRATS = ['AA','AC','C','D','E','H']
 
 # ── LOGGING ───────────────────────────────────────────
 
