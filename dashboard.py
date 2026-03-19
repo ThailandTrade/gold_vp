@@ -86,27 +86,58 @@ def main():
     # ── POSITIONS OUVERTES ──
     st.subheader(f"Positions ouvertes ({len(positions)})")
     if positions:
+        # Chercher le prix actuel
+        current_price = None
+        try:
+            from phase1_poc_calculator import get_conn
+            conn_db = get_conn(); conn_db.autocommit = True
+            cur = conn_db.cursor()
+            cur.execute("SELECT bid, ask FROM market_ticks_xauusd ORDER BY ts DESC LIMIT 1")
+            row = cur.fetchone()
+            if row: current_price = {'bid': float(row[0]), 'ask': float(row[1])}
+            cur.close(); conn_db.close()
+        except: pass
+
+        total_unrealized = 0
         rows = []
         for p in positions:
             entry = p.get('entry', 0)
             stop = p.get('stop', 0)
             best = p.get('best', entry)
-            atr = p.get('trade_atr', 1)
+            d = p.get('strat_dir', '')
+            pos_oz = p.get('pos_oz', 0)
             risk_r = abs(best - entry) / abs(entry - stop) if abs(entry - stop) > 0 else 0
+
+            # PnL latent
+            if current_price:
+                exit_price = current_price['bid'] if d == 'long' else current_price['ask']
+                pnl_oz = (exit_price - entry) if d == 'long' else (entry - exit_price)
+                pnl_dollar = pnl_oz * pos_oz
+                total_unrealized += pnl_dollar
+                pnl_str = f"${pnl_dollar:+,.2f}"
+                price_str = f"{exit_price:.2f}"
+            else:
+                pnl_str = "—"
+                price_str = "—"
+
             rows.append({
                 'Strat': p.get('strat', ''),
                 'Nom': STRAT_NAMES.get(p.get('strat', ''), ''),
-                'Dir': p.get('strat_dir', '').upper(),
+                'Dir': d.upper(),
                 'Entree': f"{entry:.2f}",
+                'Prix actuel': price_str,
                 'Stop': f"{stop:.2f}",
                 'Best': f"{best:.2f}",
-                'Risk:Reward': f"{risk_r:.1f}R",
+                'PnL latent': pnl_str,
+                'R:R': f"{risk_r:.1f}R",
                 'Trail': '🟢' if p.get('trail_active') else '⚪',
                 'Barres': p.get('bars_held', 0),
                 'Lots': f"{p.get('lots', 0):.3f}",
-                'Spread': f"{p.get('entry_spread', 0):.3f}",
                 'Heure entree': str(p.get('entry_time', ''))[:19],
             })
+
+        if current_price:
+            st.caption(f"Prix actuel: bid={current_price['bid']:.2f} ask={current_price['ask']:.2f} | PnL latent total: ${total_unrealized:+,.2f}")
         st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True, height=min(len(rows)*38+40, 400))
     else:
         st.info("Aucune position ouverte")
