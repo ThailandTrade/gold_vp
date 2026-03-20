@@ -20,10 +20,6 @@ STRAT_NAMES = {
 }
 
 st.set_page_config(page_title="VP Swing", layout="wide", page_icon="📊")
-st.markdown("""<style>
-    .block-container{padding-top:1rem;}
-    [data-testid="stMetricValue"]{font-size:1.2rem;}
-</style>""", unsafe_allow_html=True)
 
 def load_state():
     if os.path.exists(LOG_FILE):
@@ -53,125 +49,146 @@ def main():
     pnl_total = capital - CAPITAL_INITIAL
     current_price = get_current_price()
 
-    # Sidebar
-    with st.sidebar:
-        st.title("VP Swing")
-        st.caption(f"MAJ: {state.get('_mtime','—')}")
-        st.caption("10 strats | TRp SL=1.5 ACT=0.3 TRAIL=0.3 T12")
+    # ── HEADER ──
+    st.title("XAUUSD 5m — Paper Trading")
+    st.caption(f"10 strats (AC,D,E,F,G,H,I,O,P,V) | Trailing pessimiste SL=1.5 ACT=0.3 TRAIL=0.3 T12 | MAJ: {state.get('_mtime','—')}")
+
+    # ── RESUME EN HAUT ──
+    col1, col2, col3 = st.columns([1,1,1])
+    with col1:
+        st.metric("Capital", f"${capital:,.2f}", delta=f"${pnl_total:+,.2f}")
+    with col2:
+        if current_price:
+            st.metric("XAUUSD", f"${current_price['bid']:,.2f}",
+                      delta=f"spread ${current_price['ask']-current_price['bid']:.3f}")
+        else:
+            st.metric("XAUUSD", "—")
+    with col3:
         cache = {}
         for k, v in state.get('daily_cache', {}).items(): cache = v; break
-        if cache:
-            st.metric("ATR", f"{cache['atr']:.2f}" if cache.get('atr') else "—")
-        if current_price:
-            st.metric("Gold", f"${current_price['bid']:.2f}",
-                      delta=f"sp={current_price['ask']-current_price['bid']:.3f}")
-        st.divider()
-        refresh = st.selectbox("Auto-refresh (sec)", [10, 30, 60], index=0)
-        if st.button("Reset", type="secondary"):
-            reset = {'capital': CAPITAL_INITIAL, 'trades': [], 'open_positions': [],
-                     'ib_levels': {}, 'daily_cache': {}, '_triggered': {}, 'last_candle_ts': 0}
-            with open(LOG_FILE, 'w') as f: json.dump(reset, f, indent=2)
-            st.success("Reset OK"); st.rerun()
-
-    # KPIs
-    cols = st.columns(8)
-    cols[0].metric("Capital", f"${capital:,.2f}", delta=f"${pnl_total:+,.2f}")
-    cols[1].metric("Positions", len(positions))
-
-    df = None
-    if trades:
-        df = pd.DataFrame(trades)
-        df['pnl_dollar'] = df['pnl_dollar'].astype(float)
-        df['entry_time'] = pd.to_datetime(df['entry_time'])
-        df['exit_time'] = pd.to_datetime(df['exit_time'])
-        df['cum'] = df['capital_after'].astype(float)
-        wins = df[df['pnl_dollar'] > 0]
-        gp = wins['pnl_dollar'].sum() if len(wins) else 0
-        gl = abs(df[df['pnl_dollar'] < 0]['pnl_dollar'].sum()) + 0.01
-        caps = pd.concat([pd.Series([CAPITAL_INITIAL]), df['cum']]).reset_index(drop=True)
-        max_dd = ((caps - caps.cummax()) / caps.cummax() * 100).min()
-        max_cl = max((sum(1 for _ in g) for k, g in itertools.groupby(df['pnl_dollar'] < 0) if k), default=0)
-        cols[2].metric("Trades", len(df))
-        cols[3].metric("Win Rate", f"{len(wins)/len(df)*100:.0f}%")
-        cols[4].metric("Profit Factor", f"{gp/gl:.2f}")
-        cols[5].metric("Avg Trade", f"${df['pnl_dollar'].mean():+,.2f}")
-        cols[6].metric("Max DD", f"{max_dd:.1f}%")
-        cols[7].metric("Streak L", max_cl)
+        st.metric("ATR (veille)", f"${cache['atr']:.2f}" if cache.get('atr') else "—")
 
     st.divider()
 
-    # Positions ouvertes
-    st.subheader(f"Positions ouvertes ({len(positions)})")
+    # ── POSITIONS OUVERTES ──
     if positions:
+        st.subheader(f"🔴 {len(positions)} position(s) ouverte(s)")
         total_unrealized = 0
-        rows = []
         for p in positions:
             entry = p.get('entry', 0); stop = p.get('stop', 0)
             best = p.get('best', entry); d = p.get('strat_dir', '')
-            pos_oz = p.get('pos_oz', 0)
+            pos_oz = p.get('pos_oz', 0); bars = p.get('bars_held', 0)
+            strat = p.get('strat', '')
+            trail = "ACTIF" if p.get('trail_active') else "inactif"
+
             if current_price:
                 exit_price = current_price['bid'] if d == 'long' else current_price['ask']
                 pnl_oz = (exit_price - entry) if d == 'long' else (entry - exit_price)
-                pnl_dollar = pnl_oz * pos_oz; total_unrealized += pnl_dollar
-                pnl_str = f"${pnl_dollar:+,.2f}"; price_str = f"{exit_price:.2f}"
+                pnl_dollar = pnl_oz * pos_oz
+                total_unrealized += pnl_dollar
+                color = "🟢" if pnl_dollar > 0 else "🔴"
+                st.markdown(f"""
+                **{color} {strat}** ({STRAT_NAMES.get(strat,'')}) — **{d.upper()}** depuis {str(p.get('entry_time',''))[:16]}
+                - Entree: **${entry:.2f}** | Prix: **${exit_price:.2f}** | Stop: **${stop:.2f}** | Best: **${best:.2f}**
+                - PnL: **${pnl_dollar:+,.2f}** ({pnl_oz:+.2f} oz) | Trail: {trail} | Bars: {bars}/12 | {p.get('lots',0):.3f} lots
+                """)
             else:
-                pnl_str = "—"; price_str = "—"
-            rows.append({
-                'Strat': p.get('strat',''), 'Nom': STRAT_NAMES.get(p.get('strat',''),''),
-                'Dir': d.upper(), 'Entree': f"{entry:.2f}", 'Prix': price_str,
-                'Stop': f"{stop:.2f}", 'Best': f"{best:.2f}", 'PnL': pnl_str,
-                'Trail': '🟢' if p.get('trail_active') else '⚪',
-                'Bars': p.get('bars_held',0), 'Lots': f"{p.get('lots',0):.3f}",
-                'Heure': str(p.get('entry_time',''))[:16],
-            })
-        if current_price:
-            st.caption(f"PnL latent: **${total_unrealized:+,.2f}**")
-        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
-    else:
-        st.info("Aucune position ouverte")
+                st.markdown(f"**{strat}** ({STRAT_NAMES.get(strat,'')}) — **{d.upper()}** | Entry: ${entry:.2f} | Stop: ${stop:.2f} | Bars: {bars}")
 
-    if df is None or len(df) == 0:
+        if current_price:
+            color = "🟢" if total_unrealized > 0 else "🔴"
+            st.markdown(f"**{color} PnL latent total: ${total_unrealized:+,.2f}**")
         st.divider()
-        st.warning("Aucun trade ferme.")
-        if refresh > 0: time.sleep(refresh); st.rerun()
+
+    # ── PAS DE TRADES FERMES ──
+    if not trades:
+        st.info("Aucun trade ferme. Le live tourne et attend des signaux.")
+        with st.sidebar:
+            refresh = st.selectbox("Refresh", [10, 30, 60], index=0)
+            if st.button("Reset"):
+                reset = {'capital': CAPITAL_INITIAL, 'trades': [], 'open_positions': [],
+                         'ib_levels': {}, 'daily_cache': {}, '_triggered': {}, 'last_candle_ts': 0}
+                with open(LOG_FILE, 'w') as f: json.dump(reset, f, indent=2)
+                st.rerun()
+        time.sleep(refresh); st.rerun()
         return
 
-    st.divider()
+    # ── TRADES FERMES: construire le DataFrame ──
+    df = pd.DataFrame(trades)
+    df['pnl_dollar'] = df['pnl_dollar'].astype(float)
+    df['pnl_oz'] = df['pnl_oz'].astype(float)
+    df['entry'] = df['entry'].astype(float)
+    df['exit'] = df['exit'].astype(float)
+    df['entry_time'] = pd.to_datetime(df['entry_time'])
+    df['exit_time'] = pd.to_datetime(df['exit_time'])
+    df['cum'] = df['capital_after'].astype(float)
+    df['date'] = df['entry_time'].dt.date
+    df['duration_min'] = (df['exit_time'] - df['entry_time']).dt.total_seconds() / 60
 
-    # Equity + DD
-    col1, col2 = st.columns(2)
-    with col1:
-        st.subheader("Equity")
-        st.line_chart(df[['entry_time','cum']].set_index('entry_time').rename(columns={'cum':'Capital'}), use_container_width=True)
-    with col2:
-        st.subheader("Drawdown")
-        peak = pd.concat([pd.Series([CAPITAL_INITIAL]), df['cum']]).cummax().iloc[1:].reset_index(drop=True)
-        dd = (df['cum'].reset_index(drop=True) - peak) / peak * 100
-        st.area_chart(pd.DataFrame({'DD %': dd.values}, index=df['entry_time'].values), use_container_width=True, color='#ff4b4b')
+    wins = df[df['pnl_dollar'] > 0]
+    losses = df[df['pnl_dollar'] <= 0]
+    gp = wins['pnl_dollar'].sum() if len(wins) else 0
+    gl = abs(losses['pnl_dollar'].sum()) + 0.01
+    caps = pd.concat([pd.Series([CAPITAL_INITIAL]), df['cum']]).reset_index(drop=True)
+    max_dd = ((caps - caps.cummax()) / caps.cummax() * 100).min()
 
-    st.divider()
-
-    # Par strat + PnL chart
-    col1, col2 = st.columns([3, 2])
-    with col1:
-        st.subheader("Par strategie")
-        srows = []
-        for sn in sorted(df['strat'].unique()):
-            s = df[df['strat']==sn]; n = len(s)
-            w = (s['pnl_dollar']>0).sum(); pnl = s['pnl_dollar'].sum()
-            gps = s[s['pnl_dollar']>0]['pnl_dollar'].sum()
-            gls = abs(s[s['pnl_dollar']<0]['pnl_dollar'].sum())+0.01
-            srows.append({'Strat':sn, 'Nom':STRAT_NAMES.get(sn,''), 'n':n,
-                          'WR':f"{w/n*100:.0f}%", 'PF':f"{gps/gls:.2f}",
-                          'PnL':f"${pnl:+,.2f}", 'Avg':f"${pnl/n:+,.2f}"})
-        st.dataframe(pd.DataFrame(srows), use_container_width=True, hide_index=True)
-    with col2:
-        st.subheader("PnL par strat")
-        st.bar_chart(df.groupby('strat')['pnl_dollar'].sum().sort_values(), use_container_width=True, horizontal=True)
+    # ── PERFORMANCE GLOBALE ──
+    st.subheader("Performance")
+    c1, c2, c3, c4, c5, c6 = st.columns(6)
+    c1.metric("Trades", len(df))
+    c2.metric("Win Rate", f"{len(wins)/len(df)*100:.0f}%")
+    c3.metric("Profit Factor", f"{gp/gl:.2f}")
+    c4.metric("Avg Win", f"${wins['pnl_dollar'].mean():+,.2f}" if len(wins) else "—")
+    c5.metric("Avg Loss", f"${losses['pnl_dollar'].mean():+,.2f}" if len(losses) else "—")
+    c6.metric("Max Drawdown", f"{max_dd:.1f}%")
 
     st.divider()
 
-    # Long/Short + Jour semaine + PnL journalier
+    # ── EQUITY CURVE ──
+    st.subheader("Equity")
+    eq_data = pd.DataFrame({
+        'Capital': [CAPITAL_INITIAL] + df['cum'].tolist()
+    }, index=[df['entry_time'].iloc[0] - pd.Timedelta(hours=1)] + df['entry_time'].tolist())
+    st.line_chart(eq_data, use_container_width=True, height=300)
+
+    st.divider()
+
+    # ── DERNIERS TRADES ──
+    st.subheader("Derniers trades")
+    show = df.iloc[::-1].head(20).copy()
+    for _, t in show.iterrows():
+        pnl = t['pnl_dollar']
+        color = "🟢" if pnl > 0 else "🔴"
+        dt = t['entry_time'].strftime('%d/%m %H:%M')
+        dur = f"{t['duration_min']:.0f}min"
+        st.markdown(
+            f"{color} **{t['strat']}** {t['dir'].upper()} | {dt} | "
+            f"${t['entry']:.2f} → ${t['exit']:.2f} | "
+            f"**${pnl:+,.2f}** | {t['exit_reason']} | {t['bars_held']} bars ({dur})"
+        )
+
+    st.divider()
+
+    # ── STATS PAR STRATEGIE ──
+    st.subheader("Par strategie")
+    srows = []
+    for sn in sorted(df['strat'].unique()):
+        s = df[df['strat']==sn]; n = len(s)
+        w = (s['pnl_dollar']>0).sum(); pnl = s['pnl_dollar'].sum()
+        gps = s[s['pnl_dollar']>0]['pnl_dollar'].sum()
+        gls = abs(s[s['pnl_dollar']<0]['pnl_dollar'].sum())+0.01
+        srows.append({
+            'Strat': sn, 'Nom': STRAT_NAMES.get(sn,''),
+            'Trades': n, 'WR': f"{w/n*100:.0f}%", 'PF': f"{gps/gls:.2f}",
+            'PnL': f"${pnl:+,.2f}", 'Avg': f"${pnl/n:+,.2f}",
+            'Meilleur': f"${s['pnl_dollar'].max():+,.2f}",
+            'Pire': f"${s['pnl_dollar'].min():+,.2f}",
+        })
+    st.dataframe(pd.DataFrame(srows), use_container_width=True, hide_index=True)
+
+    st.divider()
+
+    # ── REPARTITION LONG/SHORT ──
     col1, col2 = st.columns(2)
     with col1:
         st.subheader("Long vs Short")
@@ -181,98 +198,29 @@ def main():
             w = (s['pnl_dollar']>0).sum()
             gp_d = s[s['pnl_dollar']>0]['pnl_dollar'].sum()
             gl_d = abs(s[s['pnl_dollar']<0]['pnl_dollar'].sum())+0.01
-            st.metric(f"{d.upper()} ({len(s)})", f"PF {gp_d/gl_d:.2f} | WR {w/len(s)*100:.0f}%",
+            st.metric(f"{d.upper()} ({len(s)} trades)",
+                      f"WR {w/len(s)*100:.0f}% | PF {gp_d/gl_d:.2f}",
                       delta=f"${s['pnl_dollar'].sum():+,.2f}")
+
     with col2:
-        st.subheader("Par jour")
-        dow_names = {0:'Lun',1:'Mar',2:'Mer',3:'Jeu',4:'Ven'}
-        df['dow'] = df['entry_time'].dt.dayofweek
-        drows = []
-        for dow in range(5):
-            s = df[df['dow']==dow]
-            if len(s) == 0: continue
-            w = (s['pnl_dollar']>0).sum()
-            gp_d = s[s['pnl_dollar']>0]['pnl_dollar'].sum()
-            gl_d = abs(s[s['pnl_dollar']<0]['pnl_dollar'].sum())+0.01
-            drows.append({'Jour':dow_names[dow],'n':len(s),'WR':f"{w/len(s)*100:.0f}%",
-                          'PF':f"{gp_d/gl_d:.2f}",'PnL':f"${s['pnl_dollar'].sum():+,.2f}"})
-        st.dataframe(pd.DataFrame(drows), use_container_width=True, hide_index=True)
-
-    st.divider()
-    st.subheader("PnL journalier")
-    df['date'] = df['entry_time'].dt.date
-    st.bar_chart(df.groupby('date')['pnl_dollar'].sum(), use_container_width=True)
-
-    st.divider()
-
-    # Distribution
-    col1, col2 = st.columns([2, 1])
-    with col1:
-        st.subheader("Distribution PnL")
-        import matplotlib; matplotlib.use('Agg')
-        import matplotlib.pyplot as plt
-        fig, ax = plt.subplots(figsize=(10, 4))
-        pnls = df['pnl_dollar'].values
-        pos_p = pnls[pnls > 0]; neg_p = pnls[pnls <= 0]
-        bins = np.linspace(pnls.min(), pnls.max(), 31)
-        if len(neg_p): ax.hist(neg_p, bins=bins, color='#ef5350', edgecolor='white', alpha=0.8, label='Loss')
-        if len(pos_p): ax.hist(pos_p, bins=bins, color='#26a69a', edgecolor='white', alpha=0.8, label='Win')
-        ax.axvline(0, color='white', linestyle='--', alpha=0.5)
-        ax.set_xlabel('PnL ($)'); ax.set_ylabel('Freq')
-        ax.set_facecolor('#0e1117'); fig.patch.set_facecolor('#0e1117')
-        ax.tick_params(colors='white'); ax.xaxis.label.set_color('white'); ax.yaxis.label.set_color('white')
-        for spine in ax.spines.values(): spine.set_color('#333')
-        ax.legend(facecolor='#0e1117', labelcolor='white')
-        st.pyplot(fig); plt.close(fig)
-    with col2:
-        st.subheader("Stats")
-        stats = {
-            'Avg win': f"${pnls[pnls>0].mean():+,.2f}" if len(pnls[pnls>0]) else "—",
-            'Avg loss': f"${pnls[pnls<0].mean():+,.2f}" if len(pnls[pnls<0]) else "—",
-            'Best': f"${pnls.max():+,.2f}", 'Worst': f"${pnls.min():+,.2f}",
-            'Ecart-type': f"${pnls.std():,.2f}",
-        }
-        st.dataframe(pd.DataFrame(stats.items(), columns=['','']), use_container_width=True, hide_index=True)
-        st.subheader("Sorties")
+        st.subheader("Raisons de sortie")
         for reason in df['exit_reason'].unique():
             s = df[df['exit_reason']==reason]
-            st.caption(f"**{reason}**: {len(s)} ({len(s)/len(df)*100:.0f}%)")
+            w = (s['pnl_dollar']>0).sum()
+            st.markdown(f"**{reason}**: {len(s)} trades ({w} wins, {len(s)-w} losses)")
 
-    st.divider()
+    # ── SIDEBAR ──
+    with st.sidebar:
+        st.divider()
+        refresh = st.selectbox("Refresh (sec)", [10, 30, 60], index=0)
+        if st.button("Reset paper trades"):
+            reset = {'capital': CAPITAL_INITIAL, 'trades': [], 'open_positions': [],
+                     'ib_levels': {}, 'daily_cache': {}, '_triggered': {}, 'last_candle_ts': 0}
+            with open(LOG_FILE, 'w') as f: json.dump(reset, f, indent=2)
+            st.success("Reset OK"); st.rerun()
 
-    # Trades
-    st.subheader(f"Trades ({len(df)})")
-    df['duration'] = (df['exit_time'] - df['entry_time']).dt.total_seconds() / 60
-    show = df.iloc[::-1].copy()
-    show['Heure'] = show['entry_time'].dt.strftime('%Y-%m-%d %H:%M')
-    show['Nom'] = show['strat'].map(STRAT_NAMES)
-    show['Dir'] = show['dir'].str.upper()
-    show['Entree'] = show['entry'].apply(lambda x: f"{float(x):.2f}")
-    show['Sortie'] = show['exit'].apply(lambda x: f"{float(x):.2f}")
-    show['PnL $'] = show['pnl_dollar'].apply(lambda x: f"${x:+,.2f}")
-    show['PnL oz'] = show['pnl_oz'].apply(lambda x: f"{float(x):+.3f}")
-    show['Duree'] = show['duration'].apply(lambda x: f"{x:.0f}m")
-    show['Raison'] = show['exit_reason']
-    show['Capital'] = show['capital_after'].apply(lambda x: f"${float(x):,.2f}")
-
-    cols_show = ['Heure','strat','Nom','Dir','Entree','Sortie','PnL $','PnL oz','Raison','bars_held','Duree','Capital']
-    display_df = show[cols_show].copy()
-    display_df.columns = ['Heure','Strat','Nom','Dir','In','Out','PnL $','PnL oz','Raison','Bars','Duree','Capital']
-
-    def color_row(row):
-        try:
-            val = float(row['PnL $'].replace('$','').replace(',','').replace('+',''))
-            c = 'color: #26a69a' if val > 0 else 'color: #ef5350' if val < 0 else ''
-        except: c = ''
-        return [c]*len(row)
-
-    st.dataframe(display_df.style.apply(color_row, axis=1),
-                 use_container_width=True, hide_index=True,
-                 height=min(len(display_df)*38+40, 800))
-
-    if refresh > 0:
-        time.sleep(refresh)
-        st.rerun()
+    time.sleep(refresh)
+    st.rerun()
 
 if __name__ == '__main__':
     main()
