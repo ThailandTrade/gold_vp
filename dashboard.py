@@ -22,7 +22,7 @@ SESS_STRATS = {'Tokyo':['AC','F','O','V'], 'London':['D','E','H'], 'New York':['
 
 st.set_page_config(page_title="VP Swing Dashboard", layout="wide")
 st.markdown("""<style>
-.block-container {padding:1rem 2rem;}
+.block-container {padding:2.5rem 2rem 1rem 2rem;}
 .metric-card {background:#0e1117; border:1px solid #262730; border-radius:8px; padding:16px; text-align:center;}
 .metric-label {color:#808495; font-size:0.7rem; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:4px;}
 .metric-value {font-size:1.6rem; font-weight:700; color:#fafafa;}
