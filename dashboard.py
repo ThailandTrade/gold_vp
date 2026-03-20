@@ -28,7 +28,7 @@ st.markdown("""<style>
 .metric-value {font-size:1.6rem; font-weight:700; color:#fafafa;}
 .metric-delta {font-size:0.8rem; margin-top:2px;}
 .green {color:#00c853;} .red {color:#ff1744;} .gray {color:#808495;}
-.pos-row {background:#0e1117; border:1px solid #262730; border-radius:8px; padding:14px 18px; margin:8px 0;}
+.pos-row {background:linear-gradient(135deg, #16213e 0%, #1a1a2e 100%); border:1px solid #2a3a5e; border-radius:10px; padding:16px 20px; margin:10px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.3);}
 .big-num {font-size:2.4rem; font-weight:800; letter-spacing:-1px;}
 </style>""", unsafe_allow_html=True)
 
