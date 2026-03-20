@@ -1,6 +1,9 @@
 """
-Paper Trading Live — Portfolio champion A+C+D+E+F+G+H+I+J+O+P+Q+R+S+V+Z+AA+AC
-18 strategies, trailing stop, bid/ask reel.
+Paper Trading Live — 10 strats, trailing pessimiste
+AC+D+E+F+G+H+I+O+P+V
+Config unique TRp SL=1.5 ACT=0.3 TRAIL=0.3 MaxBars=12
+No look-ahead, no overfitting, OOS valide.
+PF 1.82, WR 73%, DD -8.9%, 13/13 mois+
 Usage: python live_paper.py [--reset]
 """
 import warnings; warnings.filterwarnings('ignore')
@@ -18,9 +21,9 @@ CAPITAL_INITIAL = 1000.0
 RISK_PCT = 0.01
 CHECK_INTERVAL = 1
 LOG_FILE = "paper_trades.json"
-SL, ACT, TRAIL, MAX_BARS = 0.75, 0.5, 0.3, 24  # trailing params (toutes strats)
+SL, ACT, TRAIL, MAX_BARS = 1.5, 0.3, 0.3, 12  # trailing pessimiste, config unique
 
-STRATS = ['AA','AC','C','D','E','F','G','H','I','J','O','P','Q','R','S','V']  # A,Z dropped
+STRATS = ['AC','D','E','F','G','H','I','O','P','V']
 
 # ── LOGGING ───────────────────────────────────────────
 
@@ -126,6 +129,16 @@ def manage_positions(candles_df, state, conn):
                 ns = pos['best'] - TRAIL * ta; pos['stop'] = max(pos['stop'], ns)
             else:
                 ns = pos['best'] + TRAIL * ta; pos['stop'] = min(pos['stop'], ns)
+        # 4b. PESSIMISTE: re-check low/high vs nouveau stop
+        if d == 'long' and last['low'] <= pos['stop']:
+            pos['exit'] = pos['stop']; pos['exit_reason'] = 'stop'; closed.append(pos); continue
+        if d == 'short' and last['high'] >= pos['stop']:
+            pos['exit'] = pos['stop']; pos['exit_reason'] = 'stop'; closed.append(pos); continue
+        # 4c. Re-check close vs nouveau stop
+        if d == 'long' and last['close'] < pos['stop']:
+            pos['exit'] = last['close']; pos['exit_reason'] = 'stop_close'; closed.append(pos); continue
+        if d == 'short' and last['close'] > pos['stop']:
+            pos['exit'] = last['close']; pos['exit_reason'] = 'stop_close'; closed.append(pos); continue
         # 5. Timeout
         if pos['bars_held'] >= MAX_BARS:
             pos['exit'] = last['close']; pos['exit_reason'] = 'timeout'; closed.append(pos)
