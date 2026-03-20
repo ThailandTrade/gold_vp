@@ -304,6 +304,28 @@ if n_trades > 0:
 else:
     st.info("En attente du premier trade. 10 strategies surveillent XAUUSD 5 minutes.")
 
+# ── SIDEBAR: STRATEGIES ──
+with st.sidebar:
+    st.subheader("Strategies")
+    for session, strat_list in [("Tokyo", ['AC','F','O','V']), ("London", ['D','E','H']), ("New York", ['G','I','P'])]:
+        st.caption(f"**{session}**")
+        for sn in strat_list:
+            if n_trades > 0 and sn in df['strat'].values:
+                s = df[df['strat']==sn]
+                w = (s['pnl_dollar']>0).sum(); n = len(s)
+                pnl_s = s['pnl_dollar'].sum()
+                gps = s[s['pnl_dollar']>0]['pnl_dollar'].sum()
+                gls = abs(s[s['pnl_dollar']<0]['pnl_dollar'].sum())+0.01
+                color = "🟢" if pnl_s >= 0 else "🔴"
+                st.markdown(f"{color} **{sn}** — {STRATS[sn]}  \n{n} trades · WR {w/n*100:.0f}% · PF {gps/gls:.2f} · ${pnl_s:+,.2f}")
+            else:
+                st.markdown(f"⚪ **{sn}** — {STRATS[sn]}  \n0 trades")
+    st.divider()
+    cache = {}
+    for k, v in state.get('daily_cache', {}).items(): cache = v; break
+    if cache.get('atr'):
+        st.metric("ATR (veille)", f"{cache['atr']:.2f}")
+
 # Refresh
 time.sleep(10)
 st.rerun()
