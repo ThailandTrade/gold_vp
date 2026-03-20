@@ -1,6 +1,6 @@
 """
 Dashboard VP Swing — streamlit run dashboard.py
-Portfolio: AA+D+E+F+H+NY6+NY16+NY17+O
+Portfolio: 11 strats (TOK/LON/NY)
 """
 import streamlit as st
 import json, os, time
@@ -14,11 +14,7 @@ from plotly.subplots import make_subplots
 LOG_FILE = "paper_trades.json"
 CAPITAL_INITIAL = 1000.0
 
-STRATS = {
-    'AA':'Pin Bar London','D':'GAP Tokyo→London','E':'KZ London fade',
-    'F':'2BAR Tokyo rev','H':'TOKEND 3b','O':'BigCandle Tokyo',
-    'NY6':'GAP London→NY','NY16':'LONEND 3b→NY','NY17':'LONEND 0.5ATR→NY',
-}
+from strats import STRAT_NAMES as STRATS
 
 st.set_page_config(page_title="VP Swing Dashboard", layout="wide")
 
@@ -49,7 +45,7 @@ pnl = capital - CAPITAL_INITIAL
 
 # ── TITRE ──
 st.title("VP Swing — Paper Trading")
-st.caption(f"{sess} · {now.strftime('%H:%M')} UTC · XAUUSD {'${:,.2f}'.format(bid) if bid else '—'} · 9 strats · SL=1.0 ACT=0.5 TRAIL=0.75")
+st.caption(f"{sess} · {now.strftime('%H:%M')} UTC · XAUUSD {'${:,.2f}'.format(bid) if bid else '—'} · 11 strats · SL=1.0 ACT=0.5 TRAIL=0.75")
 
 # ── METRIQUES ──
 n_trades = len(trades)
@@ -303,12 +299,12 @@ if n_trades > 0:
         st.dataframe(pd.DataFrame(stat_rows), use_container_width=True, hide_index=True)
 
 else:
-    st.info("En attente du premier trade. 9 strategies surveillent XAUUSD 5 minutes.")
+    st.info("En attente du premier trade. 11 strategies surveillent XAUUSD 5 minutes.")
 
 # ── SIDEBAR: STRATEGIES ──
 with st.sidebar:
     st.subheader("Strategies")
-    for session, strat_list in [("Tokyo", ['F','O']), ("London", ['AA','D','E','H']), ("New York", ['NY6','NY16','NY17'])]:
+    for session, strat_list in [("Tokyo", ['TOK_2BAR','TOK_BIG','TOK_FADE']), ("London", ['LON_PIN','LON_GAP','LON_KZ','LON_TOKEND','LON_PREV']), ("New York", ['NY_GAP','NY_LONEND','NY_LONMOM'])]:
         st.caption(f"**{session}**")
         for sn in strat_list:
             if n_trades > 0 and sn in df['strat'].values:

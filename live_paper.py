@@ -1,7 +1,7 @@
 """
-Paper Trading Live — AA+D+E+F+H+NY6+NY16+NY17+O
+Paper Trading Live — 11 strats, noms par session.
 Config: TRAIL SL=1.0 ACT=0.5 TRAIL=0.75, pas de timeout (sur CLOSE)
-PF 1.55, WR 44%, DD -26.2%, +12331%
+PF 1.51, WR 44%, DD -27.1%, Calmar 1018, 13/13 mois+
 Usage: python live_paper.py [--reset]
 """
 import warnings; warnings.filterwarnings('ignore')
@@ -19,9 +19,7 @@ CAPITAL_INITIAL = 1000.0
 RISK_PCT = 0.01
 CHECK_INTERVAL = 1
 LOG_FILE = "paper_trades.json"
-SL, ACT, TRAIL = 1.0, 0.5, 0.75  # trailing sur close, pas de timeout
-
-STRATS = ['AA','D','E','F','H','NY6','NY16','NY17','O']
+from strats import SL, ACT, TRAIL, STRATS, STRAT_NAMES, STRAT_SESSION
 
 # ── LOGGING ───────────────────────────────────────────
 
@@ -195,106 +193,89 @@ def manage_positions(candles_df, state, conn):
 def detect_signals(candles, state, atr, candle_time, today):
     signals = []; hour = candle_time.hour + candle_time.minute / 60.0
     trig = state.setdefault('_triggered', {})
+    ds = pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')
+    te = pd.Timestamp(today.year,today.month,today.day,6,0,tz='UTC')
+    ls = pd.Timestamp(today.year,today.month,today.day,8,0,tz='UTC')
+    ns = pd.Timestamp(today.year,today.month,today.day,14,30,tz='UTC')
+    tok = candles[(candles['ts_dt']>=ds)&(candles['ts_dt']<te)]
+    lon = candles[(candles['ts_dt']>=ls)&(candles['ts_dt']<ns)]
+    r = candles.iloc[-1]
 
-    # AA: Close near extreme London (pin bar, close dans top/bottom 10% du range)
-    if 8.0 <= hour < 14.5:
-        k = str(today)+'_AA'
-        if k not in trig:
-            r = candles.iloc[-1]; rng = r['high'] - r['low']
-            if rng >= 0.3*atr and abs(r['close']-r['open']) >= 0.2*atr:
-                pos_in_range = (r['close'] - r['low']) / rng
-                if pos_in_range >= 0.9:
-                    signals.append({'strat':'AA','dir':'long'}); trig[k] = True
-                elif pos_in_range <= 0.1:
-                    signals.append({'strat':'AA','dir':'short'}); trig[k] = True
+    # Prev day data
+    prev_day_data = state.get('_prev_day_data')
 
-    # D: GAP Tokyo-London > 0.5 ATR continuation
-    if 8.0 <= hour < 8.1:
-        k = str(today)+'_D'
+    # ── TOKYO ──
+    if 0.0<=hour<6.0:
+        k = str(today)+'_TOK_2BAR'
+        if k not in trig and len(tok)>=2:
+            b1=tok.iloc[-2];b2=tok.iloc[-1];b1b=b1['close']-b1['open'];b2b=b2['close']-b2['open']
+            if abs(b1b)>=0.5*atr and abs(b2b)>=0.5*atr and b1b*b2b<0 and abs(b2b)>abs(b1b):
+                signals.append({'strat':'TOK_2BAR','dir':'long' if b2b>0 else 'short'}); trig[k]=True
+        k = str(today)+'_TOK_BIG'
         if k not in trig:
-            tc = candles[candles['ts_dt']<pd.Timestamp(today.year,today.month,today.day,6,0,tz='UTC')]
-            if len(tc) >= 5:
-                gap = (candles.iloc[-1]['open'] - tc.iloc[-1]['close']) / atr
-                if abs(gap) >= 0.5:
-                    signals.append({'strat':'D','dir':'long' if gap>0 else 'short'}); trig[k] = True
+            body=r['close']-r['open']
+            if abs(body)>=1.0*atr:
+                signals.append({'strat':'TOK_BIG','dir':'long' if body>0 else 'short'}); trig[k]=True
+    if 0.0<=hour<0.1:
+        k = str(today)+'_TOK_FADE'
+        if k not in trig and prev_day_data:
+            prev_dir = prev_day_data['close'] - prev_day_data['open']
+            if abs(prev_dir) >= 1.0*atr:
+                signals.append({'strat':'TOK_FADE','dir':'short' if prev_dir>0 else 'long'}); trig[k]=True
 
-    # E: KZ London Kill Zone 8h-10h fade
-    if 10.0 <= hour < 10.1:
-        k = str(today)+'_E'
+    # ── LONDON ──
+    if 8.0<=hour<14.5:
+        k = str(today)+'_LON_PIN'
         if k not in trig:
-            kz = candles[(candles['ts_dt']>=pd.Timestamp(today.year,today.month,today.day,8,0,tz='UTC')) &
-                         (candles['ts_dt']<pd.Timestamp(today.year,today.month,today.day,10,0,tz='UTC'))]
-            if len(kz) >= 20:
-                m = (kz.iloc[-1]['close'] - kz.iloc[0]['open']) / atr
-                if abs(m) >= 0.5:
-                    signals.append({'strat':'E','dir':'short' if m>0 else 'long'}); trig[k] = True
+            rng=r['high']-r['low']
+            if rng>=0.3*atr and abs(r['close']-r['open'])>=0.2*atr:
+                pir=(r['close']-r['low'])/rng
+                if pir>=0.9: signals.append({'strat':'LON_PIN','dir':'long'}); trig[k]=True
+                elif pir<=0.1: signals.append({'strat':'LON_PIN','dir':'short'}); trig[k]=True
+    if 8.0<=hour<8.1:
+        k = str(today)+'_LON_GAP'
+        if k not in trig:
+            tc=candles[candles['ts_dt']<te]
+            if len(tc)>=5:
+                gap=(r['open']-tc.iloc[-1]['close'])/atr
+                if abs(gap)>=0.5:
+                    signals.append({'strat':'LON_GAP','dir':'long' if gap>0 else 'short'}); trig[k]=True
+        k = str(today)+'_LON_TOKEND'
+        if k not in trig and len(tok)>=9:
+            l3=tok.iloc[-3:]; m=(l3.iloc[-1]['close']-l3.iloc[0]['open'])/atr
+            if abs(m)>=1.0:
+                signals.append({'strat':'LON_TOKEND','dir':'long' if m>0 else 'short'}); trig[k]=True
+        k = str(today)+'_LON_PREV'
+        if k not in trig and prev_day_data:
+            prev_body=(prev_day_data['close']-prev_day_data['open'])/atr
+            if abs(prev_body)>=1.0:
+                signals.append({'strat':'LON_PREV','dir':'long' if prev_body>0 else 'short'}); trig[k]=True
+    if 10.0<=hour<10.1:
+        k = str(today)+'_LON_KZ'
+        if k not in trig:
+            kz=candles[(candles['ts_dt']>=ls)&(candles['ts_dt']<pd.Timestamp(today.year,today.month,today.day,10,0,tz='UTC'))]
+            if len(kz)>=20:
+                m=(kz.iloc[-1]['close']-kz.iloc[0]['open'])/atr
+                if abs(m)>=0.5:
+                    signals.append({'strat':'LON_KZ','dir':'short' if m>0 else 'long'}); trig[k]=True
 
-    # F: 2BAR Tokyo two-bar reversal
-    if 0.0 <= hour < 6.0:
-        k = str(today)+'_F'
-        if k not in trig:
-            tok_f = candles[(candles['ts_dt']>=pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')) &
-                            (candles['ts_dt']<pd.Timestamp(today.year,today.month,today.day,6,0,tz='UTC'))]
-            if len(tok_f) >= 2:
-                b1 = tok_f.iloc[-2]; b2 = tok_f.iloc[-1]
-                b1b = b1['close']-b1['open']; b2b = b2['close']-b2['open']
-                if abs(b1b)>=0.5*atr and abs(b2b)>=0.5*atr and b1b*b2b<0 and abs(b2b)>abs(b1b):
-                    signals.append({'strat':'F','dir':'long' if b2b>0 else 'short'}); trig[k] = True
-
-    # H: TOKEND 3 dernieres bougies Tokyo > 1 ATR continuation
-    if 8.0 <= hour < 8.1:
-        k = str(today)+'_H'
-        if k not in trig:
-            tok = candles[(candles['ts_dt']>=pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')) &
-                          (candles['ts_dt']<pd.Timestamp(today.year,today.month,today.day,6,0,tz='UTC'))]
-            if len(tok) >= 9:
-                last3 = tok.iloc[-3:]
-                m = (last3.iloc[-1]['close'] - last3.iloc[0]['open']) / atr
-                if abs(m) >= 1.0:
-                    signals.append({'strat':'H','dir':'long' if m>0 else 'short'}); trig[k] = True
-
-    # O: Big candle Tokyo > 1 ATR continuation
-    if 0.0 <= hour < 6.0:
-        k = str(today)+'_O'
-        if k not in trig:
-            r = candles.iloc[-1]; body = r['close'] - r['open']
-            if abs(body) >= 1.0 * atr:
-                signals.append({'strat':'O','dir':'long' if body>0 else 'short'}); trig[k] = True
-
-    # NY6: GAP London close vs NY open > 0.5 ATR continuation
-    if 14.5 <= hour < 14.6:
-        k = str(today)+'_NY6'
-        if k not in trig:
-            lon = candles[(candles['ts_dt']>=pd.Timestamp(today.year,today.month,today.day,8,0,tz='UTC')) &
-                          (candles['ts_dt']<pd.Timestamp(today.year,today.month,today.day,14,30,tz='UTC'))]
-            if len(lon) >= 5:
-                gap = (candles.iloc[-1]['open'] - lon.iloc[-1]['close']) / atr
-                if abs(gap) >= 0.5:
-                    signals.append({'strat':'NY6','dir':'long' if gap>0 else 'short'}); trig[k] = True
-
-    # NY16: 3 dernieres bougies London > 1 ATR, continuation NY
-    if 14.5 <= hour < 14.6:
-        k = str(today)+'_NY16'
-        if k not in trig:
-            lon = candles[(candles['ts_dt']>=pd.Timestamp(today.year,today.month,today.day,8,0,tz='UTC')) &
-                          (candles['ts_dt']<pd.Timestamp(today.year,today.month,today.day,14,30,tz='UTC'))]
-            if len(lon) >= 9:
-                last3 = lon.iloc[-3:]
-                m = (last3.iloc[-1]['close'] - last3.iloc[0]['open']) / atr
-                if abs(m) >= 1.0:
-                    signals.append({'strat':'NY16','dir':'long' if m>0 else 'short'}); trig[k] = True
-
-    # NY17: 3 dernieres bougies London > 0.5 ATR, continuation NY
-    if 14.5 <= hour < 14.6:
-        k = str(today)+'_NY17'
-        if k not in trig:
-            lon = candles[(candles['ts_dt']>=pd.Timestamp(today.year,today.month,today.day,8,0,tz='UTC')) &
-                          (candles['ts_dt']<pd.Timestamp(today.year,today.month,today.day,14,30,tz='UTC'))]
-            if len(lon) >= 9:
-                last3 = lon.iloc[-3:]
-                m = (last3.iloc[-1]['close'] - last3.iloc[0]['open']) / atr
-                if abs(m) >= 0.5:
-                    signals.append({'strat':'NY17','dir':'long' if m>0 else 'short'}); trig[k] = True
+    # ── NY ──
+    if 14.5<=hour<14.6:
+        k = str(today)+'_NY_GAP'
+        if k not in trig and len(lon)>=5:
+            gap=(r['open']-lon.iloc[-1]['close'])/atr
+            if abs(gap)>=0.5:
+                signals.append({'strat':'NY_GAP','dir':'long' if gap>0 else 'short'}); trig[k]=True
+        k = str(today)+'_NY_LONEND'
+        if k not in trig and len(lon)>=9:
+            l3=lon.iloc[-3:]; m=(l3.iloc[-1]['close']-l3.iloc[0]['open'])/atr
+            if abs(m)>=1.0:
+                signals.append({'strat':'NY_LONEND','dir':'long' if m>0 else 'short'}); trig[k]=True
+        k = str(today)+'_NY_LONMOM'
+        if k not in trig and len(lon)>=9:
+            l3=lon.iloc[-3:]; m=(l3.iloc[-1]['close']-l3.iloc[0]['open'])/atr
+            if abs(m)>=0.5:
+                signals.append({'strat':'NY_LONMOM','dir':'long' if m>0 else 'short'}); trig[k]=True
 
     return signals
 
@@ -385,6 +366,15 @@ def main():
             cache = ensure_daily_cache(state, conn, candles, today)
             if not cache['atr'] or cache['atr'] == 0: time.sleep(CHECK_INTERVAL); continue
             atr = cache['atr']
+            # Prev day data for TOK_FADE and LON_PREV
+            if '_prev_day_data' not in state or state.get('_prev_day_date') != str(today):
+                yc = candles[candles['date'] < today]
+                if len(yc) > 0:
+                    last_day = yc['date'].iloc[-1]
+                    dc = yc[yc['date']==last_day]
+                    state['_prev_day_data'] = {'open':float(dc.iloc[0]['open']),'close':float(dc.iloc[-1]['close']),
+                                               'high':float(dc['high'].max()),'low':float(dc['low'].min())}
+                state['_prev_day_date'] = str(today)
 
             # Verifier les stops sur chaque poll (comme MT5 le ferait)
             if state['open_positions']:
