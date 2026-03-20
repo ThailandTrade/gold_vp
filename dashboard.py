@@ -66,7 +66,7 @@ def main():
             st.metric("Gold", f"${current_price['bid']:.2f}",
                       delta=f"sp={current_price['ask']-current_price['bid']:.3f}")
         st.divider()
-        refresh = st.selectbox("Auto-refresh (sec)", [0, 10, 30, 60], index=0)
+        refresh = st.selectbox("Auto-refresh (sec)", [10, 30, 60], index=0)
         if st.button("Reset", type="secondary"):
             reset = {'capital': CAPITAL_INITIAL, 'trades': [], 'open_positions': [],
                      'ib_levels': {}, 'daily_cache': {}, '_triggered': {}, 'last_candle_ts': 0}
