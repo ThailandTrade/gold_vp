@@ -104,7 +104,47 @@ def ensure_daily_cache(state, conn, candles_df, today):
     log.info("  ATR={} spread_rt={:.3f}".format("{:.2f}".format(atr) if atr else "None", spread_rt))
     return cache
 
-# ── POSITION MANAGEMENT ──────────────────────────────
+# ── STOP CHECK TEMPS REEL (chaque seconde) ──────────
+
+def check_stops_realtime(state, tick, conn):
+    """Verifie les stops contre le bid/ask reel, comme MT5 le ferait."""
+    closed = []
+    for pos in state['open_positions']:
+        d = pos['strat_dir']
+        # MT5: long SL = sell order, triggered when BID <= stop
+        # MT5: short SL = buy order, triggered when ASK >= stop
+        if d == 'long' and tick['bid'] <= pos['stop']:
+            pos['exit'] = tick['bid']  # exit au bid reel
+            pos['exit_reason'] = 'stop_rt'
+            closed.append(pos)
+        elif d == 'short' and tick['ask'] >= pos['stop']:
+            pos['exit'] = tick['ask']  # exit au ask reel
+            pos['exit_reason'] = 'stop_rt'
+            closed.append(pos)
+
+    for c in closed:
+        state['open_positions'].remove(c)
+        pnl_oz = (c['exit']-c['entry']) if c['strat_dir']=='long' else (c['entry']-c['exit'])
+        pnl_dollar = pnl_oz * c['pos_oz']
+        state['capital'] += pnl_dollar
+        state['trades'].append({
+            'strat': c['strat'], 'dir': c['strat_dir'],
+            'entry': c['entry'], 'exit': c['exit'],
+            'entry_time': c['entry_time'],
+            'exit_time': str(datetime.now(timezone.utc)),
+            'pnl_oz': pnl_oz, 'pnl_dollar': pnl_dollar,
+            'bars_held': c.get('bars_held', 0),
+            'exit_reason': c['exit_reason'],
+            'capital_after': state['capital'],
+        })
+        log.info("STOP RT {} {} | {:.2f}->{:.2f} | ${:+.2f} | bid={:.2f} ask={:.2f} | Cap=${:,.2f}".format(
+            c['strat'], c['strat_dir'], c['entry'], c['exit'],
+            pnl_dollar, tick['bid'], tick['ask'], state['capital']))
+
+    if closed:
+        save_state(state)
+
+# ── POSITION MANAGEMENT (sur bougie fermee) ─────────
 
 def manage_positions(candles_df, state, conn):
     last = candles_df.iloc[-1]; closed = []
@@ -494,6 +534,12 @@ def main():
             cache = ensure_daily_cache(state, conn, candles, today)
             if not cache['atr'] or cache['atr'] == 0: time.sleep(CHECK_INTERVAL); continue
             atr = cache['atr']
+
+            # Verifier les stops sur chaque poll (comme MT5 le ferait)
+            if state['open_positions']:
+                tick = get_current_bidask(conn)
+                if tick:
+                    check_stops_realtime(state, tick, conn)
 
             is_new = current_ts != last_candle_ts
             if is_new:
