@@ -27,12 +27,11 @@ def get_sp(day):
     return 2 * monthly_spread.get(str(day.year)+"-"+str(day.month).zfill(2), avg_sp)
 
 # Config unique: TRp s1.5 a0.3 t0.3 T12
-SL, ACT, TRAIL, MX = 1.0, 0.5, 0.75, 12
+SL, ACT, TRAIL = 1.0, 0.5, 0.75
 
 def sim_exit(cdf, pos, entry, d, atr):
     best = entry; stop = entry + SL*atr if d == 'short' else entry - SL*atr; ta = False
-    for j in range(1, MX+1):
-        if pos+j >= len(cdf): break
+    for j in range(1, len(cdf)-pos):
         b = cdf.iloc[pos+j]
         if d == 'long':
             if b['low'] <= stop: return j, stop
@@ -46,10 +45,9 @@ def sim_exit(cdf, pos, entry, d, atr):
             if not ta and (entry-best) >= ACT*atr: ta = True
             if ta: stop = min(stop, best + TRAIL*atr)
             if b['close'] > stop: return j, b['close']
-    if pos+MX < len(cdf): return MX, cdf.iloc[pos+MX]['close']
-    return MX, entry
+    return 1, entry
 
-# Portfolio v10: AA+D+E+F+H+NY6+NY16+NY17+O (SL=1.0 ACT=0.5 TRAIL=0.75 MX=12)
+# Portfolio v10: AA+D+E+F+H+NY6+NY16+NY17+O (SL=1.0 ACT=0.5 TRAIL=0.75, pas de timeout)
 STRATS = ['AA','D','E','F','H','NY6','NY16','NY17','O']
 
 print("Collecte bougie par bougie...", flush=True)
@@ -153,7 +151,7 @@ def run_monthly(strat_keys, label, capital=1000.0, risk=0.01):
     # Stats par strat
     print(f"\n{'='*110}")
     print(f"  {label}")
-    print(f"  Config: TRp SL={SL} ACT={ACT} TRAIL={TRAIL} MaxBars={MX}")
+    print(f"  Config: TRAIL SL={SL} ACT={ACT} TRAIL={TRAIL} (pas de timeout)")
     print(f"  {len(acc)} trades, Capital final ${cap:,.2f}, DD global {global_dd:.1f}%")
     print(f"{'='*110}")
 

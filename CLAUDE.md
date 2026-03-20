@@ -31,7 +31,7 @@
 ### Regles
 - Jamais 2 trades simultanes en sens opposes
 - ATR du jour precedent
-- Trailing sur CLOSE: SL=1.0 ACT=0.5 TRAIL=0.75, max 12 barres (config unique)
+- Trailing sur CLOSE: SL=1.0 ACT=0.5 TRAIL=0.75, pas de timeout (config unique)
 - best = max(close) et non max(high) — coherence temporelle
 - Apres trailing update, PAS de re-check low/high vs nouveau stop
 - Seul re-check: close vs nouveau stop (MT5 ModifyPosition immediat)

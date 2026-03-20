@@ -1,4 +1,4 @@
-"""Derniers 100 trades backtest — AA+D+E+F+H+NY6+NY16+NY17+O, SL=1.0 ACT=0.5 TRAIL=0.75 MX=12"""
+"""Derniers 100 trades backtest — AA+D+E+F+H+NY6+NY16+NY17+O, SL=1.0 ACT=0.5 TRAIL=0.75"""
 import warnings; warnings.filterwarnings('ignore')
 import sys; sys.stdout.reconfigure(encoding='utf-8')
 import numpy as np, pandas as pd
@@ -23,11 +23,10 @@ def prev_day(day):
 def get_sp(day):
     return 2 * monthly_spread.get(str(day.year)+"-"+str(day.month).zfill(2), avg_sp)
 
-SL, ACT, TRAIL, MX = 1.0, 0.5, 0.75, 12
+SL, ACT, TRAIL = 1.0, 0.5, 0.75
 def sim_exit(cdf, pos, entry, d, atr):
     best = entry; stop = entry + SL*atr if d == 'short' else entry - SL*atr; ta = False
-    for j in range(1, MX+1):
-        if pos+j >= len(cdf): break
+    for j in range(1, len(cdf)-pos):
         b = cdf.iloc[pos+j]
         if d == 'long':
             if b['low'] <= stop: return j, stop
@@ -41,8 +40,7 @@ def sim_exit(cdf, pos, entry, d, atr):
             if not ta and (entry-best) >= ACT*atr: ta = True
             if ta: stop = min(stop, best + TRAIL*atr)
             if b['close'] > stop: return j, b['close']
-    if pos+MX < len(cdf): return MX, cdf.iloc[pos+MX]['close']
-    return MX, entry
+    return 1, entry
 
 all_trades = []
 prev_d = None; trig = {}; day_atr = None
@@ -117,7 +115,7 @@ losses = [p for p in pnls if p < 0]
 gp = sum(wins); gl = abs(sum(losses))+0.001
 
 print("="*100)
-print(f"DERNIERS 100 TRADES — AA+D+E+F+H+NY6+NY16+NY17+O — SL=1.0 ACT=0.5 TRAIL=0.75 T12")
+print(f"DERNIERS 100 TRADES — AA+D+E+F+H+NY6+NY16+NY17+O — SL=1.0 ACT=0.5 TRAIL=0.75")
 print(f"Periode: {last100[0]['date']} a {last100[-1]['date']}")
 print("="*100)
 print(f"  WR: {len(wins)}/100 = {len(wins)}%")

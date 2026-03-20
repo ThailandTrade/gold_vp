@@ -1,7 +1,7 @@
 """
 Paper Trading Live — AA+D+E+F+H+NY6+NY16+NY17+O
-Config: TRAIL SL=1.0 ACT=0.5 TRAIL=0.75 MX=12 (sur CLOSE)
-PF 1.54, WR 44%, DD -26.2%, Calmar 481, +12624%
+Config: TRAIL SL=1.0 ACT=0.5 TRAIL=0.75, pas de timeout (sur CLOSE)
+PF 1.55, WR 44%, DD -26.2%, +12331%
 Usage: python live_paper.py [--reset]
 """
 import warnings; warnings.filterwarnings('ignore')
@@ -19,7 +19,7 @@ CAPITAL_INITIAL = 1000.0
 RISK_PCT = 0.01
 CHECK_INTERVAL = 1
 LOG_FILE = "paper_trades.json"
-SL, ACT, TRAIL, MAX_BARS = 1.0, 0.5, 0.75, 12  # trailing sur close
+SL, ACT, TRAIL = 1.0, 0.5, 0.75  # trailing sur close, pas de timeout
 
 STRATS = ['AA','D','E','F','H','NY6','NY16','NY17','O']
 
@@ -172,16 +172,9 @@ def manage_positions(candles_df, state, conn):
             pos['exit'] = last['close']; pos['exit_reason'] = 'stop_close'; closed.append(pos); continue
         if d == 'short' and last['close'] > pos['stop']:
             pos['exit'] = last['close']; pos['exit_reason'] = 'stop_close'; closed.append(pos); continue
-        # 5. Timeout
-        if pos['bars_held'] >= MAX_BARS:
-            pos['exit'] = last['close']; pos['exit_reason'] = 'timeout'; closed.append(pos)
 
     for c in closed:
         state['open_positions'].remove(c)
-        if c['exit_reason'] == 'timeout':
-            tick = get_current_bidask(conn)
-            if tick:
-                c['exit'] = tick['bid'] if c['strat_dir'] == 'long' else tick['ask']
         pnl_oz = (c['exit']-c['entry']) if c['strat_dir']=='long' else (c['entry']-c['exit'])
         pnl_dollar = pnl_oz * c['pos_oz']
         state['capital'] += pnl_dollar

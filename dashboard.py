@@ -49,7 +49,7 @@ pnl = capital - CAPITAL_INITIAL
 
 # ── TITRE ──
 st.title("VP Swing — Paper Trading")
-st.caption(f"{sess} · {now.strftime('%H:%M')} UTC · XAUUSD {'${:,.2f}'.format(bid) if bid else '—'} · 9 strats · SL=1.0 ACT=0.5 TRAIL=0.75 T12")
+st.caption(f"{sess} · {now.strftime('%H:%M')} UTC · XAUUSD {'${:,.2f}'.format(bid) if bid else '—'} · 9 strats · SL=1.0 ACT=0.5 TRAIL=0.75")
 
 # ── METRIQUES ──
 n_trades = len(trades)
@@ -125,7 +125,7 @@ if positions:
             'PnL $': pnl_str,
             'PnL oz': pnl_oz_str,
             'Trail': 'ON' if trail else '—',
-            'Bars': f"{bars}/12",
+            'Bars': str(bars),
             'Lots': f"{lots:.3f}",
             'Ouvert': et,
         })
