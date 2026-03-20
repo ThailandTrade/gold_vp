@@ -28,7 +28,7 @@ st.markdown("""<style>
 .metric-value {font-size:1.6rem; font-weight:700; color:#fafafa;}
 .metric-delta {font-size:0.8rem; margin-top:2px;}
 .green {color:#00c853;} .red {color:#ff1744;} .gray {color:#808495;}
-.pos-row {background:linear-gradient(135deg, #16213e 0%, #1a1a2e 100%); border:1px solid #2a3a5e; border-radius:10px; padding:16px 20px; margin:10px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.3);}
+.pos-row {border-bottom:1px solid #333; padding:12px 0; margin:0;}
 .big-num {font-size:2.4rem; font-weight:800; letter-spacing:-1px;}
 </style>""", unsafe_allow_html=True)
 
@@ -128,7 +128,7 @@ st.markdown("")
 # ═══════════════════════════════════════════
 if positions:
     st.markdown(f"#### {len(positions)} Position{'s' if len(positions)>1 else ''} ouverte{'s' if len(positions)>1 else ''}")
-    total_unr=0
+    total_unr=0; pos_rows=[]
     for p in positions:
         e=p.get('entry',0);s=p.get('stop',0);best=p.get('best',e)
         d=p.get('strat_dir','');sn=p.get('strat','')
@@ -142,34 +142,17 @@ if positions:
             pnl_d=pnl_oz_v*oz; total_unr+=pnl_d
             px=f"{px_v:.2f}"
         c = "#00c853" if pnl_d>=0 else "#ff1744"
-        bar_w = min(int(bars/12*100),100)
-        st.markdown(f"""<div class="pos-row" style="border-left:4px solid {c}">
-<div style="display:flex;justify-content:space-between;align-items:flex-start;">
-<div>
-<span style="font-size:1.2rem;font-weight:700;">{sn}</span>
-<span style="color:#808495;"> — {STRATS.get(sn,'')}</span><br>
-<span style="color:{c};font-weight:600;font-size:0.9rem;">{d.upper()}</span>
-<span class="gray"> · ouvert {et}</span>
-</div>
-<div style="text-align:right;">
-<div style="font-size:1.4rem;font-weight:700;color:{c};">${pnl_d:+,.2f}</div>
-<div class="gray">{pnl_oz_v:+.2f} oz</div>
-</div>
-</div>
-<div style="display:flex;gap:24px;margin-top:10px;font-size:0.82rem;">
-<div><span class="gray">Entree</span><br><b>{e:.2f}</b></div>
-<div><span class="gray">Prix actuel</span><br><b>{px}</b></div>
-<div><span class="gray">Stop</span><br><b>{s:.2f}</b></div>
-<div><span class="gray">Best</span><br><b>{best:.2f}</b></div>
-<div><span class="gray">Trail</span><br><b>{'🔒 ON' if trail else '—'}</b></div>
-<div><span class="gray">Lots</span><br><b>{lots:.3f}</b></div>
-<div><span class="gray">Bars</span><br><b>{bars}/12</b></div>
-</div>
-<div style="margin-top:8px;background:#1a1a2e;border-radius:3px;height:3px;">
-<div style="background:{c};width:{bar_w}%;height:100%;border-radius:3px;"></div>
-</div>
-</div>""", unsafe_allow_html=True)
+        trail_txt = "ON" if trail else "off"
+        pos_data = {
+            'Strat': sn, 'Nom': STRATS.get(sn,''), 'Direction': d.upper(),
+            'Entree': f"{e:.2f}", 'Prix actuel': px, 'Stop': f"{s:.2f}",
+            'Best': f"{best:.2f}", 'PnL $': f"${pnl_d:+,.2f}",
+            'PnL oz': f"{pnl_oz_v:+.2f}", 'Trail': trail_txt,
+            'Bars': f"{bars}/12", 'Lots': f"{lots:.3f}", 'Ouvert': et,
+        }
+        pos_rows.append(pos_data)
 
+    st.dataframe(pd.DataFrame(pos_rows), use_container_width=True, hide_index=True)
     if bid and total_unr != 0:
         c = "#00c853" if total_unr>=0 else "#ff1744"
         st.markdown(f'<div style="text-align:right;font-size:1rem;color:{c};font-weight:600;margin:4px 16px;">PnL latent total: ${total_unr:+,.2f}</div>', unsafe_allow_html=True)
