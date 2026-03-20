@@ -18,11 +18,45 @@ STRATS = {
 }
 
 st.set_page_config(page_title="VP Swing", layout="wide")
+
+# Custom CSS
 st.markdown("""<style>
-div[data-testid="stMetricValue"] > div {font-size: 1.4rem;}
-div[data-testid="stMetricDelta"] > div {font-size: 0.85rem;}
-section[data-testid="stSidebar"] {width: 260px !important;}
-.block-container {padding-top: 1rem; padding-bottom: 0rem;}
+.block-container {padding-top: 1rem;}
+.card {
+    background: #1e1e2e;
+    border-radius: 10px;
+    padding: 15px 20px;
+    margin: 5px 0;
+    border: 1px solid #333;
+}
+.card-green { border-left: 4px solid #26a69a; }
+.card-red { border-left: 4px solid #ef5350; }
+.card-blue { border-left: 4px solid #42a5f5; }
+.card-label { color: #888; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }
+.card-value { color: #fff; font-size: 1.5rem; font-weight: 700; }
+.card-value-sm { color: #fff; font-size: 1.1rem; font-weight: 600; }
+.card-delta { font-size: 0.85rem; margin-top: 2px; }
+.delta-green { color: #26a69a; }
+.delta-red { color: #ef5350; }
+.delta-gray { color: #888; }
+.pos-card {
+    background: #1a1a2e;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 6px 0;
+    border: 1px solid #333;
+}
+.session-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+.session-tokyo { background: #1a237e; color: #90caf9; }
+.session-london { background: #1b5e20; color: #a5d6a7; }
+.session-ny { background: #b71c1c; color: #ef9a9a; }
+.session-off { background: #333; color: #888; }
 </style>""", unsafe_allow_html=True)
 
 def load_state():
@@ -41,6 +75,10 @@ def get_price():
     except: pass
     return None, None
 
+def card(label, value, delta="", card_class="", value_class="card-value"):
+    delta_html = f'<div class="card-delta {delta[0] if delta else ""}">{delta[1] if delta else ""}</div>' if delta else ""
+    return f'<div class="card {card_class}"><div class="card-label">{label}</div><div class="{value_class}">{value}</div>{delta_html}</div>'
+
 state = load_state()
 capital = state['capital']
 trades = state['trades']
@@ -48,29 +86,47 @@ positions = state['open_positions']
 bid, ask = get_price()
 now_utc = datetime.now(timezone.utc)
 h = now_utc.hour
-sess = "Tokyo" if 0<=h<6 else "London" if 8<=h<14 else "New York" if 14<=h<21 else "Off"
+if 0<=h<6: sess, sess_cls = "Tokyo", "session-tokyo"
+elif 8<=h<14: sess, sess_cls = "London", "session-london"
+elif 14<=h<21: sess, sess_cls = "New York", "session-ny"
+else: sess, sess_cls = "Ferme", "session-off"
 
-# ══════════════════════════════════════════════════
-# SIDEBAR
-# ══════════════════════════════════════════════════
-with st.sidebar:
-    st.markdown("### VP Swing")
-    st.markdown(f"**{sess}** · {now_utc.strftime('%H:%M')} UTC")
-    if bid: st.markdown(f"**XAUUSD** ${bid:,.2f}")
-    cache = {}
-    for k, v in state.get('daily_cache', {}).items(): cache = v; break
-    if cache.get('atr'): st.markdown(f"**ATR** {cache['atr']:.2f}")
-    st.divider()
-    st.caption("10 strats · Trailing pessimiste")
-    st.caption(f"SL 1.5 · ACT 0.3 · TRAIL 0.3 · T12")
-    st.caption(f"Strats: {', '.join(sorted(STRATS.keys()))}")
-
-# ══════════════════════════════════════════════════
-# HEADER: 6 METRIQUES
-# ══════════════════════════════════════════════════
 pnl = capital - CAPITAL_INITIAL
 pnl_pct = pnl / CAPITAL_INITIAL * 100
+pnl_cls = "delta-green" if pnl >= 0 else "delta-red"
+cap_border = "card-green" if pnl >= 0 else "card-red"
 
+# ══════════════════════════════════════════════════
+# HEADER
+# ══════════════════════════════════════════════════
+header_left, header_right = st.columns([3, 1])
+with header_left:
+    st.markdown(f"""
+    <div style="display:flex; align-items:center; gap:20px;">
+        <div>
+            <div style="color:#888; font-size:0.8rem;">XAUUSD 5M PAPER TRADING</div>
+            <div style="font-size:2.2rem; font-weight:800; color:white;">${capital:,.2f}</div>
+            <div class="{pnl_cls}" style="font-size:1rem;">{'+' if pnl>=0 else ''}{pnl:,.2f} ({pnl_pct:+.1f}%)</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+with header_right:
+    price_html = f"<div style='font-size:1.3rem; font-weight:700;'>${bid:,.2f}</div>" if bid else ""
+    spread_html = f"<div class='delta-gray'>spread {ask-bid:.3f}</div>" if bid and ask else ""
+    cache = {}
+    for k, v in state.get('daily_cache', {}).items(): cache = v; break
+    atr_html = f"<div class='delta-gray'>ATR {cache['atr']:.2f}</div>" if cache.get('atr') else ""
+    st.markdown(f"""
+    <div style="text-align:right;">
+        <span class="session-badge {sess_cls}">{sess}</span>
+        <span class="delta-gray"> {now_utc.strftime('%H:%M')} UTC</span>
+        {price_html}{spread_html}{atr_html}
+    </div>
+    """, unsafe_allow_html=True)
+
+# ══════════════════════════════════════════════════
+# KPI CARDS
+# ══════════════════════════════════════════════════
 n_trades = len(trades)
 df = None
 if n_trades > 0:
@@ -93,87 +149,83 @@ if n_trades > 0:
     wr = len(wins) / n_trades * 100
     caps = pd.concat([pd.Series([CAPITAL_INITIAL]), df['cum']]).reset_index(drop=True)
     max_dd = ((caps - caps.cummax()) / caps.cummax() * 100).min()
-    dd_now = (capital - caps.cummax().iloc[-1]) / caps.cummax().iloc[-1] * 100
+
     today_df = df[df['date'] == now_utc.date()]
     today_pnl = today_df['pnl_dollar'].sum() if len(today_df) else 0
     today_n = len(today_df)
+    today_cls = "delta-green" if today_pnl >= 0 else "delta-red"
 
-    summary = pd.DataFrame([{
-        'Capital': f"${capital:,.2f}",
-        'PnL': f"${pnl:+,.2f} ({pnl_pct:+.1f}%)",
-        'Nb trades': f"{n_trades} ({today_n} auj.)",
-        'Win Rate': f"{wr:.0f}% ({len(wins)}W / {len(losses)}L)",
-        'Profit Factor': f"{pf:.2f}",
-        'Drawdown actuel': f"{dd_now:.1f}%",
-        'DD max': f"{max_dd:.1f}%",
-        'PnL aujourd hui': f"${today_pnl:+,.2f}",
-    }])
-    st.dataframe(summary, use_container_width=True, hide_index=True)
+    k1, k2, k3, k4, k5 = st.columns(5)
+    with k1: st.markdown(card("Trades", str(n_trades), ("delta-gray", f"{today_n} aujourd'hui"), "card-blue"), unsafe_allow_html=True)
+    with k2: st.markdown(card("Win Rate", f"{wr:.0f}%", ("delta-gray", f"{len(wins)}W / {len(losses)}L"), "card-blue"), unsafe_allow_html=True)
+    with k3: st.markdown(card("Profit Factor", f"{pf:.2f}", "", "card-blue"), unsafe_allow_html=True)
+    with k4: st.markdown(card("Max Drawdown", f"{max_dd:.1f}%", "", "card-red" if max_dd < -5 else "card-blue"), unsafe_allow_html=True)
+    with k5: st.markdown(card("Aujourd'hui", f"${today_pnl:+,.2f}", (today_cls, f"{today_n} trades"), "card-green" if today_pnl>=0 else "card-red"), unsafe_allow_html=True)
 else:
-    summary = pd.DataFrame([{
-        'Capital': f"${capital:,.2f}",
-        'PnL': f"${pnl:+,.2f}",
-        'Nb trades': "0",
-        'Win Rate': "—",
-        'Profit Factor': "—",
-        'Drawdown': "—",
-    }])
-    st.dataframe(summary, use_container_width=True, hide_index=True)
+    st.markdown(card("Trades", "0", ("delta-gray", "En attente de signaux"), "card-blue"), unsafe_allow_html=True)
 
-st.divider()
+st.markdown("<br>", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════
 # POSITIONS OUVERTES
 # ══════════════════════════════════════════════════
 if positions:
-    st.markdown(f"### {len(positions)} position(s) ouverte(s)")
-    pos_rows = []
+    st.markdown(f"### Positions ouvertes")
     total_unr = 0
     for p in positions:
-        entry = p.get('entry',0); stop = p.get('stop',0); best = p.get('best',entry)
-        d = p.get('strat_dir',''); strat = p.get('strat','')
-        oz = p.get('pos_oz',0); bars = p.get('bars_held',0)
-        atr = p.get('trade_atr',1); trail = p.get('trail_active',False)
-        lots = p.get('lots',0); spread = p.get('entry_spread',0)
-        entry_time = str(p.get('entry_time',''))[:19]
+        entry=p.get('entry',0); stop=p.get('stop',0); best=p.get('best',entry)
+        d=p.get('strat_dir',''); strat=p.get('strat',''); oz=p.get('pos_oz',0)
+        bars=p.get('bars_held',0); atr=p.get('trade_atr',1)
+        trail=p.get('trail_active',False); lots=p.get('lots',0)
+        entry_time=str(p.get('entry_time',''))[:16]
 
-        px = "—"; pnl_str = "—"; pnl_oz_str = "—"
+        px_str="—"; pnl_str="—"; pnl_d=0
         if bid:
-            exit_p = bid if d == 'long' else ask
-            pnl_oz = (exit_p - entry) if d == 'long' else (entry - exit_p)
-            pnl_d = pnl_oz * oz; total_unr += pnl_d
-            px = f"{exit_p:.2f}"
-            pnl_str = f"${pnl_d:+,.2f}"
-            pnl_oz_str = f"{pnl_oz:+.2f}"
+            px = bid if d=='long' else ask
+            pnl_oz = (px-entry) if d=='long' else (entry-px)
+            pnl_d = pnl_oz*oz; total_unr += pnl_d
+            px_str=f"${px:.2f}"; pnl_str=f"${pnl_d:+,.2f}"
 
-        pos_rows.append({
-            'Strat': strat,
-            'Nom': STRATS.get(strat, ''),
-            'Dir': d.upper(),
-            'Entree': f"{entry:.2f}",
-            'Prix actuel': px,
-            'Stop': f"{stop:.2f}",
-            'Best': f"{best:.2f}",
-            'PnL $': pnl_str,
-            'PnL oz': pnl_oz_str,
-            'Trail': 'ON' if trail else '—',
-            'Bars': f"{bars}/12",
-            'Lots': f"{lots:.3f}",
-            'Spread': f"{spread:.3f}",
-            'Ouverture': entry_time,
-        })
+        pnl_color = "#26a69a" if pnl_d>=0 else "#ef5350"
+        trail_str = "🔒 Trail ON" if trail else "Trail off"
+        bar_pct = int(bars/12*100)
 
-    st.dataframe(pd.DataFrame(pos_rows), use_container_width=True, hide_index=True,
-                 height=len(pos_rows)*38+40)
+        st.markdown(f"""
+        <div class="pos-card" style="border-left: 4px solid {pnl_color};">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <span style="font-size:1.1rem; font-weight:700;">{strat}</span>
+                    <span style="color:#888;"> {STRATS.get(strat,'')} · </span>
+                    <span style="font-weight:600; color:{'#26a69a' if d=='long' else '#ef5350'};">{d.upper()}</span>
+                    <span style="color:#666;"> · {entry_time}</span>
+                </div>
+                <div style="font-size:1.3rem; font-weight:700; color:{pnl_color};">{pnl_str}</div>
+            </div>
+            <div style="display:flex; gap:30px; margin-top:8px; color:#aaa; font-size:0.85rem;">
+                <span>Entree <b>${entry:.2f}</b></span>
+                <span>Prix <b>{px_str}</b></span>
+                <span>Stop <b>${stop:.2f}</b></span>
+                <span>Best <b>${best:.2f}</b></span>
+                <span>{trail_str}</span>
+                <span>{lots:.3f} lots</span>
+                <span>Bar {bars}/12</span>
+            </div>
+            <div style="margin-top:6px; background:#333; border-radius:4px; height:4px;">
+                <div style="background:{pnl_color}; width:{bar_pct}%; height:100%; border-radius:4px;"></div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
     if bid:
-        color = "green" if total_unr >= 0 else "red"
-        st.markdown(f"PnL latent total: :{color}[**${total_unr:+,.2f}**]")
-    st.divider()
+        unr_color = "#26a69a" if total_unr>=0 else "#ef5350"
+        st.markdown(f'<div style="text-align:right; font-size:1.1rem; color:{unr_color}; font-weight:600; margin:8px 0;">PnL latent: ${total_unr:+,.2f}</div>', unsafe_allow_html=True)
+
+st.markdown("<br>", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════
 # EQUITY + DRAWDOWN
 # ══════════════════════════════════════════════════
-if n_trades > 0:
+if df is not None and len(df) > 0:
     col_eq, col_dd = st.columns(2)
     with col_eq:
         st.markdown("### Equity")
@@ -183,73 +235,69 @@ if n_trades > 0:
     with col_dd:
         st.markdown("### Drawdown")
         peak = pd.concat([pd.Series([CAPITAL_INITIAL]), df['cum']]).cummax().iloc[1:].reset_index(drop=True)
-        dd_series = (df['cum'].reset_index(drop=True) - peak) / peak * 100
-        dd_df = pd.DataFrame({'%': dd_series.values}, index=df['entry_time'].values)
-        st.area_chart(dd_df, height=250, use_container_width=True, color='#ff4b4b')
+        dd_s = (df['cum'].reset_index(drop=True) - peak) / peak * 100
+        st.area_chart(pd.DataFrame({'%': dd_s.values}, index=df['entry_time'].values),
+                      height=250, use_container_width=True, color='#ff4b4b')
 
-    st.divider()
+    st.markdown("<br>", unsafe_allow_html=True)
 
-# ══════════════════════════════════════════════════
-# TRADES FERMES
-# ══════════════════════════════════════════════════
-if n_trades > 0:
-    st.markdown(f"### Trades fermes ({n_trades})")
+    # ══════════════════════════════════════════════════
+    # TRADES
+    # ══════════════════════════════════════════════════
+    st.markdown(f"### Historique des trades ({n_trades})")
 
     show = df.iloc[::-1].copy()
-    show['Ouverture'] = show['entry_time'].dt.strftime('%Y-%m-%d %H:%M')
-    show['Fermeture'] = show['exit_time'].dt.strftime('%Y-%m-%d %H:%M')
+    show['Ouverture'] = show['entry_time'].dt.strftime('%d/%m %H:%M')
+    show['Fermeture'] = show['exit_time'].dt.strftime('%d/%m %H:%M')
     show['Nom'] = show['strat'].map(STRATS)
     show['Dir'] = show['dir'].str.upper()
     show['In'] = show['entry'].apply(lambda x: f"{x:.2f}")
     show['Out'] = show['exit'].apply(lambda x: f"{x:.2f}")
-    show['PnL $'] = show['pnl_dollar'].apply(lambda x: f"${x:+,.2f}")
+    show['PnL'] = show['pnl_dollar'].apply(lambda x: f"${x:+,.2f}")
     show['PnL oz'] = show['pnl_oz'].apply(lambda x: f"{x:+.3f}")
-    show['Raison'] = show['exit_reason']
+    show['Sortie'] = show['exit_reason']
     show['Bars'] = show['bars_held']
     show['Duree'] = show['duration'].apply(lambda x: f"{x:.0f}m")
-    show['Cap'] = show['capital_after'].apply(lambda x: f"${float(x):,.2f}")
+    show['Capital'] = show['capital_after'].apply(lambda x: f"${float(x):,.2f}")
 
-    table_cols = ['Ouverture','Fermeture','strat','Nom','Dir','In','Out',
-                  'PnL $','PnL oz','Raison','Bars','Duree','Cap']
-    table = show[table_cols].copy()
-    table.columns = ['Ouverture','Fermeture','Strat','Nom','Dir','In','Out',
-                     'PnL $','PnL oz','Raison','Bars','Duree','Capital']
+    cols = ['Ouverture','Fermeture','strat','Nom','Dir','In','Out','PnL','PnL oz','Sortie','Bars','Duree','Capital']
+    tbl = show[cols].copy()
+    tbl.columns = ['Ouverture','Fermeture','Strat','Nom','Dir','In','Out','PnL','PnL oz','Sortie','Bars','Duree','Capital']
 
     def color_pnl(row):
         try:
-            v = float(row['PnL $'].replace('$','').replace(',','').replace('+',''))
-            c = 'color:#26a69a' if v>0 else 'color:#ef5350' if v<0 else ''
+            v = float(row['PnL'].replace('$','').replace(',','').replace('+',''))
+            c = 'color:#26a69a' if v>0 else 'color:#ef5350'
         except: c = ''
         return [c]*len(row)
 
-    st.dataframe(table.style.apply(color_pnl, axis=1),
-                 use_container_width=True, hide_index=True,
+    st.dataframe(tbl.style.apply(color_pnl, axis=1), use_container_width=True, hide_index=True,
                  height=min(n_trades*38+40, 500))
 
-    st.divider()
+    st.markdown("<br>", unsafe_allow_html=True)
 
     # ══════════════════════════════════════════════════
-    # PERFORMANCE PAR STRATEGIE
+    # PERFORMANCE
     # ══════════════════════════════════════════════════
     st.markdown("### Performance par strategie")
+
     srows = []
     for sn in sorted(df['strat'].unique()):
-        s = df[df['strat']==sn]; n = len(s)
-        w = (s['pnl_dollar']>0).sum()
-        gps = s[s['pnl_dollar']>0]['pnl_dollar'].sum()
-        gls = abs(s[s['pnl_dollar']<0]['pnl_dollar'].sum())+0.01
+        s = df[df['strat']==sn]; n=len(s); w=(s['pnl_dollar']>0).sum()
+        gps=s[s['pnl_dollar']>0]['pnl_dollar'].sum()
+        gls=abs(s[s['pnl_dollar']<0]['pnl_dollar'].sum())+0.01
         srows.append({
-            'Strat': sn, 'Nom': STRATS.get(sn,''),
-            'Trades': n, 'Wins': w, 'Losses': n-w,
-            'Win Rate': f"{w/n*100:.0f}%",
-            'Profit Factor': f"{gps/gls:.2f}",
-            'PnL total': f"${s['pnl_dollar'].sum():+,.2f}",
-            'PnL moyen': f"${s['pnl_dollar'].mean():+,.2f}",
-            'Meilleur': f"${s['pnl_dollar'].max():+,.2f}",
-            'Pire': f"${s['pnl_dollar'].min():+,.2f}",
+            'Strat':sn, 'Nom':STRATS.get(sn,''), 'Trades':n,
+            'Wins':w, 'Losses':n-w,
+            'Win Rate':f"{w/n*100:.0f}%", 'PF':f"{gps/gls:.2f}",
+            'PnL':f"${s['pnl_dollar'].sum():+,.2f}",
+            'Avg':f"${s['pnl_dollar'].mean():+,.2f}",
+            'Best':f"${s['pnl_dollar'].max():+,.2f}",
+            'Worst':f"${s['pnl_dollar'].min():+,.2f}",
         })
     st.dataframe(pd.DataFrame(srows), use_container_width=True, hide_index=True)
 
+    # Charts
     col1, col2 = st.columns(2)
     with col1:
         st.markdown("##### PnL par strategie")
@@ -259,43 +307,63 @@ if n_trades > 0:
         st.markdown("##### PnL journalier")
         st.bar_chart(df.groupby('date')['pnl_dollar'].sum(), height=250, use_container_width=True)
 
-    st.divider()
+    st.markdown("<br>", unsafe_allow_html=True)
 
-    # ══════════════════════════════════════════════════
-    # DETAILS
-    # ══════════════════════════════════════════════════
+    # Details
     col1, col2, col3 = st.columns(3)
-
     with col1:
         st.markdown("##### Direction")
-        for d_name in ['long','short']:
-            s = df[df['dir']==d_name]
-            if len(s) == 0: continue
-            w = (s['pnl_dollar']>0).sum()
-            gp_d = s[s['pnl_dollar']>0]['pnl_dollar'].sum()
-            gl_d = abs(s[s['pnl_dollar']<0]['pnl_dollar'].sum())+0.01
-            st.markdown(f"**{d_name.upper()}** · {len(s)} trades · WR {w/len(s)*100:.0f}% · PF {gp_d/gl_d:.2f}")
-            st.caption(f"PnL: ${s['pnl_dollar'].sum():+,.2f} · Avg: ${s['pnl_dollar'].mean():+,.2f}")
+        for d_n in ['long','short']:
+            s=df[df['dir']==d_n]
+            if len(s)==0: continue
+            w=(s['pnl_dollar']>0).sum()
+            gd=s[s['pnl_dollar']>0]['pnl_dollar'].sum()
+            ld=abs(s[s['pnl_dollar']<0]['pnl_dollar'].sum())+0.01
+            color = "#26a69a" if s['pnl_dollar'].sum()>=0 else "#ef5350"
+            st.markdown(f"<div style='margin:8px 0;'><b>{d_n.upper()}</b> · {len(s)} trades · WR {w/len(s)*100:.0f}% · PF {gd/ld:.2f}<br><span style='color:{color};font-weight:600;'>${s['pnl_dollar'].sum():+,.2f}</span></div>", unsafe_allow_html=True)
 
     with col2:
         st.markdown("##### Sorties")
         for reason in sorted(df['exit_reason'].unique()):
-            s = df[df['exit_reason']==reason]; w = (s['pnl_dollar']>0).sum()
-            st.markdown(f"**{reason}** · {len(s)} trades ({w}W / {len(s)-w}L)")
+            s=df[df['exit_reason']==reason]; w=(s['pnl_dollar']>0).sum()
+            st.markdown(f"**{reason}** · {len(s)} trades · {w}W {len(s)-w}L")
 
     with col3:
-        st.markdown("##### Performance")
-        loss_s = max((sum(1 for _ in g) for k,g in itertools.groupby(df['pnl_dollar']<0) if k), default=0)
-        win_s = max((sum(1 for _ in g) for k,g in itertools.groupby(df['pnl_dollar']>0) if k), default=0)
-        st.markdown(f"Max wins consec: **{win_s}**")
-        st.markdown(f"Max pertes consec: **{loss_s}**")
-        if len(wins): st.markdown(f"Avg win: **${wins['pnl_dollar'].mean():+,.2f}**")
-        if len(losses): st.markdown(f"Avg loss: **${losses['pnl_dollar'].mean():+,.2f}**")
-        st.markdown(f"Avg duree: **{df['duration'].mean():.0f}m**")
-        st.markdown(f"Avg bars: **{df['bars_held'].mean():.1f}**")
+        st.markdown("##### Statistiques")
+        ls = max((sum(1 for _ in g) for k,g in itertools.groupby(df['pnl_dollar']<0) if k), default=0)
+        ws = max((sum(1 for _ in g) for k,g in itertools.groupby(df['pnl_dollar']>0) if k), default=0)
+        stats = {
+            'Max wins consec': ws, 'Max losses consec': ls,
+            'Avg win': f"${wins['pnl_dollar'].mean():+,.2f}" if len(wins) else "—",
+            'Avg loss': f"${losses['pnl_dollar'].mean():+,.2f}" if len(losses) else "—",
+            'Duree moyenne': f"{df['duration'].mean():.0f} min",
+            'Bars moyen': f"{df['bars_held'].mean():.1f}",
+        }
+        for k, v in stats.items():
+            st.markdown(f"**{k}**: {v}")
 
 else:
-    st.info("En attente du premier trade ferme. Le systeme surveille les signaux sur XAUUSD 5 minutes.")
+    st.markdown("""
+    <div class="card card-blue" style="text-align:center; padding:40px;">
+        <div class="card-label">SYSTEME ACTIF</div>
+        <div style="font-size:1.2rem; color:#ccc; margin:15px 0;">En attente du premier trade</div>
+        <div style="color:#888;">10 strategies surveillent XAUUSD sur bougies 5 minutes</div>
+        <div style="color:#666; margin-top:10px; font-size:0.85rem;">
+            Tokyo: AC, F, O, V · London: D, E, H · New York: G, I, P
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+# Sidebar
+with st.sidebar:
+    st.markdown("### Config")
+    st.caption("Trailing pessimiste")
+    st.caption("SL 1.5 ATR · ACT 0.3 · TRAIL 0.3")
+    st.caption("Max 12 barres")
+    st.divider()
+    st.caption("Strats actives:")
+    for s, n in sorted(STRATS.items()):
+        st.caption(f"**{s}** · {n}")
 
 # Refresh
 time.sleep(10)
