@@ -1,4 +1,4 @@
-"""Derniers 100 trades backtest — AA+D+E+F+H+O, SL=1.0 ACT=0.5 TRAIL=0.75 MX=12"""
+"""Derniers 100 trades backtest — AA+D+E+F+H+NY6+NY16+NY17+O, SL=1.0 ACT=0.5 TRAIL=0.75 MX=12"""
 import warnings; warnings.filterwarnings('ignore')
 import sys; sys.stdout.reconfigure(encoding='utf-8')
 import numpy as np, pandas as pd
@@ -57,8 +57,9 @@ for ci in range(len(candles)):
     ds = pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')
     te = pd.Timestamp(today.year,today.month,today.day,6,0,tz='UTC')
     ls = pd.Timestamp(today.year,today.month,today.day,8,0,tz='UTC')
+    ns = pd.Timestamp(today.year,today.month,today.day,14,30,tz='UTC')
     tv = candles[(candles['ts_dt']>=ds)&(candles['ts_dt']<=ct)]
-    tok = tv[tv['ts_dt']<te]
+    tok = tv[tv['ts_dt']<te]; lon = tv[(tv['ts_dt']>=ls)&(tv['ts_dt']<ns)]
     def add(sn, d, e):
         b, ex = sim_exit(candles, ci, e, d, atr)
         pnl = (ex-e) if d=='long' else (e-ex)
@@ -96,6 +97,18 @@ for ci in range(len(candles)):
     if 0.0<=hour<6.0 and 'O' not in trig:
         body=row['close']-row['open']
         if abs(body)>=1.0*atr: add('O','long' if body>0 else 'short',row['close']); trig['O']=True
+    # NY6: GAP London->NY >0.5ATR
+    if 14.5<=hour<14.6 and 'NY6' not in trig and len(lon)>=5:
+        gap=(row['open']-lon.iloc[-1]['close'])/atr
+        if abs(gap)>=0.5: add('NY6','long' if gap>0 else 'short',row['open']); trig['NY6']=True
+    # NY16: 3 dernieres bougies London >1ATR, continuation NY
+    if 14.5<=hour<14.6 and 'NY16' not in trig and len(lon)>=9:
+        l3=lon.iloc[-3:]; m=(l3.iloc[-1]['close']-l3.iloc[0]['open'])/atr
+        if abs(m)>=1.0: add('NY16','long' if m>0 else 'short',row['open']); trig['NY16']=True
+    # NY17: 3 dernieres bougies London >0.5ATR, continuation NY
+    if 14.5<=hour<14.6 and 'NY17' not in trig and len(lon)>=9:
+        l3=lon.iloc[-3:]; m=(l3.iloc[-1]['close']-l3.iloc[0]['open'])/atr
+        if abs(m)>=0.5: add('NY17','long' if m>0 else 'short',row['open']); trig['NY17']=True
 
 last100 = all_trades[-100:]
 pnls = [t['pnl_oz'] for t in last100]
@@ -104,7 +117,7 @@ losses = [p for p in pnls if p < 0]
 gp = sum(wins); gl = abs(sum(losses))+0.001
 
 print("="*100)
-print(f"DERNIERS 100 TRADES — AA+D+E+F+H+O — SL=1.0 ACT=0.5 TRAIL=0.75 T12")
+print(f"DERNIERS 100 TRADES — AA+D+E+F+H+NY6+NY16+NY17+O — SL=1.0 ACT=0.5 TRAIL=0.75 T12")
 print(f"Periode: {last100[0]['date']} a {last100[-1]['date']}")
 print("="*100)
 print(f"  WR: {len(wins)}/100 = {len(wins)}%")

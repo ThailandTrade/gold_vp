@@ -74,7 +74,7 @@ for ci in range(len(candles)):
     le = pd.Timestamp(today.year,today.month,today.day,14,30,tz='UTC')
     ns = pd.Timestamp(today.year,today.month,today.day,14,30,tz='UTC')
     tv = candles[(candles['ts_dt']>=ds)&(candles['ts_dt']<=ct)]
-    tok = tv[tv['ts_dt']<te]; lon = tv[(tv['ts_dt']>=ls)&(tv['ts_dt']<le)]
+    tok = tv[tv['ts_dt']<te]; lon = tv[(tv['ts_dt']>=ls)&(tv['ts_dt']<le)]; ny = tv[tv['ts_dt']>=ns]
 
     def add(sn, d, e):
         b, ex = sim_exit(candles, ci, e, d, atr)
@@ -163,6 +163,38 @@ for ci in range(len(candles)):
         body=abs(row['close']-row['open'])
         if row['high']>=prev3_h and row['low']<=prev3_l and body>=0.5*atr:
             add('AC','long' if row['close']>row['open'] else 'short',row['close']); trig['AC']=True
+    # NY6: GAP London close vs NY open >0.5ATR, continuation
+    if 14.5<=hour<14.6 and 'NY6' not in trig and len(lon)>=5:
+        gap=(row['open']-lon.iloc[-1]['close'])/atr
+        if abs(gap)>=0.5: add('NY6','long' if gap>0 else 'short',row['open']); trig['NY6']=True
+    # NY11: ORB NY 30min breakout
+    if 15.0<=hour<21.0 and 'NY11' not in trig:
+        if 'NY11_h' not in trig:
+            orb=tv[(tv['ts_dt']>=ns)&(tv['ts_dt']<pd.Timestamp(today.year,today.month,today.day,15,0,tz='UTC'))]
+            if len(orb)>=6: trig['NY11_h']=float(orb['high'].max()); trig['NY11_l']=float(orb['low'].min())
+        if 'NY11_h' in trig:
+            if row['close']>trig['NY11_h']: add('NY11','long',row['close']); trig['NY11']=True
+            elif row['close']<trig['NY11_l']: add('NY11','short',row['close']); trig['NY11']=True
+    # NY16: 3 dernieres bougies London >1ATR, continuation NY
+    if 14.5<=hour<14.6 and 'NY16' not in trig and len(lon)>=9:
+        l3=lon.iloc[-3:]; m=(l3.iloc[-1]['close']-l3.iloc[0]['open'])/atr
+        if abs(m)>=1.0: add('NY16','long' if m>0 else 'short',row['open']); trig['NY16']=True
+    # NY17: 3 dernieres bougies London >0.5ATR, continuation NY
+    if 14.5<=hour<14.6 and 'NY17' not in trig and len(lon)>=9:
+        l3=lon.iloc[-3:]; m=(l3.iloc[-1]['close']-l3.iloc[0]['open'])/atr
+        if abs(m)>=0.5: add('NY17','long' if m>0 else 'short',row['open']); trig['NY17']=True
+    # NY23: 3 soldiers/crows NY continuation
+    if 14.5<=hour<21.0 and 'NY23' not in trig and len(ny)>=3:
+        c1=ny.iloc[-3];c2=ny.iloc[-2];c3=ny.iloc[-1]
+        b1n=c1['close']-c1['open'];b2n=c2['close']-c2['open'];b3n=c3['close']-c3['open']
+        if b1n*b2n>0 and b2n*b3n>0 and min(abs(b1n),abs(b2n),abs(b3n))>0.1*atr and abs(b1n+b2n+b3n)>=0.5*atr:
+            add('NY23','long' if b3n>0 else 'short',c3['close']); trig['NY23']=True
+    # NY24: Outside bar NY
+    if 14.5<=hour<21.0 and 'NY24' not in trig and len(ny)>=4:
+        prev3_h_ny=ny.iloc[-4:-1]['high'].max();prev3_l_ny=ny.iloc[-4:-1]['low'].min()
+        body_ny=abs(row['close']-row['open'])
+        if row['high']>=prev3_h_ny and row['low']<=prev3_l_ny and body_ny>=0.5*atr:
+            add('NY24','long' if row['close']>row['open'] else 'short',row['close']); trig['NY24']=True
 
 print(f"\n  Done.", flush=True)
 

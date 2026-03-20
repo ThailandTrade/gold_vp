@@ -1,7 +1,7 @@
 """
-Paper Trading Live — AA+D+E+F+H+O
+Paper Trading Live — AA+D+E+F+H+NY6+NY16+NY17+O
 Config: TRAIL SL=1.0 ACT=0.5 TRAIL=0.75 MX=12 (sur CLOSE)
-PF 1.47, WR 45%, DD -18.3%, Calmar 185.3, +3393%
+PF 1.54, WR 44%, DD -26.2%, Calmar 481, +12624%
 Usage: python live_paper.py [--reset]
 """
 import warnings; warnings.filterwarnings('ignore')
@@ -21,7 +21,7 @@ CHECK_INTERVAL = 1
 LOG_FILE = "paper_trades.json"
 SL, ACT, TRAIL, MAX_BARS = 1.0, 0.5, 0.75, 12  # trailing sur close
 
-STRATS = ['AA','D','E','F','H','O']
+STRATS = ['AA','D','E','F','H','NY6','NY16','NY17','O']
 
 # ── LOGGING ───────────────────────────────────────────
 
@@ -267,6 +267,41 @@ def detect_signals(candles, state, atr, candle_time, today):
             r = candles.iloc[-1]; body = r['close'] - r['open']
             if abs(body) >= 1.0 * atr:
                 signals.append({'strat':'O','dir':'long' if body>0 else 'short'}); trig[k] = True
+
+    # NY6: GAP London close vs NY open > 0.5 ATR continuation
+    if 14.5 <= hour < 14.6:
+        k = str(today)+'_NY6'
+        if k not in trig:
+            lon = candles[(candles['ts_dt']>=pd.Timestamp(today.year,today.month,today.day,8,0,tz='UTC')) &
+                          (candles['ts_dt']<pd.Timestamp(today.year,today.month,today.day,14,30,tz='UTC'))]
+            if len(lon) >= 5:
+                gap = (candles.iloc[-1]['open'] - lon.iloc[-1]['close']) / atr
+                if abs(gap) >= 0.5:
+                    signals.append({'strat':'NY6','dir':'long' if gap>0 else 'short'}); trig[k] = True
+
+    # NY16: 3 dernieres bougies London > 1 ATR, continuation NY
+    if 14.5 <= hour < 14.6:
+        k = str(today)+'_NY16'
+        if k not in trig:
+            lon = candles[(candles['ts_dt']>=pd.Timestamp(today.year,today.month,today.day,8,0,tz='UTC')) &
+                          (candles['ts_dt']<pd.Timestamp(today.year,today.month,today.day,14,30,tz='UTC'))]
+            if len(lon) >= 9:
+                last3 = lon.iloc[-3:]
+                m = (last3.iloc[-1]['close'] - last3.iloc[0]['open']) / atr
+                if abs(m) >= 1.0:
+                    signals.append({'strat':'NY16','dir':'long' if m>0 else 'short'}); trig[k] = True
+
+    # NY17: 3 dernieres bougies London > 0.5 ATR, continuation NY
+    if 14.5 <= hour < 14.6:
+        k = str(today)+'_NY17'
+        if k not in trig:
+            lon = candles[(candles['ts_dt']>=pd.Timestamp(today.year,today.month,today.day,8,0,tz='UTC')) &
+                          (candles['ts_dt']<pd.Timestamp(today.year,today.month,today.day,14,30,tz='UTC'))]
+            if len(lon) >= 9:
+                last3 = lon.iloc[-3:]
+                m = (last3.iloc[-1]['close'] - last3.iloc[0]['open']) / atr
+                if abs(m) >= 0.5:
+                    signals.append({'strat':'NY17','dir':'long' if m>0 else 'short'}); trig[k] = True
 
     return signals
 
