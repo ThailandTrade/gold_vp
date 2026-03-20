@@ -71,10 +71,8 @@ with st.sidebar:
 pnl = capital - CAPITAL_INITIAL
 pnl_pct = pnl / CAPITAL_INITIAL * 100
 
-c1, c2, c3, c4, c5, c6 = st.columns(6)
-c1.metric("Capital", f"${capital:,.2f}", delta=f"${pnl:+,.2f} ({pnl_pct:+.1f}%)")
-
 n_trades = len(trades)
+df = None
 if n_trades > 0:
     df = pd.DataFrame(trades)
     df['pnl_dollar'] = df['pnl_dollar'].astype(float)
@@ -96,22 +94,31 @@ if n_trades > 0:
     caps = pd.concat([pd.Series([CAPITAL_INITIAL]), df['cum']]).reset_index(drop=True)
     max_dd = ((caps - caps.cummax()) / caps.cummax() * 100).min()
     dd_now = (capital - caps.cummax().iloc[-1]) / caps.cummax().iloc[-1] * 100
-
     today_df = df[df['date'] == now_utc.date()]
     today_pnl = today_df['pnl_dollar'].sum() if len(today_df) else 0
     today_n = len(today_df)
 
-    c2.metric("Trades", n_trades, delta=f"{today_n} aujourd'hui")
-    c3.metric("Win Rate", f"{wr:.0f}%", delta=f"{len(wins)}W / {len(losses)}L")
-    c4.metric("Profit Factor", f"{pf:.2f}")
-    c5.metric("Drawdown", f"{dd_now:.1f}%", delta=f"max {max_dd:.1f}%", delta_color="off")
-    c6.metric("Aujourd'hui", f"${today_pnl:+,.2f}", delta=f"{today_n} trades")
+    summary = pd.DataFrame([{
+        'Capital': f"${capital:,.2f}",
+        'PnL': f"${pnl:+,.2f} ({pnl_pct:+.1f}%)",
+        'Nb trades': f"{n_trades} ({today_n} auj.)",
+        'Win Rate': f"{wr:.0f}% ({len(wins)}W / {len(losses)}L)",
+        'Profit Factor': f"{pf:.2f}",
+        'Drawdown actuel': f"{dd_now:.1f}%",
+        'DD max': f"{max_dd:.1f}%",
+        'PnL aujourd hui': f"${today_pnl:+,.2f}",
+    }])
+    st.dataframe(summary, use_container_width=True, hide_index=True)
 else:
-    c2.metric("Trades", "0")
-    c3.metric("Win Rate", "—")
-    c4.metric("Profit Factor", "—")
-    c5.metric("Drawdown", "—")
-    c6.metric("Aujourd'hui", "—")
+    summary = pd.DataFrame([{
+        'Capital': f"${capital:,.2f}",
+        'PnL': f"${pnl:+,.2f}",
+        'Nb trades': "0",
+        'Win Rate': "—",
+        'Profit Factor': "—",
+        'Drawdown': "—",
+    }])
+    st.dataframe(summary, use_container_width=True, hide_index=True)
 
 st.divider()
 
