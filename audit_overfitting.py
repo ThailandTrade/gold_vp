@@ -37,14 +37,12 @@ def exit_trail_pessimist(cdf, pos, entry, d, sl, atr, mx, act, trail):
             if b['high'] > best: best = b['high']
             if not ta and (best-entry) >= act*atr: ta = True
             if ta: stop = max(stop, best - trail*atr)
-            if b['low'] <= stop: return j, stop
             if b['close'] < stop: return j, b['close']
         else:
             if b['high'] >= stop: return j, stop
             if b['low'] < best: best = b['low']
             if not ta and (entry-best) >= act*atr: ta = True
             if ta: stop = min(stop, best + trail*atr)
-            if b['high'] >= stop: return j, stop
             if b['close'] > stop: return j, b['close']
     if pos+mx < len(cdf): return mx, cdf.iloc[pos+mx]['close']
     return mx, entry

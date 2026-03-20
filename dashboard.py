@@ -1,5 +1,6 @@
 """
 Dashboard VP Swing — streamlit run dashboard.py
+Portfolio: AA+D+E+F+H+O
 """
 import streamlit as st
 import json, os, time
@@ -14,9 +15,8 @@ LOG_FILE = "paper_trades.json"
 CAPITAL_INITIAL = 1000.0
 
 STRATS = {
-    'AC':'Absorption Tokyo','D':'GAP Tokyo→London','E':'KZ London fade',
-    'F':'2BAR Tokyo rev','G':'NY 1st candle','H':'TOKEND 3b',
-    'I':'FADE NY 1h','O':'BigCandle Tokyo','P':'ORB NY 30min','V':'CandleRatio Tokyo'
+    'AA':'Pin Bar London','D':'GAP Tokyo→London','E':'KZ London fade',
+    'F':'2BAR Tokyo rev','H':'TOKEND 3b','O':'BigCandle Tokyo',
 }
 
 st.set_page_config(page_title="VP Swing Dashboard", layout="wide")
@@ -48,7 +48,7 @@ pnl = capital - CAPITAL_INITIAL
 
 # ── TITRE ──
 st.title("VP Swing — Paper Trading")
-st.caption(f"{sess} · {now.strftime('%H:%M')} UTC · XAUUSD {'${:,.2f}'.format(bid) if bid else '—'} · 10 strats · Trailing SL=1.5 ACT=0.3 TRAIL=0.3 T12")
+st.caption(f"{sess} · {now.strftime('%H:%M')} UTC · XAUUSD {'${:,.2f}'.format(bid) if bid else '—'} · AA+D+E+F+H+O · SL=1.0 ACT=0.5 TRAIL=0.75 T12")
 
 # ── METRIQUES ──
 n_trades = len(trades)
@@ -302,12 +302,12 @@ if n_trades > 0:
         st.dataframe(pd.DataFrame(stat_rows), use_container_width=True, hide_index=True)
 
 else:
-    st.info("En attente du premier trade. 10 strategies surveillent XAUUSD 5 minutes.")
+    st.info("En attente du premier trade. 6 strategies surveillent XAUUSD 5 minutes.")
 
 # ── SIDEBAR: STRATEGIES ──
 with st.sidebar:
     st.subheader("Strategies")
-    for session, strat_list in [("Tokyo", ['AC','F','O','V']), ("London", ['D','E','H']), ("New York", ['G','I','P'])]:
+    for session, strat_list in [("Tokyo", ['F','O']), ("London", ['AA','D','E','H'])]:
         st.caption(f"**{session}**")
         for sn in strat_list:
             if n_trades > 0 and sn in df['strat'].values:
@@ -319,7 +319,7 @@ with st.sidebar:
                 color = "🟢" if pnl_s >= 0 else "🔴"
                 st.markdown(f"{color} **{sn}** — {STRATS[sn]}  \n{n} trades · WR {w/n*100:.0f}% · PF {gps/gls:.2f} · ${pnl_s:+,.2f}")
             else:
-                st.markdown(f"⚪ **{sn}** — {STRATS[sn]}  \n0 trades")
+                st.markdown(f"⚪ **{sn}** — {STRATS.get(sn,'')}  \n0 trades")
     st.divider()
     cache = {}
     for k, v in state.get('daily_cache', {}).items(): cache = v; break

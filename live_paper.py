@@ -1,9 +1,7 @@
 """
-Paper Trading Live — 10 strats, trailing pessimiste
-AC+D+E+F+G+H+I+O+P+V
-Config unique TRp SL=1.5 ACT=0.3 TRAIL=0.3 MaxBars=12
-No look-ahead, no overfitting, OOS valide.
-PF 1.82, WR 73%, DD -8.9%, 13/13 mois+
+Paper Trading Live — AA+D+E+F+H+O
+Config: TRAIL SL=1.0 ACT=0.5 TRAIL=0.75 MX=12 (sur CLOSE)
+PF 1.47, WR 45%, DD -18.3%, Calmar 185.3, +3393%
 Usage: python live_paper.py [--reset]
 """
 import warnings; warnings.filterwarnings('ignore')
@@ -21,9 +19,9 @@ CAPITAL_INITIAL = 1000.0
 RISK_PCT = 0.01
 CHECK_INTERVAL = 1
 LOG_FILE = "paper_trades.json"
-SL, ACT, TRAIL, MAX_BARS = 1.5, 0.3, 0.3, 12  # trailing pessimiste, config unique
+SL, ACT, TRAIL, MAX_BARS = 1.0, 0.5, 0.75, 12  # trailing sur close
 
-STRATS = ['AC','D','E','F','G','H','I','O','P','V']
+STRATS = ['AA','D','E','F','H','O']
 
 # ── LOGGING ───────────────────────────────────────────
 
@@ -79,14 +77,14 @@ def load_state():
     if os.path.exists(LOG_FILE):
         with open(LOG_FILE, 'r') as f: return json.load(f)
     return {'capital': CAPITAL_INITIAL, 'trades': [], 'open_positions': [],
-            'ib_levels': {}, 'daily_cache': {}, '_triggered': {}, 'last_candle_ts': 0}
+            'daily_cache': {}, '_triggered': {}, 'last_candle_ts': 0}
 
 def save_state(state):
     with open(LOG_FILE, 'w') as f: json.dump(state, f, indent=2, default=str)
 
 def reset_state():
     state = {'capital': CAPITAL_INITIAL, 'trades': [], 'open_positions': [],
-             'ib_levels': {}, 'daily_cache': {}, '_triggered': {}, 'last_candle_ts': 0}
+             'daily_cache': {}, '_triggered': {}, 'last_candle_ts': 0}
     save_state(state)
     log.info("RESET — ${:,.2f}".format(CAPITAL_INITIAL))
     return state
@@ -156,9 +154,9 @@ def manage_positions(candles_df, state, conn):
             pos['exit'] = pos['stop']; pos['exit_reason'] = 'stop'; closed.append(pos); continue
         if d == 'short' and last['high'] >= pos['stop']:
             pos['exit'] = pos['stop']; pos['exit_reason'] = 'stop'; closed.append(pos); continue
-        # 2. Best update
-        if d == 'long' and last['high'] > pos.get('best', pos['entry']): pos['best'] = last['high']
-        if d == 'short' and last['low'] < pos.get('best', pos['entry']): pos['best'] = last['low']
+        # 2. Best update (sur le CLOSE, pas le high/low — coherence temporelle)
+        if d == 'long' and last['close'] > pos.get('best', pos['entry']): pos['best'] = last['close']
+        if d == 'short' and last['close'] < pos.get('best', pos['entry']): pos['best'] = last['close']
         # 3. Trailing activation
         if not pos.get('trail_active', False):
             fav = (pos['best'] - pos['entry']) if d == 'long' else (pos['entry'] - pos['best'])
@@ -169,12 +167,7 @@ def manage_positions(candles_df, state, conn):
                 ns = pos['best'] - TRAIL * ta; pos['stop'] = max(pos['stop'], ns)
             else:
                 ns = pos['best'] + TRAIL * ta; pos['stop'] = min(pos['stop'], ns)
-        # 4b. PESSIMISTE: re-check low/high vs nouveau stop
-        if d == 'long' and last['low'] <= pos['stop']:
-            pos['exit'] = pos['stop']; pos['exit_reason'] = 'stop'; closed.append(pos); continue
-        if d == 'short' and last['high'] >= pos['stop']:
-            pos['exit'] = pos['stop']; pos['exit_reason'] = 'stop'; closed.append(pos); continue
-        # 4c. Re-check close vs nouveau stop
+        # 4b. Re-check close vs nouveau stop (LOW/HIGH happened pendant la bougie avec l'ANCIEN stop)
         if d == 'long' and last['close'] < pos['stop']:
             pos['exit'] = last['close']; pos['exit_reason'] = 'stop_close'; closed.append(pos); continue
         if d == 'short' and last['close'] > pos['stop']:
@@ -209,28 +202,18 @@ def manage_positions(candles_df, state, conn):
 def detect_signals(candles, state, atr, candle_time, today):
     signals = []; hour = candle_time.hour + candle_time.minute / 60.0
     trig = state.setdefault('_triggered', {})
-    ibs = state.setdefault('ib_levels', {}).setdefault(str(today), {})
 
-    # A: IB Tokyo 0h-1h break UP (backtest exige >=18 bougies dans tout Tokyo)
-    if 'A_done' not in ibs and hour >= 1.0:
-        s = pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')
-        tok_all = candles[(candles['ts_dt']>=s) & (candles['ts_dt']<pd.Timestamp(today.year,today.month,today.day,6,0,tz='UTC'))]
-        ib = candles[(candles['ts_dt']>=s) & (candles['ts_dt']<s+pd.Timedelta(hours=1))]
-        if len(ib) >= 12 and len(tok_all) >= 18: ibs['A_high'] = float(ib['high'].max()); ibs['A_done'] = True
-    if 'A_high' in ibs and 'A_trig' not in ibs and 1.0 <= hour < 6.0:
-        if candles.iloc[-1]['close'] > ibs['A_high']:
-            signals.append({'strat':'A','dir':'long'}); ibs['A_trig'] = True
-
-    # C: FADE Tokyo > 1 ATR → inverse London open
-    if 8.0 <= hour < 8.1:
-        k = str(today)+'_C'
+    # AA: Close near extreme London (pin bar, close dans top/bottom 10% du range)
+    if 8.0 <= hour < 14.5:
+        k = str(today)+'_AA'
         if k not in trig:
-            tok = candles[(candles['ts_dt']>=pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')) &
-                          (candles['ts_dt']<pd.Timestamp(today.year,today.month,today.day,6,0,tz='UTC'))]
-            if len(tok) >= 10:
-                m = (tok.iloc[-1]['close'] - tok.iloc[0]['open']) / atr
-                if abs(m) >= 1.0:
-                    signals.append({'strat':'C','dir':'short' if m>0 else 'long'}); trig[k] = True
+            r = candles.iloc[-1]; rng = r['high'] - r['low']
+            if rng >= 0.3*atr and abs(r['close']-r['open']) >= 0.2*atr:
+                pos_in_range = (r['close'] - r['low']) / rng
+                if pos_in_range >= 0.9:
+                    signals.append({'strat':'AA','dir':'long'}); trig[k] = True
+                elif pos_in_range <= 0.1:
+                    signals.append({'strat':'AA','dir':'short'}); trig[k] = True
 
     # D: GAP Tokyo-London > 0.5 ATR continuation
     if 8.0 <= hour < 8.1:
@@ -253,25 +236,17 @@ def detect_signals(candles, state, atr, candle_time, today):
                 if abs(m) >= 0.5:
                     signals.append({'strat':'E','dir':'short' if m>0 else 'long'}); trig[k] = True
 
-    # F: 2BAR Tokyo two-bar reversal (backtest exige >=8 bougies Tokyo)
+    # F: 2BAR Tokyo two-bar reversal
     if 0.0 <= hour < 6.0:
         k = str(today)+'_F'
         if k not in trig:
             tok_f = candles[(candles['ts_dt']>=pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')) &
                             (candles['ts_dt']<pd.Timestamp(today.year,today.month,today.day,6,0,tz='UTC'))]
-            if len(tok_f) >= 2:  # F: 2 bougies min
+            if len(tok_f) >= 2:
                 b1 = tok_f.iloc[-2]; b2 = tok_f.iloc[-1]
                 b1b = b1['close']-b1['open']; b2b = b2['close']-b2['open']
                 if abs(b1b)>=0.5*atr and abs(b2b)>=0.5*atr and b1b*b2b<0 and abs(b2b)>abs(b1b):
                     signals.append({'strat':'F','dir':'long' if b2b>0 else 'short'}); trig[k] = True
-
-    # G: NY 1st candle > 0.3 ATR
-    if 14.5 <= hour < 14.6:
-        k = str(today)+'_G'
-        if k not in trig:
-            first = candles.iloc[-1]; body = first['close'] - first['open']
-            if abs(body) >= 0.3 * atr:
-                signals.append({'strat':'G','dir':'long' if body>0 else 'short'}); trig[k] = True
 
     # H: TOKEND 3 dernieres bougies Tokyo > 1 ATR continuation
     if 8.0 <= hour < 8.1:
@@ -285,165 +260,13 @@ def detect_signals(candles, state, atr, candle_time, today):
                 if abs(m) >= 1.0:
                     signals.append({'strat':'H','dir':'long' if m>0 else 'short'}); trig[k] = True
 
-    # I: FADENY 1ere heure NY > 1 ATR → inverse
-    if 15.5 <= hour < 15.6:
-        k = str(today)+'_I'
-        if k not in trig:
-            ny1 = candles[(candles['ts_dt']>=pd.Timestamp(today.year,today.month,today.day,14,30,tz='UTC')) &
-                          (candles['ts_dt']<pd.Timestamp(today.year,today.month,today.day,15,30,tz='UTC'))]
-            if len(ny1) >= 10:
-                m = (ny1.iloc[-1]['close'] - ny1.iloc[0]['open']) / atr
-                if abs(m) >= 1.0:
-                    signals.append({'strat':'I','dir':'short' if m>0 else 'long'}); trig[k] = True
-
-    # J: LON 1st candle > 0.3 ATR
-    if 8.0 <= hour < 8.1:
-        k = str(today)+'_J'
-        if k not in trig:
-            first = candles.iloc[-1]; body = first['close'] - first['open']
-            if abs(body) >= 0.3 * atr:
-                signals.append({'strat':'J','dir':'long' if body>0 else 'short'}); trig[k] = True
-
-    # O: Big candle >1ATR Tokyo continuation (min 6 bougies Tokyo)
+    # O: Big candle Tokyo > 1 ATR continuation
     if 0.0 <= hour < 6.0:
         k = str(today)+'_O'
         if k not in trig:
-            tok = candles[(candles['ts_dt']>=pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')) &
-                          (candles['ts_dt']<pd.Timestamp(today.year,today.month,today.day,6,0,tz='UTC'))]
-            if len(tok) >= 1:  # O: 1 bougie min
-                r = candles.iloc[-1]; body = r['close'] - r['open']
-                if abs(body) >= 1.0 * atr:
-                    signals.append({'strat':'O','dir':'long' if body>0 else 'short'}); trig[k] = True
-
-    # P: ORB NY 30min (break apres 15h00)
-    if 15.0 <= hour < 21.5:
-        k = str(today)+'_P'
-        if k not in trig:
-            # Calculer ORB = range des 6 premieres bougies NY (14:30-15:00)
-            if 'P_high' not in ibs:
-                orb = candles[(candles['ts_dt']>=pd.Timestamp(today.year,today.month,today.day,14,30,tz='UTC')) &
-                              (candles['ts_dt']<pd.Timestamp(today.year,today.month,today.day,15,0,tz='UTC'))]
-                if len(orb) >= 6:
-                    ibs['P_high'] = float(orb['high'].max()); ibs['P_low'] = float(orb['low'].min())
-            if 'P_high' in ibs:
-                r = candles.iloc[-1]
-                if r['close'] > ibs['P_high']:
-                    signals.append({'strat':'P','dir':'long'}); trig[k] = True
-                elif r['close'] < ibs['P_low']:
-                    signals.append({'strat':'P','dir':'short'}); trig[k] = True
-
-    # Q: Engulfing London (les 2 bougies doivent etre dans London)
-    if 8.0 <= hour < 14.5 and len(candles) >= 3:
-        k = str(today)+'_Q'
-        if k not in trig:
-            # Filtrer bougies London du jour
-            lon = candles[(candles['ts_dt']>=pd.Timestamp(today.year,today.month,today.day,8,0,tz='UTC')) &
-                          (candles['ts_dt']<pd.Timestamp(today.year,today.month,today.day,14,30,tz='UTC'))]
-            if len(lon) >= 2:  # Q: 2 bougies min
-                prev_b = lon.iloc[-2]; cur_b = lon.iloc[-1]
-                # Bullish engulfing
-                if (prev_b['close'] < prev_b['open'] and cur_b['close'] > cur_b['open'] and
-                    cur_b['open'] <= prev_b['close'] and cur_b['close'] >= prev_b['open'] and
-                    abs(cur_b['close']-cur_b['open']) >= 0.3*atr):
-                    signals.append({'strat':'Q','dir':'long'}); trig[k] = True
-                # Bearish engulfing
-                elif (prev_b['close'] > prev_b['open'] and cur_b['close'] < cur_b['open'] and
-                      cur_b['open'] >= prev_b['close'] and cur_b['close'] <= prev_b['open'] and
-                      abs(cur_b['close']-cur_b['open']) >= 0.3*atr):
-                    signals.append({'strat':'Q','dir':'short'}); trig[k] = True
-
-    # R: 3 soldiers/crows Tokyo continuation (3 bougies dans Tokyo)
-    if 0.0 <= hour < 6.0:
-        k = str(today)+'_R'
-        if k not in trig:
-            tok = candles[(candles['ts_dt']>=pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')) &
-                          (candles['ts_dt']<pd.Timestamp(today.year,today.month,today.day,6,0,tz='UTC'))]
-            if len(tok) >= 3:  # R: 3 bougies min
-                c1 = tok.iloc[-3]; c2 = tok.iloc[-2]; c3 = tok.iloc[-1]
-                b1 = c1['close']-c1['open']; b2 = c2['close']-c2['open']; b3 = c3['close']-c3['open']
-                if b1*b2 > 0 and b2*b3 > 0 and min(abs(b1),abs(b2),abs(b3)) > 0.1*atr:
-                    total = abs(b1+b2+b3)
-                    if total >= 0.5*atr:
-                        signals.append({'strat':'R','dir':'long' if b3>0 else 'short'}); trig[k] = True
-
-    # S: 3 soldiers/crows London reversal (3 bougies dans London)
-    if 8.0 <= hour < 14.5:
-        k = str(today)+'_S'
-        if k not in trig:
-            lon = candles[(candles['ts_dt']>=pd.Timestamp(today.year,today.month,today.day,8,0,tz='UTC')) &
-                          (candles['ts_dt']<pd.Timestamp(today.year,today.month,today.day,14,30,tz='UTC'))]
-            if len(lon) >= 3:  # S: 3 bougies min
-                c1 = lon.iloc[-3]; c2 = lon.iloc[-2]; c3 = lon.iloc[-1]
-                b1 = c1['close']-c1['open']; b2 = c2['close']-c2['open']; b3 = c3['close']-c3['open']
-                if b1*b2 > 0 and b2*b3 > 0 and min(abs(b1),abs(b2),abs(b3)) > 0.1*atr:
-                    total = abs(b1+b2+b3)
-                    if total >= 0.5*atr:
-                        # Reversal = direction opposee
-                        signals.append({'strat':'S','dir':'short' if b3>0 else 'long'}); trig[k] = True
-
-    # V: Candle ratio 5/6 Tokyo → continuation
-    if 0.0 <= hour < 6.0:
-        k = str(today)+'_V'
-        if k not in trig:
-            tok = candles[(candles['ts_dt']>=pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')) &
-                          (candles['ts_dt']<pd.Timestamp(today.year,today.month,today.day,6,0,tz='UTC'))]
-            if len(tok) >= 7:  # V: 7 bougies min
-                last6 = tok.iloc[-6:]
-                n_bull = (last6['close'] > last6['open']).sum()
-                if n_bull >= 5:
-                    signals.append({'strat':'V','dir':'long'}); trig[k] = True
-                elif n_bull <= 1:
-                    signals.append({'strat':'V','dir':'short'}); trig[k] = True
-
-    # Z: 3 jours consecutifs meme sens → reversal London open
-    if 8.0 <= hour < 8.1:
-        k = str(today)+'_Z'
-        if k not in trig:
-            # Trouver les 3 jours precedents
-            prev_days = []
-            for c_date in sorted(set(candles['date'].unique()), reverse=True):
-                if c_date < today:
-                    prev_days.append(c_date)
-                    if len(prev_days) == 3: break
-            if len(prev_days) == 3:
-                dirs = []
-                for pd_z in prev_days:
-                    dc = candles[candles['date'] == pd_z]
-                    if len(dc) >= 10:
-                        dirs.append(1 if dc.iloc[-1]['close'] > dc.iloc[0]['open'] else -1)
-                if len(dirs) == 3 and len(set(dirs)) == 1:
-                    signals.append({'strat':'Z','dir':'short' if dirs[0] > 0 else 'long'}); trig[k] = True
-
-    # AA: Close near extreme London (close dans top/bottom 10% du range, body>0.2ATR)
-    if 8.0 <= hour < 14.5:
-        k = str(today)+'_AA'
-        if k not in trig:
-            lon = candles[(candles['ts_dt']>=pd.Timestamp(today.year,today.month,today.day,8,0,tz='UTC')) &
-                          (candles['ts_dt']<pd.Timestamp(today.year,today.month,today.day,14,30,tz='UTC'))]
-            if len(lon) >= 1:  # AA: 1 bougie min
-                r = lon.iloc[-1]; rng = r['high'] - r['low']
-                if rng >= 0.3*atr and abs(r['close']-r['open']) >= 0.2*atr:
-                    pos_in_range = (r['close'] - r['low']) / rng
-                    if pos_in_range >= 0.9:
-                        signals.append({'strat':'AA','dir':'long'}); trig[k] = True
-                    elif pos_in_range <= 0.1:
-                        signals.append({'strat':'AA','dir':'short'}); trig[k] = True
-
-    # AC: Absorption Tokyo (bougie couvre le range des 3 precedentes, body>0.5ATR)
-    if 0.0 <= hour < 6.0:
-        k = str(today)+'_AC'
-        if k not in trig:
-            tok = candles[(candles['ts_dt']>=pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')) &
-                          (candles['ts_dt']<pd.Timestamp(today.year,today.month,today.day,6,0,tz='UTC'))]
-            if len(tok) >= 4:  # AC: 4 bougies min
-                r = tok.iloc[-1]
-                if len(tok) >= 4:
-                    prev3_h = tok.iloc[-4:-1]['high'].max()
-                    prev3_l = tok.iloc[-4:-1]['low'].min()
-                    body = abs(r['close'] - r['open'])
-                    if r['high'] >= prev3_h and r['low'] <= prev3_l and body >= 0.5*atr:
-                        d = 'long' if r['close'] > r['open'] else 'short'
-                        signals.append({'strat':'AC','dir':d}); trig[k] = True
+            r = candles.iloc[-1]; body = r['close'] - r['open']
+            if abs(body) >= 1.0 * atr:
+                signals.append({'strat':'O','dir':'long' if body>0 else 'short'}); trig[k] = True
 
     return signals
 
@@ -551,10 +374,6 @@ def main():
                 last_candle_ts = current_ts; state['last_candle_ts'] = current_ts
             else:
                 time.sleep(CHECK_INTERVAL); continue
-
-            # Reset ib_levels au changement de jour
-            if str(today) not in state.get('ib_levels', {}):
-                state['ib_levels'] = {str(today): {}}
 
             # Detect signals
             open_dirs = set(p['strat_dir'] for p in state['open_positions'])

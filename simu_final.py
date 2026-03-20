@@ -1,7 +1,7 @@
 """
 Simulation finale — config unique TRp s1.5 a0.3 t0.3 T12
-Trailing pessimiste, no look-ahead, no overfitting.
-Strats retenues: celles avec OOS PF > 1.2
+Trailing corrige (pas de re-check low/high vs nouveau stop).
+Portfolio: AA+D+E+F+H (meilleur Calmar v10)
 """
 import warnings; warnings.filterwarnings('ignore')
 import sys; sys.stdout.reconfigure(encoding='utf-8')
@@ -27,7 +27,7 @@ def get_sp(day):
     return 2 * monthly_spread.get(str(day.year)+"-"+str(day.month).zfill(2), avg_sp)
 
 # Config unique: TRp s1.5 a0.3 t0.3 T12
-SL, ACT, TRAIL, MX = 1.5, 0.3, 0.3, 12
+SL, ACT, TRAIL, MX = 1.0, 0.5, 0.75, 12
 
 def sim_exit(cdf, pos, entry, d, atr):
     best = entry; stop = entry + SL*atr if d == 'short' else entry - SL*atr; ta = False
@@ -36,25 +36,21 @@ def sim_exit(cdf, pos, entry, d, atr):
         b = cdf.iloc[pos+j]
         if d == 'long':
             if b['low'] <= stop: return j, stop
-            if b['high'] > best: best = b['high']
+            if b['close'] > best: best = b['close']
             if not ta and (best-entry) >= ACT*atr: ta = True
             if ta: stop = max(stop, best - TRAIL*atr)
-            if b['low'] <= stop: return j, stop
             if b['close'] < stop: return j, b['close']
         else:
             if b['high'] >= stop: return j, stop
-            if b['low'] < best: best = b['low']
+            if b['close'] < best: best = b['close']
             if not ta and (entry-best) >= ACT*atr: ta = True
             if ta: stop = min(stop, best + TRAIL*atr)
-            if b['high'] >= stop: return j, stop
             if b['close'] > stop: return j, b['close']
     if pos+MX < len(cdf): return MX, cdf.iloc[pos+MX]['close']
     return MX, entry
 
-# Strats OOS OK: D, E, F, G, H, I, O, AC, P, V (PF > 1.2 en OOS)
-# Strats droppees: AA (weak), C (weak), Q (fail), R (fail), S (weak)
-STRATS_FULL = ['AC','D','E','F','G','H','I','O','P','V']
-STRATS_SAFE = ['AC','D','E','F','H','I','O']  # seulement PF > 1.3 en OOS
+# Portfolio v10: AA+D+E+F+H+O (SL=1.0 ACT=0.5 TRAIL=0.75 MX=12)
+STRATS = ['AA','D','E','F','H','O']
 
 print("Collecte bougie par bougie...", flush=True)
 S = {}
@@ -70,59 +66,45 @@ for ci in range(len(candles)):
     ds = pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')
     te = pd.Timestamp(today.year,today.month,today.day,6,0,tz='UTC')
     ls = pd.Timestamp(today.year,today.month,today.day,8,0,tz='UTC')
-    le = pd.Timestamp(today.year,today.month,today.day,14,30,tz='UTC')
-    ns = pd.Timestamp(today.year,today.month,today.day,14,30,tz='UTC')
     tv = candles[(candles['ts_dt']>=ds)&(candles['ts_dt']<=ct)]
-    tok = tv[tv['ts_dt']<te]; lon = tv[(tv['ts_dt']>=ls)&(tv['ts_dt']<le)]
+    tok = tv[tv['ts_dt']<te]
     def add(sn, d, e):
         b, ex = sim_exit(candles, ci, e, d, atr)
         pnl = (ex-e) if d=='long' else (e-ex)
         S.setdefault(sn,[]).append({'date':today,'dir':d,'sl_atr':SL,'pnl_oz':pnl-get_sp(today),'atr':atr,'ei':ci,'xi':ci+b})
 
+    # AA: Close near extreme London (pin bar)
+    if 8.0<=hour<14.5 and 'AA' not in trig:
+        rng=row['high']-row['low']
+        if rng>=0.3*atr and abs(row['close']-row['open'])>=0.2*atr:
+            pir=(row['close']-row['low'])/rng
+            if pir>=0.9: add('AA','long',row['close']); trig['AA']=True
+            elif pir<=0.1: add('AA','short',row['close']); trig['AA']=True
+    # D: GAP Tokyo-London > 0.5 ATR continuation
     if 8.0<=hour<8.1 and 'D' not in trig:
         tc=candles[(candles['ts_dt']<te)&(candles['ts_dt']<=ct)]
         if len(tc)>=5:
             gap=(row['open']-tc.iloc[-1]['close'])/atr
             if abs(gap)>=0.5: add('D','long' if gap>0 else 'short',row['open']); trig['D']=True
+    # E: KZ London Kill Zone 8h-10h fade
     if 10.0<=hour<10.1 and 'E' not in trig:
         kz=tv[(tv['ts_dt']>=ls)&(tv['ts_dt']<pd.Timestamp(today.year,today.month,today.day,10,0,tz='UTC'))]
         if len(kz)>=20:
             m=(kz.iloc[-1]['close']-kz.iloc[0]['open'])/atr
             if abs(m)>=0.5: add('E','short' if m>0 else 'long',row['open']); trig['E']=True
+    # F: 2BAR Tokyo two-bar reversal
     if 0.0<=hour<6.0 and 'F' not in trig and len(tok)>=2:
         b1=tok.iloc[-2];b2=tok.iloc[-1];b1b=b1['close']-b1['open'];b2b=b2['close']-b2['open']
         if abs(b1b)>=0.5*atr and abs(b2b)>=0.5*atr and b1b*b2b<0 and abs(b2b)>abs(b1b):
             add('F','long' if b2b>0 else 'short',b2['close']); trig['F']=True
-    if 14.5<=hour<14.6 and 'G' not in trig:
-        body=row['close']-row['open']
-        if abs(body)>=0.3*atr: add('G','long' if body>0 else 'short',row['close']); trig['G']=True
+    # H: TOKEND 3 dernieres bougies Tokyo >1ATR, continuation London
     if 8.0<=hour<8.1 and 'H' not in trig and len(tok)>=9:
         l3=tok.iloc[-3:]; m=(l3.iloc[-1]['close']-l3.iloc[0]['open'])/atr
         if abs(m)>=1.0: add('H','long' if m>0 else 'short',row['open']); trig['H']=True
-    if 15.5<=hour<15.6 and 'I' not in trig:
-        ny1=tv[(tv['ts_dt']>=ns)&(tv['ts_dt']<pd.Timestamp(today.year,today.month,today.day,15,30,tz='UTC'))]
-        if len(ny1)>=10:
-            m=(ny1.iloc[-1]['close']-ny1.iloc[0]['open'])/atr
-            if abs(m)>=1.0: add('I','short' if m>0 else 'long',row['open']); trig['I']=True
+    # O: Big candle Tokyo >1ATR, continuation
     if 0.0<=hour<6.0 and 'O' not in trig:
         body=row['close']-row['open']
         if abs(body)>=1.0*atr: add('O','long' if body>0 else 'short',row['close']); trig['O']=True
-    if 15.0<=hour<21.5 and 'P' not in trig:
-        if 'P_h' not in trig:
-            orb=tv[(tv['ts_dt']>=ns)&(tv['ts_dt']<pd.Timestamp(today.year,today.month,today.day,15,0,tz='UTC'))]
-            if len(orb)>=6: trig['P_h']=float(orb['high'].max()); trig['P_l']=float(orb['low'].min())
-        if 'P_h' in trig:
-            if row['close']>trig['P_h']: add('P','long',row['close']); trig['P']=True
-            elif row['close']<trig['P_l']: add('P','short',row['close']); trig['P']=True
-    if 0.0<=hour<6.0 and 'V' not in trig and len(tok)>=7:
-        last6=tok.iloc[-6:]; n_bull=(last6['close']>last6['open']).sum()
-        if n_bull>=5: add('V','long',row['close']); trig['V']=True
-        elif n_bull<=1: add('V','short',row['close']); trig['V']=True
-    if 0.0<=hour<6.0 and 'AC' not in trig and len(tok)>=4:
-        prev3_h=tok.iloc[-4:-1]['high'].max();prev3_l=tok.iloc[-4:-1]['low'].min()
-        body=abs(row['close']-row['open'])
-        if row['high']>=prev3_h and row['low']<=prev3_l and body>=0.5*atr:
-            add('AC','long' if row['close']>row['open'] else 'short',row['close']); trig['AC']=True
 
 print("Done.", flush=True)
 n_td = len(set(candles['date'].unique()))
@@ -194,5 +176,4 @@ def run_monthly(strat_keys, label, capital=1000.0, risk=0.01):
     print(f"  Mois positifs: {pm}/{len(months)}")
     print(f"{'='*110}")
 
-run_monthly(STRATS_FULL, "FULL (10 strats OOS OK) — $1000, Risk 1%")
-run_monthly(STRATS_SAFE, "SAFE (7 strats OOS PF>1.3) — $1000, Risk 1%")
+run_monthly(STRATS, "AA+D+E+F+H+O — $1000, Risk 1%")
