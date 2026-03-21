@@ -190,8 +190,30 @@ def manage_positions(candles_df, state, conn):
 
 # ── SIGNAL DETECTION ──────────────────────────────────
 
-def detect_signals(candles, state, atr, candle_time, today):
-    """Utilise detect_all de strats.py pour rester synchronise avec le backtest."""
+OPEN_STRATS = ['TOK_FADE','TOK_PREVEXT','LON_GAP','LON_BIGGAP','LON_KZ','LON_TOKEND','LON_PREV','NY_GAP','NY_LONEND','NY_LONMOM','NY_DAYMOM']
+CLOSE_STRATS = ['TOK_2BAR','TOK_BIG','LON_PIN']
+
+def detect_open_strats(candles, state, atr, now_utc, today):
+    """Strats 'open': signal base sur donnees anterieures. Detectees des l'heure cible."""
+    signals = []
+    trig = state.setdefault('_triggered', {})
+    hour = now_utc.hour + now_utc.minute / 60.0
+    ds = pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')
+    te = pd.Timestamp(today.year,today.month,today.day,6,0,tz='UTC')
+    ls = pd.Timestamp(today.year,today.month,today.day,8,0,tz='UTC')
+    ns = pd.Timestamp(today.year,today.month,today.day,14,30,tz='UTC')
+    tv = candles[(candles['ts_dt']>=ds)&(candles['ts_dt']<=candles.iloc[-1]['ts_dt'])]
+    tok = tv[tv['ts_dt']<te]; lon = tv[(tv['ts_dt']>=ls)&(tv['ts_dt']<ns)]
+    r = candles.iloc[-1]
+    prev_day_data = state.get('_prev_day_data')
+
+    def add_sig(sn, d, e):
+        if sn in OPEN_STRATS: signals.append({'strat': sn, 'dir': d})
+    detect_all(candles, len(candles)-1, r, candles.iloc[-1]['ts_dt'], today, hour, atr, trig, tv, tok, lon, prev_day_data, add_sig)
+    return signals
+
+def detect_close_strats(candles, state, atr, candle_time, today):
+    """Strats 'close': signal base sur bougie fermee (OHLC complet)."""
     signals = []
     trig = state.setdefault('_triggered', {})
     hour = candle_time.hour + candle_time.minute / 60.0
@@ -203,14 +225,11 @@ def detect_signals(candles, state, atr, candle_time, today):
     tok = tv[tv['ts_dt']<te]; lon = tv[(tv['ts_dt']>=ls)&(tv['ts_dt']<ns)]
     r = candles.iloc[-1]
     prev_day_data = state.get('_prev_day_data')
-    ct = candles.iloc[-1]['ts_dt']
 
-    # Collect via detect_all (meme logique que backtest)
-    collected = []
-    def add_signal(sn, d, e):
-        collected.append({'strat': sn, 'dir': d})
-    detect_all(candles, len(candles)-1, r, ct, today, hour, atr, trig, tv, tok, lon, prev_day_data, add_signal)
-    return collected
+    def add_sig(sn, d, e):
+        if sn in CLOSE_STRATS: signals.append({'strat': sn, 'dir': d})
+    detect_all(candles, len(candles)-1, r, candles.iloc[-1]['ts_dt'], today, hour, atr, trig, tv, tok, lon, prev_day_data, add_sig)
+    return signals
 
 # ── OPEN POSITION ─────────────────────────────────────
 
@@ -316,32 +335,41 @@ def main():
                 if tick:
                     check_stops_realtime(state, tick, conn)
 
+            # Strats "open": detectees a chaque poll via l'heure reelle
+            now_utc = datetime.now(timezone.utc)
+            open_sigs = detect_open_strats(candles, state, atr, now_utc, today)
+            if open_sigs:
+                open_dirs = set(p['strat_dir'] for p in state['open_positions'])
+                for sig in open_sigs:
+                    if sig['dir'] == 'long' and 'short' in open_dirs:
+                        log.info("SKIP {} — conflit short".format(sig['strat'])); continue
+                    if sig['dir'] == 'short' and 'long' in open_dirs:
+                        log.info("SKIP {} — conflit long".format(sig['strat'])); continue
+                    open_position(state, sig, atr, candle_time, conn)
+                    open_dirs.add(sig['dir'])
+
             is_new = current_ts != last_candle_ts
-            if is_new:
-                log.info("CANDLE {} | close={:.2f} | ATR={:.2f} | pos={}".format(
-                    candle_time.strftime("%Y-%m-%d %H:%M"), candles.iloc[-1]['close'], atr,
-                    len(state['open_positions'])))
-                if state['open_positions']:
-                    manage_positions(candles, state, conn)
-                last_candle_ts = current_ts; state['last_candle_ts'] = current_ts
-            else:
+            if not is_new:
                 time.sleep(CHECK_INTERVAL); continue
 
-            # Detect signals
-            open_dirs = set(p['strat_dir'] for p in state['open_positions'])
-            signals = detect_signals(candles, state, atr, candle_time, today)
+            log.info("CANDLE {} | close={:.2f} | ATR={:.2f} | pos={}".format(
+                candle_time.strftime("%Y-%m-%d %H:%M"), candles.iloc[-1]['close'], atr,
+                len(state['open_positions'])))
+            if state['open_positions']:
+                manage_positions(candles, state, conn)
+            last_candle_ts = current_ts; state['last_candle_ts'] = current_ts
 
-            for sig in signals:
-                if sig['strat'] not in STRATS:
-                    continue
-                if sig['dir'] == 'long' and 'short' in open_dirs:
-                    log.info("SKIP {} — conflit short".format(sig['strat'])); continue
-                if sig['dir'] == 'short' and 'long' in open_dirs:
-                    log.info("SKIP {} — conflit long".format(sig['strat'])); continue
-                open_position(state, sig, atr, candle_time, conn)
-                open_dirs.add(sig['dir'])
-
-            if signals: log.info("  -> {} signal(s)".format(len(signals)))
+            # Strats "close": detectees sur bougie fermee
+            close_sigs = detect_close_strats(candles, state, atr, candle_time, today)
+            if close_sigs:
+                open_dirs = set(p['strat_dir'] for p in state['open_positions'])
+                for sig in close_sigs:
+                    if sig['dir'] == 'long' and 'short' in open_dirs:
+                        log.info("SKIP {} — conflit short".format(sig['strat'])); continue
+                    if sig['dir'] == 'short' and 'long' in open_dirs:
+                        log.info("SKIP {} — conflit long".format(sig['strat'])); continue
+                    open_position(state, sig, atr, candle_time, conn)
+                    open_dirs.add(sig['dir'])
             print_dashboard(state, cache, candle_time)
             save_state(state)
 
