@@ -284,8 +284,8 @@ def detect_and_execute_open_strats(candles, state, atr, candle_time, today, tick
     if 8.0<=hour<8.1:
         k = str(today)+'_LON_GAP'
         if k not in trig and len(tok)>=5:
-            current_price = tick.ask  # prix actuel
-            gap = (current_price - tok.iloc[-1]['close']) / atr
+            mid_price = (tick.ask + tick.bid) / 2  # mid, pas ask seul
+            gap = (mid_price - tok.iloc[-1]['close']) / atr
             if abs(gap) >= 0.5:
                 signals.append({'strat':'LON_GAP','dir':'long' if gap>0 else 'short'}); trig[k]=True
 
@@ -319,8 +319,8 @@ def detect_and_execute_open_strats(candles, state, atr, candle_time, today, tick
     if 14.5<=hour<14.6:
         k = str(today)+'_NY_GAP'
         if k not in trig and len(lon)>=5:
-            current_price = tick.ask
-            gap = (current_price - lon.iloc[-1]['close']) / atr
+            mid_price = (tick.ask + tick.bid) / 2
+            gap = (mid_price - lon.iloc[-1]['close']) / atr
             if abs(gap) >= 0.5:
                 signals.append({'strat':'NY_GAP','dir':'long' if gap>0 else 'short'}); trig[k]=True
 
@@ -522,10 +522,11 @@ def main():
             sync_positions(state)
 
             # Strats "open" : detectees a chaque poll via tick MT5 (pas besoin de bougie fermee)
-            # Ces strats entrent des que l'heure cible est atteinte, au prix market
+            # Utilise l'heure reelle (pas candle_time qui est l'heure de la derniere bougie DB)
+            now_utc = datetime.now(timezone.utc)
             tick = mt5.symbol_info_tick(SYMBOL)
             if tick:
-                detect_and_execute_open_strats(candles, state, atr, candle_time, today, tick)
+                detect_and_execute_open_strats(candles, state, atr, now_utc, now_utc.date(), tick)
 
             # Nouvelle bougie ?
             is_new = current_ts != last_candle_ts
@@ -536,6 +537,20 @@ def main():
 
             # Trailing update sur bougie fermee (best = close de la bougie, pas price_current)
             manage_trailing(state, candles)
+
+            # Re-check: si close < nouveau SL apres trailing, fermer la position
+            # (le backtest fait ce check dans la meme bougie, MT5 ne le fait pas automatiquement)
+            last_close = float(candles.iloc[-1]['close'])
+            for mpos in get_mt5_positions():
+                key = str(mpos.ticket)
+                if key in state['positions']:
+                    pdata = state['positions'][key]
+                    if pdata['dir'] == 'long' and last_close < mpos.sl:
+                        log.info(f"CLOSE trailing: {pdata['strat']} close {last_close:.2f} < SL {mpos.sl:.2f}")
+                        close_position(mpos.ticket)
+                    elif pdata['dir'] == 'short' and last_close > mpos.sl:
+                        log.info(f"CLOSE trailing: {pdata['strat']} close {last_close:.2f} > SL {mpos.sl:.2f}")
+                        close_position(mpos.ticket)
 
             last_candle_ts = current_ts; state['last_candle_ts'] = current_ts
 
