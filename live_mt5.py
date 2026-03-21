@@ -320,34 +320,33 @@ def detect_signals(candles, state, atr, candle_time, today):
 
 # ── TRAILING MANAGEMENT (sur bougie fermee) ──────────
 
-def manage_trailing(state):
+def manage_trailing(state, candles):
     """Met a jour le trailing sur les positions ouvertes MT5.
-    Appele a chaque nouvelle bougie fermee."""
+    Appele a chaque nouvelle bougie fermee. Utilise le CLOSE de la bougie fermee (pas price_current)."""
     mt5_positions = get_mt5_positions()
     if not mt5_positions: return
+
+    # Close de la derniere bougie fermee (la bougie [-1] est celle qui vient de fermer)
+    last_close = float(candles.iloc[-1]['close'])
 
     for pos in mt5_positions:
         ticket = pos.ticket
         key = str(ticket)
         if key not in state['positions']:
-            # Position ouverte hors de notre systeme, on ignore
             continue
 
         pdata = state['positions'][key]
         d = pdata['dir']
         atr = pdata['atr']
         entry = pdata['entry']
-
-        # Prix actuel (close de la derniere bougie = prix MT5 actuel)
-        current_price = pos.price_current
         current_sl = pos.sl
 
-        # Update best close
+        # Update best avec le CLOSE de la bougie fermee (pas price_current)
         best = pdata.get('best', entry)
-        if d == 'long' and current_price > best:
-            best = current_price
-        elif d == 'short' and current_price < best:
-            best = current_price
+        if d == 'long' and last_close > best:
+            best = last_close
+        elif d == 'short' and last_close < best:
+            best = last_close
         pdata['best'] = best
 
         # Trailing activation
@@ -470,8 +469,8 @@ def main():
 
             log.info(f"CANDLE {candle_time.strftime('%Y-%m-%d %H:%M')} | close={candles.iloc[-1]['close']:.2f} | ATR={atr:.2f}")
 
-            # Trailing update sur bougie fermee
-            manage_trailing(state)
+            # Trailing update sur bougie fermee (best = close de la bougie, pas price_current)
+            manage_trailing(state, candles)
 
             last_candle_ts = current_ts; state['last_candle_ts'] = current_ts
 
