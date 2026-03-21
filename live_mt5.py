@@ -279,15 +279,30 @@ def detect_and_execute_open_strats(candles, state, atr, candle_time, today, tick
             prev_dir = prev_day_data['close'] - prev_day_data['open']
             if abs(prev_dir) >= 1.0*atr:
                 signals.append({'strat':'TOK_FADE','dir':'short' if prev_dir>0 else 'long'}); trig[k]=True
+        # TOK_PREVEXT: prev day close near extreme → continuation Tokyo
+        k = str(today)+'_TOK_PREVEXT'
+        if k not in trig and prev_day_data and prev_day_data.get('range',0) > 0:
+            pos_close = (prev_day_data['close'] - prev_day_data['low']) / prev_day_data['range']
+            if pos_close >= 0.9:
+                signals.append({'strat':'TOK_PREVEXT','dir':'long'}); trig[k]=True
+            elif pos_close <= 0.1:
+                signals.append({'strat':'TOK_PREVEXT','dir':'short'}); trig[k]=True
 
     # LON_GAP: gap Tokyo close vs prix actuel > 0.5 ATR
     if 8.0<=hour<8.1:
         k = str(today)+'_LON_GAP'
         if k not in trig and len(tok)>=5:
-            current_price = tick.ask  # prix reel d'entree potentiel
+            current_price = tick.ask
             gap = (current_price - tok.iloc[-1]['close']) / atr
             if abs(gap) >= 0.5:
                 signals.append({'strat':'LON_GAP','dir':'long' if gap>0 else 'short'}); trig[k]=True
+        # LON_BIGGAP: gap > 1.0 ATR (seuil strict)
+        k = str(today)+'_LON_BIGGAP'
+        if k not in trig and len(tok)>=5:
+            current_price = tick.ask
+            gap = (current_price - tok.iloc[-1]['close']) / atr
+            if abs(gap) >= 1.0:
+                signals.append({'strat':'LON_BIGGAP','dir':'long' if gap>0 else 'short'}); trig[k]=True
 
     # LON_TOKEND: 3 dernieres bougies Tokyo >1ATR, continuation
     if 8.0<=hour<8.1:
@@ -339,6 +354,15 @@ def detect_and_execute_open_strats(candles, state, atr, candle_time, today, tick
             l3=lon.iloc[-3:]; m=(l3.iloc[-1]['close']-l3.iloc[0]['open'])/atr
             if abs(m)>=0.5:
                 signals.append({'strat':'NY_LONMOM','dir':'long' if m>0 else 'short'}); trig[k]=True
+        # NY_DAYMOM: Tokyo+London move >1.5ATR → continuation NY
+        k = str(today)+'_NY_DAYMOM'
+        if k not in trig:
+            ds = pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')
+            tv_now = candles[(candles['ts_dt']>=ds)&(candles['ts_dt']<=candle_time)]
+            if len(tv_now) >= 100:
+                day_move = (tv_now.iloc[-1]['close'] - tv_now.iloc[0]['open']) / atr
+                if abs(day_move) >= 1.5:
+                    signals.append({'strat':'NY_DAYMOM','dir':'long' if day_move>0 else 'short'}); trig[k]=True
 
     if signals:
         execute_signals(signals, state, atr, candle_time)
@@ -515,7 +539,8 @@ def main():
                     last_day = yc['date'].iloc[-1]
                     dc = yc[yc['date']==last_day]
                     state['_prev_day_data'] = {'open':float(dc.iloc[0]['open']),'close':float(dc.iloc[-1]['close']),
-                                               'high':float(dc['high'].max()),'low':float(dc['low'].min())}
+                                               'high':float(dc['high'].max()),'low':float(dc['low'].min()),
+                                               'range':float(dc['high'].max()-dc['low'].min())}
                 state['_prev_day_date'] = str(today)
 
             # Sync avec MT5 (detecter les positions fermees)

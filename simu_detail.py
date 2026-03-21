@@ -41,7 +41,8 @@ for ci in range(len(candles)):
             yc = candles[candles['date']==prev_d]
             if len(yc) > 0:
                 prev_day_data = {'open': float(yc.iloc[0]['open']), 'close': float(yc.iloc[-1]['close']),
-                                 'high': float(yc['high'].max()), 'low': float(yc['low'].min())}
+                                 'high': float(yc['high'].max()), 'low': float(yc['low'].min()),
+                                 'range': float(yc['high'].max() - yc['low'].min())}
         prev_d = today; trig = {}
         pd_ = prev_day(today); day_atr = daily_atr.get(pd_, global_atr) if pd_ else global_atr
     atr = day_atr

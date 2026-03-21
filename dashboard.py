@@ -45,7 +45,7 @@ pnl = capital - CAPITAL_INITIAL
 
 # ── TITRE ──
 st.title("VP Swing — Paper Trading")
-st.caption(f"{sess} · {now.strftime('%H:%M')} UTC · XAUUSD {'${:,.2f}'.format(bid) if bid else '—'} · 11 strats · SL=1.0 ACT=0.5 TRAIL=0.75")
+st.caption(f"{sess} · {now.strftime('%H:%M')} UTC · XAUUSD {'${:,.2f}'.format(bid) if bid else '—'} · 14 strats · SL=1.0 ACT=0.5 TRAIL=0.75")
 
 # ── METRIQUES ──
 n_trades = len(trades)
@@ -299,12 +299,12 @@ if n_trades > 0:
         st.dataframe(pd.DataFrame(stat_rows), use_container_width=True, hide_index=True)
 
 else:
-    st.info("En attente du premier trade. 11 strategies surveillent XAUUSD 5 minutes.")
+    st.info("En attente du premier trade. 14 strategies surveillent XAUUSD 5 minutes.")
 
 # ── SIDEBAR: STRATEGIES ──
 with st.sidebar:
     st.subheader("Strategies")
-    for session, strat_list in [("Tokyo", ['TOK_2BAR','TOK_BIG','TOK_FADE']), ("London", ['LON_PIN','LON_GAP','LON_KZ','LON_TOKEND','LON_PREV']), ("New York", ['NY_GAP','NY_LONEND','NY_LONMOM'])]:
+    for session, strat_list in [("Tokyo", ['TOK_2BAR','TOK_BIG','TOK_FADE','TOK_PREVEXT']), ("London", ['LON_PIN','LON_GAP','LON_BIGGAP','LON_KZ','LON_TOKEND','LON_PREV']), ("New York", ['NY_GAP','NY_LONEND','NY_LONMOM','NY_DAYMOM'])]:
         st.caption(f"**{session}**")
         for sn in strat_list:
             if n_trades > 0 and sn in df['strat'].values:

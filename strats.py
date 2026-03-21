@@ -1,6 +1,6 @@
 """
 Module commun: strategies et exit.
-11 strats, noms par session.
+14 strats, noms par session.
 Config: TRAIL SL=1.0 ACT=0.5 TRAIL=0.75, pas de timeout, trailing sur CLOSE.
 """
 import pandas as pd
@@ -8,22 +8,26 @@ import pandas as pd
 SL, ACT, TRAIL = 1.0, 0.5, 0.75
 
 STRATS = [
-    'TOK_2BAR','TOK_BIG','TOK_FADE',
-    'LON_PIN','LON_GAP','LON_KZ','LON_TOKEND','LON_PREV',
-    'NY_GAP','NY_LONEND','NY_LONMOM',
+    'TOK_2BAR','TOK_BIG','TOK_FADE','TOK_PREVEXT',
+    'LON_PIN','LON_GAP','LON_BIGGAP','LON_KZ','LON_TOKEND','LON_PREV',
+    'NY_GAP','NY_LONEND','NY_LONMOM','NY_DAYMOM',
 ]
 
 STRAT_NAMES = {
-    'TOK_2BAR':'2BAR reversal Tokyo','TOK_BIG':'Big candle Tokyo >1ATR','TOK_FADE':'Fade prev day Tokyo',
-    'LON_PIN':'Pin bar London','LON_GAP':'GAP Tokyo->London','LON_KZ':'KZ London fade',
+    'TOK_2BAR':'2BAR reversal Tokyo','TOK_BIG':'Big candle Tokyo >1ATR',
+    'TOK_FADE':'Fade prev day Tokyo','TOK_PREVEXT':'Prev day close extreme->Tokyo',
+    'LON_PIN':'Pin bar London','LON_GAP':'GAP Tokyo->London',
+    'LON_BIGGAP':'GAP Tokyo->London >1ATR','LON_KZ':'KZ London fade',
     'LON_TOKEND':'TOKEND 3b->London','LON_PREV':'Prev day continuation London',
-    'NY_GAP':'GAP London->NY','NY_LONEND':'LONEND 3b->NY','NY_LONMOM':'LONEND 0.5ATR->NY',
+    'NY_GAP':'GAP London->NY','NY_LONEND':'LONEND 3b->NY',
+    'NY_LONMOM':'LONEND 0.5ATR->NY','NY_DAYMOM':'Day move >1.5ATR->NY',
 }
 
 STRAT_SESSION = {
-    'TOK_2BAR':'Tokyo','TOK_BIG':'Tokyo','TOK_FADE':'Tokyo',
-    'LON_PIN':'London','LON_GAP':'London','LON_KZ':'London','LON_TOKEND':'London','LON_PREV':'London',
-    'NY_GAP':'New York','NY_LONEND':'New York','NY_LONMOM':'New York',
+    'TOK_2BAR':'Tokyo','TOK_BIG':'Tokyo','TOK_FADE':'Tokyo','TOK_PREVEXT':'Tokyo',
+    'LON_PIN':'London','LON_GAP':'London','LON_BIGGAP':'London','LON_KZ':'London',
+    'LON_TOKEND':'London','LON_PREV':'London',
+    'NY_GAP':'New York','NY_LONEND':'New York','NY_LONMOM':'New York','NY_DAYMOM':'New York',
 }
 
 def sim_exit(cdf, pos, entry, d, atr):
@@ -63,6 +67,13 @@ def detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_
         prev_dir = prev_day_data['close'] - prev_day_data['open']
         if abs(prev_dir) >= 1.0*atr:
             add('TOK_FADE','short' if prev_dir>0 else 'long',row['open']); trig['TOK_FADE']=True
+    # TOK_PREVEXT: prev day close near extreme (top/bottom 10%) → continuation Tokyo
+    if 0.0<=hour<0.1 and 'TOK_PREVEXT' not in trig and prev_day_data:
+        pr = prev_day_data.get('range', prev_day_data['high']-prev_day_data['low'])
+        if pr > 0:
+            pos_close = (prev_day_data['close'] - prev_day_data['low']) / pr
+            if pos_close >= 0.9: add('TOK_PREVEXT','long',row['open']); trig['TOK_PREVEXT']=True
+            elif pos_close <= 0.1: add('TOK_PREVEXT','short',row['open']); trig['TOK_PREVEXT']=True
 
     # ── LONDON ──
     if 8.0<=hour<14.5 and 'LON_PIN' not in trig:
@@ -76,6 +87,12 @@ def detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_
         if len(tc)>=5:
             gap=(row['open']-tc.iloc[-1]['close'])/atr
             if abs(gap)>=0.5: add('LON_GAP','long' if gap>0 else 'short',row['open']); trig['LON_GAP']=True
+    # LON_BIGGAP: GAP Tokyo→London > 1.0 ATR (seuil strict)
+    if 8.0<=hour<8.1 and 'LON_BIGGAP' not in trig:
+        tc=candles[(candles['ts_dt']<te)&(candles['ts_dt']<=ct)]
+        if len(tc)>=5:
+            gap=(row['open']-tc.iloc[-1]['close'])/atr
+            if abs(gap)>=1.0: add('LON_BIGGAP','long' if gap>0 else 'short',row['open']); trig['LON_BIGGAP']=True
     if 10.0<=hour<10.1 and 'LON_KZ' not in trig:
         kz=tv[(tv['ts_dt']>=ls)&(tv['ts_dt']<pd.Timestamp(today.year,today.month,today.day,10,0,tz='UTC'))]
         if len(kz)>=20:
@@ -99,3 +116,7 @@ def detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_
     if 14.5<=hour<14.6 and 'NY_LONMOM' not in trig and len(lon)>=9:
         l3=lon.iloc[-3:]; m=(l3.iloc[-1]['close']-l3.iloc[0]['open'])/atr
         if abs(m)>=0.5: add('NY_LONMOM','long' if m>0 else 'short',row['open']); trig['NY_LONMOM']=True
+    # NY_DAYMOM: Tokyo+London combined move >1.5ATR → continuation NY
+    if 14.5<=hour<14.6 and 'NY_DAYMOM' not in trig and len(tv)>=100:
+        day_move=(tv.iloc[-1]['close']-tv.iloc[0]['open'])/atr
+        if abs(day_move)>=1.5: add('NY_DAYMOM','long' if day_move>0 else 'short',row['open']); trig['NY_DAYMOM']=True
