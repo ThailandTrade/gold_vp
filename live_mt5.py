@@ -422,13 +422,13 @@ def manage_trailing(state, candles):
                 if new_sl > current_sl:
                     if modify_sl(ticket, new_sl):
                         log.info(f"TRAIL UPDATE ticket={ticket} {pdata['strat']} SL {current_sl:.2f} -> {new_sl:.2f} (best={best:.2f})")
-                    pdata['sl'] = new_sl
+                        pdata['sl'] = new_sl
             else:
                 new_sl = round(best + TRAIL * atr, 2)
                 if new_sl < current_sl:
                     if modify_sl(ticket, new_sl):
                         log.info(f"TRAIL UPDATE ticket={ticket} {pdata['strat']} SL {current_sl:.2f} -> {new_sl:.2f} (best={best:.2f})")
-                    pdata['sl'] = new_sl
+                        pdata['sl'] = new_sl
 
     save_state(state)
 
