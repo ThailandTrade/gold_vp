@@ -19,7 +19,7 @@ CAPITAL_INITIAL = 1000.0
 RISK_PCT = 0.01
 CHECK_INTERVAL = 1
 LOG_FILE = "paper_trades.json"
-from strats import SL, ACT, TRAIL, STRATS, STRAT_NAMES, STRAT_SESSION
+from strats import SL, ACT, TRAIL, STRATS, STRAT_NAMES, STRAT_SESSION, detect_all
 
 # ── LOGGING ───────────────────────────────────────────
 
@@ -191,93 +191,26 @@ def manage_positions(candles_df, state, conn):
 # ── SIGNAL DETECTION ──────────────────────────────────
 
 def detect_signals(candles, state, atr, candle_time, today):
-    signals = []; hour = candle_time.hour + candle_time.minute / 60.0
+    """Utilise detect_all de strats.py pour rester synchronise avec le backtest."""
+    signals = []
     trig = state.setdefault('_triggered', {})
+    hour = candle_time.hour + candle_time.minute / 60.0
     ds = pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')
     te = pd.Timestamp(today.year,today.month,today.day,6,0,tz='UTC')
     ls = pd.Timestamp(today.year,today.month,today.day,8,0,tz='UTC')
     ns = pd.Timestamp(today.year,today.month,today.day,14,30,tz='UTC')
-    tok = candles[(candles['ts_dt']>=ds)&(candles['ts_dt']<te)]
-    lon = candles[(candles['ts_dt']>=ls)&(candles['ts_dt']<ns)]
+    tv = candles[(candles['ts_dt']>=ds)&(candles['ts_dt']<=candle_time)]
+    tok = tv[tv['ts_dt']<te]; lon = tv[(tv['ts_dt']>=ls)&(tv['ts_dt']<ns)]
     r = candles.iloc[-1]
-
-    # Prev day data
     prev_day_data = state.get('_prev_day_data')
+    ct = candles.iloc[-1]['ts_dt']
 
-    # ── TOKYO ──
-    if 0.0<=hour<6.0:
-        k = str(today)+'_TOK_2BAR'
-        if k not in trig and len(tok)>=2:
-            b1=tok.iloc[-2];b2=tok.iloc[-1];b1b=b1['close']-b1['open'];b2b=b2['close']-b2['open']
-            if abs(b1b)>=0.5*atr and abs(b2b)>=0.5*atr and b1b*b2b<0 and abs(b2b)>abs(b1b):
-                signals.append({'strat':'TOK_2BAR','dir':'long' if b2b>0 else 'short'}); trig[k]=True
-        k = str(today)+'_TOK_BIG'
-        if k not in trig:
-            body=r['close']-r['open']
-            if abs(body)>=1.0*atr:
-                signals.append({'strat':'TOK_BIG','dir':'long' if body>0 else 'short'}); trig[k]=True
-    if 0.0<=hour<0.1:
-        k = str(today)+'_TOK_FADE'
-        if k not in trig and prev_day_data:
-            prev_dir = prev_day_data['close'] - prev_day_data['open']
-            if abs(prev_dir) >= 1.0*atr:
-                signals.append({'strat':'TOK_FADE','dir':'short' if prev_dir>0 else 'long'}); trig[k]=True
-
-    # ── LONDON ──
-    if 8.0<=hour<14.5:
-        k = str(today)+'_LON_PIN'
-        if k not in trig:
-            rng=r['high']-r['low']
-            if rng>=0.3*atr and abs(r['close']-r['open'])>=0.2*atr:
-                pir=(r['close']-r['low'])/rng
-                if pir>=0.9: signals.append({'strat':'LON_PIN','dir':'long'}); trig[k]=True
-                elif pir<=0.1: signals.append({'strat':'LON_PIN','dir':'short'}); trig[k]=True
-    if 8.0<=hour<8.1:
-        k = str(today)+'_LON_GAP'
-        if k not in trig:
-            tc=candles[candles['ts_dt']<te]
-            if len(tc)>=5:
-                gap=(r['open']-tc.iloc[-1]['close'])/atr
-                if abs(gap)>=0.5:
-                    signals.append({'strat':'LON_GAP','dir':'long' if gap>0 else 'short'}); trig[k]=True
-        k = str(today)+'_LON_TOKEND'
-        if k not in trig and len(tok)>=9:
-            l3=tok.iloc[-3:]; m=(l3.iloc[-1]['close']-l3.iloc[0]['open'])/atr
-            if abs(m)>=1.0:
-                signals.append({'strat':'LON_TOKEND','dir':'long' if m>0 else 'short'}); trig[k]=True
-        k = str(today)+'_LON_PREV'
-        if k not in trig and prev_day_data:
-            prev_body=(prev_day_data['close']-prev_day_data['open'])/atr
-            if abs(prev_body)>=1.0:
-                signals.append({'strat':'LON_PREV','dir':'long' if prev_body>0 else 'short'}); trig[k]=True
-    if 10.0<=hour<10.1:
-        k = str(today)+'_LON_KZ'
-        if k not in trig:
-            kz=candles[(candles['ts_dt']>=ls)&(candles['ts_dt']<pd.Timestamp(today.year,today.month,today.day,10,0,tz='UTC'))]
-            if len(kz)>=20:
-                m=(kz.iloc[-1]['close']-kz.iloc[0]['open'])/atr
-                if abs(m)>=0.5:
-                    signals.append({'strat':'LON_KZ','dir':'short' if m>0 else 'long'}); trig[k]=True
-
-    # ── NY ──
-    if 14.5<=hour<14.6:
-        k = str(today)+'_NY_GAP'
-        if k not in trig and len(lon)>=5:
-            gap=(r['open']-lon.iloc[-1]['close'])/atr
-            if abs(gap)>=0.5:
-                signals.append({'strat':'NY_GAP','dir':'long' if gap>0 else 'short'}); trig[k]=True
-        k = str(today)+'_NY_LONEND'
-        if k not in trig and len(lon)>=9:
-            l3=lon.iloc[-3:]; m=(l3.iloc[-1]['close']-l3.iloc[0]['open'])/atr
-            if abs(m)>=1.0:
-                signals.append({'strat':'NY_LONEND','dir':'long' if m>0 else 'short'}); trig[k]=True
-        k = str(today)+'_NY_LONMOM'
-        if k not in trig and len(lon)>=9:
-            l3=lon.iloc[-3:]; m=(l3.iloc[-1]['close']-l3.iloc[0]['open'])/atr
-            if abs(m)>=0.5:
-                signals.append({'strat':'NY_LONMOM','dir':'long' if m>0 else 'short'}); trig[k]=True
-
-    return signals
+    # Collect via detect_all (meme logique que backtest)
+    collected = []
+    def add_signal(sn, d, e):
+        collected.append({'strat': sn, 'dir': d})
+    detect_all(candles, len(candles)-1, r, ct, today, hour, atr, trig, tv, tok, lon, prev_day_data, add_signal)
+    return collected
 
 # ── OPEN POSITION ─────────────────────────────────────
 
@@ -373,7 +306,8 @@ def main():
                     last_day = yc['date'].iloc[-1]
                     dc = yc[yc['date']==last_day]
                     state['_prev_day_data'] = {'open':float(dc.iloc[0]['open']),'close':float(dc.iloc[-1]['close']),
-                                               'high':float(dc['high'].max()),'low':float(dc['low'].min())}
+                                               'high':float(dc['high'].max()),'low':float(dc['low'].min()),
+                                               'range':float(dc['high'].max()-dc['low'].min())}
                 state['_prev_day_date'] = str(today)
 
             # Verifier les stops sur chaque poll (comme MT5 le ferait)
