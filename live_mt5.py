@@ -231,7 +231,37 @@ def get_yesterday_atr(candles_df, today):
 
 # ── SIGNAL DETECTION ─────────────────────────────────
 
-def detect_signals(candles, state, atr, candle_time, today):
+def execute_signals(signals, state, atr, candle_time):
+    """Execute les signaux: verifie conflits et place les ordres."""
+    mt5_pos = get_mt5_positions()
+    open_dirs = set()
+    for p in mt5_pos:
+        if p.type == mt5.ORDER_TYPE_BUY: open_dirs.add('long')
+        else: open_dirs.add('short')
+
+    for sig in signals:
+        if sig['strat'] not in STRATS: continue
+        if sig['dir'] == 'long' and 'short' in open_dirs:
+            log.info(f"SKIP {sig['strat']} — conflit short"); continue
+        if sig['dir'] == 'short' and 'long' in open_dirs:
+            log.info(f"SKIP {sig['strat']} — conflit long"); continue
+
+        ticket = place_order(sig['strat'], sig['dir'], atr)
+        if ticket:
+            pos_info = mt5.positions_get(ticket=ticket)
+            entry_price = pos_info[0].price_open if pos_info else 0
+            state['positions'][str(ticket)] = {
+                'strat': sig['strat'], 'dir': sig['dir'],
+                'entry': entry_price, 'atr': atr, 'best': entry_price,
+                'trail_active': False, 'entry_time': str(candle_time),
+            }
+            open_dirs.add(sig['dir'])
+            log.info(f"  signal {sig['strat']} {sig['dir']}")
+    save_state(state)
+
+def detect_and_execute_open_strats(candles, state, atr, candle_time, today, tick):
+    """Strats 'open': signal base sur donnees anterieures + prix actuel.
+    Detectees des que l'heure cible est atteinte, sans attendre la bougie fermee."""
     signals = []; hour = candle_time.hour + candle_time.minute / 60.0
     trig = state.setdefault('_triggered', {})
     ds = pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')
@@ -240,21 +270,9 @@ def detect_signals(candles, state, atr, candle_time, today):
     ns = pd.Timestamp(today.year,today.month,today.day,14,30,tz='UTC')
     tok = candles[(candles['ts_dt']>=ds)&(candles['ts_dt']<te)]
     lon = candles[(candles['ts_dt']>=ls)&(candles['ts_dt']<ns)]
-    r = candles.iloc[-1]
     prev_day_data = state.get('_prev_day_data')
 
-    # ── TOKYO ──
-    if 0.0<=hour<6.0:
-        k = str(today)+'_TOK_2BAR'
-        if k not in trig and len(tok)>=2:
-            b1=tok.iloc[-2];b2=tok.iloc[-1];b1b=b1['close']-b1['open'];b2b=b2['close']-b2['open']
-            if abs(b1b)>=0.5*atr and abs(b2b)>=0.5*atr and b1b*b2b<0 and abs(b2b)>abs(b1b):
-                signals.append({'strat':'TOK_2BAR','dir':'long' if b2b>0 else 'short'}); trig[k]=True
-        k = str(today)+'_TOK_BIG'
-        if k not in trig:
-            body=r['close']-r['open']
-            if abs(body)>=1.0*atr:
-                signals.append({'strat':'TOK_BIG','dir':'long' if body>0 else 'short'}); trig[k]=True
+    # TOK_FADE: fade previous day >1ATR at Tokyo open
     if 0.0<=hour<0.1:
         k = str(today)+'_TOK_FADE'
         if k not in trig and prev_day_data:
@@ -262,33 +280,32 @@ def detect_signals(candles, state, atr, candle_time, today):
             if abs(prev_dir) >= 1.0*atr:
                 signals.append({'strat':'TOK_FADE','dir':'short' if prev_dir>0 else 'long'}); trig[k]=True
 
-    # ── LONDON ──
-    if 8.0<=hour<14.5:
-        k = str(today)+'_LON_PIN'
-        if k not in trig:
-            rng=r['high']-r['low']
-            if rng>=0.3*atr and abs(r['close']-r['open'])>=0.2*atr:
-                pir=(r['close']-r['low'])/rng
-                if pir>=0.9: signals.append({'strat':'LON_PIN','dir':'long'}); trig[k]=True
-                elif pir<=0.1: signals.append({'strat':'LON_PIN','dir':'short'}); trig[k]=True
+    # LON_GAP: gap Tokyo close vs prix actuel > 0.5 ATR
     if 8.0<=hour<8.1:
         k = str(today)+'_LON_GAP'
-        if k not in trig:
-            tc=candles[candles['ts_dt']<te]
-            if len(tc)>=5:
-                gap=(r['open']-tc.iloc[-1]['close'])/atr
-                if abs(gap)>=0.5:
-                    signals.append({'strat':'LON_GAP','dir':'long' if gap>0 else 'short'}); trig[k]=True
+        if k not in trig and len(tok)>=5:
+            current_price = tick.ask  # prix actuel
+            gap = (current_price - tok.iloc[-1]['close']) / atr
+            if abs(gap) >= 0.5:
+                signals.append({'strat':'LON_GAP','dir':'long' if gap>0 else 'short'}); trig[k]=True
+
+    # LON_TOKEND: 3 dernieres bougies Tokyo >1ATR, continuation
+    if 8.0<=hour<8.1:
         k = str(today)+'_LON_TOKEND'
         if k not in trig and len(tok)>=9:
             l3=tok.iloc[-3:]; m=(l3.iloc[-1]['close']-l3.iloc[0]['open'])/atr
             if abs(m)>=1.0:
                 signals.append({'strat':'LON_TOKEND','dir':'long' if m>0 else 'short'}); trig[k]=True
+
+    # LON_PREV: previous day continuation >1ATR
+    if 8.0<=hour<8.1:
         k = str(today)+'_LON_PREV'
         if k not in trig and prev_day_data:
             prev_body=(prev_day_data['close']-prev_day_data['open'])/atr
             if abs(prev_body)>=1.0:
                 signals.append({'strat':'LON_PREV','dir':'long' if prev_body>0 else 'short'}); trig[k]=True
+
+    # LON_KZ: KZ London 8h-10h fade (signal base sur bougies fermees 8h-10h)
     if 10.0<=hour<10.1:
         k = str(today)+'_LON_KZ'
         if k not in trig:
@@ -298,23 +315,65 @@ def detect_signals(candles, state, atr, candle_time, today):
                 if abs(m)>=0.5:
                     signals.append({'strat':'LON_KZ','dir':'short' if m>0 else 'long'}); trig[k]=True
 
-    # ── NY ──
+    # NY_GAP: gap London close vs prix actuel > 0.5 ATR
     if 14.5<=hour<14.6:
         k = str(today)+'_NY_GAP'
         if k not in trig and len(lon)>=5:
-            gap=(r['open']-lon.iloc[-1]['close'])/atr
-            if abs(gap)>=0.5:
+            current_price = tick.ask
+            gap = (current_price - lon.iloc[-1]['close']) / atr
+            if abs(gap) >= 0.5:
                 signals.append({'strat':'NY_GAP','dir':'long' if gap>0 else 'short'}); trig[k]=True
+
+    # NY_LONEND: 3 dernieres bougies London >1ATR continuation
+    if 14.5<=hour<14.6:
         k = str(today)+'_NY_LONEND'
         if k not in trig and len(lon)>=9:
             l3=lon.iloc[-3:]; m=(l3.iloc[-1]['close']-l3.iloc[0]['open'])/atr
             if abs(m)>=1.0:
                 signals.append({'strat':'NY_LONEND','dir':'long' if m>0 else 'short'}); trig[k]=True
+
+    # NY_LONMOM: 3 dernieres bougies London >0.5ATR continuation
+    if 14.5<=hour<14.6:
         k = str(today)+'_NY_LONMOM'
         if k not in trig and len(lon)>=9:
             l3=lon.iloc[-3:]; m=(l3.iloc[-1]['close']-l3.iloc[0]['open'])/atr
             if abs(m)>=0.5:
                 signals.append({'strat':'NY_LONMOM','dir':'long' if m>0 else 'short'}); trig[k]=True
+
+    if signals:
+        execute_signals(signals, state, atr, candle_time)
+
+def detect_close_strats(candles, state, atr, candle_time, today):
+    """Strats 'close': signal base sur la bougie fermee (OHLC complet necessaire)."""
+    signals = []; hour = candle_time.hour + candle_time.minute / 60.0
+    trig = state.setdefault('_triggered', {})
+    ds = pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')
+    te = pd.Timestamp(today.year,today.month,today.day,6,0,tz='UTC')
+    tok = candles[(candles['ts_dt']>=ds)&(candles['ts_dt']<te)]
+    r = candles.iloc[-1]
+
+    # TOK_2BAR: two-bar reversal (besoin du close des 2 bougies)
+    if 0.0<=hour<6.0:
+        k = str(today)+'_TOK_2BAR'
+        if k not in trig and len(tok)>=2:
+            b1=tok.iloc[-2];b2=tok.iloc[-1];b1b=b1['close']-b1['open'];b2b=b2['close']-b2['open']
+            if abs(b1b)>=0.5*atr and abs(b2b)>=0.5*atr and b1b*b2b<0 and abs(b2b)>abs(b1b):
+                signals.append({'strat':'TOK_2BAR','dir':'long' if b2b>0 else 'short'}); trig[k]=True
+    # TOK_BIG: big candle >1ATR (besoin du close)
+        k = str(today)+'_TOK_BIG'
+        if k not in trig:
+            body=r['close']-r['open']
+            if abs(body)>=1.0*atr:
+                signals.append({'strat':'TOK_BIG','dir':'long' if body>0 else 'short'}); trig[k]=True
+    # LON_PIN: pin bar (besoin du OHLC complet)
+    if 8.0<=hour<14.5:
+        k = str(today)+'_LON_PIN'
+        if k not in trig:
+            rng=r['high']-r['low']
+            if rng>=0.3*atr and abs(r['close']-r['open'])>=0.2*atr:
+                pir=(r['close']-r['low'])/rng
+                if pir>=0.9: signals.append({'strat':'LON_PIN','dir':'long'}); trig[k]=True
+                elif pir<=0.1: signals.append({'strat':'LON_PIN','dir':'short'}); trig[k]=True
 
     return signals
 
@@ -462,6 +521,12 @@ def main():
             # Sync avec MT5 (detecter les positions fermees)
             sync_positions(state)
 
+            # Strats "open" : detectees a chaque poll via tick MT5 (pas besoin de bougie fermee)
+            # Ces strats entrent des que l'heure cible est atteinte, au prix market
+            tick = mt5.symbol_info_tick(SYMBOL)
+            if tick:
+                detect_and_execute_open_strats(candles, state, atr, candle_time, today, tick)
+
             # Nouvelle bougie ?
             is_new = current_ts != last_candle_ts
             if not is_new:
@@ -474,40 +539,10 @@ def main():
 
             last_candle_ts = current_ts; state['last_candle_ts'] = current_ts
 
-            # Reset triggers au changement de jour
-            if str(today) not in str(state.get('_triggered', {}).keys()):
-                pass  # les triggers sont prefixes par la date, pas besoin de reset
-
-            # Detect signals
-            mt5_pos = get_mt5_positions()
-            open_dirs = set()
-            for p in mt5_pos:
-                if p.type == mt5.ORDER_TYPE_BUY: open_dirs.add('long')
-                else: open_dirs.add('short')
-
-            signals = detect_signals(candles, state, atr, candle_time, today)
-
-            for sig in signals:
-                if sig['strat'] not in STRATS: continue
-                # Conflit de direction
-                if sig['dir'] == 'long' and 'short' in open_dirs:
-                    log.info(f"SKIP {sig['strat']} — conflit short"); continue
-                if sig['dir'] == 'short' and 'long' in open_dirs:
-                    log.info(f"SKIP {sig['strat']} — conflit long"); continue
-
-                ticket = place_order(sig['strat'], sig['dir'], atr)
-                if ticket:
-                    state['positions'][str(ticket)] = {
-                        'strat': sig['strat'], 'dir': sig['dir'],
-                        'entry': mt5.positions_get(ticket=ticket)[0].price_open,
-                        'atr': atr, 'best': mt5.positions_get(ticket=ticket)[0].price_open,
-                        'trail_active': False,
-                        'entry_time': str(candle_time),
-                    }
-                    open_dirs.add(sig['dir'])
-
+            # Strats "close" : detectees sur bougie fermee
+            signals = detect_close_strats(candles, state, atr, candle_time, today)
             if signals:
-                log.info(f"  {len(signals)} signal(s)")
+                execute_signals(signals, state, atr, candle_time)
 
             # Dashboard console
             balance = get_account_balance()
