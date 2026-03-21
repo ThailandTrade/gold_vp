@@ -284,8 +284,8 @@ def detect_and_execute_open_strats(candles, state, atr, candle_time, today, tick
     if 8.0<=hour<8.1:
         k = str(today)+'_LON_GAP'
         if k not in trig and len(tok)>=5:
-            mid_price = (tick.ask + tick.bid) / 2  # mid, pas ask seul
-            gap = (mid_price - tok.iloc[-1]['close']) / atr
+            current_price = tick.ask  # prix reel d'entree potentiel
+            gap = (current_price - tok.iloc[-1]['close']) / atr
             if abs(gap) >= 0.5:
                 signals.append({'strat':'LON_GAP','dir':'long' if gap>0 else 'short'}); trig[k]=True
 
@@ -319,8 +319,8 @@ def detect_and_execute_open_strats(candles, state, atr, candle_time, today, tick
     if 14.5<=hour<14.6:
         k = str(today)+'_NY_GAP'
         if k not in trig and len(lon)>=5:
-            mid_price = (tick.ask + tick.bid) / 2
-            gap = (mid_price - lon.iloc[-1]['close']) / atr
+            current_price = tick.ask
+            gap = (current_price - lon.iloc[-1]['close']) / atr
             if abs(gap) >= 0.5:
                 signals.append({'strat':'NY_GAP','dir':'long' if gap>0 else 'short'}); trig[k]=True
 
