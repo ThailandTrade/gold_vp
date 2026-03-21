@@ -4,13 +4,14 @@ Moteur de backtest commun — utilise par simu_icmarkets.py et simu_ftmo.py.
 import numpy as np, pandas as pd
 from strats import SL, ACT, TRAIL, sim_exit, detect_all
 
-def run_backtest(candles, daily_atr, global_atr, trading_days, monthly_spread, portfolio, broker_name, capital=1000.0, risk=0.01):
-    avg_sp = np.mean(list(monthly_spread.values()))
+def run_backtest(candles, daily_atr, global_atr, trading_days, monthly_spread, portfolio, broker_name, capital=1000.0, risk=0.01, spread_override=None):
+    avg_sp = np.mean(list(monthly_spread.values())) if monthly_spread else 0.10
     def prev_day(day):
         for di, d in enumerate(trading_days):
             if d >= day: return trading_days[di-1] if di > 0 else None
         return None
     def get_sp(day):
+        if spread_override is not None: return spread_override
         return 2 * monthly_spread.get(str(day.year)+"-"+str(day.month).zfill(2), avg_sp)
 
     S = {}
