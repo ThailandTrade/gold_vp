@@ -76,6 +76,32 @@ def get_mt5_positions():
     if positions is None: return []
     return [p for p in positions if p.magic == MAGIC]
 
+def calc_lot_size(symbol, entry, sl, risk_amount):
+    """Calcule la taille de position via mt5.order_calc_profit (precise, devise-aware)."""
+    sym_info = mt5.symbol_info(symbol)
+    if sym_info is None:
+        log.error(f"Symbol info introuvable pour {symbol}"); return 0.0
+
+    order_type = mt5.ORDER_TYPE_BUY if entry > sl else mt5.ORDER_TYPE_SELL
+    try:
+        loss_one_lot = mt5.order_calc_profit(order_type, symbol, 1.0, float(entry), float(sl))
+    except Exception as e:
+        log.error(f"order_calc_profit error: {e}"); return 0.0
+
+    if loss_one_lot is None:
+        log.warning("order_calc_profit None, fallback manuel")
+        loss_one_lot = -abs(entry - sl) * sym_info.trade_contract_size
+
+    loss_per_lot = abs(loss_one_lot)
+    if loss_per_lot == 0: return 0.0
+
+    raw_lots = risk_amount / loss_per_lot
+    step = sym_info.volume_step
+    lots = round(raw_lots / step) * step
+    lots = max(sym_info.volume_min, lots)
+    lots = min(sym_info.volume_max, lots)
+    return float(lots)
+
 def place_order(strat, direction, atr):
     """Place un ordre market avec SL. Retourne le ticket ou None."""
     tick = mt5.symbol_info_tick(SYMBOL)
@@ -84,23 +110,19 @@ def place_order(strat, direction, atr):
 
     balance = get_account_balance()
     risk_amount = balance * RISK_PCT
-    sl_distance = SL * atr
-    # XAUUSD: 1 lot = 100 oz, tick_value depend du broker
-    sym_info = mt5.symbol_info(SYMBOL)
-    lot_size = risk_amount / (sl_distance * sym_info.trade_contract_size)
-    # Arrondir au step
-    lot_step = sym_info.volume_step
-    lot_size = max(sym_info.volume_min, round(lot_size / lot_step) * lot_step)
-    lot_size = min(lot_size, sym_info.volume_max)
 
     if direction == 'long':
         price = tick.ask
-        sl = round(price - sl_distance, 2)
+        sl = round(price - SL * atr, 2)
         order_type = mt5.ORDER_TYPE_BUY
     else:
         price = tick.bid
-        sl = round(price + sl_distance, 2)
+        sl = round(price + SL * atr, 2)
         order_type = mt5.ORDER_TYPE_SELL
+
+    lot_size = calc_lot_size(SYMBOL, price, sl, risk_amount)
+    if lot_size <= 0:
+        log.error(f"Lot size invalide: {lot_size}"); return None
 
     request = {
         'action': mt5.TRADE_ACTION_DEAL,
@@ -115,7 +137,7 @@ def place_order(strat, direction, atr):
     }
 
     if DRY_RUN:
-        log.info(f"DRY RUN: {strat} {direction} {lot_size:.2f}lots @ {price:.2f} SL={sl:.2f}")
+        log.info(f"DRY RUN: {strat} {direction} {lot_size:.2f}lots @ {price:.2f} SL={sl:.2f} risk=${risk_amount:.2f}")
         return None
 
     result = mt5.order_send(request)
@@ -126,7 +148,7 @@ def place_order(strat, direction, atr):
         log.error(f"Order failed: {result.retcode} {result.comment}")
         return None
 
-    log.info(f"OPEN {strat} {direction} | ticket={result.order} | {lot_size:.2f}lots @ {result.price:.2f} | SL={sl:.2f}")
+    log.info(f"OPEN {strat} {direction} | ticket={result.order} | {lot_size:.2f}lots @ {result.price:.2f} | SL={sl:.2f} | risk=${risk_amount:.2f}")
     return result.order
 
 def modify_sl(ticket, new_sl):
