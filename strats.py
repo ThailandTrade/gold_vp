@@ -1,17 +1,20 @@
 """
-Module commun: strategies et exit.
-14 strats, noms par session.
+Module commun: toutes les strategies et exit.
 Config: TRAIL SL=1.0 ACT=0.5 TRAIL=0.75, pas de timeout, trailing sur CLOSE.
+Le portfolio actif est defini dans config_icmarkets.py ou config_ftmo.py.
 """
 import pandas as pd
 
 SL, ACT, TRAIL = 1.0, 0.5, 0.75
 
-STRATS = [
+ALL_STRATS = [
     'TOK_2BAR','TOK_BIG','TOK_FADE','TOK_PREVEXT',
     'LON_PIN','LON_GAP','LON_BIGGAP','LON_KZ','LON_TOKEND','LON_PREV',
     'NY_GAP','NY_LONEND','NY_LONMOM','NY_DAYMOM',
+    'D8',
 ]
+# Default portfolio (ICMarkets)
+STRATS = ALL_STRATS
 
 STRAT_NAMES = {
     'TOK_2BAR':'2BAR reversal Tokyo','TOK_BIG':'Big candle Tokyo >1ATR',
@@ -21,6 +24,7 @@ STRAT_NAMES = {
     'LON_TOKEND':'TOKEND 3b->London','LON_PREV':'Prev day continuation London',
     'NY_GAP':'GAP London->NY','NY_LONEND':'LONEND 3b->NY',
     'NY_LONMOM':'LONEND 0.5ATR->NY','NY_DAYMOM':'Day move >1.5ATR->NY',
+    'D8':'Inside day breakout London',
 }
 
 STRAT_SESSION = {
@@ -28,6 +32,7 @@ STRAT_SESSION = {
     'LON_PIN':'London','LON_GAP':'London','LON_BIGGAP':'London','LON_KZ':'London',
     'LON_TOKEND':'London','LON_PREV':'London',
     'NY_GAP':'New York','NY_LONEND':'New York','NY_LONMOM':'New York','NY_DAYMOM':'New York',
+    'D8':'London',
 }
 
 def sim_exit(cdf, pos, entry, d, atr):
@@ -48,8 +53,8 @@ def sim_exit(cdf, pos, entry, d, atr):
             if b['close'] > stop: return j, b['close']
     return 1, entry
 
-def detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_day_data, add):
-    """Detecte les signaux pour les 11 strats."""
+def detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_day_data, add, prev2_day_data=None):
+    """Detecte les signaux pour toutes les strats."""
     ds = pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')
     te = pd.Timestamp(today.year,today.month,today.day,6,0,tz='UTC')
     ls = pd.Timestamp(today.year,today.month,today.day,8,0,tz='UTC')
@@ -120,3 +125,10 @@ def detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_
     if 14.5<=hour<14.6 and 'NY_DAYMOM' not in trig and len(tv)>=100:
         day_move=(tv.iloc[-1]['close']-tv.iloc[0]['open'])/atr
         if abs(day_move)>=1.5: add('NY_DAYMOM','long' if day_move>0 else 'short',row['open']); trig['NY_DAYMOM']=True
+
+    # ── DAILY PATTERNS ──
+    # D8: Previous inside day → breakout London
+    if 8.0<=hour<14.5 and 'D8' not in trig and prev_day_data and prev2_day_data:
+        if prev_day_data['high']<prev2_day_data['high'] and prev_day_data['low']>prev2_day_data['low']:
+            if row['close']>prev_day_data['high']: add('D8','long',row['close']); trig['D8']=True
+            elif row['close']<prev_day_data['low']: add('D8','short',row['close']); trig['D8']=True

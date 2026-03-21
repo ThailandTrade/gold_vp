@@ -1,5 +1,6 @@
 """
-Simulation finale — 11 strats, noms par session.
+Simulation finale — multi-broker.
+Usage: python simu_final.py [--broker icmarkets|ftmo]
 Config: TRAIL SL=1.0 ACT=0.5 TRAIL=0.75, pas de timeout (sur CLOSE).
 """
 import warnings; warnings.filterwarnings('ignore')
@@ -8,7 +9,17 @@ import numpy as np, pandas as pd
 from dotenv import load_dotenv; load_dotenv()
 from phase1_poc_calculator import get_conn, compute_atr, get_trading_days
 from phase3_analyze import load_candles_5m
-from strats import SL, ACT, TRAIL, STRATS, sim_exit, detect_all
+from strats import SL, ACT, TRAIL, sim_exit, detect_all
+
+# Broker selection
+broker = 'icmarkets'
+for a in sys.argv:
+    if a.startswith('--broker='): broker = a.split('=')[1]
+    elif a == '--ftmo': broker = 'ftmo'
+if broker == 'ftmo':
+    from config_ftmo import PORTFOLIO as STRATS, BROKER
+else:
+    from config_icmarkets import PORTFOLIO as STRATS, BROKER
 
 conn = get_conn()
 candles = load_candles_5m(conn)
@@ -26,9 +37,9 @@ def prev_day(day):
 def get_sp(day):
     return 2 * monthly_spread.get(str(day.year)+"-"+str(day.month).zfill(2), avg_sp)
 
-print("Collecte bougie par bougie...", flush=True)
+print(f"Collecte [{BROKER}] {len(STRATS)} strats...", flush=True)
 S = {}
-prev_d = None; trig = {}; day_atr = None; prev_day_data = None
+prev_d = None; trig = {}; day_atr = None; prev_day_data = None; prev2_day_data = None
 for ci in range(len(candles)):
     row = candles.iloc[ci]; ct = row['ts_dt']; today = ct.date()
     hour = ct.hour + ct.minute / 60.0
@@ -36,9 +47,11 @@ for ci in range(len(candles)):
         if prev_d:
             yc = candles[candles['date']==prev_d]
             if len(yc) > 0:
+                prev2_day_data = prev_day_data
                 prev_day_data = {'open': float(yc.iloc[0]['open']), 'close': float(yc.iloc[-1]['close']),
                                  'high': float(yc['high'].max()), 'low': float(yc['low'].min()),
-                                 'range': float(yc['high'].max() - yc['low'].min())}
+                                 'range': float(yc['high'].max() - yc['low'].min()),
+                                 'body': float(yc.iloc[-1]['close'] - yc.iloc[0]['open'])}
         prev_d = today; trig = {}
         pd_ = prev_day(today); day_atr = daily_atr.get(pd_, global_atr) if pd_ else global_atr
     atr = day_atr
@@ -53,7 +66,7 @@ for ci in range(len(candles)):
         b, ex = sim_exit(candles, ci, e, d, atr)
         pnl = (ex-e) if d=='long' else (e-ex)
         S.setdefault(sn,[]).append({'date':today,'dir':d,'sl_atr':SL,'pnl_oz':pnl-get_sp(today),'atr':atr,'ei':ci,'xi':ci+b})
-    detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_day_data, add)
+    detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_day_data, add, prev2_day_data)
 
 print("Done.", flush=True)
 
@@ -86,7 +99,7 @@ for t in acc:
     if cap > peak: peak = cap
 
 print(f"\n{'='*110}")
-print(f"  11 strats — $1,000, Risk 1%")
+print(f"  {BROKER} — {len(STRATS)} strats — $1,000, Risk 1%")
 print(f"  Config: TRAIL SL={SL} ACT={ACT} TRAIL={TRAIL} (pas de timeout)")
 print(f"  {len(acc)} trades, Capital final ${cap:,.2f}, DD global {global_dd:.1f}%")
 print(f"{'='*110}")
