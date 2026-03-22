@@ -123,7 +123,7 @@ def detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_
         if abs(m)>=0.5: add('NY_LONMOM','long' if m>0 else 'short',row['open']); trig['NY_LONMOM']=True
     # NY_DAYMOM: Tokyo+London combined move >1.5ATR → continuation NY
     if 14.5<=hour<14.6 and 'NY_DAYMOM' not in trig and len(tv)>=100:
-        day_move=(tv.iloc[-1]['close']-tv.iloc[0]['open'])/atr
+        day_move=(row['open']-tv.iloc[0]['open'])/atr  # open, pas close (la bougie n'est pas fermee)
         if abs(day_move)>=1.5: add('NY_DAYMOM','long' if day_move>0 else 'short',row['open']); trig['NY_DAYMOM']=True
 
     # ── DAILY PATTERNS ──
