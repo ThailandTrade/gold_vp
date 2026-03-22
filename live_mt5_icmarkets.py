@@ -498,7 +498,7 @@ def main():
     conn = get_conn_autocommit()
     state = load_state()
 
-    log.info(f"{'DRY RUN — ' if DRY_RUN else ''}11 strats | Risk {args.risk}% | Magic {MAGIC}")
+    log.info(f"{'DRY RUN — ' if DRY_RUN else ''}{len(STRATS)} strats | Risk {args.risk}% | Magic {MAGIC}")
     log.info(f"Balance: ${info.balance:,.2f} | Strats: {', '.join(STRATS)}")
 
     last_candle_ts = state.get('last_candle_ts', 0)

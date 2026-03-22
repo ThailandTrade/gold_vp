@@ -496,7 +496,7 @@ def main():
     conn = get_conn_autocommit()
     state = load_state()
 
-    log.info(f"{'DRY RUN — ' if DRY_RUN else ''}11 strats | Risk {args.risk}% | Magic {MAGIC}")
+    log.info(f"{'DRY RUN — ' if DRY_RUN else ''}{len(STRATS)} strats | Risk {args.risk}% | Magic {MAGIC}")
     log.info(f"Balance: ${info.balance:,.2f} | Strats: {', '.join(STRATS)}")
 
     last_candle_ts = state.get('last_candle_ts', 0)
@@ -538,7 +538,8 @@ def main():
                     dc = yc[yc['date']==last_day]
                     state['_prev_day_data'] = {'open':float(dc.iloc[0]['open']),'close':float(dc.iloc[-1]['close']),
                                                'high':float(dc['high'].max()),'low':float(dc['low'].min()),
-                                               'range':float(dc['high'].max()-dc['low'].min())}
+                                               'range':float(dc['high'].max()-dc['low'].min()),
+                                               'body':float(dc.iloc[-1]['close']-dc.iloc[0]['open'])}
                 state['_prev_day_date'] = str(today)
 
             # Sync avec MT5 (detecter les positions fermees)
