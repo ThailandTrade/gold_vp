@@ -54,8 +54,12 @@ for ci in range(len(candles)):
     tv = candles[(candles['ts_dt']>=ds)&(candles['ts_dt']<=ct)]
     tok = tv[tv['ts_dt']<te]; lon = tv[(tv['ts_dt']>=ls)&(tv['ts_dt']<ns)]; ny = tv[tv['ts_dt']>=ns]
 
+    OPEN_STRATS = ['TOK_FADE','TOK_PREVEXT','LON_GAP','LON_BIGGAP','LON_KZ','LON_TOKEND','LON_PREV',
+                    'LON_FADE','NY_GAP','NY_LONEND','NY_LONMOM','NY_DAYMOM','NY_FADE1H','NY_CONT1H',
+                    'NY_LONMOM4H','NY_DAYFADE','D4','D5','D6','X4']
     def add(sn, d, e):
-        b, ex = sim_exit(candles, ci, e, d, atr)
+        check_entry = sn in OPEN_STRATS
+        b, ex = sim_exit(candles, ci, e, d, atr, check_entry_candle=check_entry)
         pnl = (ex-e) if d=='long' else (e-ex)
         S.setdefault(sn,[]).append({'date':today,'dir':d,'sl_atr':SL,'pnl_oz':pnl-get_sp(today),'atr':atr,'ei':ci,'xi':ci+b})
 
@@ -175,7 +179,7 @@ for ci in range(len(candles)):
         l3=lon.iloc[-3:]; m=(l3.iloc[-1]['close']-l3.iloc[0]['open'])/atr
         if abs(m)>=0.5: add('NY_LONMOM','long' if m>0 else 'short',row['open']); trig['NY_LONMOM']=True
     if 14.5<=hour<14.6 and 'NY_DAYMOM' not in trig and len(tv)>=100:
-        day_move=(tv.iloc[-1]['close']-tv.iloc[0]['open'])/atr
+        day_move=(row['open']-tv.iloc[0]['open'])/atr  # open, pas close
         if abs(day_move)>=1.5: add('NY_DAYMOM','long' if day_move>0 else 'short',row['open']); trig['NY_DAYMOM']=True
     # NY_FADE1H: fade NY 1ere heure >1ATR (ex I/NY7)
     if 15.5<=hour<15.6 and 'NY_FADE1H' not in trig:
