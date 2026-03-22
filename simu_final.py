@@ -62,8 +62,10 @@ for ci in range(len(candles)):
     ns = pd.Timestamp(today.year,today.month,today.day,14,30,tz='UTC')
     tv = candles[(candles['ts_dt']>=ds)&(candles['ts_dt']<=ct)]
     tok = tv[tv['ts_dt']<te]; lon = tv[(tv['ts_dt']>=ls)&(tv['ts_dt']<ns)]
+    OPEN_STRATS = ['TOK_FADE','TOK_PREVEXT','LON_GAP','LON_BIGGAP','LON_KZ','LON_TOKEND','LON_PREV','NY_GAP','NY_LONEND','NY_LONMOM','NY_DAYMOM']
     def add(sn, d, e):
-        b, ex = sim_exit(candles, ci, e, d, atr)
+        check_entry = sn in OPEN_STRATS
+        b, ex = sim_exit(candles, ci, e, d, atr, check_entry_candle=check_entry)
         pnl = (ex-e) if d=='long' else (e-ex)
         S.setdefault(sn,[]).append({'date':today,'dir':d,'sl_atr':SL,'pnl_oz':pnl-get_sp(today),'atr':atr,'ei':ci,'xi':ci+b})
     detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_day_data, add, prev2_day_data)

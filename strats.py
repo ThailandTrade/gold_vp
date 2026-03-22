@@ -35,10 +35,17 @@ STRAT_SESSION = {
     'D8':'London',
 }
 
-def sim_exit(cdf, pos, entry, d, atr):
+def sim_exit(cdf, pos, entry, d, atr, check_entry_candle=False):
     best = entry; stop = entry + SL*atr if d == 'short' else entry - SL*atr; ta = False
-    for j in range(1, len(cdf)-pos):
+    start = 0 if check_entry_candle else 1
+    for j in range(start, len(cdf)-pos):
+        if j == 0: j = 0  # entry candle: only check SL, no trailing
         b = cdf.iloc[pos+j]
+        if j == 0:
+            # Entry candle: seulement verifier si low/high touche le SL
+            if d == 'long' and b['low'] <= stop: return 0, stop
+            if d == 'short' and b['high'] >= stop: return 0, stop
+            continue
         if d == 'long':
             if b['low'] <= stop: return j, stop
             if b['close'] > best: best = b['close']
