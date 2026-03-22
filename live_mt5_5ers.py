@@ -468,8 +468,9 @@ def sync_positions(state):
             # Position fermee par MT5 (SL ou autre)
             pdata = state['positions'].pop(key)
 
-            # Lire le resultat depuis MT5
-            deals = mt5.history_deals_get(position=ticket)
+            # Lire le resultat depuis MT5 (chercher dans les 7 derniers jours)
+            from_date = datetime.now(timezone.utc) - timedelta(days=7)
+            deals = mt5.history_deals_get(from_date, datetime.now(timezone.utc), position=ticket)
             if deals and len(deals) >= 2:
                 close_deal = deals[-1]
                 pnl = close_deal.profit + close_deal.commission + close_deal.swap
