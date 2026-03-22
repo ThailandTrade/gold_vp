@@ -360,7 +360,8 @@ def detect_and_execute_open_strats(candles, state, atr, candle_time, today, tick
             ds = pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')
             tv_now = candles[(candles['ts_dt']>=ds)&(candles['ts_dt']<=candle_time)]
             if len(tv_now) >= 100:
-                day_move = (tv_now.iloc[-1]['close'] - tv_now.iloc[0]['open']) / atr
+                current = tick.ask if tick else tv_now.iloc[-1]['close']
+                day_move = (current - tv_now.iloc[0]['open']) / atr
                 if abs(day_move) >= 1.5:
                     signals.append({'strat':'NY_DAYMOM','dir':'long' if day_move>0 else 'short'}); trig[k]=True
 
