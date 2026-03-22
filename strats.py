@@ -36,29 +36,56 @@ STRAT_SESSION = {
 }
 
 def sim_exit(cdf, pos, entry, d, atr, check_entry_candle=False):
-    best = entry; stop = entry + SL*atr if d == 'short' else entry - SL*atr; ta = False
+    """Exit avec config globale (SL, ACT, TRAIL)."""
+    return sim_exit_custom(cdf, pos, entry, d, atr, 'TRAIL', SL, ACT, TRAIL, check_entry_candle)
+
+def sim_exit_custom(cdf, pos, entry, d, atr, exit_type, p1, p2, p3, check_entry_candle=False):
+    """Exit avec config custom.
+    TRAIL: p1=sl, p2=act, p3=trail
+    TPSL:  p1=sl, p2=tp, p3=unused
+    """
+    sl_val = p1
+    stop = entry + sl_val*atr if d == 'short' else entry - sl_val*atr
     start = 0 if check_entry_candle else 1
-    for j in range(start, len(cdf)-pos):
-        if j == 0: j = 0  # entry candle: only check SL, no trailing
-        b = cdf.iloc[pos+j]
-        if j == 0:
-            # Entry candle: seulement verifier si low/high touche le SL
-            if d == 'long' and b['low'] <= stop: return 0, stop
-            if d == 'short' and b['high'] >= stop: return 0, stop
-            continue
-        if d == 'long':
-            if b['low'] <= stop: return j, stop
-            if b['close'] > best: best = b['close']
-            if not ta and (best-entry) >= ACT*atr: ta = True
-            if ta: stop = max(stop, best - TRAIL*atr)
-            if b['close'] < stop: return j, b['close']
-        else:
-            if b['high'] >= stop: return j, stop
-            if b['close'] < best: best = b['close']
-            if not ta and (entry-best) >= ACT*atr: ta = True
-            if ta: stop = min(stop, best + TRAIL*atr)
-            if b['close'] > stop: return j, b['close']
-    return 1, entry
+
+    if exit_type == 'TPSL':
+        target = entry + p2*atr if d == 'long' else entry - p2*atr
+        for j in range(start, len(cdf)-pos):
+            b = cdf.iloc[pos+j]
+            if j == 0:
+                if d == 'long' and b['low'] <= stop: return 0, stop
+                if d == 'short' and b['high'] >= stop: return 0, stop
+                continue
+            if d == 'long':
+                if b['low'] <= stop: return j, stop
+                if b['close'] >= target: return j, b['close']
+            else:
+                if b['high'] >= stop: return j, stop
+                if b['close'] <= target: return j, b['close']
+        n = min(288, len(cdf)-pos-1)
+        if n > 0: return n, cdf.iloc[pos+n]['close']
+        return 1, entry
+    else:  # TRAIL
+        best = entry; ta = False; act_val = p2; trail_val = p3
+        for j in range(start, len(cdf)-pos):
+            b = cdf.iloc[pos+j]
+            if j == 0:
+                if d == 'long' and b['low'] <= stop: return 0, stop
+                if d == 'short' and b['high'] >= stop: return 0, stop
+                continue
+            if d == 'long':
+                if b['low'] <= stop: return j, stop
+                if b['close'] > best: best = b['close']
+                if not ta and (best-entry) >= act_val*atr: ta = True
+                if ta: stop = max(stop, best - trail_val*atr)
+                if b['close'] < stop: return j, b['close']
+            else:
+                if b['high'] >= stop: return j, stop
+                if b['close'] < best: best = b['close']
+                if not ta and (entry-best) >= act_val*atr: ta = True
+                if ta: stop = min(stop, best + trail_val*atr)
+                if b['close'] > stop: return j, b['close']
+        return 1, entry
 
 def detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_day_data, add, prev2_day_data=None):
     """Detecte les signaux pour toutes les strats."""

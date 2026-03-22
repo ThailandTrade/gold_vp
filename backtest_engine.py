@@ -2,7 +2,8 @@
 Moteur de backtest commun — utilise par simu_icmarkets.py et simu_ftmo.py.
 """
 import numpy as np, pandas as pd
-from strats import SL, ACT, TRAIL, sim_exit, detect_all
+from strats import SL, ACT, TRAIL, sim_exit, sim_exit_custom, detect_all
+from strat_exits import STRAT_EXITS, DEFAULT_EXIT
 
 def run_backtest(candles, daily_atr, global_atr, trading_days, monthly_spread, portfolio, broker_name, capital=1000.0, risk=0.01, spread_override=None):
     avg_sp = np.mean(list(monthly_spread.values())) if monthly_spread else 0.10
@@ -41,10 +42,12 @@ def run_backtest(candles, daily_atr, global_atr, trading_days, monthly_spread, p
         OPEN_STRATS = ['TOK_FADE','TOK_PREVEXT','LON_GAP','LON_BIGGAP','LON_KZ','LON_TOKEND','LON_PREV','NY_GAP','NY_LONEND','NY_LONMOM','NY_DAYMOM']
         def add(sn, d, e):
             if sn not in portfolio: return
-            check_entry = sn in OPEN_STRATS  # strats "open" : verifier la bougie d'entree pour SL
-            b, ex = sim_exit(candles, ci, e, d, atr, check_entry_candle=check_entry)
+            check_entry = sn in OPEN_STRATS
+            exit_cfg = STRAT_EXITS.get(sn, DEFAULT_EXIT)
+            etype, p1, p2, p3 = exit_cfg
+            b, ex = sim_exit_custom(candles, ci, e, d, atr, etype, p1, p2, p3, check_entry_candle=check_entry)
             pnl = (ex-e) if d=='long' else (e-ex)
-            S.setdefault(sn,[]).append({'date':today,'dir':d,'sl_atr':SL,'pnl_oz':pnl-get_sp(today),'atr':atr,'ei':ci,'xi':ci+b})
+            S.setdefault(sn,[]).append({'date':today,'dir':d,'sl_atr':p1,'pnl_oz':pnl-get_sp(today),'atr':atr,'ei':ci,'xi':ci+b})
         detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_day_data, add, prev2_day_data)
 
     # Combine et filtre conflits
