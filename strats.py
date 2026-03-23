@@ -73,11 +73,12 @@ def sim_exit_custom(cdf, pos, entry, d, atr, exit_type, p1, p2, p3, check_entry_
                 if d == 'short' and b['high'] >= stop: return 0, stop
                 continue
             if d == 'long':
+                # SL first (conservative: si les deux touchent sur la meme bougie, SL gagne)
                 if b['low'] <= stop: return j, stop
-                if b['close'] >= target: return j, b['close']
+                if b['high'] >= target: return j, target  # TP sur HIGH, exit au TARGET
             else:
                 if b['high'] >= stop: return j, stop
-                if b['close'] <= target: return j, b['close']
+                if b['low'] <= target: return j, target  # TP sur LOW, exit au TARGET
         n = min(288, len(cdf)-pos-1)
         if n > 0: return n, cdf.iloc[pos+n]['close']
         return 1, entry
