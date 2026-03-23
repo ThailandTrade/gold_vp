@@ -248,6 +248,59 @@ Greedy brut plus impacte: PF 1.77→1.60, Rend 2.4M%→1.7M%.
 | Rend | +494% | +2579% | **5x** |
 | M+ | 13/13 | 13/13 | = |
 
+---
+
+## 2026-03-23 — Analyse combinatoire exhaustive (analyze_combos.py)
+
+### Methode
+- 65 strats avec best config optimisee (optimize_all.py)
+- Correlations pairwise entre toutes les strats
+- 2080 paires evaluees
+- 6 criteres greedy: Calmar, PF, MinDD, Sharpe, PF*WR, Diversifie
+- Tailles 2 a 31 strats par critere
+- Profils de risque: conservateur, equilibre, agressif
+
+### Comparatif taille 10
+
+| Critere | Trades | PF | WR | DD | Rend | Sharpe | M+ |
+|---|---|---|---|---|---|---|---|
+| Calmar | 2006 | 1.60 | 72% | -12.3% | +2579% | 4.3 | 13/13 |
+| **PF** | **1428** | **1.85** | **76%** | **-17.6%** | **+1042%** | **4.2** | **12/13** |
+| MinDD | 1758 | 1.42 | 84% | -6.8% | +226% | 3.8 | 11/13 |
+| Sharpe | 1872 | 1.59 | 74% | -14.8% | +1353% | 6.0 | 12/13 |
+| PF*WR | 1525 | 1.77 | 82% | -12.0% | +681% | 3.9 | 10/13 |
+| Diverse | 1454 | 1.69 | 77% | -15.2% | +638% | 4.3 | 10/13 |
+
+### Meilleurs combos par profil
+
+**CONSERVATEUR (DD > -10%, 13/13 mois):**
+- Calmar 5: PO3_SWEEP + LON_PREV + TOK_2BAR + LON_KZ + ALL_KC_BRK
+- PF=1.66, WR=74%, DD=-7.7%, Rend=+548%, 13/13 mois
+
+**EQUILIBRE (DD > -15%, PF > 1.4):**
+- Calmar 13: PO3_SWEEP + LON_PREV + TOK_2BAR + LON_KZ + ALL_KC_BRK + ALL_3SOLDIERS + ALL_FVG_BULL + LON_BIGGAP + ALL_MACD_RSI + TOK_BIG + TOK_PREVEXT + LON_TOKEND + ALL_PSAR_EMA
+- PF=1.53, WR=72%, DD=-11.3%, Rend=+3646%, 13/13 mois
+
+**MEILLEUR PF (taille 10):**
+- PO3_SWEEP + D8 + LON_BIGGAP + LON_PREV + LON_TOKEND + TOK_PREVEXT + LON_KZ + LON_GAP + TOK_BIG + ALL_CONSEC_REV
+- PF=1.85, WR=76%, DD=-17.6%, Rend=+1042%, 12/13 mois
+
+**MEILLEUR SHARPE (taille 10):**
+- PO3_SWEEP + LON_KZ + TOK_2BAR + LON_PREV + ALL_KC_BRK + ALL_PSAR_EMA + ALL_CONSEC_REV + LON_BIGGAP + NY_LONEND + ALL_FIB_618
+- Sharpe=5.96, PF=1.59, DD=-14.8%, 12/13 mois
+
+### Observations cles
+- PO3_SWEEP TRAIL (PF 2.46) est le pilier de TOUS les combos
+- LON_KZ, LON_TOKEND, LON_BIGGAP forment un noyau London tres fort
+- Le critere PF donne le meilleur PF mais plus de DD
+- MinDD donne DD <7% mais rendement faible
+- Calmar est le meilleur compromis avec 13/13 mois
+- Sharpe donne le meilleur ratio risque/rendement ajuste
+
+### Fichiers generes
+- `optim_data.pkl` — donnees trades pour reload rapide
+- `combo_results.json` — resultats tous criteres/tailles
+
 Changements cles:
 - TRAIL au lieu de TPSL pour 8/10 strats → permet de capturer les gros mouvements
 - PO3_SWEEP TRAIL: PF 2.46 (vs 1.76 en TPSL)
