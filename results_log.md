@@ -406,3 +406,8 @@ python analyze_combos.py                 # re-analyser combos (si re-optimise)
 - Trade ouvert: entry/bid/ask/spread, SL distance + ATR mult, TP/RR ou TRAIL params, size/lots, risk$, capital
 - tick fetche a chaque poll (pas seulement quand positions ouvertes)
 - Commit: feba397
+
+### bt_portfolio.py: args capital et risk
+- `python bt_portfolio.py icm -c 100000 -r 2` → ICM $100k @ 2% risk
+- `python bt_portfolio.py ftmo -c 200000` → FTMO $200k @ 0.5% (defaut config)
+- Commit: 0239615
