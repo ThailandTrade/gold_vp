@@ -167,6 +167,26 @@ Conclusion: L'Equilibre 10 est le meilleur compromis pour le live.
 - **Fix**: TP check sur high/low, exit au target price (identique au backtest)
 - **Commit**: 5edc372
 
+### Bug corrige: eval_combo compound sur unrealized PnL
+- **Fichiers**: find_combo_greedy.py, build_combo_balanced.py, build_combo_high_wr.py
+- **Probleme**: trades tries par entry, PnL applique immediatement au capital → trades suivants sizes sur capital gonfle par profits non-realises
+- **Fix**: event-based tracking: capital enregistre a l'entry pour sizing, PnL applique seulement a l'exit
+- **Commit**: c0bf575, 1a8cdc8
+
+### Impact du fix eval_combo sur Equilibre 10
+
+| Metrique | Avant fix | Apres fix | Delta |
+|---|---|---|---|
+| Trades | 2005 | 2005 | = |
+| PF | 1.32 | 1.32 | = |
+| WR | 72% | 72% | = |
+| DD | -15.4% | -15.8% | -0.4% |
+| Rend | +511% | +494% | -17pp |
+| M+ | 13/13 | 13/13 | = |
+
+Impact modere sur Equilibre (peu d'overlap entre TPSL courts).
+Greedy brut plus impacte: PF 1.77→1.60, Rend 2.4M%→1.7M%.
+
 ### Autres points audites (OK)
 - check_stops_realtime (tick-level): SL et TP corrects (bid/ask reel)
 - detect_all: conditions identiques backtest ↔ live pour les 11 strats du portfolio

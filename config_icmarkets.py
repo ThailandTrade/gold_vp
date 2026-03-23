@@ -13,7 +13,8 @@ PORTFOLIO = [
 ]
 
 # Backtest reference Equilibre (donnees ICMarkets, mars 2025 - mars 2026, 1% risk):
-# Trades: 2005 | WR: 72% | PF: 1.32 | Max DD: -15.4% | Rend: +511% | Mois+: 13/13
+# Trades: 2005 | WR: 72% | PF: 1.32 | Max DD: -15.8% | Rend: +494% | Mois+: 13/13
+# (corrige: eval_combo event-based, sizing sur capital realise)
 #
 # Exits TPSL par strat:
 #   PO3_SWEEP      SL=3.0 TP=0.75   PF=1.76  WR=80%
