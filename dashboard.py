@@ -310,38 +310,36 @@ else:
 
 # ── SIDEBAR: STRATEGIES ──
 with st.sidebar:
+    from strats import STRAT_SESSION
     st.subheader(f"Strategies {BROKER}")
-    sessions = {}
-    for sn in PORTFOLIO:
-        from strats import STRAT_SESSION
-        s = STRAT_SESSION.get(sn, 'All')
-        sessions.setdefault(s, []).append(sn)
-
-    for session, strat_list in sorted(sessions.items()):
-        st.caption(f"**{session}**")
-        for sn in strat_list:
-            exit_cfg = STRAT_EXITS.get(sn, DEFAULT_EXIT)
-            exit_info = f"{exit_cfg[0]} SL={exit_cfg[1]:.1f}"
-            if exit_cfg[0] == 'TPSL':
-                exit_info += f" TP={exit_cfg[2]:.2f}"
-            else:
-                exit_info += f" ACT={exit_cfg[2]:.2f} TR={exit_cfg[3]:.2f}"
-
-            if n_trades > 0 and sn in df['strat'].values:
-                s = df[df['strat']==sn]
-                w = (s['pnl_dollar']>0).sum(); n = len(s)
-                pnl_s = s['pnl_dollar'].sum()
-                gps = s[s['pnl_dollar']>0]['pnl_dollar'].sum()
-                gls = abs(s[s['pnl_dollar']<0]['pnl_dollar'].sum())+0.01
-                color = "🟢" if pnl_s >= 0 else "🔴"
-                st.markdown(f"{color} **{sn}** — {STRATS.get(sn,'')}  \n{exit_info} · {n} trades · WR {w/n*100:.0f}% · PF {gps/gls:.2f} · ${pnl_s:+,.2f}")
-            else:
-                st.markdown(f"⚪ **{sn}** — {STRATS.get(sn,'')}  \n{exit_info} · 0 trades")
-    st.divider()
     cache = {}
     for k, v in state.get('daily_cache', {}).items(): cache = v; break
     if cache.get('atr'):
-        st.metric("ATR (veille)", f"{cache['atr']:.2f}")
+        st.caption(f"ATR {cache['atr']:.2f}")
+
+    for sn in PORTFOLIO:
+        exit_cfg = STRAT_EXITS.get(sn, DEFAULT_EXIT)
+        sess_s = STRAT_SESSION.get(sn, 'All')
+
+        if n_trades > 0 and sn in df['strat'].values:
+            s = df[df['strat']==sn]
+            w = (s['pnl_dollar']>0).sum(); ns = len(s)
+            pnl_s = s['pnl_dollar'].sum()
+            gps = s[s['pnl_dollar']>0]['pnl_dollar'].sum()
+            gls = abs(s[s['pnl_dollar']<0]['pnl_dollar'].sum())+0.01
+            icon = "🟢" if pnl_s >= 0 else "🔴"
+            label = f"{icon} **{sn}** {ns}t WR{w/ns*100:.0f}% ${pnl_s:+,.0f}"
+            # Detail on hover via expander
+            tip = (f"{STRATS.get(sn,'')} ({sess_s})\n"
+                   f"{exit_cfg[0]} SL={exit_cfg[1]:.1f} "
+                   f"{'TP='+str(exit_cfg[2]) if exit_cfg[0]=='TPSL' else 'ACT='+str(exit_cfg[2])+' TR='+str(exit_cfg[3])}\n"
+                   f"PF={gps/gls:.2f} | {w}W {ns-w}L")
+            st.markdown(f'<span title="{tip}">{label}</span>', unsafe_allow_html=True)
+        else:
+            tip = (f"{STRATS.get(sn,'')} ({sess_s})\n"
+                   f"{exit_cfg[0]} SL={exit_cfg[1]:.1f} "
+                   f"{'TP='+str(exit_cfg[2]) if exit_cfg[0]=='TPSL' else 'ACT='+str(exit_cfg[2])+' TR='+str(exit_cfg[3])}")
+            st.markdown(f'<span title="{tip}">⚪ **{sn}**</span>', unsafe_allow_html=True)
 
 # Refresh
 time.sleep(10)
