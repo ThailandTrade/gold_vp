@@ -400,3 +400,9 @@ python analyze_combos.py                 # re-analyser combos (si re-optimise)
 - Detail au survol souris (tooltip): description, session, exit config, PF, W/L
 - Suppression du groupement par session et des descriptions multi-lignes
 - Commit: 4885a8a, 98bd537 (restauration groupement par session)
+
+### Live heartbeat + detail trades
+- Heartbeat toutes les 5min: `~ HH:MM | OHLC | ATR | N/12 trig | Npos | unr=$X`
+- Trade ouvert: entry/bid/ask/spread, SL distance + ATR mult, TP/RR ou TRAIL params, size/lots, risk$, capital
+- tick fetche a chaque poll (pas seulement quand positions ouvertes)
+- Commit: feba397
