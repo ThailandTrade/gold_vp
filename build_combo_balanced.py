@@ -282,13 +282,13 @@ def eval_combo(strats, capital=1000.0, risk=0.01):
     # Event-based capital tracking (size at entry, PnL at exit)
     events = []
     for idx, (ei, xi, di, pnl_oz, sl_atr, atr, mo, _sn) in enumerate(accepted):
-        events.append((ei, 1, idx))   # 1 = entry
-        events.append((xi, 0, idx))   # 0 = exit (sort before entry at same bar)
+        events.append((ei, 0, idx))   # 0 = entry (sort before exit at same bar)
+        events.append((xi, 1, idx))   # 1 = exit
     events.sort()
     cap = capital; peak = cap; max_dd = 0; gp = 0; gl = 0; wins = 0; months = {}
     has_l = False; has_s = False; entry_caps = {}
     for bar, evt, idx in events:
-        if evt == 1:
+        if evt == 0:
             entry_caps[idx] = cap
         else:
             ei, xi, di, pnl_oz, sl_atr, atr, mo, _sn = accepted[idx]
