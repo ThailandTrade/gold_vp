@@ -399,4 +399,4 @@ python analyze_combos.py                 # re-analyser combos (si re-optimise)
 - Sidebar: 1 ligne par strat (icone + nom + trades + WR + PnL$)
 - Detail au survol souris (tooltip): description, session, exit config, PF, W/L
 - Suppression du groupement par session et des descriptions multi-lignes
-- Commit: 4885a8a
+- Commit: 4885a8a, 98bd537 (restauration groupement par session)
