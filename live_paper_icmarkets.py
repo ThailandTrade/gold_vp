@@ -166,12 +166,12 @@ def manage_positions(candles_df, state, conn):
             pos['exit'] = pos['stop']; pos['exit_reason'] = 'stop'; closed.append(pos); continue
 
         if exit_type == 'TPSL':
-            # 2. TP check on close
+            # 2. TP check on high/low, exit at target price (coherent avec backtest)
             if 'target' in pos:
-                if d == 'long' and last['close'] >= pos['target']:
-                    pos['exit'] = last['close']; pos['exit_reason'] = 'tp'; closed.append(pos); continue
-                if d == 'short' and last['close'] <= pos['target']:
-                    pos['exit'] = last['close']; pos['exit_reason'] = 'tp'; closed.append(pos); continue
+                if d == 'long' and last['high'] >= pos['target']:
+                    pos['exit'] = pos['target']; pos['exit_reason'] = 'tp'; closed.append(pos); continue
+                if d == 'short' and last['low'] <= pos['target']:
+                    pos['exit'] = pos['target']; pos['exit_reason'] = 'tp'; closed.append(pos); continue
         else:
             # TRAIL: best update + trailing
             sl_val = exit_cfg[1]; act_val = exit_cfg[2]; trail_val = exit_cfg[3]
