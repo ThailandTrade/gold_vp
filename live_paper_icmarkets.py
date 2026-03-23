@@ -271,9 +271,24 @@ def open_position(state, sig, atr, candle_time, conn):
         pos_data['target'] = target
 
     state['open_positions'].append(pos_data)
-    tp_str = " target={:.2f}".format(pos_data.get('target', 0)) if 'target' in pos_data else ""
-    log.info("OPEN {} {} | {:.2f} (sp={:.3f}) | stop={:.2f}{} | {:.3f}lots | {}".format(
-        sig['strat'], d, entry, tick['spread'], stop, tp_str, pos_oz/100, exit_type))
+
+    # Detail complet du trade
+    sl_dist = abs(entry - stop)
+    tp_str = ""
+    if 'target' in pos_data:
+        tp_dist = abs(pos_data['target'] - entry)
+        rr = tp_dist / sl_dist if sl_dist > 0 else 0
+        tp_str = " | TP={:.2f} ({:.1f}$, RR={:.1f})".format(pos_data['target'], tp_dist, rr)
+    trail_str = ""
+    if exit_type == 'TRAIL':
+        trail_str = " | ACT={:.2f} TRAIL={:.2f}".format(exit_cfg[2], exit_cfg[3])
+    log.info(">>> TRADE {} {} <<<".format(sig['strat'], d.upper()))
+    log.info("    Entry={:.2f} (bid={:.2f} ask={:.2f} spread={:.3f})".format(
+        entry, tick['bid'], tick['ask'], tick['spread']))
+    log.info("    SL={:.2f} ({:.1f}$ / {:.1f}x ATR){}{} | {}".format(
+        stop, sl_dist, exit_cfg[1], tp_str, trail_str, exit_type))
+    log.info("    Size={:.4f}oz ({:.3f}lots) | Risk=${:.2f} ({:.1f}%) | Cap=${:,.2f}".format(
+        pos_oz, pos_oz/100, risk, RISK_PCT*100, state['capital']))
 
 # ── DASHBOARD ─────────────────────────────────────────
 
@@ -361,10 +376,9 @@ def main():
                 log.info("Reset triggered pour {}".format(today))
 
             # Check stops/TP real-time
-            if state['open_positions']:
-                tick = get_current_bidask(conn)
-                if tick:
-                    check_stops_realtime(state, tick, conn)
+            tick = get_current_bidask(conn)
+            if state['open_positions'] and tick:
+                check_stops_realtime(state, tick, conn)
 
             # Open strats (detected every poll)
             now_utc = datetime.now(timezone.utc)
@@ -383,9 +397,21 @@ def main():
             if not is_new:
                 time.sleep(CHECK_INTERVAL); continue
 
-            log.info("CANDLE {} | close={:.2f} | ATR={:.2f} | pos={}".format(
-                candle_time.strftime("%Y-%m-%d %H:%M"), candles.iloc[-1]['close'], atr,
-                len(state['open_positions'])))
+            # Heartbeat: nouvelle bougie
+            last_row = candles.iloc[-1]
+            n_trig = len(state.get('_triggered', {}))
+            n_pos = len(state['open_positions'])
+            pos_pnl = ""
+            if n_pos > 0 and tick:
+                total_unr = 0
+                for p in state['open_positions']:
+                    px = tick['bid'] if p['strat_dir']=='long' else tick['ask']
+                    total_unr += ((px-p['entry']) if p['strat_dir']=='long' else (p['entry']-px)) * p['pos_oz']
+                pos_pnl = " | unr=${:+,.2f}".format(total_unr)
+            log.info("~ {} | O={:.2f} H={:.2f} L={:.2f} C={:.2f} | ATR={:.2f} | {}/{} trig | {}pos{}".format(
+                candle_time.strftime("%H:%M"),
+                last_row['open'], last_row['high'], last_row['low'], last_row['close'],
+                atr, n_trig, len(STRATS), n_pos, pos_pnl))
             if state['open_positions']:
                 manage_positions(candles, state, conn)
             last_candle_ts = current_ts; state['last_candle_ts'] = current_ts
