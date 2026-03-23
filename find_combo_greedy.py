@@ -367,6 +367,7 @@ def eval_combo(strats, capital=1000.0, risk=0.01):
         if sn in strat_arrays: combined.extend(strat_arrays[sn])
     if len(combined) < 50: return None
     combined.sort(key=lambda x: (x[0], x[7]))
+    # Step 1: Conflict filtering (entry order, unchanged)
     active = []; accepted = []
     for ei, xi, di, pnl_oz, sl_atr, atr, mo, _sn in combined:
         active = [(axi, ad) for axi, ad in active if axi >= ei]
@@ -375,20 +376,35 @@ def eval_combo(strats, capital=1000.0, risk=0.01):
         active.append((xi, di))
     n = len(accepted)
     if n < 50: return None
+    # Step 2: Event-based capital tracking (size at entry, PnL at exit)
+    events = []
+    for idx, (ei, xi, di, pnl_oz, sl_atr, atr, mo, _sn) in enumerate(accepted):
+        events.append((ei, 1, idx))   # 1 = entry
+        events.append((xi, 0, idx))   # 0 = exit (sort before entry at same bar)
+    events.sort()
     cap = capital; peak = cap; max_dd = 0; gp = 0; gl = 0; wins = 0; months = {}
-    has_l = False; has_s = False; pnls = []
-    for ei, xi, di, pnl_oz, sl_atr, atr, mo, _sn in accepted:
-        pnl = pnl_oz * (cap * risk) / (sl_atr * atr)
-        cap += pnl; pnls.append(pnl)
-        if cap > peak: peak = cap
-        dd = (cap - peak) / peak
-        if dd < max_dd: max_dd = dd
-        if pnl > 0: gp += pnl; wins += 1
-        else: gl += abs(pnl)
-        months[mo] = months.get(mo, 0.0) + pnl
-        if di == 1: has_l = True;
-        else: has_s = True
+    has_l = False; has_s = False
+    entry_caps = {}; pnl_by_entry = []  # (ei, pnl) for split check
+    for bar, evt, idx in events:
+        if evt == 1:  # entry: record realized capital for sizing
+            entry_caps[idx] = cap
+        else:  # exit: compute PnL with capital at entry time
+            ei, xi, di, pnl_oz, sl_atr, atr, mo, _sn = accepted[idx]
+            pnl = pnl_oz * (entry_caps[idx] * risk) / (sl_atr * atr)
+            cap += pnl
+            pnl_by_entry.append((ei, pnl))
+            if cap > peak: peak = cap
+            dd = (cap - peak) / peak
+            if dd < max_dd: max_dd = dd
+            if pnl > 0: gp += pnl; wins += 1
+            else: gl += abs(pnl)
+            months[mo] = months.get(mo, 0.0) + pnl
+            if di == 1: has_l = True
+            else: has_s = True
     mdd = max_dd * 100; ret = (cap - capital) / capital * 100
+    # Split check: sort by entry time for temporal robustness
+    pnl_by_entry.sort()
+    pnls = [p for _, p in pnl_by_entry]
     mid = n // 2; p1 = sum(pnls[:mid]); p2 = sum(pnls[mid:])
     pm = sum(1 for v in months.values() if v > 0)
     return {'n': n, 'ret': ret, 'mdd': mdd, 'cal': ret / abs(mdd) if mdd < 0 else 0,
