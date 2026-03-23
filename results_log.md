@@ -201,3 +201,56 @@ Greedy brut plus impacte: PF 1.77→1.60, Rend 2.4M%→1.7M%.
 2. Pas de timeout 288 bars en live (backtest a un fallback 24h pour TPSL)
 3. prev2_day_data pas passe en live (D8 pas dans portfolio, sans impact)
 4. Dead code: SL/ACT/TRAIL globals + sim_exit() dans strats.py
+
+---
+
+## 2026-03-23 — Optimisation complete: 65 strats x 122 exits (optimize_all.py)
+
+### Methode
+- 65 strats detectees (53 existantes + 13 ajoutees: EMA crosses, CCI, BB_TIGHT, HMA_DIR, etc.)
+- Grille: TPSL (6 SL x 7 TP = 42) + TRAIL (5 SL x 4 ACT x 4 TRAIL = 80) = 122 configs par strat
+- Score selection: PF * WR, avec filtre split OK + PF > 1.05
+- eval_combo event-based (sizing sur capital realise)
+
+### Resultats: 65/65 strats avec config viable
+
+### Top combos
+
+| Combo | Trades | PF | WR | DD 1% | Rend 1% | M+ |
+|---|---|---|---|---|---|---|
+| Greedy 5 | 1010 | 1.66 | 74% | -7.7% | +548% | 13/13 |
+| Greedy 8 | 1607 | 1.65 | 73% | -11.9% | +1486% | 13/13 |
+| **Greedy 10** | 2006 | **1.60** | 72% | **-12.3%** | **+2579%** | 13/13 |
+| Greedy 12 | 2078 | 1.62 | 72% | -12.5% | +3523% | 13/13 |
+| Greedy 15 | 2669 | 1.52 | 72% | -13.9% | +5407% | 12/13 |
+| Greedy 20 | 3524 | 1.47 | 74% | -18.1% | +11698% | 13/13 |
+
+### Composition Greedy 10 (nouveau candidat)
+| Strat | Type | SL | P2 | P3 | PF | WR |
+|---|---|---|---|---|---|---|
+| PO3_SWEEP | TRAIL | 3.0 | 0.75 | 0.75 | 2.46 | 79% |
+| LON_PREV | TRAIL | 2.0 | 0.75 | 0.75 | 1.19 | 63% |
+| TOK_2BAR | TRAIL | 3.0 | 0.50 | 0.50 | 1.61 | 75% |
+| LON_KZ | TRAIL | 3.0 | 0.50 | 0.30 | 1.80 | 82% |
+| ALL_KC_BRK | TRAIL | 3.0 | 1.00 | 0.75 | 1.20 | 69% |
+| ALL_3SOLDIERS | TPSL | 3.0 | 2.00 | — | 1.34 | 67% |
+| ALL_FVG_BULL | TRAIL | 3.0 | 1.00 | 0.75 | 1.63 | 70% |
+| LON_BIGGAP | TRAIL | 3.0 | 0.75 | 0.50 | 1.70 | 74% |
+| ALL_MACD_RSI | TRAIL | 1.5 | 0.50 | 0.50 | 1.67 | 60% |
+| TOK_BIG | TRAIL | 3.0 | 0.30 | 0.30 | 1.57 | 76% |
+
+### Comparatif vs ancien Equilibre 10
+| Metrique | Ancien Equilibre | Nouveau Greedy 10 | Delta |
+|---|---|---|---|
+| PF | 1.32 | 1.60 | **+0.28** |
+| WR | 72% | 72% | = |
+| DD | -15.8% | -12.3% | **+3.5%** |
+| Rend | +494% | +2579% | **5x** |
+| M+ | 13/13 | 13/13 | = |
+
+Changements cles:
+- TRAIL au lieu de TPSL pour 8/10 strats → permet de capturer les gros mouvements
+- PO3_SWEEP TRAIL: PF 2.46 (vs 1.76 en TPSL)
+- ALL_FVG_BULL TRAIL: PF 1.63 (vs 1.06 en TPSL, etait perdant!)
+- ALL_MACD_RSI TRAIL: PF 1.67 (vs 1.22 en TPSL)
+- Nouvelles strats: LON_PREV, ALL_KC_BRK, LON_BIGGAP remplacent ALL_CONSEC_REV, ALL_PSAR_EMA, ALL_FIB_618
