@@ -394,3 +394,9 @@ python bt_portfolio.py [icm|ftmo|5ers]   # backtest rapide
 python optimize_all.py                   # re-optimiser (si modif strats/exits)
 python analyze_combos.py                 # re-analyser combos (si re-optimise)
 ```
+
+### Dashboard compact sidebar
+- Sidebar: 1 ligne par strat (icone + nom + trades + WR + PnL$)
+- Detail au survol souris (tooltip): description, session, exit config, PF, W/L
+- Suppression du groupement par session et des descriptions multi-lignes
+- Commit: 4885a8a
