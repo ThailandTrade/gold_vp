@@ -612,3 +612,14 @@ for sz in [5, 8, 10, 12, 15]:
             print(f"    {sn:22s} {cfg['type']:5s} SL={cfg['p1']:.1f} {tp_str:16s} PF={cfg['pf']:.2f} WR={cfg['wr']:.0f}%")
 
 print(f"\n{'='*130}")
+
+# ── SAVE TO DISK ──
+import pickle
+save_data = {
+    'strat_arrays': strat_arrays,
+    'best_configs': best_configs,
+    'OPEN_STRATS': list(OPEN_STRATS),
+}
+with open('optim_data.pkl', 'wb') as f:
+    pickle.dump(save_data, f)
+print("Saved optim_data.pkl")
