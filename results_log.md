@@ -80,3 +80,77 @@ ALL_MACD_RSI + LON_PREV + ALL_KC_BRK + TOK_2BAR + ALL_DC10_EMA + NY_DAYMOM + NY_
 
 Conclusion: le diversifie echange du rendement contre de la stabilite.
 Plus robuste en live (moins de dependance a un seul type de signal).
+
+---
+
+## 2026-03-23 — Combo High WR (>60%)
+
+Objectif: maximiser le WR pour reduire la dependance aux gros gagnants.
+Methode: SL=3.0 ATR + TP court (0.3-1.0 ATR) = WR eleve mais PF reduit.
+19 strats validees (WR>=60% + PF>=1.1 + split OK).
+
+### 10 strats High WR diversifie (corr < 0.4)
+PO3_SWEEP + TOK_2BAR + ALL_FIB_618 + ALL_PSAR_EMA + LON_TOKEND + ALL_FVG_BULL + LON_KZ + LON_GAP + TOK_BIG + ALL_MACD_STD_SIG
+
+| Metrique | 1% risk |
+|---|---|
+| Trades | 1942 |
+| PF | 1.33 |
+| WR | 78% |
+| DD | -11.1% |
+| Rend | +339% |
+| M+ | 13/13 |
+
+Avantage: WR tres eleve, DD tres bas, 13/13 mois.
+Inconvenient: rendement modeste (PF 1.33, petits TP).
+
+---
+
+## 2026-03-23 — Combo Equilibre (WR 45-70%, PF>1.2)
+
+Objectif: trouver le sweet spot entre rendement, DD et WR.
+Methode: exits intermediaires (SL=1.5-3.0, TP=0.5-1.5) visant WR 45-70%.
+26 strats validees (WR>=45% + PF>=1.2 + split OK).
+
+### 10 strats Equilibre diversifie (corr < 0.4)
+PO3_SWEEP + ALL_3SOLDIERS + LON_KZ + LON_TOKEND + ALL_PSAR_EMA + ALL_FVG_BULL + ALL_CONSEC_REV + ALL_MACD_RSI + ALL_FIB_618 + TOK_BIG
+
+| Metrique | 1% risk |
+|---|---|
+| Trades | 2005 |
+| PF | 1.32 |
+| WR | 72% |
+| DD | -15.4% |
+| Rend | +511% |
+| M+ | 13/13 |
+
+Configs par strat:
+| Strat | SL | TP | PF | WR |
+|---|---|---|---|---|
+| PO3_SWEEP | 3.0 | 0.75 | 1.76 | 80% |
+| ALL_3SOLDIERS | 3.0 | 1.50 | 1.29 | 64% |
+| LON_KZ | 2.5 | 0.50 | 1.70 | 80% |
+| LON_TOKEND | 3.0 | 1.50 | 1.80 | 65% |
+| ALL_PSAR_EMA | 3.0 | 1.00 | 1.29 | 72% |
+| ALL_FVG_BULL | 2.5 | 0.75 | 1.45 | 70% |
+| ALL_CONSEC_REV | 3.0 | 0.50 | 1.48 | 77% |
+| ALL_MACD_RSI | 3.0 | 1.50 | 1.22 | 63% |
+| ALL_FIB_618 | 1.5 | 0.50 | 1.30 | 65% |
+| TOK_BIG | 3.0 | 0.50 | 1.30 | 78% |
+
+---
+
+## 2026-03-23 — Comparatif global des 4 approches
+
+| Combo | Trades | PF | WR | DD 1% | Rend 1% | M+ |
+|---|---|---|---|---|---|---|
+| Greedy Brut 10 | 2333 | 1.77 | 27% | -57.4% | +2,381,361% | 11/13 |
+| Greedy Divers 10 | 2163 | 1.64 | 32% | -50.6% | +728,430% | 11/13 |
+| **Equilibre 10** | 2005 | 1.32 | 72% | -15.4% | +511% | 13/13 |
+| High WR 10 | 1942 | 1.33 | 78% | -11.1% | +339% | 13/13 |
+
+Conclusion: L'Equilibre 10 est le meilleur compromis pour le live.
+- WR 72% = psychologiquement tenable, pas de dependance aux gros gagnants
+- DD -15% = tres gerable, permet d'augmenter le risk (2% → ~-30% DD, ~+1500% rend)
+- 13/13 mois positifs = regularite maximale
+- Le Greedy a un rendement enorme mais 27% WR et -57% DD = dangereux en live
