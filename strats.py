@@ -104,7 +104,9 @@ def sim_exit_custom(cdf, pos, entry, d, atr, exit_type, p1, p2, p3, check_entry_
         return 1, entry
 
 def compute_indicators(candles):
-    """Precalcule les indicateurs necessaires pour les strats indicator."""
+    """Precalcule les indicateurs necessaires pour les strats indicator.
+    IMPORTANT: doit reproduire EXACTEMENT les calculs de find_combo_greedy.py.
+    """
     c = candles
     # MACD med (8,17,9)
     ef = c['close'].ewm(span=8, adjust=False).mean()
@@ -119,32 +121,27 @@ def compute_indicators(candles):
     c['rsi14'] = 100 - 100/(1+ag/(al+1e-10))
     # EMA 20
     c['ema20'] = c['close'].ewm(span=20, adjust=False).mean()
-    # Parabolic SAR
+    # ATR14 (pour supertrend)
+    tr = np.maximum(c['high']-c['low'], np.maximum(abs(c['high']-c['close'].shift(1)), abs(c['low']-c['close'].shift(1))))
+    c['atr14'] = tr.ewm(span=14, adjust=False).mean()
+    # SUPERTREND comme proxy PSAR (identique a find_combo_greedy.py ligne 112-120)
+    c['mid'] = (c['high'] + c['low']) / 2
+    up2 = c['mid'] - 2.0 * c['atr14']
+    dn2 = c['mid'] + 2.0 * c['atr14']
     n = len(c)
-    psar = np.zeros(n); psar_dir = np.zeros(n)
-    af = 0.02; af_step = 0.02; af_max = 0.20
-    ep = c.iloc[0]['high']; psar[0] = c.iloc[0]['low']; psar_dir[0] = 1
+    st_dir = np.zeros(n); st_val = np.zeros(n)
     for i in range(1, n):
-        if psar_dir[i-1] == 1:
-            psar[i] = psar[i-1] + af * (ep - psar[i-1])
-            psar[i] = min(psar[i], c.iloc[i-1]['low'], c.iloc[i-2]['low'] if i>=2 else c.iloc[i-1]['low'])
-            if c.iloc[i]['low'] < psar[i]:
-                psar_dir[i] = -1; psar[i] = ep; ep = c.iloc[i]['low']; af = af_step
-            else:
-                psar_dir[i] = 1
-                if c.iloc[i]['high'] > ep: ep = c.iloc[i]['high']; af = min(af + af_step, af_max)
+        if c.iloc[i]['close'] > dn2.iloc[i-1]:
+            st_dir[i] = 1; st_val[i] = up2.iloc[i]
+        elif c.iloc[i]['close'] < up2.iloc[i-1]:
+            st_dir[i] = -1; st_val[i] = dn2.iloc[i]
         else:
-            psar[i] = psar[i-1] + af * (ep - psar[i-1])
-            psar[i] = max(psar[i], c.iloc[i-1]['high'], c.iloc[i-2]['high'] if i>=2 else c.iloc[i-1]['high'])
-            if c.iloc[i]['high'] > psar[i]:
-                psar_dir[i] = 1; psar[i] = ep; ep = c.iloc[i]['high']; af = af_step
-            else:
-                psar_dir[i] = -1
-                if c.iloc[i]['low'] < ep: ep = c.iloc[i]['low']; af = min(af + af_step, af_max)
-    c['psar'] = psar; c['psar_dir'] = psar_dir
+            st_dir[i] = st_dir[i-1]
+            st_val[i] = max(up2.iloc[i], st_val[i-1]) if st_dir[i] == 1 else min(dn2.iloc[i], st_val[i-1])
+    c['psar_dir'] = st_dir
     # Body / abs_body
     c['body'] = c['close'] - c['open']
-    c['abs_body'] = abs(c['body'])
+    c['abs_body'] = c['body'].abs()
     return c
 
 def detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_day_data, add, prev2_day_data=None):
@@ -257,39 +254,27 @@ def detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_
             add('ALL_CONSEC_REV','long',row['close']); trig['ALL_CONSEC_REV']=True
 
     # ALL_FIB_618: Fibonacci 0.618 retracement from 30-bar swing
+    # IMPORTANT: LONG ONLY (identique a find_combo_greedy.py, short jamais teste)
     if 'ALL_FIB_618' not in trig and ci >= 30:
         last30 = candles.iloc[ci-30:ci]
         swing_h = last30['high'].max(); swing_l = last30['low'].min()
         swing_rng = swing_h - swing_l
         if swing_rng >= 2.0*atr:
             fib_618 = swing_h - 0.618 * swing_rng
-            if row['close'] > swing_h - 0.3*swing_rng:  # uptrend
-                if prev['low'] <= fib_618 and row['close'] > fib_618 and row['close'] > row['open']:
-                    add('ALL_FIB_618','long',row['close']); trig['ALL_FIB_618']=True
-            fib_618_s = swing_l + 0.618 * swing_rng
-            if row['close'] < swing_l + 0.3*swing_rng:  # downtrend
-                if prev['high'] >= fib_618_s and row['close'] < fib_618_s and row['close'] < row['open']:
-                    add('ALL_FIB_618','short',row['close']); trig['ALL_FIB_618']=True
+            if row['close'] > swing_h - 0.3*swing_rng and prev['low'] <= fib_618 and row['close'] > fib_618 and row['close'] > row['open']:
+                add('ALL_FIB_618','long',row['close']); trig['ALL_FIB_618']=True
 
     # ALL_3SOLDIERS: Three white soldiers / three black crows
+    # IMPORTANT: conditions identiques a find_combo_greedy.py (pas d'overlap/wick check)
     if 'ALL_3SOLDIERS' not in trig and ci >= 3:
         b1 = candles.iloc[ci-2]; b2 = candles.iloc[ci-1]; b3 = row
-        b1b = b1['close']-b1['open']; b2b = b2['close']-b2['open']; b3b = b3['close']-b3['open']
-        b3_upper_wick = b3['high'] - max(b3['close'], b3['open'])
-        b3_lower_wick = min(b3['close'], b3['open']) - b3['low']
-        if (b1b>0 and b2b>0 and b3b>0 and
+        if (b1['close']>b1['open'] and b2['close']>b2['open'] and b3['close']>b3['open'] and
             b2['close']>b1['close'] and b3['close']>b2['close'] and
-            b2['open']>=b1['open'] and b2['open']<=b1['close'] and
-            b3['open']>=b2['open'] and b3['open']<=b2['close'] and
-            min(abs(b1b),abs(b2b),abs(b3b))>=0.3*atr and
-            b3_upper_wick<0.2*abs(b3b)):
+            min(abs(b1['close']-b1['open']),abs(b2['close']-b2['open']),abs(b3['close']-b3['open']))>=0.3*atr):
             add('ALL_3SOLDIERS','long',row['close']); trig['ALL_3SOLDIERS']=True
-        if (b1b<0 and b2b<0 and b3b<0 and
+        if (b1['close']<b1['open'] and b2['close']<b2['open'] and b3['close']<b3['open'] and
             b2['close']<b1['close'] and b3['close']<b2['close'] and
-            b2['open']<=b1['open'] and b2['open']>=b1['close'] and
-            b3['open']<=b2['open'] and b3['open']>=b2['close'] and
-            min(abs(b1b),abs(b2b),abs(b3b))>=0.3*atr and
-            b3_lower_wick<0.2*abs(b3b)):
+            min(abs(b1['close']-b1['open']),abs(b2['close']-b2['open']),abs(b3['close']-b3['open']))>=0.3*atr):
             add('ALL_3SOLDIERS','short',row['close']); trig['ALL_3SOLDIERS']=True
 
     # ALL_PSAR_EMA: Parabolic SAR flip + EMA20 filter
