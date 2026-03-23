@@ -301,6 +301,52 @@ Greedy brut plus impacte: PF 1.77→1.60, Rend 2.4M%→1.7M%.
 - `optim_data.pkl` — donnees trades pour reload rapide
 - `combo_results.json` — resultats tous criteres/tailles
 
+---
+
+## 2026-03-23 — Recommandations par compte (prop firm vs compte propre)
+
+### Contexte
+- ICMarkets = compte propre, pas de limite DD, maximiser rendement
+- 5ers / FTMO = prop firm, DD musele (5ers: 4% challenge, FTMO: 10%)
+- Les DD/Rend sont lineaires avec le risk% (0.5% risk = DD et Rend divises par 2)
+
+### Recommandations
+
+| Compte | Combo | Risk | PF | WR | DD | Rend | M+ |
+|---|---|---|---|---|---|---|---|
+| **5ers** | MinDD 5 | 0.50% | 1.62 | 82% | -2.5% | +83% | 12/13 |
+| **5ers** | Calmar 5 | 0.50% | 1.66 | 74% | -3.9% | +274% | 13/13 |
+| **FTMO** | Calmar 8 | 0.50% | 1.65 | 73% | -6.0% | +743% | 13/13 |
+| **FTMO** | Calmar 5 | 1.00% | 1.66 | 74% | -7.7% | +548% | 13/13 |
+| **ICM std** | Calmar 12 | 1.00% | 1.62 | 72% | -12.5% | +3523% | 13/13 |
+| **ICM std** | Calmar 14 | 1.00% | 1.54 | 72% | -12.9% | +4569% | 13/13 |
+| **ICM aggr** | Calmar 8 | 2.00% | 1.65 | 73% | -23.8% | +2972% | 13/13 |
+| **ICM aggr** | Calmar 12 | 2.00% | 1.62 | 72% | -25.0% | +7046% | 13/13 |
+
+### Compositions
+
+**5ers MinDD 5** (DD < 5%, WR > 80%):
+PO3_SWEEP(TRAIL 3.0/0.75/0.75) + TOK_2BAR(TRAIL 3.0/0.50/0.50) + LON_TOKEND(TRAIL 3.0/0.30/0.30) + ALL_AO_SAUCER(TPSL 3.0/0.50) + ALL_CCI_14_ZERO(TPSL 3.0/0.50)
+
+**FTMO Calmar 8**:
+PO3_SWEEP(TRAIL 3.0/0.75/0.75) + LON_PREV(TRAIL 2.0/0.75/0.75) + TOK_2BAR(TRAIL 3.0/0.50/0.50) + LON_KZ(TRAIL 3.0/0.50/0.30) + ALL_KC_BRK(TRAIL 3.0/1.00/0.75) + ALL_3SOLDIERS(TPSL 3.0/2.00) + ALL_FVG_BULL(TRAIL 3.0/1.00/0.75) + LON_BIGGAP(TRAIL 3.0/0.75/0.50)
+
+**ICM Calmar 12**:
+PO3_SWEEP(TRAIL 3.0/0.75/0.75) + LON_PREV(TRAIL 2.0/0.75/0.75) + TOK_2BAR(TRAIL 3.0/0.50/0.50) + LON_KZ(TRAIL 3.0/0.50/0.30) + ALL_KC_BRK(TRAIL 3.0/1.00/0.75) + ALL_3SOLDIERS(TPSL 3.0/2.00) + ALL_FVG_BULL(TRAIL 3.0/1.00/0.75) + LON_BIGGAP(TRAIL 3.0/0.75/0.50) + ALL_MACD_RSI(TRAIL 1.5/0.50/0.50) + TOK_BIG(TRAIL 3.0/0.30/0.30) + TOK_PREVEXT(TRAIL 1.5/0.75/1.00) + LON_TOKEND(TRAIL 3.0/0.30/0.30)
+
+### Observations
+- **Calmar domine** pour tous les profils sauf 5ers ultra-conservateur (MinDD)
+- **Calmar 5 est le couteau suisse**: DD -7.7% a 1%, 13/13 mois, utilisable partout
+- Pour FTMO a 0.5% risk, on peut aller jusqu'a Calmar 20 (DD -9%, +5849%)
+- PF criterion donne les meilleurs PF (1.85+) mais DD plus eleve et 12/13 mois
+- MinDD donne WR 82-85% parfait pour propfirm qui veulent du confort
+
+### Fichiers de reference
+- `combo_results.json` — tous les resultats par critere et taille
+- `optim_data.pkl` — donnees trades pour re-analyse rapide
+- `optimize_all.py` — script optimisation complete
+- `analyze_combos.py` — script analyse combinatoire
+
 Changements cles:
 - TRAIL au lieu de TPSL pour 8/10 strats → permet de capturer les gros mouvements
 - PO3_SWEEP TRAIL: PF 2.46 (vs 1.76 en TPSL)
