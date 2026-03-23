@@ -1,6 +1,6 @@
 """
-Dashboard VP Swing — streamlit run dashboard.py
-Portfolio: 11 strats (TOK/LON/NY)
+Dashboard VP Swing Equilibre — streamlit run dashboard.py
+Portfolio: 10 strats (TPSL exits, WR 72%)
 """
 import streamlit as st
 import json, os, time
@@ -11,12 +11,14 @@ import itertools
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-LOG_FILE = "paper_trades.json"
+LOG_FILE = "paper_icmarkets.json"
 CAPITAL_INITIAL = 1000.0
 
 from strats import STRAT_NAMES as STRATS
+from strat_exits import STRAT_EXITS, DEFAULT_EXIT
+from config_icmarkets import PORTFOLIO
 
-st.set_page_config(page_title="VP Swing Dashboard", layout="wide")
+st.set_page_config(page_title="VP Swing Equilibre", layout="wide")
 
 def load_state():
     if os.path.exists(LOG_FILE):
@@ -44,8 +46,8 @@ sess = "Tokyo" if 0<=h<6 else "London" if 8<=h<14 else "New York" if 14<=h<21 el
 pnl = capital - CAPITAL_INITIAL
 
 # ── TITRE ──
-st.title("VP Swing — Paper Trading")
-st.caption(f"{sess} · {now.strftime('%H:%M')} UTC · XAUUSD {'${:,.2f}'.format(bid) if bid else '—'} · 14 strats · SL=1.0 ACT=0.5 TRAIL=0.75")
+st.title("VP Swing Equilibre — Paper Trading")
+st.caption(f"{sess} · {now.strftime('%H:%M')} UTC · XAUUSD {'${:,.2f}'.format(bid) if bid else '—'} · {len(PORTFOLIO)} strats · TPSL exits · WR cible 72%")
 
 # ── METRIQUES ──
 n_trades = len(trades)
@@ -100,6 +102,9 @@ if positions:
         oz = p.get('pos_oz',0); bars = p.get('bars_held',0)
         trail = p.get('trail_active',False); lots = p.get('lots',0)
         et = str(p.get('entry_time',''))[:16]
+        target = p.get('target')
+        exit_cfg = STRAT_EXITS.get(sn, DEFAULT_EXIT)
+        exit_type = exit_cfg[0]
 
         prix = "—"; pnl_str = "—"; pnl_oz_str = "—"
         if bid:
@@ -112,12 +117,12 @@ if positions:
 
         pos_rows.append({
             'Strat': sn,
-            'Nom': STRATS.get(sn,''),
+            'Type': exit_type,
             'Dir': d.upper(),
             'Entree': f"{e:.2f}",
             'Prix': prix,
             'Stop': f"{s:.2f}",
-            'Best': f"{best:.2f}",
+            'Target': f"{target:.2f}" if target else "—",
             'PnL $': pnl_str,
             'PnL oz': pnl_oz_str,
             'Trail': 'ON' if trail else '—',
@@ -208,9 +213,13 @@ if n_trades > 0:
         w = (s['pnl_dollar'] > 0).sum()
         gps = s[s['pnl_dollar'] > 0]['pnl_dollar'].sum()
         gls = abs(s[s['pnl_dollar'] < 0]['pnl_dollar'].sum()) + 0.01
+        exit_cfg = STRAT_EXITS.get(sn, DEFAULT_EXIT)
         srows.append({
             'Strat': sn,
             'Nom': STRATS.get(sn, ''),
+            'Exit': exit_cfg[0],
+            'SL': f"{exit_cfg[1]:.1f}",
+            'TP/ACT': f"{exit_cfg[2]:.2f}",
             'Trades': n,
             'Wins': w,
             'Losses': n - w,
@@ -218,8 +227,6 @@ if n_trades > 0:
             'PF': f"{gps/gls:.2f}",
             'PnL total': f"${s['pnl_dollar'].sum():+,.2f}",
             'Avg trade': f"${s['pnl_dollar'].mean():+,.2f}",
-            'Best': f"${s['pnl_dollar'].max():+,.2f}",
-            'Worst': f"${s['pnl_dollar'].min():+,.2f}",
         })
     st.dataframe(pd.DataFrame(srows), use_container_width=True, hide_index=True)
 
@@ -233,7 +240,7 @@ if n_trades > 0:
             marker_color=colors,
             text=[f"${v:+,.0f}" for v in pnl_strat.values],
             textposition='outside'))
-        fig2.update_layout(title="PnL par strategie", height=280,
+        fig2.update_layout(title="PnL par strategie", height=350,
                            template='plotly_dark', margin=dict(l=0,r=0,t=30,b=0),
                            paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
         st.plotly_chart(fig2, use_container_width=True)
@@ -242,7 +249,7 @@ if n_trades > 0:
         daily = df.groupby('date')['pnl_dollar'].sum()
         colors_d = ['#26a69a' if v >= 0 else '#ef5350' for v in daily.values]
         fig3 = go.Figure(go.Bar(x=daily.index, y=daily.values, marker_color=colors_d))
-        fig3.update_layout(title="PnL journalier", height=280,
+        fig3.update_layout(title="PnL journalier", height=350,
                            template='plotly_dark', margin=dict(l=0,r=0,t=30,b=0),
                            paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
         st.plotly_chart(fig3, use_container_width=True)
@@ -299,14 +306,27 @@ if n_trades > 0:
         st.dataframe(pd.DataFrame(stat_rows), use_container_width=True, hide_index=True)
 
 else:
-    st.info("En attente du premier trade. 14 strategies surveillent XAUUSD 5 minutes.")
+    st.info(f"En attente du premier trade. {len(PORTFOLIO)} strategies surveillent XAUUSD 5 minutes.")
 
 # ── SIDEBAR: STRATEGIES ──
 with st.sidebar:
-    st.subheader("Strategies")
-    for session, strat_list in [("Tokyo", ['TOK_2BAR','TOK_BIG','TOK_FADE','TOK_PREVEXT']), ("London", ['LON_PIN','LON_GAP','LON_BIGGAP','LON_KZ','LON_TOKEND','LON_PREV']), ("New York", ['NY_GAP','NY_LONEND','NY_LONMOM','NY_DAYMOM'])]:
+    st.subheader("Strategies Equilibre")
+    sessions = {}
+    for sn in PORTFOLIO:
+        from strats import STRAT_SESSION
+        s = STRAT_SESSION.get(sn, 'All')
+        sessions.setdefault(s, []).append(sn)
+
+    for session, strat_list in sorted(sessions.items()):
         st.caption(f"**{session}**")
         for sn in strat_list:
+            exit_cfg = STRAT_EXITS.get(sn, DEFAULT_EXIT)
+            exit_info = f"{exit_cfg[0]} SL={exit_cfg[1]:.1f}"
+            if exit_cfg[0] == 'TPSL':
+                exit_info += f" TP={exit_cfg[2]:.2f}"
+            else:
+                exit_info += f" ACT={exit_cfg[2]:.2f} TR={exit_cfg[3]:.2f}"
+
             if n_trades > 0 and sn in df['strat'].values:
                 s = df[df['strat']==sn]
                 w = (s['pnl_dollar']>0).sum(); n = len(s)
@@ -314,9 +334,9 @@ with st.sidebar:
                 gps = s[s['pnl_dollar']>0]['pnl_dollar'].sum()
                 gls = abs(s[s['pnl_dollar']<0]['pnl_dollar'].sum())+0.01
                 color = "🟢" if pnl_s >= 0 else "🔴"
-                st.markdown(f"{color} **{sn}** — {STRATS[sn]}  \n{n} trades · WR {w/n*100:.0f}% · PF {gps/gls:.2f} · ${pnl_s:+,.2f}")
+                st.markdown(f"{color} **{sn}** — {STRATS.get(sn,'')}  \n{exit_info} · {n} trades · WR {w/n*100:.0f}% · PF {gps/gls:.2f} · ${pnl_s:+,.2f}")
             else:
-                st.markdown(f"⚪ **{sn}** — {STRATS.get(sn,'')}  \n0 trades")
+                st.markdown(f"⚪ **{sn}** — {STRATS.get(sn,'')}  \n{exit_info} · 0 trades")
     st.divider()
     cache = {}
     for k, v in state.get('daily_cache', {}).items(): cache = v; break

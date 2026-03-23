@@ -9,15 +9,15 @@ Type: TRAIL (sl, act, trail) ou TPSL (sl, tp)
 
 STRAT_EXITS = {
     # Price Action
-    'TOK_2BAR':       ('TPSL',  0.50, 3.00, 0),
-    'TOK_BIG':        ('TRAIL', 1.00, 0.30, 0.75),
+    'TOK_2BAR':       ('TPSL',  3.00, 1.50, 0),
+    'TOK_BIG':        ('TPSL',  3.00, 0.50, 0),
     'TOK_FADE':       ('TRAIL', 0.50, 0.30, 0.50),
     'TOK_PREVEXT':    ('TRAIL', 1.50, 0.75, 1.00),
     'LON_PIN':        ('TPSL',  2.00, 1.00, 0),
     'LON_GAP':        ('TRAIL', 1.00, 0.30, 0.75),
     'LON_BIGGAP':     ('TRAIL', 1.00, 0.30, 0.75),
-    'LON_KZ':         ('TRAIL', 2.00, 0.30, 0.30),
-    'LON_TOKEND':     ('TPSL',  0.50, 2.00, 0),
+    'LON_KZ':         ('TPSL',  2.50, 0.50, 0),
+    'LON_TOKEND':     ('TPSL',  3.00, 1.50, 0),
     'LON_PREV':       ('TRAIL', 0.50, 0.75, 0.50),
     'NY_GAP':         ('TPSL',  0.75, 3.00, 0),
     'NY_LONEND':      ('TPSL',  0.50, 3.00, 0),
@@ -45,7 +45,7 @@ STRAT_EXITS = {
     'LON_DC10':         ('TPSL',  1.00, 1.00, 0),
 
     # Indicators V3
-    'ALL_MACD_RSI':     ('TRAIL', 0.50, 0.50, 0.50),
+    'ALL_MACD_RSI':     ('TPSL',  3.00, 1.50, 0),
     'TOK_MACD_MED':     ('TRAIL', 1.00, 0.50, 0.75),
     'ALL_WILLR_7':      ('TPSL',  0.50, 3.00, 0),
     'ALL_WILLR_14':     ('TRAIL', 2.00, 0.50, 0.75),
@@ -64,6 +64,14 @@ STRAT_EXITS = {
     # Bonus (gagnees apres optimisation)
     'ALL_EMA_921':      ('TPSL',  0.50, 3.00, 0),
     'ALL_EMA_821':      ('TPSL',  0.50, 3.00, 0),
+
+    # Equilibre configs (WR 60-80%, PF>1.2)
+    'PO3_SWEEP':        ('TPSL',  3.00, 0.75, 0),
+    'ALL_3SOLDIERS':    ('TPSL',  3.00, 1.50, 0),
+    'ALL_PSAR_EMA':     ('TPSL',  3.00, 1.00, 0),
+    'ALL_FVG_BULL':     ('TPSL',  2.50, 0.75, 0),
+    'ALL_CONSEC_REV':   ('TPSL',  3.00, 0.50, 0),
+    'ALL_FIB_618':      ('TPSL',  1.50, 0.50, 0),
 }
 
 # Default pour strats pas dans le dict

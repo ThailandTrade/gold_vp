@@ -1,31 +1,29 @@
 """
-Config ICMarkets — 14 strats
-Backtest reference: PF 1.57, DD -22.1%, 13/13 mois+, 2232 trades
+Config ICMarkets — Equilibre 10 strats (WR 72%, PF 1.32, DD -15%)
+Objectif: WR eleve + DD bas + rendement correct
 Donnees: candles_mt5_xauusd_5m (ICMarkets feed)
 """
 BROKER = 'ICMarkets'
 PORTFOLIO = [
-    'TOK_2BAR','TOK_BIG','TOK_FADE','TOK_PREVEXT',
-    'LON_PIN','LON_GAP','LON_BIGGAP','LON_KZ','LON_TOKEND','LON_PREV',
-    'NY_GAP','NY_LONEND','NY_LONMOM','NY_DAYMOM',
+    # Price Action (3)
+    'TOK_2BAR','TOK_BIG','LON_KZ','LON_TOKEND',
+    # Indicators (6)
+    'PO3_SWEEP','ALL_3SOLDIERS','ALL_PSAR_EMA','ALL_FVG_BULL',
+    'ALL_CONSEC_REV','ALL_MACD_RSI','ALL_FIB_618',
 ]
 
-# Backtest reference (donnees ICMarkets, mars 2025 - mars 2026):
-# Capital: $1,000 -> $2,742,638 (+274,164%)
-# Trades: 2232 | WR: 45% | PF: 1.57 | Max DD: -22.1% | Mois+: 13/13
+# Backtest reference Equilibre (donnees ICMarkets, mars 2025 - mars 2026, 1% risk):
+# Trades: 2005 | WR: 72% | PF: 1.32 | Max DD: -15.4% | Rend: +511% | Mois+: 13/13
 #
-# Par strat:
-#   TOK_2BAR     196  43%  PF 1.67
-#   TOK_BIG      215  39%  PF 1.31
-#   TOK_FADE     190  51%  PF 2.04
-#   TOK_PREVEXT   12  92%  PF 11.19
-#   LON_PIN      187  39%  PF 1.26
-#   LON_GAP      243  46%  PF 1.75
-#   LON_BIGGAP   222  45%  PF 1.70
-#   LON_KZ       220  45%  PF 1.51
-#   LON_TOKEND    47  57%  PF 2.77
-#   LON_PREV     133  50%  PF 2.13
-#   NY_GAP       105  40%  PF 2.48
-#   NY_LONEND    100  43%  PF 1.96
-#   NY_LONMOM    134  43%  PF 1.79
-#   NY_DAYMOM    228  45%  PF 1.67
+# Exits TPSL par strat:
+#   PO3_SWEEP      SL=3.0 TP=0.75   PF=1.76  WR=80%
+#   ALL_3SOLDIERS  SL=3.0 TP=1.50   PF=1.29  WR=64%
+#   LON_KZ         SL=2.5 TP=0.50   PF=1.70  WR=80%
+#   LON_TOKEND     SL=3.0 TP=1.50   PF=1.80  WR=65%
+#   ALL_PSAR_EMA   SL=3.0 TP=1.00   PF=1.29  WR=72%
+#   ALL_FVG_BULL   SL=2.5 TP=0.75   PF=1.45  WR=70%
+#   ALL_CONSEC_REV SL=3.0 TP=0.50   PF=1.48  WR=77%
+#   ALL_MACD_RSI   SL=3.0 TP=1.50   PF=1.22  WR=63%
+#   ALL_FIB_618    SL=1.5 TP=0.50   PF=1.30  WR=65%
+#   TOK_BIG        SL=3.0 TP=0.50   PF=1.30  WR=78%
+#   TOK_2BAR       SL=3.0 TP=1.50   PF=1.57  WR=67%

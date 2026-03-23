@@ -1,5 +1,5 @@
 """
-Paper Trading ICMarkets - 14 strats.
+Paper Trading ICMarkets — Equilibre 10 strats (TPSL exits).
 Usage: python live_paper_icmarkets.py [--reset]
 """
 import warnings; warnings.filterwarnings('ignore')
@@ -17,8 +17,14 @@ CAPITAL_INITIAL = 1000.0
 RISK_PCT = 0.01
 CHECK_INTERVAL = 1
 LOG_FILE = "paper_icmarkets.json"
-from strats import SL, ACT, TRAIL, STRAT_NAMES, STRAT_SESSION, detect_all
+from strats import STRAT_NAMES, STRAT_SESSION, detect_all, compute_indicators
+from strat_exits import STRAT_EXITS, DEFAULT_EXIT
 from config_icmarkets import PORTFOLIO as STRATS
+
+# Open strats: signal based on prior data, enter at open
+OPEN_STRATS = ['TOK_FADE','TOK_PREVEXT','LON_GAP','LON_BIGGAP','LON_KZ','LON_TOKEND','LON_PREV','NY_GAP','NY_LONEND','NY_LONMOM','NY_DAYMOM']
+# Close strats: need closed candle OHLC
+CLOSE_STRATS = [s for s in STRATS if s not in OPEN_STRATS]
 
 # ── LOGGING ───────────────────────────────────────────
 
@@ -33,7 +39,7 @@ log = logging.getLogger('paper')
 def get_conn_autocommit():
     conn = get_conn(); conn.autocommit = True; return conn
 
-def get_recent_candles(conn, n=500):
+def get_recent_candles(conn, n=1500):
     cur = conn.cursor()
     cur.execute("SELECT ts, open, high, low, close FROM candles_mt5_xauusd_5m ORDER BY ts DESC LIMIT %s", (n,))
     rows = cur.fetchall(); cur.close()
@@ -99,23 +105,27 @@ def ensure_daily_cache(state, conn, candles_df, today):
     log.info("  ATR={} spread_rt={:.3f}".format("{:.2f}".format(atr) if atr else "None", spread_rt))
     return cache
 
-# ── STOP CHECK TEMPS REEL (chaque seconde) ──────────
+# ── STOP/TP CHECK TEMPS REEL (chaque seconde) ────────
 
 def check_stops_realtime(state, tick, conn):
-    """Verifie les stops contre le bid/ask reel, comme MT5 le ferait."""
+    """Verifie les stops et TP contre le bid/ask reel."""
     closed = []
     for pos in state['open_positions']:
         d = pos['strat_dir']
-        # MT5: long SL = sell order, triggered when BID <= stop
-        # MT5: short SL = buy order, triggered when ASK >= stop
+        exit_cfg = STRAT_EXITS.get(pos['strat'], DEFAULT_EXIT)
+        exit_type = exit_cfg[0]
+
+        # Stop check
         if d == 'long' and tick['bid'] <= pos['stop']:
-            pos['exit'] = tick['bid']  # exit au bid reel
-            pos['exit_reason'] = 'stop_rt'
-            closed.append(pos)
+            pos['exit'] = tick['bid']; pos['exit_reason'] = 'stop_rt'; closed.append(pos)
         elif d == 'short' and tick['ask'] >= pos['stop']:
-            pos['exit'] = tick['ask']  # exit au ask reel
-            pos['exit_reason'] = 'stop_rt'
-            closed.append(pos)
+            pos['exit'] = tick['ask']; pos['exit_reason'] = 'stop_rt'; closed.append(pos)
+        # TP check (TPSL only)
+        elif exit_type == 'TPSL' and 'target' in pos:
+            if d == 'long' and tick['bid'] >= pos['target']:
+                pos['exit'] = tick['bid']; pos['exit_reason'] = 'tp_rt'; closed.append(pos)
+            elif d == 'short' and tick['ask'] <= pos['target']:
+                pos['exit'] = tick['ask']; pos['exit_reason'] = 'tp_rt'; closed.append(pos)
 
     for c in closed:
         state['open_positions'].remove(c)
@@ -132,9 +142,9 @@ def check_stops_realtime(state, tick, conn):
             'exit_reason': c['exit_reason'],
             'capital_after': state['capital'],
         })
-        log.info("STOP RT {} {} | {:.2f}->{:.2f} | ${:+.2f} | bid={:.2f} ask={:.2f} | Cap=${:,.2f}".format(
-            c['strat'], c['strat_dir'], c['entry'], c['exit'],
-            pnl_dollar, tick['bid'], tick['ask'], state['capital']))
+        log.info("{} {} {} | {:.2f}->{:.2f} | ${:+.2f} | Cap=${:,.2f}".format(
+            c['exit_reason'].upper(), c['strat'], c['strat_dir'],
+            c['entry'], c['exit'], pnl_dollar, state['capital']))
 
     if closed:
         save_state(state)
@@ -146,29 +156,40 @@ def manage_positions(candles_df, state, conn):
     for pos in state['open_positions']:
         pos['bars_held'] = pos.get('bars_held', 0) + 1
         ta = pos['trade_atr']; d = pos['strat_dir']
-        # 1. Stop check (exit au niveau exact du stop — MT5 execute l'ordre serveur)
+        exit_cfg = STRAT_EXITS.get(pos['strat'], DEFAULT_EXIT)
+        exit_type = exit_cfg[0]
+
+        # 1. Stop check
         if d == 'long' and last['low'] <= pos['stop']:
             pos['exit'] = pos['stop']; pos['exit_reason'] = 'stop'; closed.append(pos); continue
         if d == 'short' and last['high'] >= pos['stop']:
             pos['exit'] = pos['stop']; pos['exit_reason'] = 'stop'; closed.append(pos); continue
-        # 2. Best update (sur le CLOSE, pas le high/low — coherence temporelle)
-        if d == 'long' and last['close'] > pos.get('best', pos['entry']): pos['best'] = last['close']
-        if d == 'short' and last['close'] < pos.get('best', pos['entry']): pos['best'] = last['close']
-        # 3. Trailing activation
-        if not pos.get('trail_active', False):
-            fav = (pos['best'] - pos['entry']) if d == 'long' else (pos['entry'] - pos['best'])
-            if fav >= ACT * ta: pos['trail_active'] = True
-        # 4. Trailing stop update
-        if pos.get('trail_active', False):
-            if d == 'long':
-                ns = pos['best'] - TRAIL * ta; pos['stop'] = max(pos['stop'], ns)
-            else:
-                ns = pos['best'] + TRAIL * ta; pos['stop'] = min(pos['stop'], ns)
-        # 4b. Re-check close vs nouveau stop (LOW/HIGH happened pendant la bougie avec l'ANCIEN stop)
-        if d == 'long' and last['close'] < pos['stop']:
-            pos['exit'] = last['close']; pos['exit_reason'] = 'stop_close'; closed.append(pos); continue
-        if d == 'short' and last['close'] > pos['stop']:
-            pos['exit'] = last['close']; pos['exit_reason'] = 'stop_close'; closed.append(pos); continue
+
+        if exit_type == 'TPSL':
+            # 2. TP check on close
+            if 'target' in pos:
+                if d == 'long' and last['close'] >= pos['target']:
+                    pos['exit'] = last['close']; pos['exit_reason'] = 'tp'; closed.append(pos); continue
+                if d == 'short' and last['close'] <= pos['target']:
+                    pos['exit'] = last['close']; pos['exit_reason'] = 'tp'; closed.append(pos); continue
+        else:
+            # TRAIL: best update + trailing
+            sl_val = exit_cfg[1]; act_val = exit_cfg[2]; trail_val = exit_cfg[3]
+            if d == 'long' and last['close'] > pos.get('best', pos['entry']): pos['best'] = last['close']
+            if d == 'short' and last['close'] < pos.get('best', pos['entry']): pos['best'] = last['close']
+            if not pos.get('trail_active', False):
+                fav = (pos['best'] - pos['entry']) if d == 'long' else (pos['entry'] - pos['best'])
+                if fav >= act_val * ta: pos['trail_active'] = True
+            if pos.get('trail_active', False):
+                if d == 'long':
+                    ns = pos['best'] - trail_val * ta; pos['stop'] = max(pos['stop'], ns)
+                else:
+                    ns = pos['best'] + trail_val * ta; pos['stop'] = min(pos['stop'], ns)
+            # Re-check close vs nouveau stop
+            if d == 'long' and last['close'] < pos['stop']:
+                pos['exit'] = last['close']; pos['exit_reason'] = 'stop_close'; closed.append(pos); continue
+            if d == 'short' and last['close'] > pos['stop']:
+                pos['exit'] = last['close']; pos['exit_reason'] = 'stop_close'; closed.append(pos); continue
 
     for c in closed:
         state['open_positions'].remove(c)
@@ -189,45 +210,40 @@ def manage_positions(candles_df, state, conn):
 
 # ── SIGNAL DETECTION ──────────────────────────────────
 
-OPEN_STRATS = ['TOK_FADE','TOK_PREVEXT','LON_GAP','LON_BIGGAP','LON_KZ','LON_TOKEND','LON_PREV','NY_GAP','NY_LONEND','NY_LONMOM','NY_DAYMOM']
-CLOSE_STRATS = ['TOK_2BAR','TOK_BIG','LON_PIN']
-
 def detect_open_strats(candles, state, atr, now_utc, today):
-    """Strats 'open': signal base sur donnees anterieures. Detectees des l'heure cible."""
     signals = []
     trig = state.setdefault('_triggered', {})
     hour = now_utc.hour + now_utc.minute / 60.0
+    r = candles.iloc[-1]
     ds = pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')
     te = pd.Timestamp(today.year,today.month,today.day,6,0,tz='UTC')
     ls = pd.Timestamp(today.year,today.month,today.day,8,0,tz='UTC')
     ns = pd.Timestamp(today.year,today.month,today.day,14,30,tz='UTC')
-    tv = candles[(candles['ts_dt']>=ds)&(candles['ts_dt']<=candles.iloc[-1]['ts_dt'])]
+    tv = candles[(candles['ts_dt']>=ds)&(candles['ts_dt']<=r['ts_dt'])]
     tok = tv[tv['ts_dt']<te]; lon = tv[(tv['ts_dt']>=ls)&(tv['ts_dt']<ns)]
-    r = candles.iloc[-1]
     prev_day_data = state.get('_prev_day_data')
 
     def add_sig(sn, d, e):
-        if sn in OPEN_STRATS: signals.append({'strat': sn, 'dir': d})
-    detect_all(candles, len(candles)-1, r, candles.iloc[-1]['ts_dt'], today, hour, atr, trig, tv, tok, lon, prev_day_data, add_sig)
+        if sn in OPEN_STRATS and sn in STRATS: signals.append({'strat': sn, 'dir': d})
+    detect_all(candles, len(candles)-1, r, r['ts_dt'], today, hour, atr, trig, tv, tok, lon, prev_day_data, add_sig)
     return signals
 
 def detect_close_strats(candles, state, atr, candle_time, today):
-    """Strats 'close': signal base sur bougie fermee (OHLC complet)."""
     signals = []
     trig = state.setdefault('_triggered', {})
     hour = candle_time.hour + candle_time.minute / 60.0
+    r = candles.iloc[-1]
     ds = pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')
     te = pd.Timestamp(today.year,today.month,today.day,6,0,tz='UTC')
     ls = pd.Timestamp(today.year,today.month,today.day,8,0,tz='UTC')
     ns = pd.Timestamp(today.year,today.month,today.day,14,30,tz='UTC')
     tv = candles[(candles['ts_dt']>=ds)&(candles['ts_dt']<=candle_time)]
     tok = tv[tv['ts_dt']<te]; lon = tv[(tv['ts_dt']>=ls)&(tv['ts_dt']<ns)]
-    r = candles.iloc[-1]
     prev_day_data = state.get('_prev_day_data')
 
     def add_sig(sn, d, e):
-        if sn in CLOSE_STRATS: signals.append({'strat': sn, 'dir': d})
-    detect_all(candles, len(candles)-1, r, candles.iloc[-1]['ts_dt'], today, hour, atr, trig, tv, tok, lon, prev_day_data, add_sig)
+        if sn in CLOSE_STRATS and sn in STRATS: signals.append({'strat': sn, 'dir': d})
+    detect_all(candles, len(candles)-1, r, r['ts_dt'], today, hour, atr, trig, tv, tok, lon, prev_day_data, add_sig)
     return signals
 
 # ── OPEN POSITION ─────────────────────────────────────
@@ -237,32 +253,43 @@ def open_position(state, sig, atr, candle_time, conn):
     if not tick: log.warning("SKIP {} — no tick".format(sig['strat'])); return
     d = sig['dir']
     entry = tick['ask'] if d == 'long' else tick['bid']
-    stop = entry - SL*atr if d == 'long' else entry + SL*atr
+    exit_cfg = STRAT_EXITS.get(sig['strat'], DEFAULT_EXIT)
+    exit_type = exit_cfg[0]; sl_val = exit_cfg[1]
+    stop = entry - sl_val*atr if d == 'long' else entry + sl_val*atr
     risk = state['capital'] * RISK_PCT
-    pos_oz = risk / (SL * atr) if atr > 0 else 0
-    state['open_positions'].append({
+    pos_oz = risk / (sl_val * atr) if atr > 0 else 0
+
+    pos_data = {
         'strat': sig['strat'], 'strat_dir': d, 'entry': entry, 'stop': stop,
         'best': entry, 'trail_active': False, 'pos_oz': pos_oz, 'lots': pos_oz/100,
         'bars_held': 0, 'entry_time': str(candle_time), 'trade_atr': atr,
         'entry_bid': tick['bid'], 'entry_ask': tick['ask'], 'entry_spread': tick['spread'],
-    })
-    log.info("OPEN {} {} | {:.2f} (bid={:.2f} ask={:.2f} sp={:.3f}) | stop={:.2f} | {:.3f}lots".format(
-        sig['strat'], d, entry, tick['bid'], tick['ask'], tick['spread'], stop, pos_oz/100))
+    }
+    # Add target for TPSL
+    if exit_type == 'TPSL':
+        tp_val = exit_cfg[2]
+        target = entry + tp_val*atr if d == 'long' else entry - tp_val*atr
+        pos_data['target'] = target
+
+    state['open_positions'].append(pos_data)
+    tp_str = " target={:.2f}".format(pos_data.get('target', 0)) if 'target' in pos_data else ""
+    log.info("OPEN {} {} | {:.2f} (sp={:.3f}) | stop={:.2f}{} | {:.3f}lots | {}".format(
+        sig['strat'], d, entry, tick['spread'], stop, tp_str, pos_oz/100, exit_type))
 
 # ── DASHBOARD ─────────────────────────────────────────
 
 def print_dashboard(state, cache, candle_time):
-    lines = ["=" * 70,
-        "PAPER TRADING — {} | ATR={} | Strats: {}".format(
+    lines = ["=" * 80,
+        "PAPER EQUILIBRE — {} | ATR={} | {} strats".format(
             candle_time.strftime("%Y-%m-%d %H:%M UTC"),
             "{:.2f}".format(cache['atr']) if cache['atr'] else "?",
-            ','.join(STRATS)),
+            len(STRATS)),
         "  Capital: ${:,.2f} (PnL: ${:+,.2f})".format(state['capital'], state['capital']-CAPITAL_INITIAL),
         "  Positions: {}".format(len(state['open_positions']))]
     for p in state['open_positions']:
-        lines.append("    {} {} entry={:.2f} stop={:.2f} best={:.2f} trail={} bars={}".format(
-            p['strat'], p['strat_dir'], p['entry'], p['stop'], p.get('best',p['entry']),
-            "ON" if p.get('trail_active') else "off", p.get('bars_held',0)))
+        tp_str = " TP={:.2f}".format(p['target']) if 'target' in p else ""
+        lines.append("    {} {} entry={:.2f} stop={:.2f}{} bars={}".format(
+            p['strat'], p['strat_dir'], p['entry'], p['stop'], tp_str, p.get('bars_held',0)))
     trades = state['trades']
     if trades:
         wins = [t for t in trades if t['pnl_dollar'] > 0]
@@ -273,7 +300,7 @@ def print_dashboard(state, cache, candle_time):
         for t in trades[-3:]:
             lines.append("    {} {} {:.2f}->{:.2f} ${:+.2f} ({})".format(
                 t['strat'], t['dir'], t['entry'], t['exit'], t['pnl_dollar'], t['exit_reason']))
-    lines.append("=" * 70)
+    lines.append("=" * 80)
     dashboard = "\n".join(lines)
     print("\033c" + dashboard)
     with open("paper_dashboard.txt", 'w', encoding='utf-8') as f: f.write(dashboard)
@@ -310,6 +337,9 @@ def main():
             candles = get_recent_candles(conn, 1500)
             if len(candles) == 0: time.sleep(CHECK_INTERVAL); continue
 
+            # Compute indicators for indicator strats
+            candles = compute_indicators(candles)
+
             current_ts = int(candles.iloc[-1]['ts'])
             candle_time = candles.iloc[-1]['ts_dt'].to_pydatetime()
             today = candle_time.date()
@@ -317,7 +347,8 @@ def main():
             cache = ensure_daily_cache(state, conn, candles, today)
             if not cache['atr'] or cache['atr'] == 0: time.sleep(CHECK_INTERVAL); continue
             atr = cache['atr']
-            # Prev day data for TOK_FADE and LON_PREV
+
+            # Prev day data
             if '_prev_day_data' not in state or state.get('_prev_day_date') != str(today):
                 yc = candles[candles['date'] < today]
                 if len(yc) > 0:
@@ -328,13 +359,13 @@ def main():
                                                'range':float(dc['high'].max()-dc['low'].min())}
                 state['_prev_day_date'] = str(today)
 
-            # Verifier les stops sur chaque poll (comme MT5 le ferait)
+            # Check stops/TP real-time
             if state['open_positions']:
                 tick = get_current_bidask(conn)
                 if tick:
                     check_stops_realtime(state, tick, conn)
 
-            # Strats "open": detectees a chaque poll via l'heure reelle
+            # Open strats (detected every poll)
             now_utc = datetime.now(timezone.utc)
             open_sigs = detect_open_strats(candles, state, atr, now_utc, today)
             if open_sigs:
@@ -358,7 +389,7 @@ def main():
                 manage_positions(candles, state, conn)
             last_candle_ts = current_ts; state['last_candle_ts'] = current_ts
 
-            # Strats "close": detectees sur bougie fermee
+            # Close strats (detected on closed candle)
             close_sigs = detect_close_strats(candles, state, atr, candle_time, today)
             if close_sigs:
                 open_dirs = set(p['strat_dir'] for p in state['open_positions'])

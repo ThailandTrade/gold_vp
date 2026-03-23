@@ -4,6 +4,7 @@ Config: TRAIL SL=1.0 ACT=0.5 TRAIL=0.75, pas de timeout, trailing sur CLOSE.
 Le portfolio actif est defini dans config_icmarkets.py ou config_ftmo.py.
 """
 import pandas as pd
+import numpy as np
 
 SL, ACT, TRAIL = 1.0, 0.5, 0.75
 
@@ -12,6 +13,9 @@ ALL_STRATS = [
     'LON_PIN','LON_GAP','LON_BIGGAP','LON_KZ','LON_TOKEND','LON_PREV',
     'NY_GAP','NY_LONEND','NY_LONMOM','NY_DAYMOM',
     'D8',
+    # Indicators
+    'ALL_MACD_RSI','ALL_FVG_BULL','ALL_CONSEC_REV','ALL_FIB_618',
+    'ALL_3SOLDIERS','ALL_PSAR_EMA','PO3_SWEEP',
 ]
 # Default portfolio (ICMarkets)
 STRATS = ALL_STRATS
@@ -25,6 +29,14 @@ STRAT_NAMES = {
     'NY_GAP':'GAP London->NY','NY_LONEND':'LONEND 3b->NY',
     'NY_LONMOM':'LONEND 0.5ATR->NY','NY_DAYMOM':'Day move >1.5ATR->NY',
     'D8':'Inside day breakout London',
+    # Indicators
+    'ALL_MACD_RSI':'MACD med cross + RSI>50',
+    'ALL_FVG_BULL':'Fair Value Gap bullish',
+    'ALL_CONSEC_REV':'5-bar exhaustion reversal',
+    'ALL_FIB_618':'Fib 0.618 retracement bounce',
+    'ALL_3SOLDIERS':'Three soldiers/crows pattern',
+    'ALL_PSAR_EMA':'Parabolic SAR flip + EMA20',
+    'PO3_SWEEP':'PO3 Asian sweep reversal',
 }
 
 STRAT_SESSION = {
@@ -33,6 +45,10 @@ STRAT_SESSION = {
     'LON_TOKEND':'London','LON_PREV':'London',
     'NY_GAP':'New York','NY_LONEND':'New York','NY_LONMOM':'New York','NY_DAYMOM':'New York',
     'D8':'London',
+    # Indicators (all sessions sauf PO3_SWEEP = London)
+    'ALL_MACD_RSI':'All','ALL_FVG_BULL':'All','ALL_CONSEC_REV':'All',
+    'ALL_FIB_618':'All','ALL_3SOLDIERS':'All','ALL_PSAR_EMA':'All',
+    'PO3_SWEEP':'London',
 }
 
 def sim_exit(cdf, pos, entry, d, atr, check_entry_candle=False):
@@ -86,6 +102,50 @@ def sim_exit_custom(cdf, pos, entry, d, atr, exit_type, p1, p2, p3, check_entry_
                 if ta: stop = min(stop, best + trail_val*atr)
                 if b['close'] > stop: return j, b['close']
         return 1, entry
+
+def compute_indicators(candles):
+    """Precalcule les indicateurs necessaires pour les strats indicator."""
+    c = candles
+    # MACD med (8,17,9)
+    ef = c['close'].ewm(span=8, adjust=False).mean()
+    es = c['close'].ewm(span=17, adjust=False).mean()
+    c['macd_med'] = ef - es
+    c['macd_med_sig'] = c['macd_med'].ewm(span=9, adjust=False).mean()
+    # RSI 14
+    delta = c['close'].diff()
+    gain = delta.clip(lower=0); loss = (-delta).clip(lower=0)
+    ag = gain.ewm(alpha=1.0/14, min_periods=14, adjust=False).mean()
+    al = loss.ewm(alpha=1.0/14, min_periods=14, adjust=False).mean()
+    c['rsi14'] = 100 - 100/(1+ag/(al+1e-10))
+    # EMA 20
+    c['ema20'] = c['close'].ewm(span=20, adjust=False).mean()
+    # Parabolic SAR
+    n = len(c)
+    psar = np.zeros(n); psar_dir = np.zeros(n)
+    af = 0.02; af_step = 0.02; af_max = 0.20
+    ep = c.iloc[0]['high']; psar[0] = c.iloc[0]['low']; psar_dir[0] = 1
+    for i in range(1, n):
+        if psar_dir[i-1] == 1:
+            psar[i] = psar[i-1] + af * (ep - psar[i-1])
+            psar[i] = min(psar[i], c.iloc[i-1]['low'], c.iloc[i-2]['low'] if i>=2 else c.iloc[i-1]['low'])
+            if c.iloc[i]['low'] < psar[i]:
+                psar_dir[i] = -1; psar[i] = ep; ep = c.iloc[i]['low']; af = af_step
+            else:
+                psar_dir[i] = 1
+                if c.iloc[i]['high'] > ep: ep = c.iloc[i]['high']; af = min(af + af_step, af_max)
+        else:
+            psar[i] = psar[i-1] + af * (ep - psar[i-1])
+            psar[i] = max(psar[i], c.iloc[i-1]['high'], c.iloc[i-2]['high'] if i>=2 else c.iloc[i-1]['high'])
+            if c.iloc[i]['high'] > psar[i]:
+                psar_dir[i] = 1; psar[i] = ep; ep = c.iloc[i]['high']; af = af_step
+            else:
+                psar_dir[i] = -1
+                if c.iloc[i]['low'] < ep: ep = c.iloc[i]['low']; af = min(af + af_step, af_max)
+    c['psar'] = psar; c['psar_dir'] = psar_dir
+    # Body / abs_body
+    c['body'] = c['close'] - c['open']
+    c['abs_body'] = abs(c['body'])
+    return c
 
 def detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_day_data, add, prev2_day_data=None):
     """Detecte les signaux pour toutes les strats."""
@@ -166,3 +226,85 @@ def detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_
         if prev_day_data['high']<prev2_day_data['high'] and prev_day_data['low']>prev2_day_data['low']:
             if row['close']>prev_day_data['high']: add('D8','long',row['close']); trig['D8']=True
             elif row['close']<prev_day_data['low']: add('D8','short',row['close']); trig['D8']=True
+
+    # ── INDICATOR STRATS ──
+    prev = candles.iloc[ci-1] if ci >= 1 else row
+
+    # ALL_MACD_RSI: MACD med cross + RSI confirmation
+    if 'ALL_MACD_RSI' not in trig and 'macd_med' in row.index and pd.notna(row.get('macd_med')) and pd.notna(row.get('rsi14')):
+        if prev.get('macd_med',0)<prev.get('macd_med_sig',0) and row['macd_med']>row['macd_med_sig'] and row['rsi14']>50:
+            add('ALL_MACD_RSI','long',row['close']); trig['ALL_MACD_RSI']=True
+        elif prev.get('macd_med',0)>prev.get('macd_med_sig',0) and row['macd_med']<row['macd_med_sig'] and row['rsi14']<50:
+            add('ALL_MACD_RSI','short',row['close']); trig['ALL_MACD_RSI']=True
+
+    # ALL_FVG_BULL: Fair Value Gap (candle 3 bars ago high < current low)
+    if 'ALL_FVG_BULL' not in trig and ci >= 3:
+        prev3 = candles.iloc[ci-3]
+        body = row['close'] - row['open']
+        if prev3['high'] < row['low'] and row['close'] > row['open'] and abs(body) >= 0.3*atr:
+            add('ALL_FVG_BULL','long',row['close']); trig['ALL_FVG_BULL']=True
+
+    # ALL_CONSEC_REV: 5 consecutive same-dir candles then reversal
+    if 'ALL_CONSEC_REV' not in trig and ci >= 6:
+        last5 = candles.iloc[ci-5:ci]
+        all_bull = all(last5.iloc[j]['close'] > last5.iloc[j]['open'] for j in range(5))
+        all_bear = all(last5.iloc[j]['close'] < last5.iloc[j]['open'] for j in range(5))
+        total_rng = last5['high'].max() - last5['low'].min()
+        abs_body = abs(row['close'] - row['open'])
+        if all_bull and total_rng >= 1.5*atr and row['close'] < row['open'] and abs_body >= 0.3*atr:
+            add('ALL_CONSEC_REV','short',row['close']); trig['ALL_CONSEC_REV']=True
+        elif all_bear and total_rng >= 1.5*atr and row['close'] > row['open'] and abs_body >= 0.3*atr:
+            add('ALL_CONSEC_REV','long',row['close']); trig['ALL_CONSEC_REV']=True
+
+    # ALL_FIB_618: Fibonacci 0.618 retracement from 30-bar swing
+    if 'ALL_FIB_618' not in trig and ci >= 30:
+        last30 = candles.iloc[ci-30:ci]
+        swing_h = last30['high'].max(); swing_l = last30['low'].min()
+        swing_rng = swing_h - swing_l
+        if swing_rng >= 2.0*atr:
+            fib_618 = swing_h - 0.618 * swing_rng
+            if row['close'] > swing_h - 0.3*swing_rng:  # uptrend
+                if prev['low'] <= fib_618 and row['close'] > fib_618 and row['close'] > row['open']:
+                    add('ALL_FIB_618','long',row['close']); trig['ALL_FIB_618']=True
+            fib_618_s = swing_l + 0.618 * swing_rng
+            if row['close'] < swing_l + 0.3*swing_rng:  # downtrend
+                if prev['high'] >= fib_618_s and row['close'] < fib_618_s and row['close'] < row['open']:
+                    add('ALL_FIB_618','short',row['close']); trig['ALL_FIB_618']=True
+
+    # ALL_3SOLDIERS: Three white soldiers / three black crows
+    if 'ALL_3SOLDIERS' not in trig and ci >= 3:
+        b1 = candles.iloc[ci-2]; b2 = candles.iloc[ci-1]; b3 = row
+        b1b = b1['close']-b1['open']; b2b = b2['close']-b2['open']; b3b = b3['close']-b3['open']
+        b3_upper_wick = b3['high'] - max(b3['close'], b3['open'])
+        b3_lower_wick = min(b3['close'], b3['open']) - b3['low']
+        if (b1b>0 and b2b>0 and b3b>0 and
+            b2['close']>b1['close'] and b3['close']>b2['close'] and
+            b2['open']>=b1['open'] and b2['open']<=b1['close'] and
+            b3['open']>=b2['open'] and b3['open']<=b2['close'] and
+            min(abs(b1b),abs(b2b),abs(b3b))>=0.3*atr and
+            b3_upper_wick<0.2*abs(b3b)):
+            add('ALL_3SOLDIERS','long',row['close']); trig['ALL_3SOLDIERS']=True
+        if (b1b<0 and b2b<0 and b3b<0 and
+            b2['close']<b1['close'] and b3['close']<b2['close'] and
+            b2['open']<=b1['open'] and b2['open']>=b1['close'] and
+            b3['open']<=b2['open'] and b3['open']>=b2['close'] and
+            min(abs(b1b),abs(b2b),abs(b3b))>=0.3*atr and
+            b3_lower_wick<0.2*abs(b3b)):
+            add('ALL_3SOLDIERS','short',row['close']); trig['ALL_3SOLDIERS']=True
+
+    # ALL_PSAR_EMA: Parabolic SAR flip + EMA20 filter
+    if 'ALL_PSAR_EMA' not in trig and 'psar_dir' in row.index and 'ema20' in row.index and pd.notna(row.get('ema20')):
+        if prev.get('psar_dir',-1)==-1 and row['psar_dir']==1 and row['close']>row['ema20']:
+            add('ALL_PSAR_EMA','long',row['close']); trig['ALL_PSAR_EMA']=True
+        elif prev.get('psar_dir',1)==1 and row['psar_dir']==-1 and row['close']<row['ema20']:
+            add('ALL_PSAR_EMA','short',row['close']); trig['ALL_PSAR_EMA']=True
+
+    # PO3_SWEEP: Asian session sweep reversal at London open (7h-9h)
+    if 7.0<=hour<9.0 and 'PO3_SWEEP' not in trig:
+        asian = candles[(candles['ts_dt']>=ds)&(candles['ts_dt']<te)]
+        if len(asian) >= 50:
+            asian_h = asian['high'].max(); asian_l = asian['low'].min()
+            if row['low'] < asian_l and row['close'] > asian_l and row['close'] > row['open']:
+                add('PO3_SWEEP','long',row['close']); trig['PO3_SWEEP']=True
+            elif row['high'] > asian_h and row['close'] < asian_h and row['close'] < row['open']:
+                add('PO3_SWEEP','short',row['close']); trig['PO3_SWEEP']=True

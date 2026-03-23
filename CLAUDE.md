@@ -1,70 +1,61 @@
 # CLAUDE.md — VP Swing Explorer (XAUUSD 5m)
 
-## Portfolio actif : 14 strats (1%/trade)
+## Portfolio actif : Equilibre 10 strats (1%/trade, TPSL exits)
 
-| Metrique | Valeur |
+| Metrique | 1% risk |
 |---|---|
-| Rendement | +274,164% |
-| Max DD | -22.1% |
-| Calmar | 5316 |
-| PF | 1.57 |
-| WR | 45% |
-| Trades | 2232 (~7.1/jour) |
+| Rendement | +511% |
+| Max DD | -15.4% |
+| PF | 1.32 |
+| WR | 72% |
+| Trades | 2005 (~6.4/jour) |
 | Mois positifs | 13/13 |
 | Directions | Long + Short |
-| Sessions | Tokyo + London + New York |
+| Sessions | Tokyo + London + All |
 
 ## Strategies
 
-| Strat | Description | Dir | PF | Session | Horaire |
-|---|---|---|---|---|---|
-| TOK_2BAR | Two-bar reversal Tokyo (body >0.5ATR, 2eme > 1ere) | L+S | 1.70 | Tokyo | 0h-6h |
-| TOK_BIG | Bougie Tokyo >1ATR, continuation | L+S | 1.55 | Tokyo | 0h-6h |
-| TOK_FADE | Fade previous day >1ATR at Tokyo open | L+S | 1.43 | Tokyo | 0h00 |
-| TOK_PREVEXT | Prev day close near extreme (top/bottom 10%) → continuation Tokyo | L+S | 1.54 | Tokyo | 0h00 |
-| LON_PIN | Pin bar London (close top/bottom 10% range) | L+S | 1.11 | London | 8h-14h30 |
-| LON_GAP | Gap Tokyo close vs London open >0.5ATR, continuation | L+S | 1.74 | London | 8h |
-| LON_BIGGAP | Gap Tokyo close vs London open >1.0ATR, continuation | L+S | 1.70 | London | 8h |
-| LON_KZ | London Kill Zone 8h-10h move >0.5ATR, fade a 10h | L+S | 1.58 | London | 10h |
-| LON_TOKEND | 3 dernieres bougies Tokyo >1ATR, continuation London | L+S | 1.84 | London | 8h |
-| LON_PREV | Previous day >1ATR, continuation London open | L+S | 1.43 | London | 8h |
-| NY_GAP | Gap London close vs NY open >0.5ATR, continuation | L+S | 1.72 | NY | 14h30 |
-| NY_LONEND | 3 dernieres bougies London >1ATR, continuation NY | L+S | 1.58 | NY | 14h30 |
-| NY_LONMOM | 3 dernieres bougies London >0.5ATR, continuation NY | L+S | 1.47 | NY | 14h30 |
-| NY_DAYMOM | Tokyo+London move >1.5ATR, continuation NY | L+S | 1.71 | NY | 14h30 |
+| Strat | Description | SL | TP | PF | WR | Session |
+|---|---|---|---|---|---|---|
+| PO3_SWEEP | Asian sweep reversal at London open | 3.0 | 0.75 | 1.76 | 80% | London 7h-9h |
+| ALL_3SOLDIERS | Three soldiers/crows pattern | 3.0 | 1.50 | 1.29 | 64% | All |
+| LON_KZ | KZ London 8h-10h fade | 2.5 | 0.50 | 1.70 | 80% | London 10h |
+| LON_TOKEND | 3 bougies Tokyo >1ATR continuation | 3.0 | 1.50 | 1.80 | 65% | London 8h |
+| ALL_PSAR_EMA | Parabolic SAR flip + EMA20 | 3.0 | 1.00 | 1.29 | 72% | All |
+| ALL_FVG_BULL | Fair Value Gap bullish | 2.5 | 0.75 | 1.45 | 70% | All |
+| ALL_CONSEC_REV | 5-bar exhaustion reversal | 3.0 | 0.50 | 1.48 | 77% | All |
+| ALL_MACD_RSI | MACD med cross + RSI>50 | 3.0 | 1.50 | 1.22 | 63% | All |
+| ALL_FIB_618 | Fib 0.618 retracement bounce | 1.5 | 0.50 | 1.30 | 65% | All |
+| TOK_BIG | Bougie Tokyo >1ATR continuation | 3.0 | 0.50 | 1.30 | 78% | Tokyo 0h-6h |
+| TOK_2BAR | Two-bar reversal Tokyo | 3.0 | 1.50 | 1.57 | 67% | Tokyo 0h-6h |
 
 ### Regles
+- Tous les exits sont TPSL (SL fixe + TP fixe, pas de trailing)
 - Jamais 2 trades simultanes en sens opposes
 - ATR du jour precedent
-- Trailing sur CLOSE: SL=1.0 ACT=0.5 TRAIL=0.75, pas de timeout (config unique)
-- best = max(close) et non max(high) — coherence temporelle
-- Apres trailing update, PAS de re-check low/high vs nouveau stop
-- Seul re-check: close vs nouveau stop (MT5 ModifyPosition immediat)
 - Spread: 2x monthly avg dans backtest, bid/ask reel en live
 - 1 trigger max par strat par jour
+- Indicateurs precalcules: MACD(8,17,9), RSI(14), EMA(20), Parabolic SAR
 
 ### Horaires cles UTC
-- 0h00: TOK_2BAR, TOK_BIG, TOK_FADE, TOK_PREVEXT actifs
-- 6h00: Tokyo close → reference pour LON_GAP, LON_BIGGAP, LON_TOKEND
-- 8h00: London open → LON_GAP, LON_BIGGAP, LON_TOKEND, LON_PREV triggent, LON_PIN actif
+- 0h00: TOK_2BAR, TOK_BIG actifs
+- 7h00-9h00: PO3_SWEEP actif
+- 8h00: LON_TOKEND trigger
 - 10h00: LON_KZ trigger
-- 14h30: NY open → NY_GAP, NY_LONEND, NY_LONMOM, NY_DAYMOM triggent, LON_PIN fin
+- ALL_* strats: actives toute la journee (sur bougie fermee)
 
 ## Scripts
 | Script | Role |
 |---|---|
-| `strats.py` | Module commun: strategies, exit, noms |
-| `simu_final.py` | Simulation mensuelle |
-| `simu_detail.py` | Simulation detaillee mois par mois |
-| `live_mt5.py` | Trading live MT5 (ordres reels) |
-| `live_paper.py` | Paper trading live |
+| `strats.py` | Module commun: strategies, exit, indicateurs, noms |
+| `strat_exits.py` | Config exit par strat (TPSL/TRAIL) |
+| `config_icmarkets.py` | Portfolio Equilibre 10 strats |
+| `live_paper_icmarkets.py` | Paper trading live |
 | `dashboard.py` | Dashboard Streamlit |
-| `last100.py` | Stats et detail des 100 derniers trades |
-| `explore_exits_v4.py` | Exploration exhaustive des exits |
-| `explore_ny.py` | Exploration des strategies NY |
-| `explore_v2.py` | Exploration v2 toutes sessions |
-| `explore_v3.py` | Exploration v3 session-independantes |
-| `explore_v4.py` | Exploration v4 multi-angle |
+| `build_combo_balanced.py` | Construction combo equilibre |
+| `build_combo_high_wr.py` | Construction combo high WR |
+| `find_combo_greedy.py` | Greedy combo builder |
+| `results_log.md` | Log evolution resultats |
 
 ## Infrastructure
 - PostgreSQL: `candles_mt5_xauusd_5m`, `market_ticks_xauusd`
