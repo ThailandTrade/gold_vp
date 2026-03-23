@@ -410,4 +410,4 @@ python analyze_combos.py                 # re-analyser combos (si re-optimise)
 ### bt_portfolio.py: args capital et risk
 - `python bt_portfolio.py icm -c 100000 -r 2` → ICM $100k @ 2% risk
 - `python bt_portfolio.py ftmo -c 200000` → FTMO $200k @ 0.5% (defaut config)
-- Commit: 0239615
+- Commit: 0239615, 6f35211 (rewrite complet: mois par mois, strats, directions, sessions, distribution, equity ASCII)
