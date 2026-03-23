@@ -348,7 +348,7 @@ def main():
             if not cache['atr'] or cache['atr'] == 0: time.sleep(CHECK_INTERVAL); continue
             atr = cache['atr']
 
-            # Prev day data
+            # Prev day data + reset triggered (comme le backtest: trig={} par jour)
             if '_prev_day_data' not in state or state.get('_prev_day_date') != str(today):
                 yc = candles[candles['date'] < today]
                 if len(yc) > 0:
@@ -358,6 +358,8 @@ def main():
                                                'high':float(dc['high'].max()),'low':float(dc['low'].min()),
                                                'range':float(dc['high'].max()-dc['low'].min())}
                 state['_prev_day_date'] = str(today)
+                state['_triggered'] = {}  # RESET journalier (1 trigger max par strat par jour)
+                log.info("Reset triggered pour {}".format(today))
 
             # Check stops/TP real-time
             if state['open_positions']:
