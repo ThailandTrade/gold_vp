@@ -14,12 +14,11 @@ from phase1_poc_calculator import get_conn
 # ── CONFIG ────────────────────────────────────────────
 
 CAPITAL_INITIAL = 1000.0
-RISK_PCT = 0.01
 CHECK_INTERVAL = 1
 LOG_FILE = "paper_icmarkets.json"
 from strats import STRAT_NAMES, STRAT_SESSION, detect_all, compute_indicators
 from strat_exits import STRAT_EXITS, DEFAULT_EXIT
-from config_icmarkets import PORTFOLIO as STRATS
+from config_icm import PORTFOLIO as STRATS, RISK_PCT
 
 # Open strats: signal based on prior data, enter at open
 OPEN_STRATS = ['TOK_FADE','TOK_PREVEXT','LON_GAP','LON_BIGGAP','LON_KZ','LON_TOKEND','LON_PREV','NY_GAP','NY_LONEND','NY_LONMOM','NY_DAYMOM']

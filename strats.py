@@ -1,24 +1,20 @@
 """
-Module commun: toutes les strategies et exit.
-Config: TRAIL SL=1.0 ACT=0.5 TRAIL=0.75, pas de timeout, trailing sur CLOSE.
-Le portfolio actif est defini dans config_icmarkets.py ou config_ftmo.py.
+Module commun: toutes les strategies, exit et indicateurs.
+Le portfolio actif est defini dans config_icm.py / config_ftmo.py / config_5ers.py.
 """
 import pandas as pd
 import numpy as np
 
-SL, ACT, TRAIL = 1.0, 0.5, 0.75
-
 ALL_STRATS = [
+    # Price Action
     'TOK_2BAR','TOK_BIG','TOK_FADE','TOK_PREVEXT',
     'LON_PIN','LON_GAP','LON_BIGGAP','LON_KZ','LON_TOKEND','LON_PREV',
     'NY_GAP','NY_LONEND','NY_LONMOM','NY_DAYMOM',
     'D8',
     # Indicators
     'ALL_MACD_RSI','ALL_FVG_BULL','ALL_CONSEC_REV','ALL_FIB_618',
-    'ALL_3SOLDIERS','ALL_PSAR_EMA','PO3_SWEEP',
+    'ALL_3SOLDIERS','ALL_PSAR_EMA','PO3_SWEEP','ALL_KC_BRK',
 ]
-# Default portfolio (ICMarkets)
-STRATS = ALL_STRATS
 
 STRAT_NAMES = {
     'TOK_2BAR':'2BAR reversal Tokyo','TOK_BIG':'Big candle Tokyo >1ATR',
@@ -29,7 +25,6 @@ STRAT_NAMES = {
     'NY_GAP':'GAP London->NY','NY_LONEND':'LONEND 3b->NY',
     'NY_LONMOM':'LONEND 0.5ATR->NY','NY_DAYMOM':'Day move >1.5ATR->NY',
     'D8':'Inside day breakout London',
-    # Indicators
     'ALL_MACD_RSI':'MACD med cross + RSI>50',
     'ALL_FVG_BULL':'Fair Value Gap bullish',
     'ALL_CONSEC_REV':'5-bar exhaustion reversal',
@@ -37,6 +32,7 @@ STRAT_NAMES = {
     'ALL_3SOLDIERS':'Three soldiers/crows pattern',
     'ALL_PSAR_EMA':'Parabolic SAR flip + EMA20',
     'PO3_SWEEP':'PO3 Asian sweep reversal',
+    'ALL_KC_BRK':'Keltner Channel breakout',
 }
 
 STRAT_SESSION = {
@@ -45,9 +41,9 @@ STRAT_SESSION = {
     'LON_TOKEND':'London','LON_PREV':'London',
     'NY_GAP':'New York','NY_LONEND':'New York','NY_LONMOM':'New York','NY_DAYMOM':'New York',
     'D8':'London',
-    # Indicators (all sessions sauf PO3_SWEEP = London)
     'ALL_MACD_RSI':'All','ALL_FVG_BULL':'All','ALL_CONSEC_REV':'All',
     'ALL_FIB_618':'All','ALL_3SOLDIERS':'All','ALL_PSAR_EMA':'All',
+    'ALL_KC_BRK':'All',
     'PO3_SWEEP':'London',
 }
 
@@ -140,6 +136,9 @@ def compute_indicators(candles):
             st_dir[i] = st_dir[i-1]
             st_val[i] = max(up2.iloc[i], st_val[i-1]) if st_dir[i] == 1 else min(dn2.iloc[i], st_val[i-1])
     c['psar_dir'] = st_dir
+    # Keltner Channels (EMA20 +/- 1.5*ATR14)
+    c['kc_up'] = c['ema20'] + 1.5 * c['atr14']
+    c['kc_lo'] = c['ema20'] - 1.5 * c['atr14']
     # Body / abs_body
     c['body'] = c['close'] - c['open']
     c['abs_body'] = c['body'].abs()
@@ -294,3 +293,10 @@ def detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_
                 add('PO3_SWEEP','long',row['close']); trig['PO3_SWEEP']=True
             elif row['high'] > asian_h and row['close'] < asian_h and row['close'] < row['open']:
                 add('PO3_SWEEP','short',row['close']); trig['PO3_SWEEP']=True
+
+    # ALL_KC_BRK: Keltner Channel breakout (close crosses KC band)
+    if 'ALL_KC_BRK' not in trig and 'kc_up' in row.index and pd.notna(row.get('kc_up')):
+        if row['close'] > row['kc_up'] and prev['close'] <= prev['kc_up']:
+            add('ALL_KC_BRK','long',row['close']); trig['ALL_KC_BRK']=True
+        elif row['close'] < row['kc_lo'] and prev['close'] >= prev['kc_lo']:
+            add('ALL_KC_BRK','short',row['close']); trig['ALL_KC_BRK']=True

@@ -1,61 +1,72 @@
 # CLAUDE.md — VP Swing Explorer (XAUUSD 5m)
 
-## Portfolio actif : Equilibre 10 strats (1%/trade, TPSL exits)
+## Portfolios actifs (optimises 2026-03-23)
 
-| Metrique | 1% risk |
-|---|---|
-| Rendement | +511% |
-| Max DD | -15.4% |
-| PF | 1.32 |
-| WR | 72% |
-| Trades | 2005 (~6.4/jour) |
-| Mois positifs | 13/13 |
-| Directions | Long + Short |
-| Sessions | Tokyo + London + All |
+| Compte | Combo | Risk | PF | WR | DD | Rend | M+ |
+|---|---|---|---|---|---|---|---|
+| **ICM** | Calmar 12 | 1.0% | 1.62 | 72% | -12.5% | +3523% | 13/13 |
+| **FTMO** | Calmar 8 | 0.5% | 1.65 | 73% | -6.0% | +743% | 13/13 |
+| **5ers** | MinDD 5 | 0.5% | 1.62 | 82% | -2.5% | +83% | 12/13 |
 
-## Strategies
+## ICM Calmar 12 (compte propre)
 
-| Strat | Description | SL | TP | PF | WR | Session |
-|---|---|---|---|---|---|---|
-| PO3_SWEEP | Asian sweep reversal at London open | 3.0 | 0.75 | 1.76 | 80% | London 7h-9h |
-| ALL_3SOLDIERS | Three soldiers/crows pattern | 3.0 | 1.50 | 1.29 | 64% | All |
-| LON_KZ | KZ London 8h-10h fade | 2.5 | 0.50 | 1.70 | 80% | London 10h |
-| LON_TOKEND | 3 bougies Tokyo >1ATR continuation | 3.0 | 1.50 | 1.80 | 65% | London 8h |
-| ALL_PSAR_EMA | Parabolic SAR flip + EMA20 | 3.0 | 1.00 | 1.29 | 72% | All |
-| ALL_FVG_BULL | Fair Value Gap bullish | 2.5 | 0.75 | 1.45 | 70% | All |
-| ALL_CONSEC_REV | 5-bar exhaustion reversal | 3.0 | 0.50 | 1.48 | 77% | All |
-| ALL_MACD_RSI | MACD med cross + RSI>50 | 3.0 | 1.50 | 1.22 | 63% | All |
-| ALL_FIB_618 | Fib 0.618 retracement bounce | 1.5 | 0.50 | 1.30 | 65% | All |
-| TOK_BIG | Bougie Tokyo >1ATR continuation | 3.0 | 0.50 | 1.30 | 78% | Tokyo 0h-6h |
-| TOK_2BAR | Two-bar reversal Tokyo | 3.0 | 1.50 | 1.57 | 67% | Tokyo 0h-6h |
+| Strat | Exit | SL | ACT/TP | TRAIL | PF | WR | Session |
+|---|---|---|---|---|---|---|---|
+| PO3_SWEEP | TRAIL | 3.0 | 0.75 | 0.75 | 2.46 | 79% | London 7h-9h |
+| LON_PREV | TRAIL | 2.0 | 0.75 | 0.75 | 1.19 | 63% | London 8h |
+| TOK_2BAR | TRAIL | 3.0 | 0.50 | 0.50 | 1.61 | 75% | Tokyo 0h-6h |
+| LON_KZ | TRAIL | 3.0 | 0.50 | 0.30 | 1.80 | 82% | London 10h |
+| ALL_KC_BRK | TRAIL | 3.0 | 1.00 | 0.75 | 1.20 | 69% | All |
+| ALL_3SOLDIERS | TPSL | 3.0 | 2.00 | — | 1.34 | 67% | All |
+| ALL_FVG_BULL | TRAIL | 3.0 | 1.00 | 0.75 | 1.63 | 70% | All |
+| LON_BIGGAP | TRAIL | 3.0 | 0.75 | 0.50 | 1.70 | 74% | London 8h |
+| ALL_MACD_RSI | TRAIL | 1.5 | 0.50 | 0.50 | 1.67 | 60% | All |
+| TOK_BIG | TRAIL | 3.0 | 0.30 | 0.30 | 1.57 | 76% | Tokyo 0h-6h |
+| TOK_PREVEXT | TRAIL | 1.5 | 0.75 | 1.00 | 1.53 | 51% | Tokyo 0h |
+| LON_TOKEND | TRAIL | 3.0 | 0.30 | 0.30 | 1.81 | 68% | London 8h |
 
 ### Regles
-- Tous les exits sont TPSL (SL fixe + TP fixe, pas de trailing)
+- Exits TRAIL majoritaires (11/12 strats), 1 TPSL (ALL_3SOLDIERS)
 - Jamais 2 trades simultanes en sens opposes
 - ATR du jour precedent
 - Spread: 2x monthly avg dans backtest, bid/ask reel en live
 - 1 trigger max par strat par jour
-- Indicateurs precalcules: MACD(8,17,9), RSI(14), EMA(20), Parabolic SAR
+- Indicateurs precalcules: MACD(8,17,9), RSI(14), EMA(20), Parabolic SAR, Keltner Channels
 
-### Horaires cles UTC
-- 0h00: TOK_2BAR, TOK_BIG actifs
-- 7h00-9h00: PO3_SWEEP actif
-- 8h00: LON_TOKEND trigger
-- 10h00: LON_KZ trigger
-- ALL_* strats: actives toute la journee (sur bougie fermee)
+## Nomenclature fichiers
 
-## Scripts
+### Core
 | Script | Role |
 |---|---|
-| `strats.py` | Module commun: strategies, exit, indicateurs, noms |
-| `strat_exits.py` | Config exit par strat (TPSL/TRAIL) |
-| `config_icmarkets.py` | Portfolio Equilibre 10 strats |
-| `live_paper_icmarkets.py` | Paper trading live |
-| `dashboard.py` | Dashboard Streamlit |
-| `build_combo_balanced.py` | Construction combo equilibre |
-| `build_combo_high_wr.py` | Construction combo high WR |
-| `find_combo_greedy.py` | Greedy combo builder |
-| `results_log.md` | Log evolution resultats |
+| `strats.py` | Module commun: detect_all(), sim_exit_custom(), compute_indicators() |
+| `strat_exits.py` | Config exit optimale par strat (65 strats, optimise 2026-03-23) |
+
+### Configs par compte
+| Script | Role |
+|---|---|
+| `config_icm.py` | ICMarkets Calmar 12 (1% risk) |
+| `config_ftmo.py` | FTMO Calmar 8 (0.5% risk) |
+| `config_5ers.py` | 5ers MinDD 5 (0.5% risk) |
+
+### Live paper trading
+| Script | Role |
+|---|---|
+| `live_paper_icmarkets.py` | Paper trading ICM (importe config_icm.py) |
+
+### Backtest / optimisation
+| Script | Role |
+|---|---|
+| `optimize_all.py` | Optimisation complete: 65 strats x 122 exits → best configs |
+| `analyze_combos.py` | Analyse combinatoire: 6 criteres, pairwise, profils risque |
+| `find_combo_greedy.py` | Legacy greedy builder (remplace par optimize_all.py) |
+
+### Data / logs
+| Fichier | Role |
+|---|---|
+| `results_log.md` | Log detaille de toutes les iterations et decisions |
+| `LOOK_AHEAD_CHECKLIST.md` | Checklist anti look-ahead |
+| `optim_data.pkl` | Trades precomputes (reload rapide pour analyze_combos.py) |
+| `combo_results.json` | Resultats tous criteres/tailles |
 
 ## Infrastructure
 - PostgreSQL: `candles_mt5_xauusd_5m`, `market_ticks_xauusd`
