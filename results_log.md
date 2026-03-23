@@ -353,3 +353,44 @@ Changements cles:
 - ALL_FVG_BULL TRAIL: PF 1.63 (vs 1.06 en TPSL, etait perdant!)
 - ALL_MACD_RSI TRAIL: PF 1.67 (vs 1.22 en TPSL)
 - Nouvelles strats: LON_PREV, ALL_KC_BRK, LON_BIGGAP remplacent ALL_CONSEC_REV, ALL_PSAR_EMA, ALL_FIB_618
+
+---
+
+## 2026-03-23 — Mise en production des nouvelles configs
+
+### Changements appliques
+- `strats.py`: ajout ALL_KC_BRK (detection + indicateurs Keltner Channels)
+- `strat_exits.py`: reecrit avec 65 configs optimisees (optimize_all.py)
+- `config_icm.py`: nouveau — ICM Calmar 12 @ 1% risk (remplace config_icmarkets.py)
+- `config_ftmo.py`: mis a jour — FTMO Calmar 8 @ 0.5% risk
+- `config_5ers.py`: mis a jour — 5ers MinDD 5 @ 0.5% risk
+- `live_paper_icmarkets.py`: importe config_icm.py + RISK_PCT dynamique
+- `dashboard.py`: importe config_icm.py, titres/captions dynamiques
+- `bt_portfolio.py`: nouveau — backtest rapide par compte (charge optim_data.pkl)
+- `CLAUDE.md`: nouvelle nomenclature complete
+
+### Nomenclature fichiers
+| Type | Fichier | Role |
+|---|---|---|
+| Core | `strats.py` | detect_all(), sim_exit_custom(), compute_indicators() |
+| Core | `strat_exits.py` | 65 configs exit optimisees |
+| Config | `config_icm.py` | ICM Calmar 12 (1% risk) |
+| Config | `config_ftmo.py` | FTMO Calmar 8 (0.5% risk) |
+| Config | `config_5ers.py` | 5ers MinDD 5 (0.5% risk) |
+| Live | `live_paper_icmarkets.py` | Paper trading ICM |
+| Dashboard | `dashboard.py` | Streamlit dashboard ICM |
+| Backtest | `bt_portfolio.py` | Backtest rapide (optim_data.pkl) |
+| Optim | `optimize_all.py` | Optimisation 65 strats x 122 exits |
+| Optim | `analyze_combos.py` | Analyse combinatoire 6 criteres |
+| Data | `optim_data.pkl` | Trades precomputes |
+| Data | `combo_results.json` | Resultats tous criteres/tailles |
+
+### Comment lancer
+```
+python live_paper_icmarkets.py --reset   # reset state (nouveau portfolio)
+python live_paper_icmarkets.py           # paper trading live
+streamlit run dashboard.py               # dashboard
+python bt_portfolio.py [icm|ftmo|5ers]   # backtest rapide
+python optimize_all.py                   # re-optimiser (si modif strats/exits)
+python analyze_combos.py                 # re-analyser combos (si re-optimise)
+```
