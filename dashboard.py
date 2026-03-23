@@ -1,6 +1,6 @@
 """
-Dashboard VP Swing Equilibre — streamlit run dashboard.py
-Portfolio: 10 strats (TPSL exits, WR 72%)
+Dashboard VP Swing — streamlit run dashboard.py
+Portfolio: Calmar 12 (TRAIL exits, WR 72%)
 """
 import streamlit as st
 import json, os, time
@@ -16,9 +16,9 @@ CAPITAL_INITIAL = 1000.0
 
 from strats import STRAT_NAMES as STRATS
 from strat_exits import STRAT_EXITS, DEFAULT_EXIT
-from config_icmarkets import PORTFOLIO
+from config_icm import PORTFOLIO, RISK_PCT, BROKER
 
-st.set_page_config(page_title="VP Swing Equilibre", layout="wide")
+st.set_page_config(page_title=f"VP Swing {BROKER}", layout="wide")
 
 def load_state():
     if os.path.exists(LOG_FILE):
@@ -46,8 +46,8 @@ sess = "Tokyo" if 0<=h<6 else "London" if 8<=h<14 else "New York" if 14<=h<21 el
 pnl = capital - CAPITAL_INITIAL
 
 # ── TITRE ──
-st.title("VP Swing Equilibre — Paper Trading")
-st.caption(f"{sess} · {now.strftime('%H:%M')} UTC · XAUUSD {'${:,.2f}'.format(bid) if bid else '—'} · {len(PORTFOLIO)} strats · TPSL exits · WR cible 72%")
+st.title(f"VP Swing {BROKER} — Calmar {len(PORTFOLIO)} Paper")
+st.caption(f"{sess} · {now.strftime('%H:%M')} UTC · XAUUSD {'${:,.2f}'.format(bid) if bid else '—'} · {len(PORTFOLIO)} strats · {RISK_PCT*100:.1f}% risk · TRAIL exits")
 
 # ── METRIQUES ──
 n_trades = len(trades)
@@ -310,7 +310,7 @@ else:
 
 # ── SIDEBAR: STRATEGIES ──
 with st.sidebar:
-    st.subheader("Strategies Equilibre")
+    st.subheader(f"Strategies {BROKER}")
     sessions = {}
     for sn in PORTFOLIO:
         from strats import STRAT_SESSION
