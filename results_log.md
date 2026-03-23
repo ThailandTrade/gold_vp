@@ -154,3 +154,30 @@ Conclusion: L'Equilibre 10 est le meilleur compromis pour le live.
 - DD -15% = tres gerable, permet d'augmenter le risk (2% → ~-30% DD, ~+1500% rend)
 - 13/13 mois positifs = regularite maximale
 - Le Greedy a un rendement enorme mais 27% WR et -57% DD = dangereux en live
+
+---
+
+## 2026-03-23 — Audit critique live vs backtest
+
+### Bug corrige: manage_positions TPSL TP sur close au lieu de high/low
+- **Fichier**: live_paper_icmarkets.py, fonction manage_positions
+- **Probleme**: Le fallback candle-level verifiait TP sur `last['close']` et sortait au prix close
+- **Backtest**: Verifie TP sur `high` (long) / `low` (short) et sort au prix target exact
+- **Impact**: Si le tick-level check rate un TP (deconnexion DB), le fallback candle donnait un resultat different du backtest
+- **Fix**: TP check sur high/low, exit au target price (identique au backtest)
+- **Commit**: 5edc372
+
+### Autres points audites (OK)
+- check_stops_realtime (tick-level): SL et TP corrects (bid/ask reel)
+- detect_all: conditions identiques backtest ↔ live pour les 11 strats du portfolio
+- TPSL sim_exit_custom: SL sur low/high, TP sur high/low, exit au target — OK
+- Spread: backtest = 2x monthly avg, live = bid/ask reel — acceptable
+- ATR: veille dans les deux cas — OK
+- Conflict check: meme logique (pas 2 directions simultanees) — OK
+- _triggered reset quotidien: OK (corrige commit 9cd082a)
+
+### Points restants non critiques
+1. Portfolio = 11 strats (pas 10): TOK_2BAR present dans config mais absent de la liste texte
+2. Pas de timeout 288 bars en live (backtest a un fallback 24h pour TPSL)
+3. prev2_day_data pas passe en live (D8 pas dans portfolio, sans impact)
+4. Dead code: SL/ACT/TRAIL globals + sim_exit() dans strats.py
