@@ -411,3 +411,9 @@ python analyze_combos.py                 # re-analyser combos (si re-optimise)
 - `python bt_portfolio.py icm -c 100000 -r 2` → ICM $100k @ 2% risk
 - `python bt_portfolio.py ftmo -c 200000` → FTMO $200k @ 0.5% (defaut config)
 - Commit: 0239615, 6f35211 (rewrite complet: mois par mois, strats, directions, sessions, distribution, equity ASCII)
+
+### BUG CRITIQUE: detect_all appele 2 fois consumait les triggers
+- **Probleme**: detect_open_strats appelait detect_all qui marquait TOUTES les strats dans trig (open + close). Quand detect_close_strats appelait detect_all apres, les strats close etaient deja triggees → 0 trades close generes
+- **Impact**: AUCUN trade close (TOK_BIG, ALL_3SOLDIERS, ALL_KC_BRK, PO3_SWEEP, etc.) n'etait jamais ouvert en live. Seules les open strats pouvaient trader
+- **Fix**: un seul appel detect_signals() qui route les signaux vers open/close lists sans filtrer avant que trig soit set
+- **Commit**: dda27c5
