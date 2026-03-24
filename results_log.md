@@ -428,3 +428,8 @@ python analyze_combos.py                 # re-analyser combos (si re-optimise)
 - **Fix**: 2 trig dicts separes (`_triggered_open` et `_triggered_close`), open strats detectees a chaque poll (temps reel), close strats sur bougie fermee
 - **Heartbeat**: affiche les 2 compteurs `trig 3/5o 4/7c`
 - Commit: 87f3a04
+
+### Dashboard: couleurs PnL latent
+- Colonnes PnL $ et PnL oz colorees vert/rouge dans le tableau positions ouvertes
+- Metric PnL latent total avec fleche verte/rouge
+- Commit: 9881c4b
