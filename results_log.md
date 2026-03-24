@@ -432,4 +432,4 @@ python analyze_combos.py                 # re-analyser combos (si re-optimise)
 ### Dashboard: couleurs PnL latent
 - Colonnes PnL $ et PnL oz colorees vert/rouge dans le tableau positions ouvertes
 - Metric PnL latent total avec fleche verte/rouge
-- Commit: 9881c4b, 018cc48 (total en texte colore sans encadre metric)
+- Commit: 9881c4b, 018cc48, cf49f88 (fix: pnl_vals indexe par row.name apres drop de _pnl_val)
