@@ -125,16 +125,27 @@ if positions:
             'Target': f"{target:.2f}" if target else "—",
             'PnL $': pnl_str,
             'PnL oz': pnl_oz_str,
+            '_pnl_val': pnl_d if bid else 0,
             'Trail': 'ON' if trail else '—',
             'Bars': str(bars),
             'Lots': f"{lots:.3f}",
             'Ouvert': et,
         })
 
-    st.dataframe(pd.DataFrame(pos_rows), use_container_width=True, hide_index=True)
+    pos_df = pd.DataFrame(pos_rows)
+    def color_pos_pnl(row):
+        try:
+            v = row['_pnl_val']
+            c = 'color:#26a69a' if v > 0 else 'color:#ef5350' if v < 0 else ''
+        except: c = ''
+        return [c if col in ('PnL $','PnL oz') else '' for col in row.index]
+    display_cols = [c for c in pos_df.columns if c != '_pnl_val']
+    st.dataframe(pos_df[display_cols].style.apply(color_pos_pnl, axis=1),
+                 use_container_width=True, hide_index=True)
 
     if bid and total_unr != 0:
-        st.metric("PnL latent total", f"${total_unr:+,.2f}")
+        color = "normal" if total_unr >= 0 else "inverse"
+        st.metric("PnL latent total", f"${total_unr:+,.2f}", delta=f"${total_unr:+,.2f}", delta_color=color)
 else:
     st.info("Aucune position ouverte")
 
