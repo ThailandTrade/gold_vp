@@ -209,28 +209,14 @@ def manage_positions(candles_df, state, conn):
 
 # ── SIGNAL DETECTION ──────────────────────────────────
 
-def detect_open_strats(candles, state, atr, now_utc, today):
-    signals = []
+def detect_signals(candles, state, atr, candle_time, today, use_now_for_open=False):
+    """Detecte tous les signaux (open + close) en un seul appel.
+    Retourne (open_signals, close_signals).
+    IMPORTANT: un seul appel a detect_all pour ne pas doubler les triggers.
+    """
+    open_signals = []; close_signals = []
     trig = state.setdefault('_triggered', {})
-    hour = now_utc.hour + now_utc.minute / 60.0
-    r = candles.iloc[-1]
-    ds = pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')
-    te = pd.Timestamp(today.year,today.month,today.day,6,0,tz='UTC')
-    ls = pd.Timestamp(today.year,today.month,today.day,8,0,tz='UTC')
-    ns = pd.Timestamp(today.year,today.month,today.day,14,30,tz='UTC')
-    tv = candles[(candles['ts_dt']>=ds)&(candles['ts_dt']<=r['ts_dt'])]
-    tok = tv[tv['ts_dt']<te]; lon = tv[(tv['ts_dt']>=ls)&(tv['ts_dt']<ns)]
-    prev_day_data = state.get('_prev_day_data')
-
-    def add_sig(sn, d, e):
-        if sn in OPEN_STRATS and sn in STRATS: signals.append({'strat': sn, 'dir': d})
-    detect_all(candles, len(candles)-1, r, r['ts_dt'], today, hour, atr, trig, tv, tok, lon, prev_day_data, add_sig)
-    return signals
-
-def detect_close_strats(candles, state, atr, candle_time, today):
-    signals = []
-    trig = state.setdefault('_triggered', {})
-    hour = candle_time.hour + candle_time.minute / 60.0
+    hour_close = candle_time.hour + candle_time.minute / 60.0
     r = candles.iloc[-1]
     ds = pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')
     te = pd.Timestamp(today.year,today.month,today.day,6,0,tz='UTC')
@@ -241,9 +227,14 @@ def detect_close_strats(candles, state, atr, candle_time, today):
     prev_day_data = state.get('_prev_day_data')
 
     def add_sig(sn, d, e):
-        if sn in CLOSE_STRATS and sn in STRATS: signals.append({'strat': sn, 'dir': d})
-    detect_all(candles, len(candles)-1, r, r['ts_dt'], today, hour, atr, trig, tv, tok, lon, prev_day_data, add_sig)
-    return signals
+        if sn not in STRATS: return
+        if sn in OPEN_STRATS:
+            open_signals.append({'strat': sn, 'dir': d})
+        else:
+            close_signals.append({'strat': sn, 'dir': d})
+
+    detect_all(candles, len(candles)-1, r, r['ts_dt'], today, hour_close, atr, trig, tv, tok, lon, prev_day_data, add_sig)
+    return open_signals, close_signals
 
 # ── OPEN POSITION ─────────────────────────────────────
 
@@ -380,19 +371,6 @@ def main():
             if state['open_positions'] and tick:
                 check_stops_realtime(state, tick, conn)
 
-            # Open strats (detected every poll)
-            now_utc = datetime.now(timezone.utc)
-            open_sigs = detect_open_strats(candles, state, atr, now_utc, today)
-            if open_sigs:
-                open_dirs = set(p['strat_dir'] for p in state['open_positions'])
-                for sig in open_sigs:
-                    if sig['dir'] == 'long' and 'short' in open_dirs:
-                        log.info("SKIP {} — conflit short".format(sig['strat'])); continue
-                    if sig['dir'] == 'short' and 'long' in open_dirs:
-                        log.info("SKIP {} — conflit long".format(sig['strat'])); continue
-                    open_position(state, sig, atr, candle_time, conn)
-                    open_dirs.add(sig['dir'])
-
             is_new = current_ts != last_candle_ts
             if not is_new:
                 time.sleep(CHECK_INTERVAL); continue
@@ -416,11 +394,12 @@ def main():
                 manage_positions(candles, state, conn)
             last_candle_ts = current_ts; state['last_candle_ts'] = current_ts
 
-            # Close strats (detected on closed candle)
-            close_sigs = detect_close_strats(candles, state, atr, candle_time, today)
-            if close_sigs:
+            # Detect ALL signals in one call (open + close) to avoid trig conflicts
+            open_sigs, close_sigs = detect_signals(candles, state, atr, candle_time, today)
+            all_sigs = open_sigs + close_sigs
+            if all_sigs:
                 open_dirs = set(p['strat_dir'] for p in state['open_positions'])
-                for sig in close_sigs:
+                for sig in all_sigs:
                     if sig['dir'] == 'long' and 'short' in open_dirs:
                         log.info("SKIP {} — conflit short".format(sig['strat'])); continue
                     if sig['dir'] == 'short' and 'long' in open_dirs:
