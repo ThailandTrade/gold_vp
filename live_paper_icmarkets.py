@@ -322,13 +322,14 @@ def main():
         state['capital'], len(state['trades']), len(state['open_positions'])))
 
     conn = get_conn_autocommit()
-    saved_ts = state.get('last_candle_ts', 0)
-    if saved_ts == 0:
-        ci = get_recent_candles(conn, 1)
-        if len(ci) > 0:
-            saved_ts = int(ci.iloc[-1]['ts'])
-            log.info("Calage: {}".format(ci.iloc[-1]['ts_dt']))
-    last_candle_ts = saved_ts
+    # Calage: toujours se caler sur la derniere bougie en base au demarrage
+    # pour ne trigger QUE sur les bougies qui arrivent APRES le lancement
+    ci = get_recent_candles(conn, 1)
+    if len(ci) > 0:
+        last_candle_ts = int(ci.iloc[-1]['ts'])
+        log.info("Calage: {} (on ne triggera qu'a partir de la prochaine bougie)".format(ci.iloc[-1]['ts_dt']))
+    else:
+        last_candle_ts = 0
 
     while True:
         try:
