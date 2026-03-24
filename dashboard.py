@@ -133,14 +133,14 @@ if positions:
         })
 
     pos_df = pd.DataFrame(pos_rows)
+    pnl_vals = pos_df['_pnl_val'].values
+    display_df = pos_df.drop(columns=['_pnl_val'])
     def color_pos_pnl(row):
-        try:
-            v = row['_pnl_val']
-            c = 'color:#26a69a' if v > 0 else 'color:#ef5350' if v < 0 else ''
-        except: c = ''
+        idx = row.name
+        v = pnl_vals[idx] if idx < len(pnl_vals) else 0
+        c = 'color:#26a69a' if v > 0 else 'color:#ef5350' if v < 0 else ''
         return [c if col in ('PnL $','PnL oz') else '' for col in row.index]
-    display_cols = [c for c in pos_df.columns if c != '_pnl_val']
-    st.dataframe(pos_df[display_cols].style.apply(color_pos_pnl, axis=1),
+    st.dataframe(display_df.style.apply(color_pos_pnl, axis=1),
                  use_container_width=True, hide_index=True)
 
     if bid and total_unr != 0:
