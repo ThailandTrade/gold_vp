@@ -263,10 +263,17 @@ def open_position(state, sig, atr, candle_time, conn):
     stop = entry - sl_val*atr if d == 'long' else entry + sl_val*atr
     risk = state['capital'] * RISK_PCT
     pos_oz = risk / (sl_val * atr) if atr > 0 else 0
+    MIN_LOT = 0.01; LOT_STEP = 0.01  # MT5 XAUUSD: min 0.01 lot = 1 oz
+    lots = max(MIN_LOT, round(pos_oz / 100 / LOT_STEP) * LOT_STEP)
+    pos_oz = lots * 100
+    actual_risk = pos_oz * sl_val * atr
+    actual_risk_pct = actual_risk / state['capital'] * 100 if state['capital'] > 0 else 0
+    if actual_risk_pct > RISK_PCT * 100 * 1.5:
+        log.warning("RISK {} {:.1f}% > cible {:.1f}% (min lot)".format(sig['strat'], actual_risk_pct, RISK_PCT*100))
 
     pos_data = {
         'strat': sig['strat'], 'strat_dir': d, 'entry': entry, 'stop': stop,
-        'best': entry, 'trail_active': False, 'pos_oz': pos_oz, 'lots': pos_oz/100,
+        'best': entry, 'trail_active': False, 'pos_oz': pos_oz, 'lots': lots,
         'bars_held': 0, 'entry_time': str(candle_time), 'trade_atr': atr,
         'entry_bid': tick['bid'], 'entry_ask': tick['ask'], 'entry_spread': tick['spread'],
     }
