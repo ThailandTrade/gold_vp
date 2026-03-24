@@ -433,3 +433,9 @@ python analyze_combos.py                 # re-analyser combos (si re-optimise)
 - Colonnes PnL $ et PnL oz colorees vert/rouge dans le tableau positions ouvertes
 - Metric PnL latent total avec fleche verte/rouge
 - Commit: 9881c4b, 018cc48, cf49f88 (fix: pnl_vals indexe par row.name apres drop de _pnl_val)
+
+### Fix lot sizing MT5
+- Min lot 0.01 (1 oz), step 0.01 — arrondi au lot valide le plus proche
+- Warning si risk reel > 1.5x la cible (ex: $1000 capital avec SL 3*ATR → min lot donne 3.4% risk au lieu de 1%)
+- A $100k+ l'arrondi est negligeable (<0.1%)
+- Commit: 7f4a5cb
