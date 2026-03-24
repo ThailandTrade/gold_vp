@@ -417,3 +417,8 @@ python analyze_combos.py                 # re-analyser combos (si re-optimise)
 - **Impact**: AUCUN trade close (TOK_BIG, ALL_3SOLDIERS, ALL_KC_BRK, PO3_SWEEP, etc.) n'etait jamais ouvert en live. Seules les open strats pouvaient trader
 - **Fix**: un seul appel detect_signals() qui route les signaux vers open/close lists sans filtrer avant que trig soit set
 - **Commit**: dda27c5
+
+### Fix: calage au demarrage
+- Au lancement, toujours se caler sur la derniere bougie en DB (ignorer le saved_ts du state)
+- Garantit qu'on ne trigger jamais sur une bougie qui existait avant le lancement
+- Commit: 8b3efff
