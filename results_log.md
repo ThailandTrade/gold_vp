@@ -429,6 +429,28 @@ python analyze_combos.py                 # re-analyser combos (si re-optimise)
 - **Heartbeat**: affiche les 2 compteurs `trig 3/5o 4/7c`
 - Commit: 87f3a04
 
+### Comparatif backtest vs live 24 mars 2026
+
+Backtest simule sur les memes donnees DB que le live.
+
+| Strat | BT time | BT PnL oz | Live time | Live PnL oz | Verdict |
+|---|---|---|---|---|---|
+| ALL_FVG_BULL | 01:30 | -33.58 | 01:30 | -33.85 | OK (identique) |
+| ALL_MACD_RSI | 01:45 | -16.79 | 01:45 | -17.04 | OK (identique) |
+| LON_BIGGAP | 08:00 | +3.55 | 08:00 | +2.90 | OK (identique) |
+| LON_PREV | skip (conflit) | — | skip (conflit) | — | OK |
+| LON_KZ | skip (conflit) | — | skip (conflit) | — | OK |
+| TOK_BIG | 00:10 | +40.88 | 01:10 | -34.17 | BUG retard 1h |
+| ALL_3SOLDIERS | 00:20 | +22.39 | 01:10 | -34.17 | BUG retard 50min |
+| ALL_KC_BRK | 00:20 | +19.85 | 01:40 | -34.64 | BUG retard 1h20 |
+| TOK_2BAR | 00:45 | +9.69 | — | — | BUG trig rate |
+
+Conclusion:
+- Strats London (08h+) = coherentes entre BT et live
+- Strats Tokyo (00h-06h) = decalees car le live a demarre tard (calage sur derniere bougie)
+- Le script de comparaison initial etait faux: il ne filtrait pas les conflits de direction
+- LON_PREV et LON_KZ correctement skippees (short vs LON_BIGGAP long ouvert)
+
 ### Dashboard: couleurs PnL latent
 - Colonnes PnL $ et PnL oz colorees vert/rouge dans le tableau positions ouvertes
 - Metric PnL latent total avec fleche verte/rouge
