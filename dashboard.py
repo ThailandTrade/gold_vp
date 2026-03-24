@@ -144,8 +144,8 @@ if positions:
                  use_container_width=True, hide_index=True)
 
     if bid and total_unr != 0:
-        color = "normal" if total_unr >= 0 else "inverse"
-        st.metric("PnL latent total", f"${total_unr:+,.2f}", delta=f"${total_unr:+,.2f}", delta_color=color)
+        c = '#26a69a' if total_unr >= 0 else '#ef5350'
+        st.markdown(f'**PnL latent total** <span style="color:{c};font-size:1.4em">${total_unr:+,.2f}</span>', unsafe_allow_html=True)
 else:
     st.info("Aucune position ouverte")
 
