@@ -422,3 +422,9 @@ python analyze_combos.py                 # re-analyser combos (si re-optimise)
 - Au lancement, toujours se caler sur la derniere bougie en DB (ignorer le saved_ts du state)
 - Garantit qu'on ne trigger jamais sur une bougie qui existait avant le lancement
 - Commit: 8b3efff
+
+### Fix: trig dicts separes open/close + restore real-time open strats
+- **Probleme**: le fix precedent (detect_signals unique) faisait tourner les open strats sur bougie fermee au lieu de temps reel → 5min de retard sur LON_KZ, LON_TOKEND, etc.
+- **Fix**: 2 trig dicts separes (`_triggered_open` et `_triggered_close`), open strats detectees a chaque poll (temps reel), close strats sur bougie fermee
+- **Heartbeat**: affiche les 2 compteurs `trig 3/5o 4/7c`
+- Commit: 87f3a04
