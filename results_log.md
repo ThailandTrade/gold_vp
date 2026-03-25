@@ -607,6 +607,16 @@ Architecture live_mt5.py:
 - Trail entries auto-nettoyees quand MT5 ferme la position
 - Au demarrage: affiche magic numbers + positions MT5 ouvertes
 
+### Audit live_mt5.py
+Audit #1:
+1. CRITIQUE magic instable (tri alphabetique) → fix: hashlib.md5 deterministe
+2. CRITIQUE double ouverture possible au restart → fix: check magic sur MT5 avant open
+3. CRITIQUE triggers perdus au restart → fix: rebuild triggers depuis positions MT5
+4. TRAIL best sur close (coherent backtest) → documente, pas change
+5. Pas de timeout TRAIL → impact faible, documente
+6. Dry run = test detection seulement → documente
+- Commit: 6770ce0
+
 ### Isolation broker: dossiers data/{broker}/
 Tous les fichiers per-broker dans `data/{icm|ftmo|5ers}/`:
 - `optim_data.pkl` — trades precomputes
