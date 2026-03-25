@@ -22,7 +22,9 @@ ACCOUNTS = {
     '5ers': {'module': 'config_5ers', 'label': '5ers'},
 }
 with st.sidebar:
-    account = st.selectbox("Compte", list(ACCOUNTS.keys()), format_func=lambda x: ACCOUNTS[x]['label'])
+    account = st.selectbox("Compte", list(ACCOUNTS.keys()),
+                           format_func=lambda x: ACCOUNTS[x]['label'],
+                           key='account_selector')
 
 import importlib
 cfg = importlib.import_module(ACCOUNTS[account]['module'])
