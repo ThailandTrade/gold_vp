@@ -586,6 +586,20 @@ Meilleur candidat 5ers (DD < 4% challenge):
 - Ajout indicateurs: adx_f, pdi_f, mdi_f, ema21, wr14
 - Commit: 605f476
 
+### live_mt5.py: trading reel MT5
+- Meme logique que live_paper.py mais avec vrais ordres MT5
+- Close strats: detection DB (bougie fermee) → mt5.order_send()
+- Open strats: detection bougie precedente → mt5.order_send() au tick
+- TPSL: SL + TP poses sur l'ordre → MT5 gere les exits
+- TRAIL: SL initial → mt5_modify_sl() a chaque bougie fermee (best sur close)
+- sync_positions(): detecte les clotures MT5 (SL/TP), log PnL incl commission+swap
+- --dry: dry run (log sans envoyer d'ordres)
+- --symbol: nom du symbole MT5 (defaut XAUUSD)
+- Capital: lu depuis mt5.account_info().balance
+- Lot sizing: mt5.symbol_info() pour min/step/max/contract_size
+- State: data/{broker}/live_mt5.json
+- Commit: 7b03121
+
 ### Isolation broker: dossiers data/{broker}/
 Tous les fichiers per-broker dans `data/{icm|ftmo|5ers}/`:
 - `optim_data.pkl` — trades precomputes
