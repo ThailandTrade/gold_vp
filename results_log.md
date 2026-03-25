@@ -561,6 +561,23 @@ streamlit run dashboard.py                             # selecteur de compte dan
 | Pickle | optim_data_icm.pkl | optim_data_ftmo.pkl | optim_data_5ers.pkl |
 | Combos | combo_results_icm.json | combo_results_ftmo.json | combo_results_5ers.json |
 
+---
+
+## 2026-03-25 — Optimisation 5ers sur donnees 5ers
+
+### Resultats
+40/65 strats viables (25 sans config viable — donnees 5ers plus difficiles).
+Aucun combo 13/13 mois avec DD < 10%.
+
+Meilleur candidat 5ers (DD < 4% challenge):
+- Calmar 5 @ 0.25% risk: TOK_PREVEXT + TOK_2BAR + ALL_PSAR_EMA + ALL_FVG_BULL + NY_LONEND
+- PF 1.38 | WR 67% | DD -2.4% | Rend +43% | 11/13 mois
+
+### Config
+- config_5ers.py mis a jour: Calmar 5 @ 0.25% risk
+- optim_data_5ers.pkl genere
+- Strats: toutes deja dans strats.py detect_all
+
 ### Comparatif backtest vs live 25 mars 2026 (apres fix open strats)
 
 BT: +54.95 oz | Live: +70.16 oz | Live fait mieux (+15.21)
