@@ -619,7 +619,7 @@ Audit #1:
 
 Audit #2 (backtest vs live MT5):
 - TPSL: SL/TP geres par MT5 nativement → OK
-- TRAIL etape 5 (close < nouveau stop → exit): manquait → CORRIGE
+- TRAIL etape 5 (close < nouveau stop): pas de market close, MT5 gere le SL tick par tick
 - TRAIL SL initial: MT5 check tick par tick → mieux que backtest (bougie par bougie)
 - TPSL meme bougie SL+TP: MT5 ordre reel vs BT SL prioritaire → live potentiellement meilleur
 - Spread: BT 2x conservateur, live 1x reel → live meilleur
