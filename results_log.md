@@ -451,6 +451,22 @@ Conclusion:
 - Le script de comparaison initial etait faux: il ne filtrait pas les conflits de direction
 - LON_PREV et LON_KZ correctement skippees (short vs LON_BIGGAP long ouvert)
 
+### Comparatif backtest vs live 25 mars 2026
+
+4/4 trades match. Live valide.
+
+| Strat | BT Entry | LV Entry | E.diff | BT PnL | LV PnL | P.diff |
+|---|---|---|---|---|---|---|
+| ALL_3SOLDIERS | 4566.51 | 4566.16 | -0.35 | +27.60 | +27.67 | +0.07 |
+| ALL_FVG_BULL | 4566.51 | 4566.16 | -0.35 | +21.93 | +21.81 | -0.12 |
+| ALL_MACD_RSI | 4596.40 | 4596.45 | +0.05 | -20.70 | -21.99 | -1.29 |
+| TOK_PREVEXT | 4546.86 | 4553.89 | +7.03 | +8.80 | +0.82 | -7.98 |
+| **TOTAL** | | | | **+37.63** | **+28.31** | **-9.32** |
+
+Ecart TOK_PREVEXT = open strat, entry au tick vs row['open']. Close strats quasi identiques.
+Script: `python compare_today.py` — comparatif quotidien BT vs live avec filtre conflits.
+Commit: 6b6c6dd
+
 ### Dashboard: couleurs PnL latent
 - Colonnes PnL $ et PnL oz colorees vert/rouge dans le tableau positions ouvertes
 - Metric PnL latent total avec fleche verte/rouge
