@@ -578,6 +578,14 @@ Meilleur candidat 5ers (DD < 4% challenge):
 - optim_data_5ers.pkl genere
 - Strats: toutes deja dans strats.py detect_all
 
+### Mise a jour 5ers: MinDD 10 (remplace Calmar 5)
+- Ancien: Calmar 5 @ 0.25% (PF 1.38, WR 67%, DD -2.4%, +43%)
+- **Nouveau: MinDD 10 @ 0.25% (PF 1.46, WR 74%, DD -2.5%, +104%)**
+- Strats: TOK_PREVEXT, LON_TOKEND, LON_PREV, TOK_BIG, PO3_SWEEP, LON_PIN, ALL_ADX_FAST, TOK_WILLR, ALL_KC_BRK, TOK_FADE
+- Ajout strats.py: ALL_ADX_FAST (ADX fast DI cross + EMA21), TOK_WILLR (Williams %R Tokyo)
+- Ajout indicateurs: adx_f, pdi_f, mdi_f, ema21, wr14
+- Commit: 605f476
+
 ### Isolation broker: dossiers data/{broker}/
 Tous les fichiers per-broker dans `data/{icm|ftmo|5ers}/`:
 - `optim_data.pkl` — trades precomputes
