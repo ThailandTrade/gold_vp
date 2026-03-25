@@ -484,7 +484,7 @@ Pour 4/5 strats, le prix open n'a AUCUNE incidence sur le trigger. Seul LON_BIGG
 
 **Le backtest n'est pas modifie** : il entre a row['open'] ce qui est equivalent car en 5min le open de la bougie 08:00 ≈ close de la bougie 07:55. L'ecart est negligeable.
 
-- Commit: c638b67
+- Commit: c638b67, cb4ccc8 (fix entry_time: now_utc au lieu de candle_time pour open strats)
 
 ### Comparatif backtest vs live 25 mars 2026 (apres fix open strats)
 
