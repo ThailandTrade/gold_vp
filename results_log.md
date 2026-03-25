@@ -484,7 +484,27 @@ Pour 4/5 strats, le prix open n'a AUCUNE incidence sur le trigger. Seul LON_BIGG
 
 **Le backtest n'est pas modifie** : il entre a row['open'] ce qui est equivalent car en 5min le open de la bougie 08:00 ≈ close de la bougie 07:55. L'ecart est negligeable.
 
-- Commit: a venir
+- Commit: c638b67
+
+### Comparatif backtest vs live 25 mars 2026 (apres fix open strats)
+
+BT: +54.95 oz | Live: +70.16 oz | Live fait mieux (+15.21)
+
+| Strat | E.diff | P.diff | Verdict |
+|---|---|---|---|
+| ALL_3SOLDIERS | -0.35 | +0.07 | OK |
+| ALL_FVG_BULL | -0.35 | -0.12 | OK |
+| ALL_KC_BRK | -0.02 | -0.22 | OK |
+| ALL_MACD_RSI | +0.05 | -1.29 | OK |
+| TOK_PREVEXT | +7.03 | -7.98 | Pre-fix (avant le changement) |
+| LON_PREV | BT skip | +15.62 | Live detecte a 07:50 (fix ok!) |
+| PO3_SWEEP | BT skip | +9.13 | Live detecte a 08:00 |
+| LON_BIGGAP | +0.00 | LV miss | Skip car LON_PREV long deja ouvert |
+
+Observations:
+- Close strats: entry diff < 0.35$ — parfait
+- LON_PREV detecte a 07:50 grace au fix bougie precedente (avant: 08:05)
+- Le BT et le live gerent les conflits differemment quand les signaux arrivent simultanement vs sequentiellement
 
 ### Dashboard: couleurs PnL latent
 - Colonnes PnL $ et PnL oz colorees vert/rouge dans le tableau positions ouvertes
