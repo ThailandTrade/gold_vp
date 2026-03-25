@@ -515,6 +515,14 @@ Conclusion: les donnees FTMO sont plus difficiles que ICM (spreads? feed? timing
 Le Calmar 8 ICM donne DD -10% sur FTMO = inacceptable. Il faut un combo specifique FTMO.
 Candidat FTMO: Calmar 5 (DD -9.1%, marge 0.9% avant limite).
 
+### Mise en place FTMO
+- config_ftmo.py: Calmar 5 (PO3_SWEEP, LON_PREV, ALL_PSAR_EMA, TOK_2BAR, ALL_DC10) @ 0.5%
+- strats.py: ajout ALL_DC10 (Donchian 10 breakout) detection + indicateur dc10_h/dc10_l
+- live_paper_icmarkets.py: multi-compte (icm/ftmo/5ers) via argument CLI
+  - Fichiers separes: paper_{account}.json, paper_{account}.log
+- Usage: `python live_paper_icmarkets.py ftmo --reset`
+- Commit: 5720b37
+
 ### Comparatif backtest vs live 25 mars 2026 (apres fix open strats)
 
 BT: +54.95 oz | Live: +70.16 oz | Live fait mieux (+15.21)
