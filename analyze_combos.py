@@ -14,7 +14,7 @@ from itertools import combinations
 import argparse
 _parser = argparse.ArgumentParser(); _parser.add_argument('account', nargs='?', default='icm')
 _args = _parser.parse_args()
-_pkl = f'optim_data_{_args.account}.pkl'
+_pkl = f'data/{_args.account}/optim_data.pkl'
 print(f"Loading {_pkl}...", flush=True)
 with open(_pkl, 'rb') as f:
     data = pickle.load(f)
@@ -377,7 +377,7 @@ for name, cp in all_results.items():
             'n': d['r']['n'], 'pf': d['r']['pf'], 'wr': d['r']['wr'],
             'mdd': d['r']['mdd'], 'ret': d['r']['ret'],
             'sharpe': d['r']['sharpe'], 'pm': d['r']['pm'], 'tm': d['r']['tm']}
-_json_file = f'combo_results_{_args.account}.json'
+_json_file = f'data/{_args.account}/combo_results.json'
 with open(_json_file, 'w') as f:
     json.dump(results_save, f, indent=2)
 print(f"\nSaved {_json_file}")

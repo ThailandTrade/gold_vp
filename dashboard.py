@@ -31,7 +31,7 @@ cfg = importlib.import_module(ACCOUNTS[account]['module'])
 PORTFOLIO = cfg.PORTFOLIO
 RISK_PCT = cfg.RISK_PCT
 BROKER = cfg.BROKER
-LOG_FILE = f"paper_{account}.json"
+LOG_FILE = f"data/{account}/paper.json"
 
 def load_state():
     if os.path.exists(LOG_FILE):

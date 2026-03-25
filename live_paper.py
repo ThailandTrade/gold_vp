@@ -35,7 +35,9 @@ else:
 RISK_PCT = args.risk / 100 if args.risk else RISK_PCT
 CAPITAL_INITIAL = args.capital if args.capital else 1000.0
 CHECK_INTERVAL = 1
-LOG_FILE = f"paper_{_account}.json"
+import os as _os
+_os.makedirs(f'data/{_account}', exist_ok=True)
+LOG_FILE = f"data/{_account}/paper.json"
 from strats import STRAT_NAMES, STRAT_SESSION, detect_all, compute_indicators
 from strat_exits import STRAT_EXITS, DEFAULT_EXIT
 
@@ -49,7 +51,7 @@ CLOSE_STRATS = [s for s in STRATS if s not in OPEN_STRATS]
 logging.basicConfig(level=logging.INFO, format='%(asctime)s | %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S',
     handlers=[logging.StreamHandler(),
-              logging.FileHandler(f'paper_{_account}.log', encoding='utf-8')])
+              logging.FileHandler(f'data/{_account}/paper.log', encoding='utf-8')])
 log = logging.getLogger('paper')
 
 # ── DB ────────────────────────────────────────────────
@@ -372,7 +374,7 @@ def print_dashboard(state, cache, candle_time):
     lines.append("=" * 80)
     dashboard = "\n".join(lines)
     print("\033c" + dashboard)
-    with open(f"paper_{_account}_dashboard.txt", 'w', encoding='utf-8') as f: f.write(dashboard)
+    with open(f"data/{_account}/dashboard.txt", 'w', encoding='utf-8') as f: f.write(dashboard)
 
 # ── MAIN ──────────────────────────────────────────────
 

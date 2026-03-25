@@ -29,7 +29,7 @@ RISK = args.risk / 100 if args.risk else RISK_PCT
 
 # ── LOAD DATA ──
 try:
-    pkl_file = f'optim_data_{args.account}.pkl'
+    pkl_file = f'data/{args.account}/optim_data.pkl'
     with open(pkl_file, 'rb') as f:
         data = pickle.load(f)
     strat_arrays = data['strat_arrays']

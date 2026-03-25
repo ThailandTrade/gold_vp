@@ -1,0 +1,25 @@
+{
+  "capital": 50000.0,
+  "capital_initial": 50000.0,
+  "risk_pct": 0.001,
+  "broker": "FTMO",
+  "trades": [],
+  "open_positions": [],
+  "daily_cache": {
+    "2026-03-25": {
+      "atr": 13.974853457602775,
+      "spread_rt": 1.4040323409302107
+    }
+  },
+  "_triggered_open": {},
+  "_triggered_close": {},
+  "last_candle_ts": 0,
+  "_prev_day_data": {
+    "open": 4440.93,
+    "close": 4546.53,
+    "high": 4551.44,
+    "low": 4305.8,
+    "range": 245.63999999999942
+  },
+  "_prev_day_date": "2026-03-25"
+}

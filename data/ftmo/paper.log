@@ -1,0 +1,69 @@
+2026-03-25 17:57:32 | RESET — $1,000.00
+2026-03-25 18:03:17 | Demarrage FTMO — 5 strats @ 0.1% risk: PO3_SWEEP,LON_PREV,ALL_PSAR_EMA,TOK_2BAR,ALL_DC10
+2026-03-25 18:03:17 | Capital: $1,000.00 | Trades: 0 | Positions: 0
+2026-03-25 18:03:17 | Calage: 2026-03-25 10:55:00+00:00 (on ne triggera qu'a partir de la prochaine bougie)
+2026-03-25 18:03:17 | Cache journalier 2026-03-25...
+2026-03-25 18:03:18 |   ATR=13.97 spread_rt=1.404
+2026-03-25 18:03:18 | Reset triggered pour 2026-03-25
+2026-03-25 18:05:01 | ~ 11:00 | O=4558.63 H=4565.89 L=4555.84 C=4565.89 | ATR=13.97 | trig 1/1o 0/4c | 0pos
+2026-03-25 18:05:01 | RISK ALL_DC10 4.2% > cible 0.1% (min lot)
+2026-03-25 18:05:01 | >>> TRADE ALL_DC10 LONG <<<
+2026-03-25 18:05:01 |     Entry=4566.50 (bid=4565.89 ask=4566.50 spread=0.610)
+2026-03-25 18:05:01 |     SL=4524.58 (41.9$ / 3.0x ATR) | ACT=0.75 TRAIL=0.75 | TRAIL
+2026-03-25 18:05:01 |     Size=1.0000oz (0.010lots) | Risk=$1.00 (0.1%) | Cap=$1,000.00
+2026-03-25 18:10:01 | ~ 11:05 | O=4565.88 H=4568.83 L=4565.76 C=4567.57 | ATR=13.97 | trig 2/1o 2/4c | 1pos | unr=$+1.13
+2026-03-25 18:15:01 | ~ 11:10 | O=4567.64 H=4568.55 L=4562.03 C=4567.43 | ATR=13.97 | trig 3/1o 3/4c | 1pos | unr=$+1.18
+2026-03-25 18:20:01 | ~ 11:15 | O=4567.47 H=4568.49 L=4564.24 C=4567.42 | ATR=13.97 | trig 3/1o 3/4c | 1pos | unr=$+0.92
+2026-03-25 18:25:01 | ~ 11:20 | O=4567.40 H=4582.59 L=4566.21 C=4581.81 | ATR=13.97 | trig 3/1o 3/4c | 1pos | unr=$+15.31
+2026-03-25 18:25:01 | RISK ALL_PSAR_EMA 4.2% > cible 0.1% (min lot)
+2026-03-25 18:25:01 | >>> TRADE ALL_PSAR_EMA LONG <<<
+2026-03-25 18:25:01 |     Entry=4582.44 (bid=4581.81 ask=4582.44 spread=0.630)
+2026-03-25 18:25:01 |     SL=4540.52 (41.9$ / 3.0x ATR) | TP=4603.40 (21.0$, RR=0.5) | TPSL
+2026-03-25 18:25:01 |     Size=1.0000oz (0.010lots) | Risk=$1.00 (0.1%) | Cap=$1,000.00
+2026-03-25 18:30:01 | ~ 11:25 | O=4581.89 H=4582.61 L=4576.82 C=4579.65 | ATR=13.97 | trig 4/1o 4/4c | 2pos | unr=$+10.36
+2026-03-25 18:35:00 | ~ 11:30 | O=4579.66 H=4584.29 L=4579.66 C=4582.53 | ATR=13.97 | trig 4/1o 4/4c | 2pos | unr=$+16.12
+2026-03-25 18:37:53 | RESET FTMO — $50,000.00 @ 0.1% risk
+2026-03-25 18:40:00 | ~ 11:35 | O=4582.54 H=4585.51 L=4581.50 C=4583.02 | ATR=13.97 | trig 4/1o 4/4c | 2pos | unr=$+17.10
+2026-03-25 18:42:27 | Arret.
+2026-03-25 18:42:27 | Capital final: $1,000.00
+2026-03-25 18:42:30 | RESET FTMO — $1,000.00 @ 0.5% risk
+2026-03-25 18:42:31 | Demarrage FTMO — 5 strats @ 0.1% risk: PO3_SWEEP,LON_PREV,ALL_PSAR_EMA,TOK_2BAR,ALL_DC10
+2026-03-25 18:42:31 | Capital: $1,000.00 | Trades: 0 | Positions: 0
+2026-03-25 18:42:32 | Calage: 2026-03-25 11:35:00+00:00 (on ne triggera qu'a partir de la prochaine bougie)
+2026-03-25 18:42:32 | Cache journalier 2026-03-25...
+2026-03-25 18:42:33 |   ATR=13.97 spread_rt=1.404
+2026-03-25 18:42:33 | Reset triggered pour 2026-03-25
+2026-03-25 18:44:49 | Supprime paper_ftmo.json
+2026-03-25 18:45:01 | ~ 11:40 | O=4583.01 H=4584.54 L=4580.96 C=4583.35 | ATR=13.97 | trig 0/1o 0/4c | 0pos
+2026-03-25 18:45:05 | RESET FTMO — $50,000.00 @ 0.1% risk
+2026-03-25 18:45:05 | Demarrage FTMO — 5 strats @ 0.1% risk: PO3_SWEEP,LON_PREV,ALL_PSAR_EMA,TOK_2BAR,ALL_DC10
+2026-03-25 18:45:05 | Capital: $50,000.00 | Trades: 0 | Positions: 0
+2026-03-25 18:45:05 | Calage: 2026-03-25 11:40:00+00:00 (on ne triggera qu'a partir de la prochaine bougie)
+2026-03-25 18:45:05 | Cache journalier 2026-03-25...
+2026-03-25 18:45:06 |   ATR=13.97 spread_rt=1.404
+2026-03-25 18:45:06 | Reset triggered pour 2026-03-25
+2026-03-25 18:45:52 | Arret.
+2026-03-25 18:45:52 | Capital final: $1,000.00
+2026-03-25 18:45:55 | RESET FTMO — $1,000.00 @ 0.5% risk
+2026-03-25 18:45:55 | Demarrage FTMO — 5 strats @ 0.5% risk: PO3_SWEEP,LON_PREV,ALL_PSAR_EMA,TOK_2BAR,ALL_DC10
+2026-03-25 18:45:55 | Capital: $1,000.00 | Trades: 0 | Positions: 0
+2026-03-25 18:45:55 | Calage: 2026-03-25 11:40:00+00:00 (on ne triggera qu'a partir de la prochaine bougie)
+2026-03-25 18:45:55 | Cache journalier 2026-03-25...
+2026-03-25 18:45:56 |   ATR=13.97 spread_rt=1.404
+2026-03-25 18:45:56 | Reset triggered pour 2026-03-25
+2026-03-25 18:45:58 | Arret.
+2026-03-25 18:45:58 | Capital final: $1,000.00
+2026-03-25 18:46:04 | Demarrage FTMO — 5 strats @ 0.1% risk: PO3_SWEEP,LON_PREV,ALL_PSAR_EMA,TOK_2BAR,ALL_DC10
+2026-03-25 18:46:04 | Capital: $1,000.00 | Trades: 0 | Positions: 0
+2026-03-25 18:46:04 | Calage: 2026-03-25 11:40:00+00:00 (on ne triggera qu'a partir de la prochaine bougie)
+2026-03-25 18:46:14 | Arret.
+2026-03-25 18:46:14 | Capital final: $1,000.00
+2026-03-25 18:46:30 | RESET FTMO — $50,000.00 @ 0.1% risk
+2026-03-25 18:46:30 | Demarrage FTMO — 5 strats @ 0.1% risk: PO3_SWEEP,LON_PREV,ALL_PSAR_EMA,TOK_2BAR,ALL_DC10
+2026-03-25 18:46:30 | Capital: $50,000.00 | Trades: 0 | Positions: 0
+2026-03-25 18:46:30 | Calage: 2026-03-25 11:40:00+00:00 (on ne triggera qu'a partir de la prochaine bougie)
+2026-03-25 18:46:30 | Cache journalier 2026-03-25...
+2026-03-25 18:46:31 |   ATR=13.97 spread_rt=1.404
+2026-03-25 18:46:31 | Reset triggered pour 2026-03-25
+2026-03-25 18:48:19 | Arret.
+2026-03-25 18:48:19 | Capital final: $50,000.00

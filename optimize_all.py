@@ -620,10 +620,11 @@ save_data = {
     'best_configs': best_configs,
     'OPEN_STRATS': list(OPEN_STRATS),
 }
-# Determine broker from CLI arg or default
-import sys
+import sys, os
 _broker = sys.argv[1] if len(sys.argv) > 1 else 'icm'
-_pkl_file = f'optim_data_{_broker}.pkl'
+_dir = f'data/{_broker}'
+os.makedirs(_dir, exist_ok=True)
+_pkl_file = f'{_dir}/optim_data.pkl'
 with open(_pkl_file, 'wb') as f:
     pickle.dump(save_data, f)
 print(f"Saved {_pkl_file}")
