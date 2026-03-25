@@ -1,211 +1,178 @@
 """
-Live MT5 — 11 strats, ordres reels.
-Les trades sont places et geres par MT5. Resultats lus depuis MT5.
-Config: TRAIL SL=1.0 ACT=0.5 TRAIL=0.75, pas de timeout (sur CLOSE).
+Live Trading MT5 — multi-compte, vrais ordres.
+Usage:
+  python live_mt5.py icm                        → ICM
+  python live_mt5.py ftmo                       → FTMO
+  python live_mt5.py 5ers                       → 5ers
+  python live_mt5.py icm --dry                  → dry run (log sans envoyer)
+  python live_mt5.py ftmo -c 200000 --reset     → reset + capital override
 
-Usage: python live_mt5.py [--risk 0.1] [--dry]
-  --risk 0.1  : risque par trade en % du capital (defaut: 0.1%)
-  --dry       : mode dry run (log les signaux sans placer d'ordres)
+Identique a live_paper.py mais envoie de vrais ordres MT5.
+- Close strats: detection sur DB (bougie fermee)
+- Open strats: detection sur bougie precedente, entry au tick MT5
+- TPSL: SL + TP poses sur l'ordre MT5
+- TRAIL: SL initial, puis ModifyPosition a chaque bougie fermee
 """
 import warnings; warnings.filterwarnings('ignore')
-import sys; sys.stdout.reconfigure(encoding='utf-8')
-import os, json, time, logging, argparse
+import sys, argparse; sys.stdout.reconfigure(encoding='utf-8')
+import os, json, time, logging
 import numpy as np, pandas as pd
-import MetaTrader5 as mt5
 from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 load_dotenv()
+import MetaTrader5 as mt5
 from phase1_poc_calculator import get_conn
-from strats import SL, ACT, TRAIL, STRATS, STRAT_NAMES
 
-# ── ARGS ─────────────────────────────────────────────
+# ── CONFIG ────────────────────────────────────────────
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--risk', type=float, default=0.1, help='Risque par trade en %%')
-parser.add_argument('--dry', action='store_true', help='Dry run (pas d ordres)')
-parser.add_argument('--magic', type=int, default=20260321, help='Magic number MT5')
+parser = argparse.ArgumentParser(description='Live MT5 trading')
+parser.add_argument('account', nargs='?', default='icm', choices=['icm','ftmo','5ers'])
+parser.add_argument('-c', '--capital', type=float, default=None, help='Capital override')
+parser.add_argument('-r', '--risk', type=float, default=None, help='Risk %% par trade')
+parser.add_argument('--reset', action='store_true', help='Reset state')
+parser.add_argument('--symbol', default='XAUUSD', help='MT5 symbol (default XAUUSD)')
+parser.add_argument('--dry', action='store_true', help='Dry run (log orders but dont send)')
 args = parser.parse_args()
+_account = args.account
 
-RISK_PCT = args.risk / 100
+if _account == 'ftmo':
+    from config_ftmo import PORTFOLIO as STRATS, RISK_PCT, BROKER
+elif _account == '5ers':
+    from config_5ers import PORTFOLIO as STRATS, RISK_PCT, BROKER
+else:
+    from config_icm import PORTFOLIO as STRATS, RISK_PCT, BROKER
+
+RISK_PCT = args.risk / 100 if args.risk else RISK_PCT
+SYMBOL = args.symbol
 DRY_RUN = args.dry
-MAGIC = args.magic
-SYMBOL = 'XAUUSD'
-CHECK_INTERVAL = 5  # secondes entre chaque poll
+CHECK_INTERVAL = 1
+
+os.makedirs(f'data/{_account}', exist_ok=True)
+STATE_FILE = f"data/{_account}/live_mt5.json"
+from strats import STRAT_NAMES, STRAT_SESSION, detect_all, compute_indicators
+from strat_exits import STRAT_EXITS, DEFAULT_EXIT
+
+OPEN_STRATS = ['TOK_FADE','TOK_PREVEXT','LON_GAP','LON_BIGGAP','LON_KZ','LON_TOKEND','LON_PREV','NY_GAP','NY_LONEND','NY_LONMOM','NY_DAYMOM']
+CLOSE_STRATS = [s for s in STRATS if s not in OPEN_STRATS]
 
 # ── LOGGING ──────────────────────────────────────────
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s | %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S',
     handlers=[logging.StreamHandler(),
-              logging.FileHandler('live_mt5.log', encoding='utf-8')])
-log = logging.getLogger('mt5live')
-
-# ── STATE (persistant) ───────────────────────────────
-
-STATE_FILE = 'live_mt5_state.json'
-
-def load_state():
-    if os.path.exists(STATE_FILE):
-        with open(STATE_FILE, 'r') as f: return json.load(f)
-    return {'_triggered': {}, '_prev_day_data': None, '_prev_day_date': None,
-            'positions': {}, 'last_candle_ts': 0, 'trades_log': []}
-
-def save_state(state):
-    with open(STATE_FILE, 'w') as f: json.dump(state, f, indent=2, default=str)
+              logging.FileHandler(f'data/{_account}/live_mt5.log', encoding='utf-8')])
+log = logging.getLogger('mt5')
 
 # ── MT5 ──────────────────────────────────────────────
 
 def mt5_init():
     if not mt5.initialize():
-        log.error(f"MT5 init failed: {mt5.last_error()}")
-        sys.exit(1)
+        log.error("MT5 init failed: {}".format(mt5.last_error()))
+        return False
     info = mt5.account_info()
-    log.info(f"MT5 connected: {info.login} | Balance: ${info.balance:,.2f} | Server: {info.server}")
+    if info is None:
+        log.error("MT5 account_info failed")
+        return False
+    log.info("MT5 connecte: {} {} balance=${:,.2f} equity=${:,.2f}".format(
+        info.company, info.server, info.balance, info.equity))
     sym = mt5.symbol_info(SYMBOL)
-    if sym is None or not sym.visible:
+    if sym is None:
+        log.error("Symbole {} non trouve".format(SYMBOL))
+        return False
+    if not sym.visible:
         mt5.symbol_select(SYMBOL, True)
-    return info
+    log.info("Symbole {}: lot_min={} lot_step={} lot_max={} digits={}".format(
+        SYMBOL, sym.volume_min, sym.volume_step, sym.volume_max, sym.digits))
+    return True
 
-def get_account_balance():
+def mt5_get_balance():
     info = mt5.account_info()
     return info.balance if info else 0
 
-def get_mt5_positions():
-    """Retourne les positions ouvertes MT5 pour notre magic number."""
-    positions = mt5.positions_get(symbol=SYMBOL)
-    if positions is None: return []
-    return [p for p in positions if p.magic == MAGIC]
-
-def calc_lot_size(symbol, entry, sl, risk_amount):
-    """Calcule la taille de position via mt5.order_calc_profit (precise, devise-aware)."""
-    sym_info = mt5.symbol_info(symbol)
-    if sym_info is None:
-        log.error(f"Symbol info introuvable pour {symbol}"); return 0.0
-
-    order_type = mt5.ORDER_TYPE_BUY if entry > sl else mt5.ORDER_TYPE_SELL
-    try:
-        loss_one_lot = mt5.order_calc_profit(order_type, symbol, 1.0, float(entry), float(sl))
-    except Exception as e:
-        log.error(f"order_calc_profit error: {e}"); return 0.0
-
-    if loss_one_lot is None:
-        log.warning("order_calc_profit None, fallback manuel")
-        loss_one_lot = -abs(entry - sl) * sym_info.trade_contract_size
-
-    loss_per_lot = abs(loss_one_lot)
-    if loss_per_lot == 0: return 0.0
-
-    raw_lots = risk_amount / loss_per_lot
-    step = sym_info.volume_step
-    lots = round(raw_lots / step) * step
-    lots = max(sym_info.volume_min, lots)
-    lots = min(sym_info.volume_max, lots)
-    return float(lots)
-
-def place_order(strat, direction, atr):
-    """Place un ordre market avec SL. Retourne le ticket ou None."""
+def mt5_get_tick():
     tick = mt5.symbol_info_tick(SYMBOL)
-    if not tick:
-        log.error("Pas de tick"); return None
+    if tick:
+        return {'bid': tick.bid, 'ask': tick.ask, 'spread': tick.ask - tick.bid}
+    return None
 
-    balance = get_account_balance()
-    risk_amount = balance * RISK_PCT
+def mt5_get_positions():
+    positions = mt5.positions_get(symbol=SYMBOL)
+    return list(positions) if positions else []
 
-    if direction == 'long':
-        price = tick.ask
-        sl = round(price - SL * atr, 2)
-        order_type = mt5.ORDER_TYPE_BUY
-    else:
-        price = tick.bid
-        sl = round(price + SL * atr, 2)
-        order_type = mt5.ORDER_TYPE_SELL
+def mt5_lot_size(risk_amount, sl_distance):
+    sym = mt5.symbol_info(SYMBOL)
+    if not sym or sl_distance <= 0: return sym.volume_min if sym else 0.01
+    pos_oz = risk_amount / sl_distance
+    lots = pos_oz / sym.trade_contract_size  # contract_size = 100 pour gold
+    lots = max(sym.volume_min, round(lots / sym.volume_step) * sym.volume_step)
+    lots = min(lots, sym.volume_max)
+    return round(lots, 2)
 
-    lot_size = calc_lot_size(SYMBOL, price, sl, risk_amount)
-    if lot_size <= 0:
-        log.error(f"Lot size invalide: {lot_size}"); return None
+def mt5_open_order(strat, direction, sl, tp, lots):
+    sym = mt5.symbol_info(SYMBOL)
+    if not sym: return None
+
+    order_type = mt5.ORDER_TYPE_BUY if direction == 'long' else mt5.ORDER_TYPE_SELL
+    price = sym.ask if direction == 'long' else sym.bid
 
     request = {
         'action': mt5.TRADE_ACTION_DEAL,
         'symbol': SYMBOL,
-        'volume': lot_size,
+        'volume': lots,
         'type': order_type,
         'price': price,
-        'sl': sl,
-        'magic': MAGIC,
-        'comment': strat,
-        'type_filling': mt5.ORDER_FILLING_IOC,
+        'sl': round(sl, sym.digits),
+        'tp': round(tp, sym.digits) if tp else 0.0,
+        'deviation': 20,
+        'magic': 240325,
+        'comment': 'VP_{}'.format(strat),
+        'type_time': mt5.ORDER_TIME_GTC,
     }
 
+    log.info(">>> MT5 {} {} {} lots @ {:.2f} SL={:.2f} TP={:.2f} <<<".format(
+        'BUY' if direction == 'long' else 'SELL', strat, lots, price, sl, tp or 0))
+
     if DRY_RUN:
-        log.info(f"DRY RUN: {strat} {direction} {lot_size:.2f}lots @ {price:.2f} SL={sl:.2f} risk=${risk_amount:.2f}")
-        return None
+        log.info("    [DRY RUN] Ordre non envoye")
+        return {'ticket': int(time.time()), 'price': price, 'volume': lots}
 
     result = mt5.order_send(request)
     if result is None:
-        log.error(f"order_send None: {mt5.last_error()}")
+        log.error("    order_send None: {}".format(mt5.last_error()))
         return None
     if result.retcode != mt5.TRADE_RETCODE_DONE:
-        log.error(f"Order failed: {result.retcode} {result.comment}")
+        log.error("    order_send failed: {} {}".format(result.retcode, result.comment))
         return None
 
-    log.info(f"OPEN {strat} {direction} | ticket={result.order} | {lot_size:.2f}lots @ {result.price:.2f} | SL={sl:.2f} | risk=${risk_amount:.2f}")
-    return result.order
+    log.info("    OK ticket={} fill={:.2f}".format(result.order, result.price))
+    return {'ticket': result.order, 'price': result.price, 'volume': result.volume}
 
-def modify_sl(ticket, new_sl):
-    """Modifie le SL d'une position ouverte."""
-    pos = mt5.positions_get(ticket=ticket)
-    if not pos:
-        log.warning(f"Position {ticket} introuvable pour modify"); return False
+def mt5_modify_sl(ticket, new_sl):
+    sym = mt5.symbol_info(SYMBOL)
+    if not sym: return False
+    positions = mt5.positions_get(ticket=ticket)
+    if not positions: return False
+    pos = positions[0]
 
     request = {
         'action': mt5.TRADE_ACTION_SLTP,
-        'position': ticket,
         'symbol': SYMBOL,
-        'sl': round(new_sl, 2),
-        'tp': 0,
+        'position': ticket,
+        'sl': round(new_sl, sym.digits),
+        'tp': pos.tp,
     }
 
     if DRY_RUN:
-        log.info(f"DRY RUN modify: ticket={ticket} new_sl={new_sl:.2f}")
+        log.info("    [DRY] Modify SL #{} -> {:.2f}".format(ticket, new_sl))
         return True
 
     result = mt5.order_send(request)
-    if result is None or result.retcode != mt5.TRADE_RETCODE_DONE:
-        log.error(f"Modify SL failed: {result.retcode if result else 'None'} {result.comment if result else ''}")
-        return False
-    return True
-
-def close_position(ticket):
-    """Ferme une position au marche."""
-    pos = mt5.positions_get(ticket=ticket)
-    if not pos: return
-    p = pos[0]
-    close_type = mt5.ORDER_TYPE_SELL if p.type == mt5.ORDER_TYPE_BUY else mt5.ORDER_TYPE_BUY
-    tick = mt5.symbol_info_tick(SYMBOL)
-    price = tick.bid if p.type == mt5.ORDER_TYPE_BUY else tick.ask
-
-    request = {
-        'action': mt5.TRADE_ACTION_DEAL,
-        'symbol': SYMBOL,
-        'volume': p.volume,
-        'type': close_type,
-        'position': ticket,
-        'price': price,
-        'magic': MAGIC,
-        'comment': 'close',
-        'type_filling': mt5.ORDER_FILLING_IOC,
-    }
-
-    if DRY_RUN:
-        log.info(f"DRY RUN close: ticket={ticket} @ {price:.2f}"); return
-
-    result = mt5.order_send(request)
     if result and result.retcode == mt5.TRADE_RETCODE_DONE:
-        log.info(f"CLOSE ticket={ticket} @ {result.price:.2f}")
-    else:
-        log.error(f"Close failed: {result.retcode if result else 'None'}")
+        return True
+    log.error("    Modify SL failed: {}".format(result.retcode if result else mt5.last_error()))
+    return False
 
-# ── DB ───────────────────────────────────────────────
+# ── DB ────────────────────────────────────────────────
 
 def get_conn_autocommit():
     conn = get_conn(); conn.autocommit = True; return conn
@@ -229,286 +196,224 @@ def get_yesterday_atr(candles_df, today):
     yc['atr'] = yc['tr'].ewm(span=14, adjust=False).mean()
     return float(yc['atr'].iloc[-1])
 
+# ── STATE ─────────────────────────────────────────────
+
+def new_state(capital):
+    return {'capital_initial': capital, 'broker': BROKER, 'risk_pct': RISK_PCT,
+            'trades': [], 'positions': [],
+            'daily_cache': {}, '_triggered_open': {}, '_triggered_close': {},
+            '_prev_day_data': None, '_prev_day_date': None,
+            'last_candle_ts': 0}
+
+def load_state():
+    if os.path.exists(STATE_FILE):
+        with open(STATE_FILE, 'r') as f: return json.load(f)
+    cap = args.capital or mt5_get_balance() or 1000.0
+    return new_state(cap)
+
+def save_state(state):
+    with open(STATE_FILE, 'w') as f: json.dump(state, f, indent=2, default=str)
+
+def reset_state():
+    if os.path.exists(STATE_FILE): os.remove(STATE_FILE)
+    cap = args.capital or mt5_get_balance() or 1000.0
+    state = new_state(cap)
+    save_state(state)
+    log.info("RESET {} — ${:,.2f} @ {:.1f}% risk".format(BROKER, cap, RISK_PCT*100))
+    return state
+
+# ── DAILY CACHE ──────────────────────────────────────
+
+def ensure_daily_cache(state, conn, candles_df, today):
+    k = str(today)
+    if k in state['daily_cache']: return state['daily_cache'][k]
+    atr = get_yesterday_atr(candles_df, today)
+    cache = {'atr': atr}
+    state['daily_cache'] = {k: cache}
+    log.info("Cache journalier {}: ATR={}".format(today, "{:.2f}".format(atr) if atr else "None"))
+    return cache
+
 # ── SIGNAL DETECTION ─────────────────────────────────
 
-def execute_signals(signals, state, atr, candle_time):
-    """Execute les signaux: verifie conflits et place les ordres."""
-    mt5_pos = get_mt5_positions()
-    open_dirs = set()
-    for p in mt5_pos:
-        if p.type == mt5.ORDER_TYPE_BUY: open_dirs.add('long')
-        else: open_dirs.add('short')
-
-    for sig in signals:
-        if sig['strat'] not in STRATS: continue
-        if sig['dir'] == 'long' and 'short' in open_dirs:
-            log.info(f"SKIP {sig['strat']} — conflit short"); continue
-        if sig['dir'] == 'short' and 'long' in open_dirs:
-            log.info(f"SKIP {sig['strat']} — conflit long"); continue
-
-        ticket = place_order(sig['strat'], sig['dir'], atr)
-        if ticket:
-            pos_info = mt5.positions_get(ticket=ticket)
-            entry_price = pos_info[0].price_open if pos_info else 0
-            state['positions'][str(ticket)] = {
-                'strat': sig['strat'], 'dir': sig['dir'],
-                'entry': entry_price, 'atr': atr, 'best': entry_price,
-                'trail_active': False, 'entry_time': str(candle_time),
-            }
-            open_dirs.add(sig['dir'])
-            log.info(f"  signal {sig['strat']} {sig['dir']}")
-    save_state(state)
-
-def detect_and_execute_open_strats(candles, state, atr, candle_time, today, tick):
-    """Strats 'open': signal base sur donnees anterieures + prix actuel.
-    Detectees des que l'heure cible est atteinte, sans attendre la bougie fermee."""
-    signals = []; hour = candle_time.hour + candle_time.minute / 60.0
-    trig = state.setdefault('_triggered', {})
+def detect_open_strats(candles, state, atr, now_utc, today):
+    if len(candles) < 2: return []
+    signals = []
+    trig = state.setdefault('_triggered_open', {})
+    hour = now_utc.hour + now_utc.minute / 60.0
+    r = candles.iloc[-2]; ci = len(candles) - 2
     ds = pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')
     te = pd.Timestamp(today.year,today.month,today.day,6,0,tz='UTC')
     ls = pd.Timestamp(today.year,today.month,today.day,8,0,tz='UTC')
     ns = pd.Timestamp(today.year,today.month,today.day,14,30,tz='UTC')
-    tok = candles[(candles['ts_dt']>=ds)&(candles['ts_dt']<te)]
-    lon = candles[(candles['ts_dt']>=ls)&(candles['ts_dt']<ns)]
+    tv = candles[(candles['ts_dt']>=ds)&(candles['ts_dt']<=r['ts_dt'])]
+    tok = tv[tv['ts_dt']<te]; lon = tv[(tv['ts_dt']>=ls)&(tv['ts_dt']<ns)]
     prev_day_data = state.get('_prev_day_data')
-
-    # TOK_FADE: fade previous day >1ATR at Tokyo open
-    if 0.0<=hour<0.1:
-        k = str(today)+'_TOK_FADE'
-        if k not in trig and prev_day_data:
-            prev_dir = prev_day_data['close'] - prev_day_data['open']
-            if abs(prev_dir) >= 1.0*atr:
-                signals.append({'strat':'TOK_FADE','dir':'short' if prev_dir>0 else 'long'}); trig[k]=True
-        # TOK_PREVEXT: prev day close near extreme → continuation Tokyo
-        k = str(today)+'_TOK_PREVEXT'
-        if k not in trig and prev_day_data and prev_day_data.get('range',0) > 0:
-            pos_close = (prev_day_data['close'] - prev_day_data['low']) / prev_day_data['range']
-            if pos_close >= 0.9:
-                signals.append({'strat':'TOK_PREVEXT','dir':'long'}); trig[k]=True
-            elif pos_close <= 0.1:
-                signals.append({'strat':'TOK_PREVEXT','dir':'short'}); trig[k]=True
-
-    # LON_GAP: gap Tokyo close vs prix actuel > 0.5 ATR
-    if 8.0<=hour<8.1:
-        k = str(today)+'_LON_GAP'
-        if k not in trig and len(tok)>=5:
-            current_price = tick.ask
-            gap = (current_price - tok.iloc[-1]['close']) / atr
-            if abs(gap) >= 0.5:
-                signals.append({'strat':'LON_GAP','dir':'long' if gap>0 else 'short'}); trig[k]=True
-        # LON_BIGGAP: gap > 1.0 ATR (seuil strict)
-        k = str(today)+'_LON_BIGGAP'
-        if k not in trig and len(tok)>=5:
-            current_price = tick.ask
-            gap = (current_price - tok.iloc[-1]['close']) / atr
-            if abs(gap) >= 1.0:
-                signals.append({'strat':'LON_BIGGAP','dir':'long' if gap>0 else 'short'}); trig[k]=True
-
-    # LON_TOKEND: 3 dernieres bougies Tokyo >1ATR, continuation
-    if 8.0<=hour<8.1:
-        k = str(today)+'_LON_TOKEND'
-        if k not in trig and len(tok)>=9:
-            l3=tok.iloc[-3:]; m=(l3.iloc[-1]['close']-l3.iloc[0]['open'])/atr
-            if abs(m)>=1.0:
-                signals.append({'strat':'LON_TOKEND','dir':'long' if m>0 else 'short'}); trig[k]=True
-
-    # LON_PREV: previous day continuation >1ATR
-    if 8.0<=hour<8.1:
-        k = str(today)+'_LON_PREV'
-        if k not in trig and prev_day_data:
-            prev_body=(prev_day_data['close']-prev_day_data['open'])/atr
-            if abs(prev_body)>=1.0:
-                signals.append({'strat':'LON_PREV','dir':'long' if prev_body>0 else 'short'}); trig[k]=True
-
-    # LON_KZ: KZ London 8h-10h fade (signal base sur bougies fermees 8h-10h)
-    if 10.0<=hour<10.1:
-        k = str(today)+'_LON_KZ'
-        if k not in trig:
-            kz=candles[(candles['ts_dt']>=ls)&(candles['ts_dt']<pd.Timestamp(today.year,today.month,today.day,10,0,tz='UTC'))]
-            if len(kz)>=20:
-                m=(kz.iloc[-1]['close']-kz.iloc[0]['open'])/atr
-                if abs(m)>=0.5:
-                    signals.append({'strat':'LON_KZ','dir':'short' if m>0 else 'long'}); trig[k]=True
-
-    # NY_GAP: gap London close vs prix actuel > 0.5 ATR
-    if 14.5<=hour<14.6:
-        k = str(today)+'_NY_GAP'
-        if k not in trig and len(lon)>=5:
-            current_price = tick.ask
-            gap = (current_price - lon.iloc[-1]['close']) / atr
-            if abs(gap) >= 0.5:
-                signals.append({'strat':'NY_GAP','dir':'long' if gap>0 else 'short'}); trig[k]=True
-
-    # NY_LONEND: 3 dernieres bougies London >1ATR continuation
-    if 14.5<=hour<14.6:
-        k = str(today)+'_NY_LONEND'
-        if k not in trig and len(lon)>=9:
-            l3=lon.iloc[-3:]; m=(l3.iloc[-1]['close']-l3.iloc[0]['open'])/atr
-            if abs(m)>=1.0:
-                signals.append({'strat':'NY_LONEND','dir':'long' if m>0 else 'short'}); trig[k]=True
-
-    # NY_LONMOM: 3 dernieres bougies London >0.5ATR continuation
-    if 14.5<=hour<14.6:
-        k = str(today)+'_NY_LONMOM'
-        if k not in trig and len(lon)>=9:
-            l3=lon.iloc[-3:]; m=(l3.iloc[-1]['close']-l3.iloc[0]['open'])/atr
-            if abs(m)>=0.5:
-                signals.append({'strat':'NY_LONMOM','dir':'long' if m>0 else 'short'}); trig[k]=True
-        # NY_DAYMOM: Tokyo+London move >1.5ATR → continuation NY
-        k = str(today)+'_NY_DAYMOM'
-        if k not in trig:
-            ds = pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')
-            tv_now = candles[(candles['ts_dt']>=ds)&(candles['ts_dt']<=candle_time)]
-            if len(tv_now) >= 100:
-                day_move = (tv_now.iloc[-1]['close'] - tv_now.iloc[0]['open']) / atr
-                if abs(day_move) >= 1.5:
-                    signals.append({'strat':'NY_DAYMOM','dir':'long' if day_move>0 else 'short'}); trig[k]=True
-
-    if signals:
-        execute_signals(signals, state, atr, candle_time)
-
-def detect_close_strats(candles, state, atr, candle_time, today):
-    """Strats 'close': signal base sur la bougie fermee (OHLC complet necessaire)."""
-    signals = []; hour = candle_time.hour + candle_time.minute / 60.0
-    trig = state.setdefault('_triggered', {})
-    ds = pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')
-    te = pd.Timestamp(today.year,today.month,today.day,6,0,tz='UTC')
-    tok = candles[(candles['ts_dt']>=ds)&(candles['ts_dt']<te)]
-    r = candles.iloc[-1]
-
-    # TOK_2BAR: two-bar reversal (besoin du close des 2 bougies)
-    if 0.0<=hour<6.0:
-        k = str(today)+'_TOK_2BAR'
-        if k not in trig and len(tok)>=2:
-            b1=tok.iloc[-2];b2=tok.iloc[-1];b1b=b1['close']-b1['open'];b2b=b2['close']-b2['open']
-            if abs(b1b)>=0.5*atr and abs(b2b)>=0.5*atr and b1b*b2b<0 and abs(b2b)>abs(b1b):
-                signals.append({'strat':'TOK_2BAR','dir':'long' if b2b>0 else 'short'}); trig[k]=True
-    # TOK_BIG: big candle >1ATR (besoin du close)
-        k = str(today)+'_TOK_BIG'
-        if k not in trig:
-            body=r['close']-r['open']
-            if abs(body)>=1.0*atr:
-                signals.append({'strat':'TOK_BIG','dir':'long' if body>0 else 'short'}); trig[k]=True
-    # LON_PIN: pin bar (besoin du OHLC complet)
-    if 8.0<=hour<14.5:
-        k = str(today)+'_LON_PIN'
-        if k not in trig:
-            rng=r['high']-r['low']
-            if rng>=0.3*atr and abs(r['close']-r['open'])>=0.2*atr:
-                pir=(r['close']-r['low'])/rng
-                if pir>=0.9: signals.append({'strat':'LON_PIN','dir':'long'}); trig[k]=True
-                elif pir<=0.1: signals.append({'strat':'LON_PIN','dir':'short'}); trig[k]=True
-
+    def add_sig(sn, d, e):
+        if sn in OPEN_STRATS and sn in STRATS:
+            signals.append({'strat': sn, 'dir': d})
+    detect_all(candles, ci, r, r['ts_dt'], today, hour, atr, trig, tv, tok, lon, prev_day_data, add_sig)
     return signals
 
-# ── TRAILING MANAGEMENT (sur bougie fermee) ──────────
+def detect_close_strats(candles, state, atr, candle_time, today):
+    signals = []
+    trig = state.setdefault('_triggered_close', {})
+    hour = candle_time.hour + candle_time.minute / 60.0
+    r = candles.iloc[-1]
+    ds = pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')
+    te = pd.Timestamp(today.year,today.month,today.day,6,0,tz='UTC')
+    ls = pd.Timestamp(today.year,today.month,today.day,8,0,tz='UTC')
+    ns = pd.Timestamp(today.year,today.month,today.day,14,30,tz='UTC')
+    tv = candles[(candles['ts_dt']>=ds)&(candles['ts_dt']<=candle_time)]
+    tok = tv[tv['ts_dt']<te]; lon = tv[(tv['ts_dt']>=ls)&(tv['ts_dt']<ns)]
+    prev_day_data = state.get('_prev_day_data')
+    def add_sig(sn, d, e):
+        if sn in CLOSE_STRATS and sn in STRATS:
+            signals.append({'strat': sn, 'dir': d})
+    detect_all(candles, len(candles)-1, r, r['ts_dt'], today, hour, atr, trig, tv, tok, lon, prev_day_data, add_sig)
+    return signals
+
+# ── OPEN POSITION ────────────────────────────────────
+
+def open_position(state, sig, atr):
+    d = sig['dir']
+    tick = mt5_get_tick()
+    if not tick:
+        log.warning("SKIP {} — no tick".format(sig['strat'])); return
+
+    entry = tick['ask'] if d == 'long' else tick['bid']
+    exit_cfg = STRAT_EXITS.get(sig['strat'], DEFAULT_EXIT)
+    exit_type = exit_cfg[0]; sl_val = exit_cfg[1]
+    stop = entry - sl_val * atr if d == 'long' else entry + sl_val * atr
+
+    capital = mt5_get_balance() or state.get('capital_initial', 1000)
+    risk = capital * RISK_PCT
+    sl_distance = abs(entry - stop)
+    lots = mt5_lot_size(risk, sl_distance)
+
+    actual_risk = lots * mt5.symbol_info(SYMBOL).trade_contract_size * sl_distance
+    actual_risk_pct = actual_risk / capital * 100 if capital > 0 else 0
+    if actual_risk_pct > RISK_PCT * 100 * 1.5:
+        log.warning("RISK {} {:.1f}% > cible {:.1f}% (min lot)".format(
+            sig['strat'], actual_risk_pct, RISK_PCT*100))
+
+    tp = 0.0
+    if exit_type == 'TPSL':
+        tp_val = exit_cfg[2]
+        tp = entry + tp_val * atr if d == 'long' else entry - tp_val * atr
+
+    result = mt5_open_order(sig['strat'], d, stop, tp, lots)
+    if not result: return
+
+    state['positions'].append({
+        'strat': sig['strat'], 'dir': d, 'entry': result['price'],
+        'stop': stop, 'tp': tp, 'lots': result['volume'],
+        'ticket': result['ticket'], 'exit_type': exit_type,
+        'best': result['price'], 'trail_active': False,
+        'trade_atr': atr, 'bars_held': 0,
+        'entry_time': str(datetime.now(timezone.utc)),
+        'sl_val': sl_val,
+        'act_val': exit_cfg[2] if exit_type == 'TRAIL' else 0,
+        'trail_val': exit_cfg[3] if exit_type == 'TRAIL' else 0,
+    })
+    log.info("    Risk=${:.2f} ({:.1f}%) Cap=${:,.2f} Spread={:.3f}".format(
+        risk, RISK_PCT*100, capital, tick['spread']))
+
+# ── MANAGE TRAILING ──────────────────────────────────
 
 def manage_trailing(state, candles):
-    """Met a jour le trailing sur les positions ouvertes MT5.
-    Appele a chaque nouvelle bougie fermee. Utilise le CLOSE de la bougie fermee (pas price_current)."""
-    mt5_positions = get_mt5_positions()
-    if not mt5_positions: return
+    last = candles.iloc[-1]
+    for pos in state['positions']:
+        if pos['exit_type'] != 'TRAIL': continue
+        pos['bars_held'] = pos.get('bars_held', 0) + 1
 
-    # Close de la derniere bougie fermee (la bougie [-1] est celle qui vient de fermer)
-    last_close = float(candles.iloc[-1]['close'])
+        d = pos['dir']; atr = pos['trade_atr']
+        act_val = pos['act_val']; trail_val = pos['trail_val']
 
-    for pos in mt5_positions:
-        ticket = pos.ticket
-        key = str(ticket)
-        if key not in state['positions']:
-            continue
+        # Update best on CLOSE (like backtest)
+        px = last['close']
+        if d == 'long' and px > pos['best']: pos['best'] = px
+        if d == 'short' and px < pos['best']: pos['best'] = px
 
-        pdata = state['positions'][key]
-        d = pdata['dir']
-        atr = pdata['atr']
-        entry = pdata['entry']
-        current_sl = pos.sl
+        if not pos['trail_active']:
+            fav = (pos['best'] - pos['entry']) if d == 'long' else (pos['entry'] - pos['best'])
+            if fav >= act_val * atr:
+                pos['trail_active'] = True
+                log.info("TRAIL ACTIVE {} {} | best={:.2f} fav={:.2f}".format(
+                    pos['strat'], d, pos['best'], fav))
 
-        # Update best avec le CLOSE de la bougie fermee (pas price_current)
-        best = pdata.get('best', entry)
-        if d == 'long' and last_close > best:
-            best = last_close
-        elif d == 'short' and last_close < best:
-            best = last_close
-        pdata['best'] = best
-
-        # Trailing activation
-        if not pdata.get('trail_active', False):
-            fav = (best - entry) if d == 'long' else (entry - best)
-            if fav >= ACT * atr:
-                pdata['trail_active'] = True
-                log.info(f"TRAIL ACTIVE ticket={ticket} {pdata['strat']} best={best:.2f}")
-
-        # Trailing stop update
-        if pdata.get('trail_active', False):
+        if pos['trail_active']:
             if d == 'long':
-                new_sl = round(best - TRAIL * atr, 2)
-                if new_sl > current_sl:
-                    if modify_sl(ticket, new_sl):
-                        log.info(f"TRAIL UPDATE ticket={ticket} {pdata['strat']} SL {current_sl:.2f} -> {new_sl:.2f} (best={best:.2f})")
-                        pdata['sl'] = new_sl
+                new_sl = pos['best'] - trail_val * atr
+                if new_sl > pos['stop']:
+                    log.info("TRAIL {} SL {:.2f} -> {:.2f} (best={:.2f})".format(
+                        pos['strat'], pos['stop'], new_sl, pos['best']))
+                    if mt5_modify_sl(pos['ticket'], new_sl):
+                        pos['stop'] = new_sl
             else:
-                new_sl = round(best + TRAIL * atr, 2)
-                if new_sl < current_sl:
-                    if modify_sl(ticket, new_sl):
-                        log.info(f"TRAIL UPDATE ticket={ticket} {pdata['strat']} SL {current_sl:.2f} -> {new_sl:.2f} (best={best:.2f})")
-                        pdata['sl'] = new_sl
+                new_sl = pos['best'] + trail_val * atr
+                if new_sl < pos['stop']:
+                    log.info("TRAIL {} SL {:.2f} -> {:.2f} (best={:.2f})".format(
+                        pos['strat'], pos['stop'], new_sl, pos['best']))
+                    if mt5_modify_sl(pos['ticket'], new_sl):
+                        pos['stop'] = new_sl
 
-    save_state(state)
-
-# ── SYNC POSITIONS (lire l'etat reel MT5) ────────────
+# ── SYNC WITH MT5 ───────────────────────────────────
 
 def sync_positions(state):
-    """Synchronise notre state avec les positions reelles MT5.
-    Detecte les positions fermees par MT5 (SL touche)."""
-    mt5_tickets = {p.ticket for p in get_mt5_positions()}
-    our_tickets = set(state['positions'].keys())
+    if DRY_RUN: return
+    mt5_pos = mt5_get_positions()
+    mt5_tickets = {p.ticket for p in mt5_pos}
 
-    for key in list(our_tickets):
-        ticket = int(key)
+    closed = []
+    for pos in state['positions']:
+        ticket = pos['ticket']
         if ticket not in mt5_tickets:
-            # Position fermee par MT5 (SL ou autre)
-            pdata = state['positions'].pop(key)
-
-            # Lire le resultat depuis MT5
+            log.info("CLOSED {} {} #{} (MT5 SL/TP)".format(pos['strat'], pos['dir'], ticket))
             deals = mt5.history_deals_get(position=ticket)
-            if deals and len(deals) >= 2:
-                close_deal = deals[-1]
-                pnl = close_deal.profit + close_deal.commission + close_deal.swap
-                exit_price = close_deal.price
-                log.info(f"CLOSED BY MT5 | {pdata['strat']} {pdata['dir']} | "
-                         f"{pdata['entry']:.2f} -> {exit_price:.2f} | "
-                         f"PnL: ${pnl:+,.2f} | ticket={ticket}")
-                state['trades_log'].append({
-                    'strat': pdata['strat'], 'dir': pdata['dir'],
-                    'entry': pdata['entry'], 'exit': exit_price,
-                    'pnl': pnl, 'ticket': ticket,
-                    'entry_time': pdata.get('entry_time'),
-                    'exit_time': str(datetime.now(timezone.utc)),
-                })
-            else:
-                log.warning(f"Position {ticket} fermee mais pas de deals trouves")
+            pnl = sum(d.profit + d.commission + d.swap for d in deals) if deals else 0
+            state['trades'].append({
+                'strat': pos['strat'], 'dir': pos['dir'],
+                'entry': pos['entry'], 'lots': pos['lots'],
+                'pnl': pnl, 'ticket': ticket,
+                'entry_time': pos['entry_time'],
+                'exit_time': str(datetime.now(timezone.utc)),
+                'bars_held': pos.get('bars_held', 0),
+            })
+            log.info("    PnL=${:+,.2f} (incl commission+swap)".format(pnl))
+            closed.append(pos)
 
-    save_state(state)
+    for c in closed:
+        state['positions'].remove(c)
+    if closed: save_state(state)
 
 # ── MAIN ─────────────────────────────────────────────
 
 def main():
-    info = mt5_init()
+    if not mt5_init():
+        log.error("MT5 init failed. Arret.")
+        return
+
+    if args.reset:
+        state = reset_state()
+    else:
+        state = load_state()
+
+    log.info("Demarrage {} LIVE{} — {} strats @ {:.1f}% risk: {}".format(
+        BROKER, " [DRY]" if DRY_RUN else "",
+        len(STRATS), RISK_PCT*100, ','.join(STRATS)))
+    log.info("Balance MT5: ${:,.2f} | Positions state: {}".format(
+        mt5_get_balance(), len(state['positions'])))
+
     conn = get_conn_autocommit()
-    state = load_state()
-
-    log.info(f"{'DRY RUN — ' if DRY_RUN else ''}11 strats | Risk {args.risk}% | Magic {MAGIC}")
-    log.info(f"Balance: ${info.balance:,.2f} | Strats: {', '.join(STRATS)}")
-
-    last_candle_ts = state.get('last_candle_ts', 0)
-    if last_candle_ts == 0:
-        ci = get_recent_candles(conn, 1)
-        if len(ci) > 0: last_candle_ts = int(ci.iloc[-1]['ts'])
+    ci = get_recent_candles(conn, 1)
+    if len(ci) > 0:
+        last_candle_ts = int(ci.iloc[-1]['ts'])
+        log.info("Calage: {} (triggers apres prochaine bougie)".format(ci.iloc[-1]['ts_dt']))
+    else:
+        last_candle_ts = 0
 
     while True:
         try:
-            # Reconnexion DB si necessaire
             try: conn.isolation_level
             except Exception:
                 log.warning("Reconnexion DB...")
@@ -516,24 +421,24 @@ def main():
                 except: pass
                 conn = get_conn_autocommit()
 
-            # Reconnexion MT5 si necessaire
             if not mt5.terminal_info():
-                log.warning("Reconnexion MT5...")
+                log.warning("MT5 deconnecte, reconnexion...")
                 mt5_init()
 
             candles = get_recent_candles(conn, 1500)
             if len(candles) == 0: time.sleep(CHECK_INTERVAL); continue
+            candles = compute_indicators(candles)
 
             current_ts = int(candles.iloc[-1]['ts'])
             candle_time = candles.iloc[-1]['ts_dt'].to_pydatetime()
             today = candle_time.date()
 
-            # ATR
-            atr = get_yesterday_atr(candles, today)
-            if not atr or atr == 0: time.sleep(CHECK_INTERVAL); continue
+            cache = ensure_daily_cache(state, conn, candles, today)
+            if not cache['atr'] or cache['atr'] == 0: time.sleep(CHECK_INTERVAL); continue
+            atr = cache['atr']
 
-            # Prev day data
-            if state.get('_prev_day_date') != str(today):
+            # Prev day data + reset triggered
+            if '_prev_day_data' not in state or state.get('_prev_day_date') != str(today):
                 yc = candles[candles['date'] < today]
                 if len(yc) > 0:
                     last_day = yc['date'].iloc[-1]
@@ -542,67 +447,75 @@ def main():
                                                'high':float(dc['high'].max()),'low':float(dc['low'].min()),
                                                'range':float(dc['high'].max()-dc['low'].min())}
                 state['_prev_day_date'] = str(today)
+                state['_triggered_open'] = {}
+                state['_triggered_close'] = {}
+                log.info("Reset triggered pour {}".format(today))
 
-            # Sync avec MT5 (detecter les positions fermees)
+            # Sync: detect MT5 closed positions
             sync_positions(state)
 
-            # Strats "open" : detectees a chaque poll via tick MT5 (pas besoin de bougie fermee)
-            # Utilise l'heure reelle (pas candle_time qui est l'heure de la derniere bougie DB)
+            # Open strats: every poll
             now_utc = datetime.now(timezone.utc)
-            tick = mt5.symbol_info_tick(SYMBOL)
-            if tick:
-                detect_and_execute_open_strats(candles, state, atr, now_utc, now_utc.date(), tick)
+            open_sigs = detect_open_strats(candles, state, atr, now_utc, today)
+            if open_sigs:
+                mt5_pos = mt5_get_positions()
+                open_dirs = set()
+                for p in mt5_pos:
+                    open_dirs.add('long' if p.type == mt5.ORDER_TYPE_BUY else 'short')
+                for sig in open_sigs:
+                    if sig['dir'] == 'long' and 'short' in open_dirs:
+                        log.info("SKIP {} — conflit short".format(sig['strat'])); continue
+                    if sig['dir'] == 'short' and 'long' in open_dirs:
+                        log.info("SKIP {} — conflit long".format(sig['strat'])); continue
+                    open_position(state, sig, atr)
+                    open_dirs.add(sig['dir'])
 
-            # Nouvelle bougie ?
             is_new = current_ts != last_candle_ts
             if not is_new:
                 time.sleep(CHECK_INTERVAL); continue
 
-            log.info(f"CANDLE {candle_time.strftime('%Y-%m-%d %H:%M')} | close={candles.iloc[-1]['close']:.2f} | ATR={atr:.2f}")
+            # Heartbeat
+            last_row = candles.iloc[-1]
+            n_trig_o = len(state.get('_triggered_open', {}))
+            n_trig_c = len(state.get('_triggered_close', {}))
+            balance = mt5_get_balance()
+            log.info("~ {} | C={:.2f} | ATR={:.2f} | {}o {}c | {}pos | ${:,.0f}".format(
+                candle_time.strftime("%H:%M"), last_row['close'], atr,
+                n_trig_o, n_trig_c, len(state['positions']), balance))
 
-            # Trailing update sur bougie fermee (best = close de la bougie, pas price_current)
-            manage_trailing(state, candles)
-
-            # Re-check: si close < nouveau SL apres trailing, fermer la position
-            # (le backtest fait ce check dans la meme bougie, MT5 ne le fait pas automatiquement)
-            last_close = float(candles.iloc[-1]['close'])
-            for mpos in get_mt5_positions():
-                key = str(mpos.ticket)
-                if key in state['positions']:
-                    pdata = state['positions'][key]
-                    if pdata['dir'] == 'long' and last_close < mpos.sl:
-                        log.info(f"CLOSE trailing: {pdata['strat']} close {last_close:.2f} < SL {mpos.sl:.2f}")
-                        close_position(mpos.ticket)
-                    elif pdata['dir'] == 'short' and last_close > mpos.sl:
-                        log.info(f"CLOSE trailing: {pdata['strat']} close {last_close:.2f} > SL {mpos.sl:.2f}")
-                        close_position(mpos.ticket)
+            # Trailing
+            if state['positions']:
+                manage_trailing(state, candles)
 
             last_candle_ts = current_ts; state['last_candle_ts'] = current_ts
 
-            # Strats "close" : detectees sur bougie fermee
-            signals = detect_close_strats(candles, state, atr, candle_time, today)
-            if signals:
-                execute_signals(signals, state, atr, candle_time)
-
-            # Dashboard console
-            balance = get_account_balance()
-            n_pos = len(get_mt5_positions())
-            n_trades = len(state['trades_log'])
-            log.info(f"  Balance=${balance:,.2f} | Positions={n_pos} | Trades={n_trades}")
+            # Close strats
+            close_sigs = detect_close_strats(candles, state, atr, candle_time, today)
+            if close_sigs:
+                mt5_pos = mt5_get_positions()
+                open_dirs = set()
+                for p in mt5_pos:
+                    open_dirs.add('long' if p.type == mt5.ORDER_TYPE_BUY else 'short')
+                for sig in close_sigs:
+                    if sig['dir'] == 'long' and 'short' in open_dirs:
+                        log.info("SKIP {} — conflit short".format(sig['strat'])); continue
+                    if sig['dir'] == 'short' and 'long' in open_dirs:
+                        log.info("SKIP {} — conflit long".format(sig['strat'])); continue
+                    open_position(state, sig, atr)
+                    open_dirs.add(sig['dir'])
 
             save_state(state)
 
         except KeyboardInterrupt:
             log.info("Arret."); save_state(state); break
         except Exception as e:
-            log.error(f"Erreur: {e}")
-            import traceback; traceback.print_exc()
-            time.sleep(30)
+            log.error("Erreur: {}".format(e))
+            import traceback; traceback.print_exc(); time.sleep(30)
 
         time.sleep(CHECK_INTERVAL)
 
-    mt5.shutdown()
-    log.info("MT5 shutdown.")
+    mt5.shutdown(); conn.close()
+    log.info("Arrete.")
 
 if __name__ == '__main__':
     main()
