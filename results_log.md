@@ -615,7 +615,26 @@ Audit #1:
 4. TRAIL best sur close (coherent backtest) → documente, pas change
 5. Pas de timeout TRAIL → impact faible, documente
 6. Dry run supprime (inutile, live_paper.py fait tout mieux) → commit 39f0030
-- Commit: 6770ce0, 5912214 (fix TRAIL close vs new stop + mt5_close_position)
+- Commit: 6770ce0, 5912214, 3259736 (5 audits paralleles)
+
+### 5 audits paralleles — tous les bugs corriges
+
+**Audit 1 (signal detection):** Pas de bug critique. prev2_day_data manquant (D8 pas dans portfolio). prev_day_data.body manquant (jamais lu). OK.
+
+**Audit 2 (exit logic):** Toutes formules identiques BT vs live. Differences structurelles (bougie vs tick) en faveur du live. OK.
+
+**Audit 3 (lot sizing):** BUG capital=0 → trade au lot min. FIX: guard skip si balance<=0.
+
+**Audit 4 (MT5 safety):**
+- HIGH: mt5.shutdown() pas garanti → FIX: try/finally
+- MEDIUM: trade_allowed pas verifie → FIX: check a l'init
+- LOW: magic collision cross-broker → FIX: MAGIC_BASE par broker (240k/250k/260k)
+
+**Audit 5 (state/restart):**
+- HIGH: save_state seulement sur bougie → trail perdu si crash mid-candle → FIX: save apres chaque open_position
+- MEDIUM: trigger rebuild sans date check → position hier bloque trigger aujourd'hui → FIX: check p.time vs today
+- MEDIUM: --reset wipe trail info → FIX: warning si TRAIL ouvertes
+- LOW: last_candle_ts dead code dans state → FIX: supprime
 
 Audit #2 (backtest vs live MT5):
 - TPSL: SL/TP geres par MT5 nativement → OK
