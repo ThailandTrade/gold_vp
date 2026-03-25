@@ -3,7 +3,7 @@ Dashboard VP Swing — streamlit run dashboard.py
 Multi-compte: selecteur dans la sidebar.
 """
 import streamlit as st
-import json, os, time
+import json, os
 import pandas as pd
 import numpy as np
 from datetime import datetime, timezone
@@ -369,6 +369,6 @@ with st.sidebar:
                        f"{'TP='+str(exit_cfg[2]) if exit_cfg[0]=='TPSL' else 'ACT='+str(exit_cfg[2])+' TR='+str(exit_cfg[3])}")
                 st.markdown(f'<span title="{tip}">⚪ **{sn}**</span>', unsafe_allow_html=True)
 
-# Refresh
-time.sleep(10)
-st.rerun()
+# Auto-refresh every 10 seconds (no sleep/rerun)
+from streamlit_autorefresh import st_autorefresh
+st_autorefresh(interval=10000, key="refresh")
