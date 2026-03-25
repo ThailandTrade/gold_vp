@@ -1,19 +1,16 @@
 """
-Config FTMO — Prop firm — Calmar 8 (optimise 2026-03-23)
-Risk: 0.5% par trade | PF 1.65 | WR 73% | DD -6.0% | Rend +743% | 13/13 mois
-Source: analyze_combos.py (critere Calmar, taille 8, scale 0.5x)
-Max DD FTMO: 10% → marge confortable a -6%
+Config FTMO — Prop firm — Calmar 5 (optimise 2026-03-25 sur donnees FTMO)
+Risk: 0.5% par trade | PF 1.41 | WR 66% | DD -9.1% | Rend +269% | 11/13 mois
+Source: analyze_combos.py ftmo (critere Calmar, taille 5)
+Max DD FTMO: 10% → marge 0.9%
 """
 BROKER = 'FTMO'
 RISK_PCT = 0.005
 
 PORTFOLIO = [
-    'PO3_SWEEP',       # TRAIL 3.0/0.75/0.75  PF=2.46 WR=79%
-    'LON_PREV',        # TRAIL 2.0/0.75/0.75  PF=1.19 WR=63%
-    'TOK_2BAR',        # TRAIL 3.0/0.50/0.50  PF=1.61 WR=75%
-    'LON_KZ',          # TRAIL 3.0/0.50/0.30  PF=1.80 WR=82%
-    'ALL_KC_BRK',      # TRAIL 3.0/1.00/0.75  PF=1.20 WR=69%
-    'ALL_3SOLDIERS',   # TPSL  3.0/2.00       PF=1.34 WR=67%
-    'ALL_FVG_BULL',    # TRAIL 3.0/1.00/0.75  PF=1.63 WR=70%
-    'LON_BIGGAP',      # TRAIL 3.0/0.75/0.50  PF=1.70 WR=74%
+    'PO3_SWEEP',       # TRAIL 3.0/0.75/0.75  PF=1.81 WR=67%
+    'LON_PREV',        # TRAIL 2.0/0.75/0.75  PF=1.50 WR=71%
+    'ALL_PSAR_EMA',    # TPSL  3.0/1.50       PF=1.32 WR=72%
+    'TOK_2BAR',        # TRAIL 3.0/0.50/0.50  PF=1.44 WR=61%
+    'ALL_DC10',        # TRAIL 3.0/0.75/0.75  PF=1.33 WR=66%
 ]

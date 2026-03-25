@@ -1,6 +1,9 @@
 """
-Paper Trading ICMarkets — Equilibre 10 strats (TPSL exits).
-Usage: python live_paper_icmarkets.py [--reset]
+Paper Trading — multi-compte.
+Usage:
+  python live_paper_icmarkets.py [--reset]          → ICM (defaut)
+  python live_paper_icmarkets.py ftmo [--reset]     → FTMO
+  python live_paper_icmarkets.py 5ers [--reset]     → 5ers
 """
 import warnings; warnings.filterwarnings('ignore')
 import sys; sys.stdout.reconfigure(encoding='utf-8')
@@ -13,12 +16,23 @@ from phase1_poc_calculator import get_conn
 
 # ── CONFIG ────────────────────────────────────────────
 
+# Detect account from first arg (skip --reset)
+_account = 'icm'
+for a in sys.argv[1:]:
+    if a in ('ftmo', '5ers', 'icm'): _account = a
+
+if _account == 'ftmo':
+    from config_ftmo import PORTFOLIO as STRATS, RISK_PCT, BROKER
+elif _account == '5ers':
+    from config_5ers import PORTFOLIO as STRATS, RISK_PCT, BROKER
+else:
+    from config_icm import PORTFOLIO as STRATS, RISK_PCT, BROKER
+
 CAPITAL_INITIAL = 1000.0
 CHECK_INTERVAL = 1
-LOG_FILE = "paper_icmarkets.json"
+LOG_FILE = f"paper_{_account}.json"
 from strats import STRAT_NAMES, STRAT_SESSION, detect_all, compute_indicators
 from strat_exits import STRAT_EXITS, DEFAULT_EXIT
-from config_icm import PORTFOLIO as STRATS, RISK_PCT
 
 # Open strats: signal based on prior data, enter at open
 OPEN_STRATS = ['TOK_FADE','TOK_PREVEXT','LON_GAP','LON_BIGGAP','LON_KZ','LON_TOKEND','LON_PREV','NY_GAP','NY_LONEND','NY_LONMOM','NY_DAYMOM']
@@ -30,7 +44,7 @@ CLOSE_STRATS = [s for s in STRATS if s not in OPEN_STRATS]
 logging.basicConfig(level=logging.INFO, format='%(asctime)s | %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S',
     handlers=[logging.StreamHandler(),
-              logging.FileHandler('paper_icmarkets.log', encoding='utf-8')])
+              logging.FileHandler(f'paper_{_account}.log', encoding='utf-8')])
 log = logging.getLogger('paper')
 
 # ── DB ────────────────────────────────────────────────
@@ -340,7 +354,7 @@ def print_dashboard(state, cache, candle_time):
     lines.append("=" * 80)
     dashboard = "\n".join(lines)
     print("\033c" + dashboard)
-    with open("paper_dashboard.txt", 'w', encoding='utf-8') as f: f.write(dashboard)
+    with open(f"paper_{_account}_dashboard.txt", 'w', encoding='utf-8') as f: f.write(dashboard)
 
 # ── MAIN ──────────────────────────────────────────────
 
@@ -348,7 +362,7 @@ def main():
     if '--reset' in sys.argv:
         reset_state(); print("Reset. Relancez sans --reset."); return
 
-    log.info("Demarrage — {} strats: {}".format(len(STRATS), ','.join(STRATS)))
+    log.info("Demarrage {} — {} strats @ {}% risk: {}".format(BROKER, len(STRATS), RISK_PCT*100, ','.join(STRATS)))
     state = load_state()
     log.info("Capital: ${:,.2f} | Trades: {} | Positions: {}".format(
         state['capital'], len(state['trades']), len(state['open_positions'])))

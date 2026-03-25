@@ -13,7 +13,7 @@ ALL_STRATS = [
     'D8',
     # Indicators
     'ALL_MACD_RSI','ALL_FVG_BULL','ALL_CONSEC_REV','ALL_FIB_618',
-    'ALL_3SOLDIERS','ALL_PSAR_EMA','PO3_SWEEP','ALL_KC_BRK',
+    'ALL_3SOLDIERS','ALL_PSAR_EMA','PO3_SWEEP','ALL_KC_BRK','ALL_DC10',
 ]
 
 STRAT_NAMES = {
@@ -33,6 +33,7 @@ STRAT_NAMES = {
     'ALL_PSAR_EMA':'Parabolic SAR flip + EMA20',
     'PO3_SWEEP':'PO3 Asian sweep reversal',
     'ALL_KC_BRK':'Keltner Channel breakout',
+    'ALL_DC10':'Donchian 10 breakout',
 }
 
 STRAT_SESSION = {
@@ -44,6 +45,7 @@ STRAT_SESSION = {
     'ALL_MACD_RSI':'All','ALL_FVG_BULL':'All','ALL_CONSEC_REV':'All',
     'ALL_FIB_618':'All','ALL_3SOLDIERS':'All','ALL_PSAR_EMA':'All',
     'ALL_KC_BRK':'All',
+    'ALL_DC10':'All',
     'PO3_SWEEP':'London',
 }
 
@@ -139,6 +141,9 @@ def compute_indicators(candles):
     # Keltner Channels (EMA20 +/- 1.5*ATR14)
     c['kc_up'] = c['ema20'] + 1.5 * c['atr14']
     c['kc_lo'] = c['ema20'] - 1.5 * c['atr14']
+    # Donchian Channel 10
+    c['dc10_h'] = c['high'].rolling(10).max()
+    c['dc10_l'] = c['low'].rolling(10).min()
     # Body / abs_body
     c['body'] = c['close'] - c['open']
     c['abs_body'] = c['body'].abs()
@@ -300,3 +305,10 @@ def detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_
             add('ALL_KC_BRK','long',row['close']); trig['ALL_KC_BRK']=True
         elif row['close'] < row['kc_lo'] and prev['close'] >= prev['kc_lo']:
             add('ALL_KC_BRK','short',row['close']); trig['ALL_KC_BRK']=True
+
+    # ALL_DC10: Donchian 10 breakout (close breaks prev high/low)
+    if 'ALL_DC10' not in trig and 'dc10_h' in row.index and pd.notna(prev.get('dc10_h')):
+        if row['close'] > prev['dc10_h']:
+            add('ALL_DC10','long',row['close']); trig['ALL_DC10']=True
+        elif row['close'] < prev['dc10_l']:
+            add('ALL_DC10','short',row['close']); trig['ALL_DC10']=True
