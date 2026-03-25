@@ -387,7 +387,7 @@ def main():
     else:
         state = load_state()
 
-    log.info("=== {} LIVE{} === {} strats @ {:.1f}% === {}".format(
+    log.info("=== {} LIVE === {} strats @ {:.1f}% === {}".format(
         BROKER, len(STRATS), RISK_PCT*100, ','.join(STRATS)))
 
     # Show magic numbers
