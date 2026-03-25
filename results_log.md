@@ -625,6 +625,14 @@ Audit #2 (backtest vs live MT5):
 - Spread: BT 2x conservateur, live 1x reel → live meilleur
 - Timeout 288 bars: absent en live → impact faible
 
+### Audit isolation broker
+Tous les scripts principaux sont cloisonnes par broker:
+- live_mt5.py ✓ | live_paper.py ✓ | bt_portfolio.py ✓
+- dashboard.py ✓ | analyze_combos.py ✓ | optimize_all.py ✓
+- compare_today.py: etait hardcode ICM → CORRIGE (commit 4565808)
+- strats.py / strat_exits.py: generiques, pas de reference broker ✓
+- Donnees dans data/{icm|ftmo|5ers}/ ✓
+
 ### Isolation broker: dossiers data/{broker}/
 Tous les fichiers per-broker dans `data/{icm|ftmo|5ers}/`:
 - `optim_data.pkl` — trades precomputes
