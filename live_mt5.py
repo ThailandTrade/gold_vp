@@ -52,7 +52,8 @@ CLOSE_STRATS = [s for s in STRATS if s not in OPEN_STRATS]
 
 # ── MAGIC NUMBERS (stable hash par strat) ────────────
 
-MAGIC_BASE = 240000
+MAGIC_BASES = {'icm': 240000, 'ftmo': 250000, '5ers': 260000}
+MAGIC_BASE = MAGIC_BASES.get(_account, 240000)
 def _strat_magic(name):
     """Hash deterministe: stable entre redemarrages Python."""
     import hashlib
@@ -79,8 +80,11 @@ def mt5_init():
     if info is None:
         log.error("MT5 account_info failed")
         return False
-    log.info("MT5: {} {} bal=${:,.2f} eq=${:,.2f}".format(
-        info.company, info.server, info.balance, info.equity))
+    if not info.trade_allowed:
+        log.error("Trading DESACTIVE sur ce compte!")
+        return False
+    log.info("MT5: {} {} bal=${:,.2f} eq=${:,.2f} trade={}".format(
+        info.company, info.server, info.balance, info.equity, info.trade_allowed))
     sym = mt5.symbol_info(SYMBOL)
     if sym is None:
         log.error("Symbole {} non trouve".format(SYMBOL))
@@ -199,7 +203,6 @@ def new_state():
     return {'broker': BROKER, 'risk_pct': RISK_PCT,
             'daily_cache': {}, '_triggered_open': {}, '_triggered_close': {},
             '_prev_day_data': None, '_prev_day_date': None,
-            'last_candle_ts': 0,
             'trail': {}}  # ticket -> {strat, best, trail_active, act_val, trail_val, atr}
 
 def load_state():
@@ -290,6 +293,8 @@ def open_position(state, sig, atr):
     stop = entry - sl_val * atr if d == 'long' else entry + sl_val * atr
 
     capital = mt5_balance()
+    if capital <= 0:
+        log.warning("SKIP {} — balance indisponible ou zero".format(sn)); return
     risk = capital * RISK_PCT
     sl_distance = abs(entry - stop)
     lots = mt5_lot_size(risk, sl_distance)
@@ -383,6 +388,13 @@ def main():
         log.error("MT5 init failed. Arret."); return
 
     if args.reset:
+        # Warn if TRAIL positions are open on MT5
+        open_trail = [p for p in mt5_our_positions()
+                      if STRAT_EXITS.get(MAGIC_REVERSE.get(p.magic, ''), DEFAULT_EXIT)[0] == 'TRAIL']
+        if open_trail:
+            log.warning("!!! RESET avec {} positions TRAIL ouvertes — trailing perdu !!!".format(len(open_trail)))
+            for p in open_trail:
+                log.warning("  #{} {} SL={:.2f}".format(p.ticket, MAGIC_REVERSE.get(p.magic, '?'), p.sl))
         state = reset_state()
     else:
         state = load_state()
@@ -401,11 +413,16 @@ def main():
         log.info("  #{} {} {} {:.2f}lots entry={:.2f} sl={:.2f} tp={:.2f} pnl=${:+,.2f}".format(
             p.ticket, sn, 'LONG' if p.type == 0 else 'SHORT',
             p.volume, p.price_open, p.sl, p.tp, p.profit))
-        # Re-mark as triggered so we don't re-detect
-        if sn in OPEN_STRATS:
-            state.setdefault('_triggered_open', {})[sn] = True
-        elif sn != '?':
-            state.setdefault('_triggered_close', {})[sn] = True
+        # Re-mark as triggered only if position was opened today
+        pos_date = datetime.fromtimestamp(p.time, tz=timezone.utc).date()
+        if pos_date == datetime.now(timezone.utc).date():
+            if sn in OPEN_STRATS:
+                state.setdefault('_triggered_open', {})[sn] = True
+            elif sn != '?':
+                state.setdefault('_triggered_close', {})[sn] = True
+            log.info("    -> trigger marque (ouvert aujourd'hui)")
+        else:
+            log.info("    -> trigger NON marque (ouvert le {})".format(pos_date))
 
     conn = get_conn_autocommit()
     ci = get_recent_candles(conn, 1)
@@ -468,6 +485,7 @@ def main():
                     log.info("SKIP {} — conflit long".format(sig['strat'])); continue
                 open_position(state, sig, atr)
                 open_dirs.add(sig['dir'])
+                save_state(state)
 
             is_new = current_ts != last_candle_ts
             if not is_new:
@@ -483,7 +501,7 @@ def main():
             if state['trail']:
                 manage_trailing(state, candles)
 
-            last_candle_ts = current_ts; state['last_candle_ts'] = current_ts
+            last_candle_ts = current_ts
 
             # Close strats: on candle close
             our_pos = mt5_our_positions()
@@ -498,6 +516,7 @@ def main():
                     log.info("SKIP {} — conflit long".format(sig['strat'])); continue
                 open_position(state, sig, atr)
                 open_dirs.add(sig['dir'])
+                save_state(state)
 
             save_state(state)
 
@@ -512,4 +531,7 @@ def main():
     mt5.shutdown(); conn.close()
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    finally:
+        mt5.shutdown()
