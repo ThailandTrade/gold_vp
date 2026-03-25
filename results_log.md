@@ -499,7 +499,21 @@ Le combo Calmar 8 optimise sur ICM **ne tient PAS** sur donnees FTMO:
 - DD -10% = PILE la limite FTMO → inacceptable
 - Les exits optimises sur ICM ne sont pas transferables a FTMO
 - Il faut re-optimiser specifiquement sur les donnees FTMO
-- Analyse combos FTMO en cours...
+### Analyse combos FTMO (donnees FTMO)
+
+45 strats viables. Aucun combo 13/13 mois avec DD < 10%.
+
+Meilleurs candidats @ 0.5% risk:
+
+| Combo | Strats | PF | WR | DD | Rend | M+ |
+|---|---|---|---|---|---|---|
+| Calmar 5 | PO3+LON_PREV+PSAR_EMA+TOK_2BAR+DC10 | 1.41 | 66% | -9.1% | +269% | 11/13 |
+| MinDD 5 | LON_TOKEND+PO3+TOK_PREVEXT+PSAR_EMA+LON_KZ | 1.30 | 71% | -6.8% | +92% | 12/13 |
+| Calmar 3 | PO3+LON_PREV+PSAR_EMA | 1.43 | 68% | -7.3% | +119% | 12/13 |
+
+Conclusion: les donnees FTMO sont plus difficiles que ICM (spreads? feed? timing?).
+Le Calmar 8 ICM donne DD -10% sur FTMO = inacceptable. Il faut un combo specifique FTMO.
+Candidat FTMO: Calmar 5 (DD -9.1%, marge 0.9% avant limite).
 
 ### Comparatif backtest vs live 25 mars 2026 (apres fix open strats)
 
