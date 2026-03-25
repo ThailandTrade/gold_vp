@@ -14,6 +14,7 @@ ALL_STRATS = [
     # Indicators
     'ALL_MACD_RSI','ALL_FVG_BULL','ALL_CONSEC_REV','ALL_FIB_618',
     'ALL_3SOLDIERS','ALL_PSAR_EMA','PO3_SWEEP','ALL_KC_BRK','ALL_DC10',
+    'ALL_ADX_FAST','TOK_WILLR',
 ]
 
 STRAT_NAMES = {
@@ -34,6 +35,8 @@ STRAT_NAMES = {
     'PO3_SWEEP':'PO3 Asian sweep reversal',
     'ALL_KC_BRK':'Keltner Channel breakout',
     'ALL_DC10':'Donchian 10 breakout',
+    'ALL_ADX_FAST':'ADX fast DI cross + EMA21',
+    'TOK_WILLR':'Williams %R Tokyo reversal',
 }
 
 STRAT_SESSION = {
@@ -46,6 +49,8 @@ STRAT_SESSION = {
     'ALL_FIB_618':'All','ALL_3SOLDIERS':'All','ALL_PSAR_EMA':'All',
     'ALL_KC_BRK':'All',
     'ALL_DC10':'All',
+    'ALL_ADX_FAST':'All',
+    'TOK_WILLR':'Tokyo',
     'PO3_SWEEP':'London',
 }
 
@@ -141,6 +146,19 @@ def compute_indicators(candles):
     # Keltner Channels (EMA20 +/- 1.5*ATR14)
     c['kc_up'] = c['ema20'] + 1.5 * c['atr14']
     c['kc_lo'] = c['ema20'] - 1.5 * c['atr14']
+    # ADX fast (7-period)
+    pdm = c['high'].diff().clip(lower=0); mdm = (-c['low'].diff()).clip(lower=0)
+    mask = pdm > mdm; pdm2 = pdm.where(mask, 0); mdm2 = mdm.where(~mask, 0)
+    atr_f = tr.ewm(span=7, adjust=False).mean()
+    c['pdi_f'] = 100 * pdm2.ewm(span=7, adjust=False).mean() / (atr_f + 1e-10)
+    c['mdi_f'] = 100 * mdm2.ewm(span=7, adjust=False).mean() / (atr_f + 1e-10)
+    dx_f = 100 * abs(c['pdi_f'] - c['mdi_f']) / (c['pdi_f'] + c['mdi_f'] + 1e-10)
+    c['adx_f'] = dx_f.ewm(span=7, adjust=False).mean()
+    # EMA 21
+    c['ema21'] = c['close'].ewm(span=21, adjust=False).mean()
+    # Williams %R 14
+    hh14 = c['high'].rolling(14).max(); ll14 = c['low'].rolling(14).min()
+    c['wr14'] = -100 * (hh14 - c['close']) / (hh14 - ll14 + 1e-10)
     # Donchian Channel 10
     c['dc10_h'] = c['high'].rolling(10).max()
     c['dc10_l'] = c['low'].rolling(10).min()
@@ -312,3 +330,17 @@ def detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_
             add('ALL_DC10','long',row['close']); trig['ALL_DC10']=True
         elif row['close'] < prev['dc10_l']:
             add('ALL_DC10','short',row['close']); trig['ALL_DC10']=True
+
+    # ALL_ADX_FAST: ADX fast DI cross + EMA21 filter
+    if 'ALL_ADX_FAST' not in trig and 'adx_f' in row.index and pd.notna(row.get('adx_f')) and pd.notna(row.get('ema21')):
+        if row['adx_f'] > 25 and row['pdi_f'] > row['mdi_f'] and row['close'] > row['ema21'] and not (prev['pdi_f'] > prev['mdi_f']):
+            add('ALL_ADX_FAST','long',row['close']); trig['ALL_ADX_FAST']=True
+        elif row['adx_f'] > 25 and row['mdi_f'] > row['pdi_f'] and row['close'] < row['ema21'] and not (prev['mdi_f'] > prev['pdi_f']):
+            add('ALL_ADX_FAST','short',row['close']); trig['ALL_ADX_FAST']=True
+
+    # TOK_WILLR: Williams %R Tokyo reversal
+    if 0.0 <= hour < 6.0 and 'TOK_WILLR' not in trig and 'wr14' in row.index and pd.notna(row.get('wr14')):
+        if prev['wr14'] < -80 and row['wr14'] >= -80:
+            add('TOK_WILLR','long',row['close']); trig['TOK_WILLR']=True
+        elif prev['wr14'] > -20 and row['wr14'] <= -20:
+            add('TOK_WILLR','short',row['close']); trig['TOK_WILLR']=True
