@@ -1,13 +1,24 @@
-"""Compare backtest vs live trades for today."""
+"""
+Compare backtest vs live trades for today.
+Usage: python compare_today.py [icm|ftmo|5ers]
+"""
 import warnings; warnings.filterwarnings('ignore')
-import sys; sys.stdout.reconfigure(encoding='utf-8')
+import sys, argparse; sys.stdout.reconfigure(encoding='utf-8')
 import pandas as pd, numpy as np, json
 from dotenv import load_dotenv; load_dotenv()
 from phase1_poc_calculator import get_conn
 from strats import detect_all, compute_indicators, sim_exit_custom
 from strat_exits import STRAT_EXITS, DEFAULT_EXIT
-from config_icm import PORTFOLIO
 from datetime import date, datetime, timezone
+
+_parser = argparse.ArgumentParser(); _parser.add_argument('account', nargs='?', default='icm', choices=['icm','ftmo','5ers'])
+_args = _parser.parse_args()
+if _args.account == 'ftmo':
+    from config_ftmo import PORTFOLIO, BROKER
+elif _args.account == '5ers':
+    from config_5ers import PORTFOLIO, BROKER
+else:
+    from config_icm import PORTFOLIO, BROKER
 
 OPEN_STRATS = {'TOK_FADE','TOK_PREVEXT','LON_GAP','LON_BIGGAP','LON_KZ','LON_TOKEND','LON_PREV','NY_GAP','NY_LONEND','NY_LONMOM','NY_DAYMOM'}
 
@@ -75,7 +86,7 @@ for ci, sn, d_dir, entry, ct_str in signals:
                       'skipped':None})
 
 # Live trades
-with open('paper_icmarkets.json') as f:
+with open(f'data/{_args.account}/paper.json') as f:
     state = json.load(f)
 live_trades = [t for t in state['trades'] if t['entry_time'].startswith(str(today))]
 live_open = state['open_positions']
