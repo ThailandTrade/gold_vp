@@ -506,6 +506,42 @@ Observations:
 - LON_PREV detecte a 07:50 grace au fix bougie precedente (avant: 08:05)
 - Le BT et le live gerent les conflits differemment quand les signaux arrivent simultanement vs sequentiellement
 
+### Incoherence connue: ordre de traitement des conflits BT vs live
+
+Quand plusieurs strats trigger au meme moment avec des directions opposees:
+- **Backtest**: traite par ordre alphabetique du nom de strat (tri `(ei, strat_name)` dans eval_combo). LON_BIGGAP short < LON_PREV long → LON_BIGGAP gagne.
+- **Live**: traite par ordre de detection. Les open strats (detect_open_strats chaque seconde) trigguent avant les close strats (detect_close_strats sur bougie fermee). LON_PREV long detecte en premier → LON_PREV gagne.
+
+Impact: sur le 25 mars, le BT prend LON_BIGGAP short (+0.00), le live prend LON_PREV long (+15.62) et PO3_SWEEP long (+9.13). Le live fait mieux sur ce jour.
+
+Decision: on ne corrige pas. L'ordre alphabetique du BT est arbitraire. Le live reflete mieux la realite (open strats connues avant le candle, donc legitimement prioritaires). Un systeme de priorite par PF pourrait etre ajoute plus tard si necessaire.
+
+---
+
+## Validation ICM — Resume session 2026-03-25
+
+### Bugs corriges
+1. detect_all double-call consumait les triggers close strats (0 trades close) → fix: trig dicts separes
+2. Calage au demarrage triggeait sur bougie existante → fix: toujours sync sur derniere bougie DB
+3. Open strats detectees 5min en retard (attendaient la bougie en DB) → fix: evaluer sur bougie precedente
+4. entry_time des open strats montrait candle_time au lieu de now_utc → fix: passer now_utc
+
+### Etat live ICM valide
+- Close strats: entry diff < 0.35$ vs backtest — parfait
+- Open strats: trigger a l'heure correcte, entry au tick reel
+- Conflits de direction: geres correctement (pas 2 directions simultanees)
+- Trailing stop: fonctionne (best update sur close, activation sur ACT*ATR)
+- Lot sizing: min 0.01 lot, warning si risk depasse 1.5x cible
+
+### Scripts de reference
+```
+python live_paper_icmarkets.py --reset  # reset state
+python live_paper_icmarkets.py          # paper trading
+python compare_today.py                 # comparatif BT vs live du jour
+python bt_portfolio.py icm -c 100000   # backtest historique
+streamlit run dashboard.py              # dashboard
+```
+
 ### Dashboard: couleurs PnL latent
 - Colonnes PnL $ et PnL oz colorees vert/rouge dans le tableau positions ouvertes
 - Metric PnL latent total avec fleche verte/rouge
