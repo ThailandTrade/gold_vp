@@ -1,6 +1,6 @@
 """
 Dashboard VP Swing — streamlit run dashboard.py
-Portfolio: Calmar 12 (TRAIL exits, WR 72%)
+Multi-compte: selecteur dans la sidebar.
 """
 import streamlit as st
 import json, os, time
@@ -10,15 +10,27 @@ from datetime import datetime, timezone
 import itertools
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-
-LOG_FILE = "paper_icmarkets.json"
-CAPITAL_INITIAL = 1000.0
-
-from strats import STRAT_NAMES as STRATS
+from strats import STRAT_NAMES as STRATS, STRAT_SESSION
 from strat_exits import STRAT_EXITS, DEFAULT_EXIT
-from config_icm import PORTFOLIO, RISK_PCT, BROKER
 
-st.set_page_config(page_title=f"VP Swing {BROKER}", layout="wide")
+st.set_page_config(page_title="VP Swing", layout="wide")
+
+# Account selector
+ACCOUNTS = {
+    'icm': {'module': 'config_icm', 'label': 'ICMarkets'},
+    'ftmo': {'module': 'config_ftmo', 'label': 'FTMO'},
+    '5ers': {'module': 'config_5ers', 'label': '5ers'},
+}
+with st.sidebar:
+    account = st.selectbox("Compte", list(ACCOUNTS.keys()), format_func=lambda x: ACCOUNTS[x]['label'])
+
+import importlib
+cfg = importlib.import_module(ACCOUNTS[account]['module'])
+PORTFOLIO = cfg.PORTFOLIO
+RISK_PCT = cfg.RISK_PCT
+BROKER = cfg.BROKER
+LOG_FILE = f"paper_{account}.json"
+CAPITAL_INITIAL = 1000.0
 
 def load_state():
     if os.path.exists(LOG_FILE):
@@ -321,7 +333,6 @@ else:
 
 # ── SIDEBAR: STRATEGIES ──
 with st.sidebar:
-    from strats import STRAT_SESSION
     st.subheader(f"Strategies {BROKER}")
     cache = {}
     for k, v in state.get('daily_cache', {}).items(): cache = v; break
