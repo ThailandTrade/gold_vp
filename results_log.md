@@ -615,7 +615,15 @@ Audit #1:
 4. TRAIL best sur close (coherent backtest) → documente, pas change
 5. Pas de timeout TRAIL → impact faible, documente
 6. Dry run supprime (inutile, live_paper.py fait tout mieux) → commit 39f0030
-- Commit: 6770ce0
+- Commit: 6770ce0, 5912214 (fix TRAIL close vs new stop + mt5_close_position)
+
+Audit #2 (backtest vs live MT5):
+- TPSL: SL/TP geres par MT5 nativement → OK
+- TRAIL etape 5 (close < nouveau stop → exit): manquait → CORRIGE
+- TRAIL SL initial: MT5 check tick par tick → mieux que backtest (bougie par bougie)
+- TPSL meme bougie SL+TP: MT5 ordre reel vs BT SL prioritaire → live potentiellement meilleur
+- Spread: BT 2x conservateur, live 1x reel → live meilleur
+- Timeout 288 bars: absent en live → impact faible
 
 ### Isolation broker: dossiers data/{broker}/
 Tous les fichiers per-broker dans `data/{icm|ftmo|5ers}/`:
