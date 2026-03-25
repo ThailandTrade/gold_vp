@@ -169,6 +169,36 @@ def mt5_modify_sl(ticket, new_sl):
     log.error("    Modify SL #{} failed: {}".format(ticket, result.retcode if result else '?'))
     return False
 
+def mt5_close_position(ticket, direction, strat):
+    """Close a position immediately (market order)."""
+    sym = mt5.symbol_info(SYMBOL)
+    if not sym: return False
+    positions = mt5.positions_get(ticket=ticket)
+    if not positions: return False
+
+    order_type = mt5.ORDER_TYPE_SELL if direction == 'long' else mt5.ORDER_TYPE_BUY
+    price = sym.bid if direction == 'long' else sym.ask
+
+    request = {
+        'action': mt5.TRADE_ACTION_DEAL,
+        'symbol': SYMBOL,
+        'volume': positions[0].volume,
+        'type': order_type,
+        'position': ticket,
+        'price': price,
+        'deviation': 20,
+        'magic': MAGIC_MAP.get(strat, MAGIC_BASE),
+        'comment': 'VP_trail_close',
+        'type_time': mt5.ORDER_TIME_GTC,
+    }
+
+    result = mt5.order_send(request)
+    if result and result.retcode == mt5.TRADE_RETCODE_DONE:
+        log.info("    CLOSE #{} {} @ {:.2f}".format(ticket, strat, result.price))
+        return True
+    log.error("    Close #{} failed: {}".format(ticket, result.retcode if result else '?'))
+    return False
+
 # ── DB ────────────────────────────────────────────────
 
 def get_conn_autocommit():
@@ -366,6 +396,19 @@ def manage_trailing(state, candles):
                         info['strat'], info['stop'], new_sl, info['best']))
                     if mt5_modify_sl(ticket, new_sl):
                         info['stop'] = new_sl
+
+        # Check close vs stop (backtest: if close < stop after trail update → exit at close)
+        close_price = last['close']
+        if d == 'long' and close_price < info['stop']:
+            log.info("TRAIL CLOSE {} close {:.2f} < stop {:.2f}".format(
+                info['strat'], close_price, info['stop']))
+            mt5_close_position(ticket, d, info['strat'])
+            closed_tickets.append(ticket_str)
+        elif d == 'short' and close_price > info['stop']:
+            log.info("TRAIL CLOSE {} close {:.2f} > stop {:.2f}".format(
+                info['strat'], close_price, info['stop']))
+            mt5_close_position(ticket, d, info['strat'])
+            closed_tickets.append(ticket_str)
 
     # Clean closed trail entries
     for t in closed_tickets:
