@@ -617,6 +617,13 @@ Audit #1:
 6. Dry run supprime (inutile, live_paper.py fait tout mieux) → commit 39f0030
 - Commit: 6770ce0, 5912214, 3259736 (5 audits paralleles)
 
+### LON_BIGGAP retiree de tous les portfolios
+- Sa condition depend de `row['open']` pour calculer le gap
+- En live, detect_open_strats passe la bougie precedente (07:55) donc le gap est faux
+- Meme probleme pour LON_GAP, NY_GAP, NY_DAYMOM (pas dans les portfolios actifs)
+- Regle: toutes les open strats doivent dependre UNIQUEMENT de bougies fermees, pas du prix open
+- ICM passe de Calmar 12 a Calmar 11
+
 ### 5 audits paralleles — tous les bugs corriges
 
 **Audit 1 (signal detection):** Pas de bug critique. prev2_day_data manquant (D8 pas dans portfolio). prev_day_data.body manquant (jamais lu). OK.
