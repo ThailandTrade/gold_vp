@@ -598,7 +598,14 @@ Meilleur candidat 5ers (DD < 4% challenge):
 - Capital: lu depuis mt5.account_info().balance
 - Lot sizing: mt5.symbol_info() pour min/step/max/contract_size
 - State: data/{broker}/live_mt5.json
-- Commit: 7b03121
+- Commit: 7b03121, 9351fbb (rewrite: magic par strat, positions lues MT5)
+
+Architecture live_mt5.py:
+- Magic number unique par strat (MAGIC_BASE 240000 + index alphabetique)
+- Positions lues directement depuis MT5 (mt5.positions_get) — plus de simulation
+- State minimal: triggers + trail info (best/trail_active par ticket)
+- Trail entries auto-nettoyees quand MT5 ferme la position
+- Au demarrage: affiche magic numbers + positions MT5 ouvertes
 
 ### Isolation broker: dossiers data/{broker}/
 Tous les fichiers per-broker dans `data/{icm|ftmo|5ers}/`:
