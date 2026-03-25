@@ -614,7 +614,7 @@ Audit #1:
 3. CRITIQUE triggers perdus au restart → fix: rebuild triggers depuis positions MT5
 4. TRAIL best sur close (coherent backtest) → documente, pas change
 5. Pas de timeout TRAIL → impact faible, documente
-6. Dry run = test detection seulement → documente
+6. Dry run supprime (inutile, live_paper.py fait tout mieux) → commit 39f0030
 - Commit: 6770ce0
 
 ### Isolation broker: dossiers data/{broker}/
