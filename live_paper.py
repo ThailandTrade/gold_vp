@@ -1,12 +1,13 @@
 """
 Paper Trading — multi-compte.
 Usage:
-  python live_paper.py [--reset]          → ICM (defaut)
-  python live_paper.py ftmo [--reset]     → FTMO
-  python live_paper.py 5ers [--reset]     → 5ers
+  python live_paper.py [--reset]                    → ICM, $1000, 1%
+  python live_paper.py ftmo [--reset]               → FTMO, $1000, 0.5%
+  python live_paper.py 5ers -c 50000 -r 0.25        → 5ers, $50k, 0.25%
+  python live_paper.py icm -c 100000 -r 2           → ICM, $100k, 2%
 """
 import warnings; warnings.filterwarnings('ignore')
-import sys; sys.stdout.reconfigure(encoding='utf-8')
+import sys, argparse; sys.stdout.reconfigure(encoding='utf-8')
 import os, json, time, logging
 import numpy as np, pandas as pd
 from datetime import datetime, timedelta, timezone
@@ -16,10 +17,13 @@ from phase1_poc_calculator import get_conn
 
 # ── CONFIG ────────────────────────────────────────────
 
-# Detect account from first arg (skip --reset)
-_account = 'icm'
-for a in sys.argv[1:]:
-    if a in ('ftmo', '5ers', 'icm'): _account = a
+parser = argparse.ArgumentParser(description='Paper trading')
+parser.add_argument('account', nargs='?', default='icm', choices=['icm','ftmo','5ers'])
+parser.add_argument('-c', '--capital', type=float, default=None, help='Capital initial')
+parser.add_argument('-r', '--risk', type=float, default=None, help='Risk %% par trade (ex: 0.5)')
+parser.add_argument('--reset', action='store_true', help='Reset state')
+args = parser.parse_args()
+_account = args.account
 
 if _account == 'ftmo':
     from config_ftmo import PORTFOLIO as STRATS, RISK_PCT, BROKER
@@ -28,7 +32,8 @@ elif _account == '5ers':
 else:
     from config_icm import PORTFOLIO as STRATS, RISK_PCT, BROKER
 
-CAPITAL_INITIAL = 1000.0
+RISK_PCT = args.risk / 100 if args.risk else RISK_PCT
+CAPITAL_INITIAL = args.capital if args.capital else 1000.0
 CHECK_INTERVAL = 1
 LOG_FILE = f"paper_{_account}.json"
 from strats import STRAT_NAMES, STRAT_SESSION, detect_all, compute_indicators
@@ -359,7 +364,7 @@ def print_dashboard(state, cache, candle_time):
 # ── MAIN ──────────────────────────────────────────────
 
 def main():
-    if '--reset' in sys.argv:
+    if args.reset:
         reset_state(); print("Reset. Relancez sans --reset."); return
 
     log.info("Demarrage {} — {} strats @ {}% risk: {}".format(BROKER, len(STRATS), RISK_PCT*100, ','.join(STRATS)))
