@@ -523,6 +523,8 @@ Candidat FTMO: Calmar 5 (DD -9.1%, marge 0.9% avant limite).
 - `live_paper.py` remplace `live_paper_icmarkets.py` (garde pour compat)
 - Usage: `python live_paper.py ftmo --reset`
 - Commit: 5720b37
+- Dashboard: selecteur de compte ICM/FTMO/5ers dans la sidebar (commit 1995bb4)
+- live_paper.py: args --capital et --risk (commit 4e0cea6)
 
 ### Comparatif backtest vs live 25 mars 2026 (apres fix open strats)
 
