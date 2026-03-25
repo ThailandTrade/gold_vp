@@ -415,7 +415,7 @@ def main():
                         log.info("SKIP {} — conflit short".format(sig['strat'])); continue
                     if sig['dir'] == 'short' and 'long' in open_dirs:
                         log.info("SKIP {} — conflit long".format(sig['strat'])); continue
-                    open_position(state, sig, atr, candle_time, conn)
+                    open_position(state, sig, atr, now_utc, conn)  # now_utc = heure reelle du trade
                     open_dirs.add(sig['dir'])
 
             is_new = current_ts != last_candle_ts
