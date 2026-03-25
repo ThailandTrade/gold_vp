@@ -29,11 +29,13 @@ RISK = args.risk / 100 if args.risk else RISK_PCT
 
 # ── LOAD DATA ──
 try:
-    with open('optim_data.pkl', 'rb') as f:
+    pkl_file = f'optim_data_{args.account}.pkl'
+    with open(pkl_file, 'rb') as f:
         data = pickle.load(f)
     strat_arrays = data['strat_arrays']
+    print(f"Loaded {pkl_file}")
 except FileNotFoundError:
-    print("ERROR: optim_data.pkl not found. Run optimize_all.py first.")
+    print(f"ERROR: {pkl_file} not found. Run: python optimize_all.py {args.account}")
     sys.exit(1)
 
 missing = [s for s in PORTFOLIO if s not in strat_arrays]
