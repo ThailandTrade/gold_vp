@@ -105,7 +105,6 @@ def load_state():
     if os.path.exists(LOG_FILE):
         with open(LOG_FILE, 'r') as f:
             state = json.load(f)
-            # Backward compat
             if 'capital_initial' not in state:
                 state['capital_initial'] = CAPITAL_INITIAL
             return state
@@ -115,6 +114,9 @@ def save_state(state):
     with open(LOG_FILE, 'w') as f: json.dump(state, f, indent=2, default=str)
 
 def reset_state():
+    # Supprime le state JSON (le log est append, on le garde)
+    if os.path.exists(LOG_FILE):
+        os.remove(LOG_FILE)
     state = new_state()
     save_state(state)
     log.info("RESET {} — ${:,.2f} @ {:.1f}% risk".format(BROKER, CAPITAL_INITIAL, RISK_PCT*100))
@@ -376,10 +378,11 @@ def print_dashboard(state, cache, candle_time):
 
 def main():
     if args.reset:
-        reset_state(); print("Reset. Relancez sans --reset."); return
+        state = reset_state()
+    else:
+        state = load_state()
 
     log.info("Demarrage {} — {} strats @ {}% risk: {}".format(BROKER, len(STRATS), RISK_PCT*100, ','.join(STRATS)))
-    state = load_state()
     log.info("Capital: ${:,.2f} | Trades: {} | Positions: {}".format(
         state['capital'], len(state['trades']), len(state['open_positions'])))
 

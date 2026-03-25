@@ -526,6 +526,40 @@ Candidat FTMO: Calmar 5 (DD -9.1%, marge 0.9% avant limite).
 - Dashboard: selecteur de compte ICM/FTMO/5ers dans la sidebar (commit 1995bb4, 6d859ab)
 - Fix double render sidebar: remplace sleep+rerun par streamlit-autorefresh
 - live_paper.py: args --capital et --risk (commit 4e0cea6)
+- live_paper.py renomme de live_paper_icmarkets.py (commit 3cf3428)
+- Fix capital: state sauvegarde capital_initial, broker, risk_pct (commit 175a44b)
+- Fix reset: supprime le JSON, ne quitte plus (enchaine directement), plus de load_state() duplique (commit a venir)
+- Fix: les args -c et -r doivent etre passes avec --reset pour s'appliquer
+
+### Usage final scripts
+
+```
+# Paper trading
+python live_paper.py ftmo -c 50000 -r 0.1 --reset   # reset + lance FTMO $50k 0.1%
+python live_paper.py ftmo -c 50000 -r 0.1            # reprend FTMO
+python live_paper.py icm -c 100000 --reset            # reset ICM $100k 1% (defaut)
+python live_paper.py                                   # reprend ICM
+
+# Backtest
+python bt_portfolio.py ftmo -c 200000 -r 0.5          # backtest FTMO
+python optimize_all.py ftmo                            # re-optimiser sur donnees FTMO
+python analyze_combos.py ftmo                          # analyser combos FTMO
+
+# Comparaison
+python compare_today.py                                # BT vs live du jour
+
+# Dashboard
+streamlit run dashboard.py                             # selecteur de compte dans sidebar
+```
+
+### Fichiers par compte
+| Fichier | ICM | FTMO | 5ers |
+|---|---|---|---|
+| Config | config_icm.py | config_ftmo.py | config_5ers.py |
+| State | paper_icm.json | paper_ftmo.json | paper_5ers.json |
+| Log | paper_icm.log | paper_ftmo.log | paper_5ers.log |
+| Pickle | optim_data_icm.pkl | optim_data_ftmo.pkl | optim_data_5ers.pkl |
+| Combos | combo_results_icm.json | combo_results_ftmo.json | combo_results_5ers.json |
 
 ### Comparatif backtest vs live 25 mars 2026 (apres fix open strats)
 
