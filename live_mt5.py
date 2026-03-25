@@ -52,14 +52,16 @@ from strat_exits import STRAT_EXITS, DEFAULT_EXIT
 OPEN_STRATS = ['TOK_FADE','TOK_PREVEXT','LON_GAP','LON_BIGGAP','LON_KZ','LON_TOKEND','LON_PREV','NY_GAP','NY_LONEND','NY_LONMOM','NY_DAYMOM']
 CLOSE_STRATS = [s for s in STRATS if s not in OPEN_STRATS]
 
-# ── MAGIC NUMBERS (unique par strat) ─────────────────
+# ── MAGIC NUMBERS (stable hash par strat) ────────────
 
 MAGIC_BASE = 240000
-MAGIC_MAP = {}
-ALL_STRAT_NAMES = sorted(set(list(STRAT_EXITS.keys()) + list(STRATS)))
-for i, sn in enumerate(ALL_STRAT_NAMES):
-    MAGIC_MAP[sn] = MAGIC_BASE + i
+def _strat_magic(name):
+    """Hash deterministe: stable entre redemarrages Python."""
+    import hashlib
+    return MAGIC_BASE + int(hashlib.md5(name.encode()).hexdigest()[:4], 16) % 9999
+MAGIC_MAP = {sn: _strat_magic(sn) for sn in set(list(STRAT_EXITS.keys()) + list(STRATS))}
 MAGIC_REVERSE = {v: k for k, v in MAGIC_MAP.items()}
+ALL_OUR_MAGICS = set(MAGIC_MAP.values())
 
 # ── LOGGING ──────────────────────────────────────────
 
@@ -102,7 +104,7 @@ def mt5_tick():
 def mt5_our_positions():
     """Get our positions (filtered by our magic numbers)."""
     positions = mt5.positions_get(symbol=SYMBOL) or []
-    return [p for p in positions if p.magic in MAGIC_REVERSE]
+    return [p for p in positions if p.magic in ALL_OUR_MAGICS]
 
 def mt5_lot_size(risk_amount, sl_distance):
     sym = mt5.symbol_info(SYMBOL)
@@ -280,6 +282,14 @@ def detect_close_strats(candles, state, atr, candle_time, today):
 
 def open_position(state, sig, atr):
     d = sig['dir']; sn = sig['strat']
+
+    # Guard: check if strat already has an open position on MT5
+    magic = MAGIC_MAP.get(sn)
+    for p in mt5_our_positions():
+        if p.magic == magic:
+            log.info("SKIP {} — deja une position ouverte #{}".format(sn, p.ticket))
+            return
+
     tick = mt5_tick()
     if not tick:
         log.warning("SKIP {} — no tick".format(sn)); return
@@ -398,6 +408,11 @@ def main():
         log.info("  #{} {} {} {:.2f}lots entry={:.2f} sl={:.2f} tp={:.2f} pnl=${:+,.2f}".format(
             p.ticket, sn, 'LONG' if p.type == 0 else 'SHORT',
             p.volume, p.price_open, p.sl, p.tp, p.profit))
+        # Re-mark as triggered so we don't re-detect
+        if sn in OPEN_STRATS:
+            state.setdefault('_triggered_open', {})[sn] = True
+        elif sn != '?':
+            state.setdefault('_triggered_close', {})[sn] = True
 
     conn = get_conn_autocommit()
     ci = get_recent_candles(conn, 1)
