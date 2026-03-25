@@ -211,12 +211,18 @@ def manage_positions(candles_df, state, conn):
 
 def detect_open_strats(candles, state, atr, now_utc, today):
     """Detecte les open strats en temps reel (chaque poll).
+    Evalue les conditions sur la BOUGIE PRECEDENTE (deja fermee) avec l'heure
+    reelle (now_utc). Ainsi a 08:00:01 on evalue sur la bougie 07:55 fermee
+    et on entre au tick courant — pas besoin d'attendre la bougie 08:00.
     Utilise un trig dict separe pour ne pas interférer avec les close strats.
     """
+    if len(candles) < 2: return []
     signals = []
     trig = state.setdefault('_triggered_open', {})
     hour = now_utc.hour + now_utc.minute / 60.0
-    r = candles.iloc[-1]
+    # Bougie precedente (fermee) pour evaluer les conditions
+    r = candles.iloc[-2]
+    ci = len(candles) - 2
     ds = pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')
     te = pd.Timestamp(today.year,today.month,today.day,6,0,tz='UTC')
     ls = pd.Timestamp(today.year,today.month,today.day,8,0,tz='UTC')
@@ -226,8 +232,11 @@ def detect_open_strats(candles, state, atr, now_utc, today):
     prev_day_data = state.get('_prev_day_data')
 
     def add_sig(sn, d, e):
-        if sn in OPEN_STRATS and sn in STRATS: signals.append({'strat': sn, 'dir': d})
-    detect_all(candles, len(candles)-1, r, r['ts_dt'], today, hour, atr, trig, tv, tok, lon, prev_day_data, add_sig)
+        if sn in OPEN_STRATS and sn in STRATS:
+            # Ignore le prix e de detect_all (= row['open'] de la bougie precedente)
+            # Le live entrera au tick courant dans open_position
+            signals.append({'strat': sn, 'dir': d, 'entry_price': None})
+    detect_all(candles, ci, r, r['ts_dt'], today, hour, atr, trig, tv, tok, lon, prev_day_data, add_sig)
     return signals
 
 def detect_close_strats(candles, state, atr, candle_time, today):
@@ -247,7 +256,8 @@ def detect_close_strats(candles, state, atr, candle_time, today):
     prev_day_data = state.get('_prev_day_data')
 
     def add_sig(sn, d, e):
-        if sn in CLOSE_STRATS and sn in STRATS: signals.append({'strat': sn, 'dir': d})
+        if sn in CLOSE_STRATS and sn in STRATS:
+            signals.append({'strat': sn, 'dir': d, 'entry_price': None})
     detect_all(candles, len(candles)-1, r, r['ts_dt'], today, hour, atr, trig, tv, tok, lon, prev_day_data, add_sig)
     return signals
 

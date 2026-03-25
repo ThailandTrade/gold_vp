@@ -467,6 +467,25 @@ Ecart TOK_PREVEXT = open strat, entry au tick vs row['open']. Close strats quasi
 Script: `python compare_today.py` — comparatif quotidien BT vs live avec filtre conflits.
 Commit: 6b6c6dd
 
+### Analyse open strats: trigger sur bougie precedente
+
+**Probleme identifie** : les open strats (TOK_PREVEXT, LON_TOKEND, LON_PREV, LON_BIGGAP, LON_KZ) dans le backtest entrent a `row['open']` de la bougie trigger. Mais en live, la bougie n'est visible en DB qu'a sa fermeture (5min plus tard), donc le live entrait au close au lieu de l'open → 7$ d'ecart sur TOK_PREVEXT.
+
+**Analyse des conditions de trigger** :
+- TOK_PREVEXT : conditions basees sur prev_day_data → connues AVANT l'heure trigger
+- LON_TOKEND : basees sur tok[-3:] (fermees a 06:00) → connues avant 08:00
+- LON_PREV : basees sur prev_day_data → connues avant 08:00
+- LON_KZ : basees sur move 8h-10h → connues avant 10:00
+- LON_BIGGAP : gap = row['open'] - tok.close → besoin du premier prix de la session
+
+Pour 4/5 strats, le prix open n'a AUCUNE incidence sur le trigger. Seul LON_BIGGAP utilise l'open pour calculer le gap (en live → tick courant).
+
+**Solution** : evaluer les conditions des open strats sur la BOUGIE PRECEDENTE (deja fermee) avec l'heure reelle (now_utc). A 08:00:01, on evalue sur la bougie 07:55 et on entre au tick courant.
+
+**Le backtest n'est pas modifie** : il entre a row['open'] ce qui est equivalent car en 5min le open de la bougie 08:00 ≈ close de la bougie 07:55. L'ecart est negligeable.
+
+- Commit: a venir
+
 ### Dashboard: couleurs PnL latent
 - Colonnes PnL $ et PnL oz colorees vert/rouge dans le tableau positions ouvertes
 - Metric PnL latent total avec fleche verte/rouge
