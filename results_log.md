@@ -578,6 +578,17 @@ Meilleur candidat 5ers (DD < 4% challenge):
 - optim_data_5ers.pkl genere
 - Strats: toutes deja dans strats.py detect_all
 
+### Isolation broker: dossiers data/{broker}/
+Tous les fichiers per-broker dans `data/{icm|ftmo|5ers}/`:
+- `optim_data.pkl` — trades precomputes
+- `combo_results.json` — resultats combos
+- `paper.json` — state paper trading
+- `paper.log` — log paper trading
+- `dashboard.txt` — dashboard texte
+
+Scripts mis a jour: optimize_all.py, bt_portfolio.py, analyze_combos.py, live_paper.py, dashboard.py
+Commit: a489e47
+
 ### Comparatif backtest vs live 25 mars 2026 (apres fix open strats)
 
 BT: +54.95 oz | Live: +70.16 oz | Live fait mieux (+15.21)
