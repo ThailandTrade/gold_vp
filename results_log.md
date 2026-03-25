@@ -486,6 +486,21 @@ Pour 4/5 strats, le prix open n'a AUCUNE incidence sur le trigger. Seul LON_BIGG
 
 - Commit: c638b67, cb4ccc8 (fix entry_time: now_utc au lieu de candle_time pour open strats)
 
+### Separation fichiers par broker
+- `optim_data_{icm|ftmo|5ers}.pkl` — pickle par compte
+- `combo_results_{icm|ftmo|5ers}.json` — resultats combos par compte
+- Usage: `python optimize_all.py ftmo` / `python bt_portfolio.py ftmo` / `python analyze_combos.py ftmo`
+- Commit: 5fa70ab
+
+### Test FTMO Calmar 8 sur donnees FTMO (au lieu de ICM)
+Le combo Calmar 8 optimise sur ICM **ne tient PAS** sur donnees FTMO:
+- PF 1.67 → 1.29 | WR 73% → 67% | DD -6.1% → -10.0% | M+ 13/13 → 9/13
+- 4 mois negatifs: mars, juin, aout, sept 2025
+- DD -10% = PILE la limite FTMO → inacceptable
+- Les exits optimises sur ICM ne sont pas transferables a FTMO
+- Il faut re-optimiser specifiquement sur les donnees FTMO
+- Analyse combos FTMO en cours...
+
 ### Comparatif backtest vs live 25 mars 2026 (apres fix open strats)
 
 BT: +54.95 oz | Live: +70.16 oz | Live fait mieux (+15.21)
