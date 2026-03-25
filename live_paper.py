@@ -94,20 +94,30 @@ def get_spread_rt(conn, today):
 
 # ── STATE ─────────────────────────────────────────────
 
+def new_state():
+    return {'capital': CAPITAL_INITIAL, 'capital_initial': CAPITAL_INITIAL,
+            'risk_pct': RISK_PCT, 'broker': BROKER,
+            'trades': [], 'open_positions': [],
+            'daily_cache': {}, '_triggered_open': {}, '_triggered_close': {},
+            'last_candle_ts': 0}
+
 def load_state():
     if os.path.exists(LOG_FILE):
-        with open(LOG_FILE, 'r') as f: return json.load(f)
-    return {'capital': CAPITAL_INITIAL, 'trades': [], 'open_positions': [],
-            'daily_cache': {}, '_triggered': {}, 'last_candle_ts': 0}
+        with open(LOG_FILE, 'r') as f:
+            state = json.load(f)
+            # Backward compat
+            if 'capital_initial' not in state:
+                state['capital_initial'] = CAPITAL_INITIAL
+            return state
+    return new_state()
 
 def save_state(state):
     with open(LOG_FILE, 'w') as f: json.dump(state, f, indent=2, default=str)
 
 def reset_state():
-    state = {'capital': CAPITAL_INITIAL, 'trades': [], 'open_positions': [],
-             'daily_cache': {}, '_triggered': {}, 'last_candle_ts': 0}
+    state = new_state()
     save_state(state)
-    log.info("RESET — ${:,.2f}".format(CAPITAL_INITIAL))
+    log.info("RESET {} — ${:,.2f} @ {:.1f}% risk".format(BROKER, CAPITAL_INITIAL, RISK_PCT*100))
     return state
 
 # ── DAILY CACHE ───────────────────────────────────────
@@ -335,12 +345,13 @@ def open_position(state, sig, atr, candle_time, conn):
 # ── DASHBOARD ─────────────────────────────────────────
 
 def print_dashboard(state, cache, candle_time):
+    cap_init = state.get('capital_initial', CAPITAL_INITIAL)
     lines = ["=" * 80,
-        "PAPER EQUILIBRE — {} | ATR={} | {} strats".format(
-            candle_time.strftime("%Y-%m-%d %H:%M UTC"),
+        "PAPER {} — {} | ATR={} | {} strats @ {:.1f}%".format(
+            BROKER, candle_time.strftime("%Y-%m-%d %H:%M UTC"),
             "{:.2f}".format(cache['atr']) if cache['atr'] else "?",
-            len(STRATS)),
-        "  Capital: ${:,.2f} (PnL: ${:+,.2f})".format(state['capital'], state['capital']-CAPITAL_INITIAL),
+            len(STRATS), RISK_PCT*100),
+        "  Capital: ${:,.2f} (PnL: ${:+,.2f})".format(state['capital'], state['capital']-cap_init),
         "  Positions: {}".format(len(state['open_positions']))]
     for p in state['open_positions']:
         tp_str = " TP={:.2f}".format(p['target']) if 'target' in p else ""

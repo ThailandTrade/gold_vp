@@ -32,12 +32,11 @@ PORTFOLIO = cfg.PORTFOLIO
 RISK_PCT = cfg.RISK_PCT
 BROKER = cfg.BROKER
 LOG_FILE = f"paper_{account}.json"
-CAPITAL_INITIAL = 1000.0
 
 def load_state():
     if os.path.exists(LOG_FILE):
         with open(LOG_FILE) as f: return json.load(f)
-    return {'capital':CAPITAL_INITIAL,'trades':[],'open_positions':[]}
+    return {'capital':1000,'capital_initial':1000,'trades':[],'open_positions':[]}
 
 def get_price():
     try:
@@ -57,6 +56,7 @@ bid, ask = get_price()
 now = datetime.now(timezone.utc)
 h = now.hour
 sess = "Tokyo" if 0<=h<6 else "London" if 8<=h<14 else "New York" if 14<=h<21 else "Off"
+CAPITAL_INITIAL = state.get('capital_initial', 1000.0)
 pnl = capital - CAPITAL_INITIAL
 
 # ── TITRE ──
