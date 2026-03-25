@@ -520,7 +520,8 @@ Candidat FTMO: Calmar 5 (DD -9.1%, marge 0.9% avant limite).
 - strats.py: ajout ALL_DC10 (Donchian 10 breakout) detection + indicateur dc10_h/dc10_l
 - live_paper_icmarkets.py: multi-compte (icm/ftmo/5ers) via argument CLI
   - Fichiers separes: paper_{account}.json, paper_{account}.log
-- Usage: `python live_paper_icmarkets.py ftmo --reset`
+- `live_paper.py` remplace `live_paper_icmarkets.py` (garde pour compat)
+- Usage: `python live_paper.py ftmo --reset`
 - Commit: 5720b37
 
 ### Comparatif backtest vs live 25 mars 2026 (apres fix open strats)
