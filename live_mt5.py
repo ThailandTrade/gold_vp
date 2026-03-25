@@ -47,7 +47,9 @@ STATE_FILE = f"data/{_account}/live_mt5.json"
 from strats import STRAT_NAMES, STRAT_SESSION, detect_all, compute_indicators
 from strat_exits import STRAT_EXITS, DEFAULT_EXIT
 
-OPEN_STRATS = ['TOK_FADE','TOK_PREVEXT','LON_GAP','LON_BIGGAP','LON_KZ','LON_TOKEND','LON_PREV','NY_GAP','NY_LONEND','NY_LONMOM','NY_DAYMOM']
+# LON_BIGGAP et LON_GAP retires des OPEN strats: leur condition depend de row['open']
+# de la bougie trigger (le gap), qu'on ne peut connaitre qu'a la fermeture de la bougie.
+OPEN_STRATS = ['TOK_FADE','TOK_PREVEXT','LON_KZ','LON_TOKEND','LON_PREV','NY_GAP','NY_LONEND','NY_LONMOM','NY_DAYMOM']
 CLOSE_STRATS = [s for s in STRATS if s not in OPEN_STRATS]
 
 # ── MAGIC NUMBERS (stable hash par strat) ────────────

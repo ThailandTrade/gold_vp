@@ -41,8 +41,9 @@ LOG_FILE = f"data/{_account}/paper.json"
 from strats import STRAT_NAMES, STRAT_SESSION, detect_all, compute_indicators
 from strat_exits import STRAT_EXITS, DEFAULT_EXIT
 
-# Open strats: signal based on prior data, enter at open
-OPEN_STRATS = ['TOK_FADE','TOK_PREVEXT','LON_GAP','LON_BIGGAP','LON_KZ','LON_TOKEND','LON_PREV','NY_GAP','NY_LONEND','NY_LONMOM','NY_DAYMOM']
+# Open strats: signal based on prior data, enter at session open tick
+# LON_BIGGAP/LON_GAP exclus: leur condition depend de row['open'] (le gap)
+OPEN_STRATS = ['TOK_FADE','TOK_PREVEXT','LON_KZ','LON_TOKEND','LON_PREV','NY_GAP','NY_LONEND','NY_LONMOM','NY_DAYMOM']
 # Close strats: need closed candle OHLC
 CLOSE_STRATS = [s for s in STRATS if s not in OPEN_STRATS]
 
