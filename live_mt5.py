@@ -1,7 +1,7 @@
 """
 Live Trading MT5 — multi-compte, vrais ordres.
 Usage:
-  python live_mt5.py icm --dry              → dry run ICM
+  python live_mt5.py icm                    → ICM live
   python live_mt5.py ftmo                   → FTMO live
   python live_mt5.py 5ers --symbol XAUUSDm  → 5ers symbole custom
 
@@ -28,7 +28,6 @@ parser.add_argument('account', nargs='?', default='icm', choices=['icm','ftmo','
 parser.add_argument('-r', '--risk', type=float, default=None, help='Risk %% par trade')
 parser.add_argument('--reset', action='store_true', help='Reset state')
 parser.add_argument('--symbol', default='XAUUSD', help='MT5 symbol')
-parser.add_argument('--dry', action='store_true', help='Dry run')
 args = parser.parse_args()
 _account = args.account
 
@@ -41,7 +40,6 @@ else:
 
 RISK_PCT = args.risk / 100 if args.risk else RISK_PCT
 SYMBOL = args.symbol
-DRY_RUN = args.dry
 CHECK_INTERVAL = 1
 
 os.makedirs(f'data/{_account}', exist_ok=True)
@@ -140,10 +138,6 @@ def mt5_send_order(strat, direction, sl, tp, lots):
         'BUY' if direction == 'long' else 'SELL', strat, direction.upper(),
         lots, price, sl, tp or 0, magic))
 
-    if DRY_RUN:
-        log.info("    [DRY] Ordre non envoye")
-        return {'ticket': int(time.time()*1000) % 1000000, 'price': price, 'volume': lots}
-
     result = mt5.order_send(request)
     if result is None:
         log.error("    order_send None: {}".format(mt5.last_error()))
@@ -168,10 +162,6 @@ def mt5_modify_sl(ticket, new_sl):
         'sl': round(new_sl, sym.digits),
         'tp': positions[0].tp,
     }
-
-    if DRY_RUN:
-        log.info("    [DRY] SL #{} -> {:.2f}".format(ticket, new_sl))
-        return True
 
     result = mt5.order_send(request)
     if result and result.retcode == mt5.TRADE_RETCODE_DONE:
@@ -395,7 +385,7 @@ def main():
         state = load_state()
 
     log.info("=== {} LIVE{} === {} strats @ {:.1f}% === {}".format(
-        BROKER, " [DRY]" if DRY_RUN else "", len(STRATS), RISK_PCT*100, ','.join(STRATS)))
+        BROKER, len(STRATS), RISK_PCT*100, ','.join(STRATS)))
 
     # Show magic numbers
     for sn in STRATS:
