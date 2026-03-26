@@ -712,6 +712,14 @@ Strats: IDX_CONSEC_REV + IDX_GAP_CONT + IDX_GAP_FILL
 
 BTC meilleur que NAS100 (5 safe vs 4, 13/13 vs 10/13). Comparable a l'or sur rendement.
 
+### Dictionnaire unifie (2026-03-26)
+- Fusion de toutes les strats (gold + indices + crypto) dans strats.py
+- 87 strats total dans un seul detect_all()
+- L'optimiseur filtre ce qui marche par instrument
+- Plus besoin de optimize_indices.py separement
+- Fix crash optimize_all.py quand 0 strats viables
+- Usage: python optimize_all.py 5ers --symbol btcusd
+
 **Decision**: rester sur l'or pour l'instant. L'edge est plus fort (18 strats safe vs 4). Revenir sur indices quand le live gold est stable.
 
 ### Architecture multi-instrument (discussion 2026-03-26)
