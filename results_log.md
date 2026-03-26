@@ -624,6 +624,14 @@ Audit #1:
 - Regle: toutes les open strats doivent dependre UNIQUEMENT de bougies fermees, pas du prix open
 - ICM passe de Calmar 12 a Calmar 11
 
+### Dashboard Paper/Live MT5
+- Selecteur Paper / Live MT5 dans la sidebar
+- Mode Live: positions depuis mt5.positions_get(), historique depuis mt5.history_deals_get()
+- Magic numbers pour identifier les strats (meme logique que live_mt5.py)
+- Trades non reconnus (magic inconnu) → strat LEGACY
+- PnL latent en temps reel depuis MT5 (p.profit)
+- Commit: 4b7da91
+
 ### 5 audits paralleles — tous les bugs corriges
 
 **Audit 1 (signal detection):** Pas de bug critique. prev2_day_data manquant (D8 pas dans portfolio). prev_day_data.body manquant (jamais lu). OK.
