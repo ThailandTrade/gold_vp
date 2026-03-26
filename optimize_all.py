@@ -36,7 +36,7 @@ except Exception:
     monthly_spread = {}
     print(f"  WARNING: pas de ticks pour {SYMBOL}, spread=0")
 cur.close(); conn.close()
-avg_sp = np.mean(list(monthly_spread.values()))
+avg_sp = np.mean(list(monthly_spread.values())) if monthly_spread else 0.0
 def prev_day(day):
     for di, d in enumerate(trading_days):
         if d >= day: return trading_days[di-1] if di > 0 else None
