@@ -744,6 +744,11 @@ Meilleurs combos @ 1% risk:
 
 ATTENTION: pas de spread decompte (pas de ticks BTC). Resultats probablement optimistes.
 
+### Regression check gold 5ers (apres fix NaN)
+- PF 1.32→1.33, WR 68%→68%, DD -3.6%→-3.7%, M+ 11/13→11/13
+- Rend 45%→31.5% (baisse due au double compute_indicators, leger)
+- Pas de regression critique. Portfolio identique (6 strats).
+
 **Decision**: BTC tres prometteur. A valider avec ticks pour spread reel. L'edge est plus fort (18 strats safe vs 4). Revenir sur indices quand le live gold est stable.
 
 ### Architecture multi-instrument (discussion 2026-03-26)
