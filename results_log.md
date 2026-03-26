@@ -696,6 +696,22 @@ Audit #1:
 
 Best combo Greedy 2 @ 0.25%: DD -2.6%, +16%, 10/13 mois. Viable mais modeste.
 
+### BTCUSD — Test (2026-03-26)
+
+**Strats gold sur BTC**: 0/71 viables. Meme resultat que NAS100.
+
+**Strats indices sur BTC**: 5/16 safe (marge WR > 5%)
+- IDX_CONSEC_REV: PF 1.44, WR 57%
+- IDX_GAP_CONT: PF 1.38, WR 67%
+- IDX_GAP_FILL: PF 1.23, WR 57%
+- IDX_NR4: PF 1.29, WR 39%
+- IDX_RSI_REV: PF 1.33, WR 78%
+
+Best combo Greedy 3 @ 0.25%: DD -2.8%, +46%, **13/13 mois**
+Strats: IDX_CONSEC_REV + IDX_GAP_CONT + IDX_GAP_FILL
+
+BTC meilleur que NAS100 (5 safe vs 4, 13/13 vs 10/13). Comparable a l'or sur rendement.
+
 **Decision**: rester sur l'or pour l'instant. L'edge est plus fort (18 strats safe vs 4). Revenir sur indices quand le live gold est stable.
 
 ### Architecture multi-instrument (discussion 2026-03-26)
