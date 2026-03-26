@@ -380,3 +380,118 @@ def detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_
             add('TOK_WILLR','long',row['close']); trig['TOK_WILLR']=True
         elif prev['wr14'] > -20 and row['wr14'] <= -20:
             add('TOK_WILLR','short',row['close']); trig['TOK_WILLR']=True
+
+    # ── NEW STRATS ──
+
+    # ALL_ENGULF: Bullish/bearish engulfing
+    if 'ALL_ENGULF' not in trig and ci >= 1:
+        pb = prev['body'] if 'body' in prev.index else prev['close'] - prev['open']
+        cb = row['close'] - row['open']
+        if pb < 0 and cb > 0 and row['close'] > prev['open'] and row['open'] < prev['close'] and abs(cb) >= 0.3*atr:
+            add('ALL_ENGULF','long',row['close']); trig['ALL_ENGULF']=True
+        elif pb > 0 and cb < 0 and row['close'] < prev['open'] and row['open'] > prev['close'] and abs(cb) >= 0.3*atr:
+            add('ALL_ENGULF','short',row['close']); trig['ALL_ENGULF']=True
+
+    # ALL_HAMMER: Hammer (long lower wick) / Shooting star (long upper wick)
+    if 'ALL_HAMMER' not in trig and 'candle_range' in row.index:
+        rng = row['candle_range']
+        if rng >= 0.3*atr:
+            lw = row['lower_wick']; uw = row['upper_wick']; ab = abs(row['close'] - row['open'])
+            # Hammer: lower wick > 2x body, small upper wick, after down move
+            if lw >= 2*ab and uw < 0.3*rng and ci >= 5:
+                last5 = candles.iloc[ci-5:ci]
+                if last5.iloc[-1]['close'] < last5.iloc[0]['open']:
+                    add('ALL_HAMMER','long',row['close']); trig['ALL_HAMMER']=True
+            # Shooting star: upper wick > 2x body, small lower wick, after up move
+            elif uw >= 2*ab and lw < 0.3*rng and ci >= 5:
+                last5 = candles.iloc[ci-5:ci]
+                if last5.iloc[-1]['close'] > last5.iloc[0]['open']:
+                    add('ALL_HAMMER','short',row['close']); trig['ALL_HAMMER']=True
+
+    # ALL_DOJI_REV: Doji (tiny body) after trend → reversal
+    if 'ALL_DOJI_REV' not in trig and ci >= 5:
+        rng = row['high'] - row['low']
+        ab = abs(row['close'] - row['open'])
+        if rng >= 0.2*atr and ab < 0.1*rng:  # doji: body < 10% of range
+            last5 = candles.iloc[ci-5:ci]
+            move = last5.iloc[-1]['close'] - last5.iloc[0]['open']
+            if move > 0.5*atr:  # was going up → reverse short
+                add('ALL_DOJI_REV','short',row['close']); trig['ALL_DOJI_REV']=True
+            elif move < -0.5*atr:  # was going down → reverse long
+                add('ALL_DOJI_REV','long',row['close']); trig['ALL_DOJI_REV']=True
+
+    # ALL_MSTAR: Morning star (3-bar bullish reversal) / Evening star (bearish)
+    if 'ALL_MSTAR' not in trig and ci >= 3:
+        b1 = candles.iloc[ci-2]; b2 = candles.iloc[ci-1]; b3 = row
+        b1b = b1['close'] - b1['open']; b2b = b2['close'] - b2['open']; b3b = b3['close'] - b3['open']
+        b2_range = b2['high'] - b2['low']
+        # Morning star: big bear, small body (star), big bull
+        if (b1b < -0.3*atr and abs(b2b) < 0.15*atr and b2_range < 0.5*atr
+            and b3b > 0.3*atr and b3['close'] > (b1['open']+b1['close'])/2):
+            add('ALL_MSTAR','long',row['close']); trig['ALL_MSTAR']=True
+        # Evening star: big bull, small body (star), big bear
+        elif (b1b > 0.3*atr and abs(b2b) < 0.15*atr and b2_range < 0.5*atr
+              and b3b < -0.3*atr and b3['close'] < (b1['open']+b1['close'])/2):
+            add('ALL_MSTAR','short',row['close']); trig['ALL_MSTAR']=True
+
+    # LON_ASIAN_BRK: Asian range breakout at London open
+    if 8.0 <= hour < 10.0 and 'LON_ASIAN_BRK' not in trig:
+        asian = candles[(candles['ts_dt']>=ds)&(candles['ts_dt']<te)]
+        if len(asian) >= 20:
+            ah = asian['high'].max(); al_ = asian['low'].min()
+            ar = ah - al_
+            if ar >= 0.3*atr:  # meaningful range
+                if row['close'] > ah and row['close'] > row['open']:
+                    add('LON_ASIAN_BRK','long',row['close']); trig['LON_ASIAN_BRK']=True
+                elif row['close'] < al_ and row['close'] < row['open']:
+                    add('LON_ASIAN_BRK','short',row['close']); trig['LON_ASIAN_BRK']=True
+
+    # ALL_INSIDE_BRK: Inside bar breakout (prev bar contains current)
+    if 'ALL_INSIDE_BRK' not in trig and ci >= 2:
+        p2 = candles.iloc[ci-1]
+        # prev bar is inside bar (contained by bar before it)
+        p3 = candles.iloc[ci-2]
+        if p2['high'] < p3['high'] and p2['low'] > p3['low']:
+            # current bar breaks out
+            if row['close'] > p2['high'] and abs(row['close']-row['open']) >= 0.2*atr:
+                add('ALL_INSIDE_BRK','long',row['close']); trig['ALL_INSIDE_BRK']=True
+            elif row['close'] < p2['low'] and abs(row['close']-row['open']) >= 0.2*atr:
+                add('ALL_INSIDE_BRK','short',row['close']); trig['ALL_INSIDE_BRK']=True
+
+    # ALL_BB_SQUEEZE: Bollinger squeeze (width at 20-bar min) then breakout
+    if 'ALL_BB_SQUEEZE' not in trig and 'bb_width' in row.index and pd.notna(row.get('bb_width_min20')):
+        if prev.get('bb_width', 999) <= prev.get('bb_width_min20', 0) * 1.05:  # prev was squeezed
+            if row['close'] > row.get('bb_up', 999):
+                add('ALL_BB_SQUEEZE','long',row['close']); trig['ALL_BB_SQUEEZE']=True
+            elif row['close'] < row.get('bb_lo', 0):
+                add('ALL_BB_SQUEEZE','short',row['close']); trig['ALL_BB_SQUEEZE']=True
+
+    # ALL_RSI_EXTREME: RSI < 25 reversal or > 75 reversal
+    if 'ALL_RSI_EXTREME' not in trig and 'rsi14' in row.index and pd.notna(row.get('rsi14')):
+        if prev['rsi14'] < 25 and row['rsi14'] >= 25 and row['close'] > row['open']:
+            add('ALL_RSI_EXTREME','long',row['close']); trig['ALL_RSI_EXTREME']=True
+        elif prev['rsi14'] > 75 and row['rsi14'] <= 75 and row['close'] < row['open']:
+            add('ALL_RSI_EXTREME','short',row['close']); trig['ALL_RSI_EXTREME']=True
+
+    # ALL_MACD_HIST: MACD histogram reversal (direction change)
+    if 'ALL_MACD_HIST' not in trig and 'macd_hist' in row.index and pd.notna(row.get('macd_hist')) and ci >= 3:
+        h1 = candles.iloc[ci-2].get('macd_hist', 0)
+        h2 = prev.get('macd_hist', 0)
+        h3 = row['macd_hist']
+        if pd.notna(h1) and pd.notna(h2):
+            # Histogram was declining, now rising → bullish
+            if h1 > h2 and h2 < h3 and h3 < 0 and row['close'] > row['open']:
+                add('ALL_MACD_HIST','long',row['close']); trig['ALL_MACD_HIST']=True
+            # Histogram was rising, now declining → bearish
+            elif h1 < h2 and h2 > h3 and h3 > 0 and row['close'] < row['open']:
+                add('ALL_MACD_HIST','short',row['close']); trig['ALL_MACD_HIST']=True
+
+    # ALL_VOL_SPIKE: Volume spike > 2x average with directional candle
+    if 'ALL_VOL_SPIKE' not in trig and 'vol_avg' in row.index and pd.notna(row.get('vol_avg')):
+        vol_col = 'tick_volume' if 'tick_volume' in row.index else 'volume' if 'volume' in row.index else None
+        if vol_col and row.get(vol_col, 0) > 2 * row['vol_avg'] and row['vol_avg'] > 0:
+            cb = row['close'] - row['open']
+            if cb > 0 and abs(cb) >= 0.3*atr:
+                add('ALL_VOL_SPIKE','long',row['close']); trig['ALL_VOL_SPIKE']=True
+            elif cb < 0 and abs(cb) >= 0.3*atr:
+                add('ALL_VOL_SPIKE','short',row['close']); trig['ALL_VOL_SPIKE']=True

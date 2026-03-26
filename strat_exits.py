@@ -82,6 +82,18 @@ STRAT_EXITS = {
     'TOK_NR4':           ('TPSL',  1.50, 0.50, 0),   # PF=1.30 WR=78%
     'TOK_WILLR':         ('TRAIL', 2.00, 0.50, 0.30), # PF=1.48 WR=67%
     'TOK_FISHER':        ('TRAIL', 3.00, 0.75, 0.75), # PF=1.17 WR=66%
+
+    # ── New strats (default configs, will be optimized per broker) ──
+    'ALL_ENGULF':        ('TRAIL', 3.00, 0.50, 0.50),
+    'ALL_HAMMER':        ('TRAIL', 3.00, 0.50, 0.50),
+    'ALL_DOJI_REV':      ('TRAIL', 3.00, 0.50, 0.50),
+    'ALL_MSTAR':         ('TRAIL', 3.00, 0.50, 0.50),
+    'LON_ASIAN_BRK':     ('TRAIL', 3.00, 0.50, 0.50),
+    'ALL_INSIDE_BRK':    ('TRAIL', 3.00, 0.50, 0.50),
+    'ALL_BB_SQUEEZE':    ('TRAIL', 3.00, 0.50, 0.50),
+    'ALL_RSI_EXTREME':   ('TRAIL', 3.00, 0.50, 0.50),
+    'ALL_MACD_HIST':     ('TRAIL', 3.00, 0.50, 0.50),
+    'ALL_VOL_SPIKE':     ('TRAIL', 3.00, 0.50, 0.50),
 }
 
 # Default pour strats pas dans le dict
