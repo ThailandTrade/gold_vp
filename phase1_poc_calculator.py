@@ -142,11 +142,17 @@ def compute_atr(conn, period=14, symbol='xauusd'):
 # ── Identification des jours de trading ───────────────────────
 
 def get_trading_days(conn, symbol='xauusd'):
-    """Récupère les jours uniques où on a des ticks."""
-    table = f"market_ticks_{symbol}"
+    """Récupère les jours uniques (ticks si dispo, sinon candles)."""
     cur = conn.cursor()
-    cur.execute(f"SELECT DISTINCT DATE(time) FROM {table} ORDER BY 1")
-    days = [r[0] for r in cur.fetchall()]
+    try:
+        table = f"market_ticks_{symbol}"
+        cur.execute(f"SELECT DISTINCT DATE(time) FROM {table} ORDER BY 1")
+        days = [r[0] for r in cur.fetchall()]
+    except Exception:
+        conn.rollback()
+        table = f"candles_mt5_{symbol}_5m"
+        cur.execute(f"SELECT DISTINCT DATE(to_timestamp(ts/1000)) FROM {table} ORDER BY 1")
+        days = [r[0].date() if hasattr(r[0], 'date') else r[0] for r in cur.fetchall()]
     cur.close()
     return days
 

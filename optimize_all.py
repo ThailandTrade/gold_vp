@@ -28,8 +28,13 @@ daily_atr, global_atr = compute_atr(conn, symbol=SYMBOL)
 trading_days = get_trading_days(conn, symbol=SYMBOL)
 tick_table = f"market_ticks_{SYMBOL}"
 cur = conn.cursor()
-cur.execute(f"""SELECT DATE_TRUNC('month', time), AVG(ask-bid) FROM {tick_table} WHERE ask>bid AND ask-bid<10 GROUP BY 1""")
-monthly_spread = {r[0].strftime("%Y-%m"): float(r[1]) for r in cur.fetchall()}
+try:
+    cur.execute(f"""SELECT DATE_TRUNC('month', time), AVG(ask-bid) FROM {tick_table} WHERE ask>bid AND ask-bid<10 GROUP BY 1""")
+    monthly_spread = {r[0].strftime("%Y-%m"): float(r[1]) for r in cur.fetchall()}
+except Exception:
+    conn.rollback()
+    monthly_spread = {}
+    print(f"  WARNING: pas de ticks pour {SYMBOL}, spread=0")
 cur.close(); conn.close()
 avg_sp = np.mean(list(monthly_spread.values()))
 def prev_day(day):
