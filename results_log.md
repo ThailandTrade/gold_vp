@@ -771,7 +771,24 @@ ATTENTION: NAS100 et BTC sans spread decompte. Resultats probablement optimistes
 - dashboard.py: prix depuis derniere bougie
 - phase1_poc_calculator.py: get_trading_days depuis candles uniquement
 - live_mt5.py: inchange (utilise MT5 ticks directement, pas la DB)
-- Plus besoin de charger les ticks pour chaque broker/instrument L'edge est plus fort (18 strats safe vs 4). Revenir sur indices quand le live gold est stable.
+- Plus besoin de charger les ticks pour chaque broker/instrument
+
+### Comparatif tous instruments 5ers (2026-03-26)
+87 strats unifiees testees sur 8 instruments, filtre marge WR > 5%.
+
+| Instrument | Safe | PF | WR | DD @0.25% | Rend @0.25% | M+ |
+|---|---|---|---|---|---|---|
+| **JPN225** | 26 | **1.74** | **78%** | **-1.8%** | +168% | **13/13** |
+| **DAX40** | 45 | 1.60 | 67% | -1.9% | +228% | **13/13** |
+| **UK100** | 15 | 1.50 | 75% | -2.0% | +102% | **13/13** |
+| BTCUSD | 22 | 1.47 | 54% | -3.2% | +607% | 12/13 |
+| SP500 | 14 | 1.43 | 78% | -1.9% | +67% | 12/13 |
+| NAS100 | 27 | 1.39 | 72% | -2.8% | +117% | 11/13 |
+| US30 | 16 | 1.43 | 53% | -5.0% | +313% | 12/13 |
+| XAUUSD | 18 | 1.33 | 68% | -3.7% | +31% | 11/13 |
+
+JPN225 champion: meilleur PF, meilleur WR, 13/13 mois, DD < 2%.
+ATTENTION: tous sauf XAUUSD sans spread decompte. L'edge est plus fort (18 strats safe vs 4). Revenir sur indices quand le live gold est stable.
 
 ### Architecture multi-instrument (discussion 2026-03-26)
 
