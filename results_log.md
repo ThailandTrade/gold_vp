@@ -670,7 +670,14 @@ Audit #1:
 - 8/10 strats du portfolio 5ers etaient RISK (marge < 5%)
 - Seules TOK_PREVEXT et ALL_KC_BRK etaient saines
 
-### Enrichissement dictionnaire de strats (en cours)
+### Config 5ers finale: Calmar 6 (filtre marge WR)
+- Ancien: MinDD 10 (8/10 strats RISK, marge WR < 5%)
+- **Nouveau: Calmar 6 — PO3_SWEEP + ALL_PSAR_EMA + TOK_2BAR + ALL_DC10 + TOK_BIG + TOK_PREVEXT**
+- PF 1.32 | WR 68% | DD -3.6% @ 0.25% | Rend +45% | 11/13 mois
+- Toutes les strats ont marge WR > 5% (rentables avec frais)
+- 10 nouvelles strats testees (engulfing, hammer, doji, morning star, asian breakout, inside bar, BB squeeze, RSI extreme, MACD hist, vol spike) — aucune n'a passe le filtre sur donnees 5ers
+
+### Enrichissement dictionnaire de strats
 10 nouvelles strats ajoutees au dictionnaire:
 - Candlestick: ALL_ENGULF, ALL_HAMMER, ALL_DOJI_REV, ALL_MSTAR
 - Breakout: LON_ASIAN_BRK, ALL_INSIDE_BRK, ALL_BB_SQUEEZE
