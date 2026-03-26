@@ -720,6 +720,12 @@ BTC meilleur que NAS100 (5 safe vs 4, 13/13 vs 10/13). Comparable a l'or sur ren
 - Fix crash optimize_all.py quand 0 strats viables
 - Usage: python optimize_all.py 5ers --symbol btcusd
 
+### BTCUSD — Retest avec dictionnaire unifie (2026-03-26)
+- optimize_all.py avec 90 strats (gold + indices + crypto): 0/90 viables
+- Les resultats precedents (optimize_indices.py: 5 safe) etaient avec des filtres differents
+- Le filtre unifie (PF>1.05 + split + marge WR>5%) est plus strict et plus honnete
+- BTC et NAS100 ne marchent pas avec nos strats actuelles sur 5min
+
 **Decision**: rester sur l'or pour l'instant. L'edge est plus fort (18 strats safe vs 4). Revenir sur indices quand le live gold est stable.
 
 ### Architecture multi-instrument (discussion 2026-03-26)
