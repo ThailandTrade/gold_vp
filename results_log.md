@@ -677,6 +677,24 @@ Audit #1:
 - Toutes les strats ont marge WR > 5% (rentables avec frais)
 - 10 nouvelles strats testees (engulfing, hammer, doji, morning star, asian breakout, inside bar, BB squeeze, RSI extreme, MACD hist, vol spike) — aucune n'a passe le filtre sur donnees 5ers
 
+### Architecture multi-instrument (discussion 2026-03-26)
+
+**Decision**: tester NAS100 d'abord avec --symbol separement, puis refactoriser.
+
+**Architecture cible** (apres validation):
+- Un seul process live_mt5.py par broker, multi-instrument
+- Config par broker avec liste d'instruments et strats par instrument
+- Magic numbers encodent broker + instrument + strat
+- data/{broker}/{instrument}/ pour les fichiers
+- Dashboard avec selecteur broker + instrument
+
+**Architecture interim** (pour tester):
+- --symbol NAS100 en argument CLI
+- data/{broker}/nas100/ pour les fichiers
+- Table DB candles_mt5_nas100_5m
+- Memes strats/indicateurs (universels)
+- Strats session-specific (TOK_*, LON_*, PO3_SWEEP) probablement inutiles sur NAS100
+
 ### Enrichissement dictionnaire de strats
 10 nouvelles strats ajoutees au dictionnaire:
 - Candlestick: ALL_ENGULF, ALL_HAMMER, ALL_DOJI_REV, ALL_MSTAR
