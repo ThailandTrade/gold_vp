@@ -56,14 +56,14 @@ def load_paper():
     cap_init = state.get('capital_initial', 1000.0)
     trades = state['trades']
     positions = state['open_positions']
-    # Get price from DB
+    # Get price from last candle close
     bid, ask = None, None
     try:
         from phase1_poc_calculator import get_conn
         c = get_conn(); c.autocommit = True; cur = c.cursor()
-        cur.execute("SELECT bid,ask FROM market_ticks_xauusd ORDER BY ts DESC LIMIT 1")
+        cur.execute("SELECT close FROM candles_mt5_xauusd_5m ORDER BY ts DESC LIMIT 1")
         r = cur.fetchone(); cur.close(); c.close()
-        if r: bid, ask = float(r[0]), float(r[1])
+        if r: bid = ask = float(r[0])
     except: pass
     return capital, cap_init, trades, positions, bid, ask
 

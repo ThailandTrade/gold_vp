@@ -24,24 +24,12 @@ conn = get_conn()
 candles = load_candles_5m(conn, symbol=SYMBOL)
 daily_atr, global_atr = compute_atr(conn, symbol=SYMBOL)
 trading_days = get_trading_days(conn, symbol=SYMBOL)
-tick_table = f"market_ticks_{SYMBOL}"
-cur = conn.cursor()
-try:
-    cur.execute(f"""SELECT DATE_TRUNC('month', time), AVG(ask-bid) FROM {tick_table} WHERE ask>bid AND ask-bid<10 GROUP BY 1""")
-    monthly_spread = {r[0].strftime("%Y-%m"): float(r[1]) for r in cur.fetchall()}
-except Exception:
-    conn.rollback()
-    monthly_spread = {}
-    print(f"  WARNING: pas de ticks pour {SYMBOL}, spread=0")
-cur.close(); conn.close()
-avg_sp = np.mean(list(monthly_spread.values())) if monthly_spread else 0
+conn.close()
 
 def prev_day(day):
     for di, d in enumerate(trading_days):
         if d >= day: return trading_days[di-1] if di > 0 else None
     return None
-def get_sp(day):
-    return 2 * monthly_spread.get(f"{day.year}-{str(day.month).zfill(2)}", avg_sp)
 
 # ── PRECALCUL ──
 print("Precalcul indicateurs...", flush=True)
@@ -114,7 +102,7 @@ for ci in range(200, len(c)):
         pd_ = prev_day(today); day_atr = daily_atr.get(pd_, global_atr) if pd_ else global_atr
     atr = day_atr
     if atr == 0 or atr is None: continue
-    sp = get_sp(today)
+    sp = 0
     ds = pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')
     tv = c[(c['ts_dt']>=ds)&(c['ts_dt']<=ct)]
 

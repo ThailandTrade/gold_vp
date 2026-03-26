@@ -72,14 +72,15 @@ def get_recent_candles(conn, n=1500):
     df['date'] = df['ts_dt'].dt.date
     return df
 
-def get_current_bidask(conn):
+def get_current_price(conn):
+    """Get last candle close as price proxy (no tick table needed)."""
     cur = conn.cursor()
-    tick_table = f"market_ticks_{_SYMBOL.lower()}"
-    cur.execute(f"SELECT bid, ask, last FROM {tick_table} ORDER BY ts DESC LIMIT 1")
+    table = f"candles_mt5_{_SYMBOL.lower()}_5m"
+    cur.execute(f"SELECT close FROM {table} ORDER BY ts DESC LIMIT 1")
     row = cur.fetchone(); cur.close()
     if row:
-        bid, ask, last = float(row[0]), float(row[1]), float(row[2])
-        return {'bid': bid, 'ask': ask, 'last': last, 'spread': ask - bid}
+        px = float(row[0])
+        return {'bid': px, 'ask': px, 'last': px, 'spread': 0}
     return None
 
 def get_yesterday_atr(candles_df, today):
@@ -90,13 +91,6 @@ def get_yesterday_atr(candles_df, today):
     yc['atr'] = yc['tr'].ewm(span=14, adjust=False).mean()
     return float(yc['atr'].iloc[-1])
 
-def get_spread_rt(conn, today):
-    cur = conn.cursor()
-    tick_table = f"market_ticks_{_SYMBOL.lower()}"
-    cur.execute(f"SELECT AVG(ask-bid) FROM {tick_table} WHERE ask>bid AND ask-bid<10 AND time >= %s",
-                (datetime(today.year, today.month, 1, 0, 0),))
-    row = cur.fetchone(); cur.close()
-    return 2 * float(row[0]) if row and row[0] else 0.188
 
 # ── STATE ─────────────────────────────────────────────
 
@@ -135,10 +129,9 @@ def ensure_daily_cache(state, conn, candles_df, today):
     if k in state['daily_cache']: return state['daily_cache'][k]
     log.info("Cache journalier {}...".format(today))
     atr = get_yesterday_atr(candles_df, today)
-    spread_rt = get_spread_rt(conn, today)
-    cache = {'atr': atr, 'spread_rt': spread_rt}
+    cache = {'atr': atr}
     state['daily_cache'] = {k: cache}
-    log.info("  ATR={} spread_rt={:.3f}".format("{:.2f}".format(atr) if atr else "None", spread_rt))
+    log.info("  ATR={}".format("{:.2f}".format(atr) if atr else "None"))
     return cache
 
 # ── STOP/TP CHECK TEMPS REEL (chaque seconde) ────────
@@ -301,7 +294,7 @@ def detect_close_strats(candles, state, atr, candle_time, today):
 # ── OPEN POSITION ─────────────────────────────────────
 
 def open_position(state, sig, atr, candle_time, conn):
-    tick = get_current_bidask(conn)
+    tick = get_current_price(conn)
     if not tick: log.warning("SKIP {} — no tick".format(sig['strat'])); return
     d = sig['dir']
     entry = tick['ask'] if d == 'long' else tick['bid']
@@ -440,7 +433,7 @@ def main():
                 log.info("Reset triggered pour {}".format(today))
 
             # Check stops/TP real-time
-            tick = get_current_bidask(conn)
+            tick = get_current_price(conn)
             if state['open_positions'] and tick:
                 check_stops_realtime(state, tick, conn)
 

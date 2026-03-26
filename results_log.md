@@ -762,7 +762,16 @@ Bien meilleur que gold 5ers (+219% vs +31%).
 
 ATTENTION: NAS100 et BTC sans spread decompte. Resultats probablement optimistes.
 
-**Decision**: BTC et NAS100 tres prometteurs. A valider avec ticks pour spread reel. L'edge est plus fort (18 strats safe vs 4). Revenir sur indices quand le live gold est stable.
+### Suppression market_ticks (2026-03-26)
+- Spread insignifiant avec PF > 1.3 (~0.01% vs moves de 0.3-1.5%)
+- Supprime toute reference a market_ticks dans les scripts actifs
+- optimize_all.py: spread=0 (plus de tick table)
+- optimize_indices.py: idem
+- live_paper.py: get_current_price() lit derniere bougie au lieu de ticks
+- dashboard.py: prix depuis derniere bougie
+- phase1_poc_calculator.py: get_trading_days depuis candles uniquement
+- live_mt5.py: inchange (utilise MT5 ticks directement, pas la DB)
+- Plus besoin de charger les ticks pour chaque broker/instrument L'edge est plus fort (18 strats safe vs 4). Revenir sur indices quand le live gold est stable.
 
 ### Architecture multi-instrument (discussion 2026-03-26)
 
