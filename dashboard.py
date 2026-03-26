@@ -1,6 +1,6 @@
 """
 Dashboard VP Swing — streamlit run dashboard.py
-Multi-compte: selecteur dans la sidebar.
+Multi-compte + Paper/Live selector.
 """
 import streamlit as st
 import json, os
@@ -15,7 +15,7 @@ from strat_exits import STRAT_EXITS, DEFAULT_EXIT
 
 st.set_page_config(page_title="VP Swing", layout="wide")
 
-# Account selector
+# ── SIDEBAR: ACCOUNT + MODE ──
 ACCOUNTS = {
     'icm': {'module': 'config_icm', 'label': 'ICMarkets'},
     'ftmo': {'module': 'config_ftmo', 'label': 'FTMO'},
@@ -25,43 +25,160 @@ with st.sidebar:
     account = st.selectbox("Compte", list(ACCOUNTS.keys()),
                            format_func=lambda x: ACCOUNTS[x]['label'],
                            key='account_selector')
+    mode = st.radio("Mode", ["Paper", "Live MT5"], key='mode_selector')
 
 import importlib
 cfg = importlib.import_module(ACCOUNTS[account]['module'])
 PORTFOLIO = cfg.PORTFOLIO
 RISK_PCT = cfg.RISK_PCT
 BROKER = cfg.BROKER
-LOG_FILE = f"data/{account}/paper.json"
 
-def load_state():
-    if os.path.exists(LOG_FILE):
-        with open(LOG_FILE) as f: return json.load(f)
-    return {'capital':1000,'capital_initial':1000,'trades':[],'open_positions':[]}
+# ── MAGIC NUMBERS (same as live_mt5.py) ──
+import hashlib
+MAGIC_BASES = {'icm': 240000, 'ftmo': 250000, '5ers': 260000}
+MAGIC_BASE = MAGIC_BASES.get(account, 240000)
+def _strat_magic(name):
+    return MAGIC_BASE + int(hashlib.md5(name.encode()).hexdigest()[:4], 16) % 9999
+MAGIC_MAP = {sn: _strat_magic(sn) for sn in set(list(STRAT_EXITS.keys()) + list(PORTFOLIO))}
+MAGIC_REVERSE = {v: k for k, v in MAGIC_MAP.items()}
+ALL_OUR_MAGICS = set(MAGIC_MAP.values())
 
-def get_price():
+# ── DATA LOADING ──
+
+def load_paper():
+    """Load paper trading state from JSON."""
+    f = f"data/{account}/paper.json"
+    if os.path.exists(f):
+        with open(f) as fh: state = json.load(fh)
+    else:
+        state = {'capital': 1000, 'capital_initial': 1000, 'trades': [], 'open_positions': []}
+    capital = state['capital']
+    cap_init = state.get('capital_initial', 1000.0)
+    trades = state['trades']
+    positions = state['open_positions']
+    # Get price from DB
+    bid, ask = None, None
     try:
         from phase1_poc_calculator import get_conn
-        c=get_conn(); c.autocommit=True; cur=c.cursor()
+        c = get_conn(); c.autocommit = True; cur = c.cursor()
         cur.execute("SELECT bid,ask FROM market_ticks_xauusd ORDER BY ts DESC LIMIT 1")
-        r=cur.fetchone(); cur.close(); c.close()
-        if r: return float(r[0]),float(r[1])
+        r = cur.fetchone(); cur.close(); c.close()
+        if r: bid, ask = float(r[0]), float(r[1])
     except: pass
-    return None,None
+    return capital, cap_init, trades, positions, bid, ask
 
-state = load_state()
-capital = state['capital']
-trades = state['trades']
-positions = state['open_positions']
-bid, ask = get_price()
+def load_mt5_live():
+    """Load live data directly from MT5."""
+    try:
+        import MetaTrader5 as mt5
+        if not mt5.initialize():
+            return 0, 0, [], [], None, None
+        info = mt5.account_info()
+        capital = info.balance if info else 0
+        cap_init = capital  # no initial tracking for live, use current balance
+
+        # Tick
+        tick = mt5.symbol_info_tick('XAUUSD')
+        bid = tick.bid if tick else None
+        ask = tick.ask if tick else None
+
+        # Open positions (ours)
+        mt5_positions = mt5.positions_get(symbol='XAUUSD') or []
+        positions = []
+        for p in mt5_positions:
+            sn = MAGIC_REVERSE.get(p.magic, 'LEGACY')
+            if p.magic not in ALL_OUR_MAGICS and sn == 'LEGACY':
+                # Check comment for strat name
+                if p.comment and p.comment in STRATS:
+                    sn = p.comment
+            d = 'long' if p.type == 0 else 'short'
+            positions.append({
+                'strat': sn, 'strat_dir': d,
+                'entry': p.price_open, 'stop': p.sl,
+                'target': p.tp if p.tp > 0 else None,
+                'pos_oz': p.volume * 100,  # 1 lot = 100 oz
+                'lots': p.volume,
+                'bars_held': 0,
+                'trail_active': False,
+                'best': p.price_open,
+                'entry_time': datetime.fromtimestamp(p.time, tz=timezone.utc).isoformat(),
+                '_pnl_live': p.profit,
+                '_ticket': p.ticket,
+            })
+
+        # History deals (closed trades)
+        from_date = datetime(2025, 1, 1, tzinfo=timezone.utc)
+        to_date = datetime.now(timezone.utc)
+        deals = mt5.history_deals_get(from_date, to_date) or []
+
+        # Group deals by position ID to reconstruct trades
+        pos_deals = {}
+        for d in deals:
+            if d.symbol != 'XAUUSD': continue
+            if d.entry == 0 and d.type <= 1:  # DEAL_ENTRY_IN
+                pos_deals.setdefault(d.position_id, {'in': None, 'out': None, 'pnl': 0, 'commission': 0, 'swap': 0})
+                pos_deals[d.position_id]['in'] = d
+            elif d.entry == 1 and d.type <= 1:  # DEAL_ENTRY_OUT
+                pos_deals.setdefault(d.position_id, {'in': None, 'out': None, 'pnl': 0, 'commission': 0, 'swap': 0})
+                pos_deals[d.position_id]['out'] = d
+                pos_deals[d.position_id]['pnl'] += d.profit
+                pos_deals[d.position_id]['commission'] += d.commission
+                pos_deals[d.position_id]['swap'] += d.swap
+
+        trades = []
+        for pid, td in pos_deals.items():
+            if not td['in'] or not td['out']: continue
+            din = td['in']; dout = td['out']
+            sn = MAGIC_REVERSE.get(din.magic, 'LEGACY')
+            if din.magic not in ALL_OUR_MAGICS and sn == 'LEGACY':
+                if din.comment and din.comment in STRATS:
+                    sn = din.comment
+            direction = 'long' if din.type == 0 else 'short'
+            pnl_total = td['pnl'] + td['commission'] + td['swap']
+            trades.append({
+                'strat': sn, 'dir': direction,
+                'entry': din.price, 'exit': dout.price,
+                'pnl_dollar': pnl_total,
+                'pnl_oz': (dout.price - din.price) if direction == 'long' else (din.price - dout.price),
+                'entry_time': datetime.fromtimestamp(din.time, tz=timezone.utc).isoformat(),
+                'exit_time': datetime.fromtimestamp(dout.time, tz=timezone.utc).isoformat(),
+                'exit_reason': 'mt5',
+                'bars_held': 0,
+                'capital_after': 0,  # can't reconstruct easily
+                'lots': din.volume,
+            })
+
+        # Sort by entry time and compute running capital
+        trades.sort(key=lambda t: t['entry_time'])
+        # We don't have true running capital from MT5, estimate from current balance
+        running = capital - sum(t['pnl_dollar'] for t in trades)
+        for t in trades:
+            running += t['pnl_dollar']
+            t['capital_after'] = running
+
+        cap_init = capital - sum(t['pnl_dollar'] for t in trades)
+
+        mt5.shutdown()
+        return capital, cap_init, trades, positions, bid, ask
+    except Exception as e:
+        st.error(f"MT5 error: {e}")
+        return 0, 0, [], [], None, None
+
+# ── LOAD DATA ──
+if mode == "Live MT5":
+    capital, CAPITAL_INITIAL, trades, positions, bid, ask = load_mt5_live()
+else:
+    capital, CAPITAL_INITIAL, trades, positions, bid, ask = load_paper()
+
 now = datetime.now(timezone.utc)
 h = now.hour
 sess = "Tokyo" if 0<=h<6 else "London" if 8<=h<14 else "New York" if 14<=h<21 else "Off"
-CAPITAL_INITIAL = state.get('capital_initial', 1000.0)
 pnl = capital - CAPITAL_INITIAL
 
 # ── TITRE ──
-st.title(f"VP Swing {BROKER} — Calmar {len(PORTFOLIO)} Paper")
-st.caption(f"{sess} · {now.strftime('%H:%M')} UTC · XAUUSD {'${:,.2f}'.format(bid) if bid else '—'} · {len(PORTFOLIO)} strats · {RISK_PCT*100:.1f}% risk · TRAIL exits")
+mode_label = "Live" if mode == "Live MT5" else "Paper"
+st.title(f"VP Swing {BROKER} — {mode_label}")
+st.caption(f"{sess} · {now.strftime('%H:%M')} UTC · XAUUSD {'${:,.2f}'.format(bid) if bid else '—'} · {len(PORTFOLIO)} strats · {RISK_PCT*100:.1f}% risk")
 
 # ── METRIQUES ──
 n_trades = len(trades)
@@ -111,38 +228,38 @@ if positions:
     pos_rows = []
     total_unr = 0
     for p in positions:
-        e = p.get('entry',0); s = p.get('stop',0); best = p.get('best',e)
+        e = p.get('entry',0); s = p.get('stop',0)
         d = p.get('strat_dir',''); sn = p.get('strat','')
-        oz = p.get('pos_oz',0); bars = p.get('bars_held',0)
-        trail = p.get('trail_active',False); lots = p.get('lots',0)
+        lots = p.get('lots',0)
         et = str(p.get('entry_time',''))[:16]
         target = p.get('target')
         exit_cfg = STRAT_EXITS.get(sn, DEFAULT_EXIT)
-        exit_type = exit_cfg[0]
+        exit_type = exit_cfg[0] if sn != 'LEGACY' else '?'
 
-        prix = "—"; pnl_str = "—"; pnl_oz_str = "—"
-        if bid:
+        # PnL
+        if mode == "Live MT5" and '_pnl_live' in p:
+            pnl_d = p['_pnl_live']; total_unr += pnl_d
+            prix = f"{bid:.2f}" if bid else "—"
+            pnl_str = f"${pnl_d:+,.2f}"
+            pnl_oz_val = 0
+        elif bid:
+            oz = p.get('pos_oz', lots * 100)
             px = bid if d=='long' else ask
-            pnl_oz = (px-e) if d=='long' else (e-px)
-            pnl_d = pnl_oz * oz; total_unr += pnl_d
+            pnl_oz_val = (px-e) if d=='long' else (e-px)
+            pnl_d = pnl_oz_val * oz; total_unr += pnl_d
             prix = f"{px:.2f}"
             pnl_str = f"${pnl_d:+,.2f}"
-            pnl_oz_str = f"{pnl_oz:+.2f}"
+        else:
+            prix = "—"; pnl_str = "—"; pnl_d = 0; pnl_oz_val = 0
 
         pos_rows.append({
-            'Strat': sn,
-            'Type': exit_type,
-            'Dir': d.upper(),
-            'Entree': f"{e:.2f}",
-            'Prix': prix,
-            'Stop': f"{s:.2f}",
+            'Strat': sn, 'Type': exit_type, 'Dir': d.upper(),
+            'Entree': f"{e:.2f}", 'Prix': prix,
+            'Stop': f"{s:.2f}" if s else "—",
             'Target': f"{target:.2f}" if target else "—",
             'PnL $': pnl_str,
-            'PnL oz': pnl_oz_str,
-            '_pnl_val': pnl_d if bid else 0,
-            'Trail': 'ON' if trail else '—',
-            'Bars': str(bars),
-            'Lots': f"{lots:.3f}",
+            '_pnl_val': pnl_d,
+            'Lots': f"{lots:.3f}" if lots else "—",
             'Ouvert': et,
         })
 
@@ -153,11 +270,11 @@ if positions:
         idx = row.name
         v = pnl_vals[idx] if idx < len(pnl_vals) else 0
         c = 'color:#26a69a' if v > 0 else 'color:#ef5350' if v < 0 else ''
-        return [c if col in ('PnL $','PnL oz') else '' for col in row.index]
+        return [c if col in ('PnL $',) else '' for col in row.index]
     st.dataframe(display_df.style.apply(color_pos_pnl, axis=1),
                  use_container_width=True, hide_index=True)
 
-    if bid and total_unr != 0:
+    if total_unr != 0:
         c = '#26a69a' if total_unr >= 0 else '#ef5350'
         st.markdown(f'**PnL latent total** <span style="color:{c};font-size:1.4em">${total_unr:+,.2f}</span>', unsafe_allow_html=True)
 else:
@@ -185,11 +302,9 @@ if n_trades > 1:
                              line=dict(color='#ef5350', width=1.5),
                              name='Drawdown'), row=2, col=1)
 
-    fig.update_layout(
-        height=400, showlegend=False, template='plotly_dark',
+    fig.update_layout(height=400, showlegend=False, template='plotly_dark',
         margin=dict(l=0, r=0, t=10, b=0),
-        paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-    )
+        paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
     fig.update_yaxes(title_text="$", row=1, col=1)
     fig.update_yaxes(title_text="%", row=2, col=1)
     st.plotly_chart(fig, use_container_width=True)
@@ -202,19 +317,16 @@ if n_trades > 0:
     show = df.iloc[::-1].copy()
     show['Ouverture'] = show['entry_time'].dt.strftime('%d/%m %H:%M')
     show['Fermeture'] = show['exit_time'].dt.strftime('%d/%m %H:%M')
-    show['Nom'] = show['strat'].map(STRATS)
+    show['Nom'] = show['strat'].map(lambda x: STRATS.get(x, x))
     show['Dir'] = show['dir'].str.upper()
     show['In'] = show['entry'].apply(lambda x: f"{x:.2f}")
     show['Out'] = show['exit'].apply(lambda x: f"{x:.2f}")
     show['PnL'] = show['pnl_dollar'].apply(lambda x: f"${x:+,.2f}")
     show['oz'] = show['pnl_oz'].apply(lambda x: f"{x:+.3f}")
-    show['Sortie'] = show['exit_reason']
-    show['Bars'] = show['bars_held']
-    show['Duree'] = show['duration'].apply(lambda x: f"{x:.0f}m")
-    show['Capital'] = show['capital_after'].apply(lambda x: f"${float(x):,.2f}")
+    show['Lots'] = show.get('lots', pd.Series([0]*len(show))).apply(lambda x: f"{x:.3f}" if x else "—")
 
-    tbl = show[['Ouverture','Fermeture','strat','Nom','Dir','In','Out','PnL','oz','Sortie','Bars','Duree','Capital']].copy()
-    tbl.columns = ['Ouverture','Fermeture','Strat','Nom','Dir','In','Out','PnL','PnL oz','Sortie','Bars','Duree','Capital']
+    tbl = show[['Ouverture','Fermeture','strat','Nom','Dir','In','Out','PnL','oz','Lots']].copy()
+    tbl.columns = ['Ouverture','Fermeture','Strat','Nom','Dir','In','Out','PnL','PnL oz','Lots']
 
     def color_pnl(row):
         try:
@@ -238,16 +350,10 @@ if n_trades > 0:
         w = (s['pnl_dollar'] > 0).sum()
         gps = s[s['pnl_dollar'] > 0]['pnl_dollar'].sum()
         gls = abs(s[s['pnl_dollar'] < 0]['pnl_dollar'].sum()) + 0.01
-        exit_cfg = STRAT_EXITS.get(sn, DEFAULT_EXIT)
         srows.append({
             'Strat': sn,
-            'Nom': STRATS.get(sn, ''),
-            'Exit': exit_cfg[0],
-            'SL': f"{exit_cfg[1]:.1f}",
-            'TP/ACT': f"{exit_cfg[2]:.2f}",
-            'Trades': n,
-            'Wins': w,
-            'Losses': n - w,
+            'Nom': STRATS.get(sn, 'Legacy' if sn == 'LEGACY' else sn),
+            'Trades': n, 'Wins': w, 'Losses': n - w,
             'Win Rate': f"{w/n*100:.0f}%",
             'PF': f"{gps/gls:.2f}",
             'PnL total': f"${s['pnl_dollar'].sum():+,.2f}",
@@ -279,67 +385,12 @@ if n_trades > 0:
                            paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
         st.plotly_chart(fig3, use_container_width=True)
 
-    st.divider()
-
-    # Details
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        st.subheader("Direction")
-        dir_rows = []
-        for d_name in ['long', 'short']:
-            s = df[df['dir'] == d_name]
-            if len(s) == 0: continue
-            w = (s['pnl_dollar'] > 0).sum()
-            gd = s[s['pnl_dollar'] > 0]['pnl_dollar'].sum()
-            ld = abs(s[s['pnl_dollar'] < 0]['pnl_dollar'].sum()) + 0.01
-            dir_rows.append({
-                'Dir': d_name.upper(),
-                'Trades': len(s),
-                'WR': f"{w/len(s)*100:.0f}%",
-                'PF': f"{gd/ld:.2f}",
-                'PnL': f"${s['pnl_dollar'].sum():+,.2f}",
-            })
-        st.dataframe(pd.DataFrame(dir_rows), use_container_width=True, hide_index=True)
-
-    with col2:
-        st.subheader("Sorties")
-        exit_rows = []
-        for reason in sorted(df['exit_reason'].unique()):
-            s = df[df['exit_reason'] == reason]
-            w = (s['pnl_dollar'] > 0).sum()
-            exit_rows.append({
-                'Raison': reason,
-                'Trades': len(s),
-                'Wins': w,
-                'Losses': len(s) - w,
-            })
-        st.dataframe(pd.DataFrame(exit_rows), use_container_width=True, hide_index=True)
-
-    with col3:
-        st.subheader("Stats")
-        ls = max((sum(1 for _ in g) for k, g in itertools.groupby(df['pnl_dollar'] < 0) if k), default=0)
-        ws = max((sum(1 for _ in g) for k, g in itertools.groupby(df['pnl_dollar'] > 0) if k), default=0)
-        stat_rows = [
-            {'Stat': 'Max wins consec', 'Valeur': str(ws)},
-            {'Stat': 'Max losses consec', 'Valeur': str(ls)},
-            {'Stat': 'Avg win', 'Valeur': f"${wins['pnl_dollar'].mean():+,.2f}" if len(wins) else "—"},
-            {'Stat': 'Avg loss', 'Valeur': f"${losses['pnl_dollar'].mean():+,.2f}" if len(losses) else "—"},
-            {'Stat': 'Duree moyenne', 'Valeur': f"{df['duration'].mean():.0f} min"},
-            {'Stat': 'Bars moyen', 'Valeur': f"{df['bars_held'].mean():.1f}"},
-        ]
-        st.dataframe(pd.DataFrame(stat_rows), use_container_width=True, hide_index=True)
-
 else:
     st.info(f"En attente du premier trade. {len(PORTFOLIO)} strategies surveillent XAUUSD 5 minutes.")
 
 # ── SIDEBAR: STRATEGIES ──
 with st.sidebar:
     st.subheader(f"Strategies {BROKER}")
-    cache = {}
-    for k, v in state.get('daily_cache', {}).items(): cache = v; break
-    if cache.get('atr'):
-        st.caption(f"ATR {cache['atr']:.2f}")
 
     sessions = {}
     for sn in PORTFOLIO:
@@ -369,6 +420,6 @@ with st.sidebar:
                        f"{'TP='+str(exit_cfg[2]) if exit_cfg[0]=='TPSL' else 'ACT='+str(exit_cfg[2])+' TR='+str(exit_cfg[3])}")
                 st.markdown(f'<span title="{tip}">⚪ **{sn}**</span>', unsafe_allow_html=True)
 
-# Auto-refresh every 10 seconds (no sleep/rerun)
+# Auto-refresh
 from streamlit_autorefresh import st_autorefresh
 st_autorefresh(interval=10000, key="refresh")
