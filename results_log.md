@@ -677,6 +677,27 @@ Audit #1:
 - Toutes les strats ont marge WR > 5% (rentables avec frais)
 - 10 nouvelles strats testees (engulfing, hammer, doji, morning star, asian breakout, inside bar, BB squeeze, RSI extreme, MACD hist, vol spike) — aucune n'a passe le filtre sur donnees 5ers
 
+### NAS100 — Test indices (2026-03-26)
+
+**Strats XAUUSD sur NAS100**: 0/71 viables. Aucune ne fonctionne.
+
+**Strats indices (strats_indices.py)**: 16 nouvelles strats creees:
+- Opening: IDX_ORB15, IDX_ORB30, IDX_GAP_FILL, IDX_GAP_CONT
+- Momentum: IDX_NY_MOM, IDX_LATE_REV, IDX_TREND_DAY
+- Mean reversion: IDX_VWAP_BOUNCE, IDX_BB_REV, IDX_RSI_REV
+- Breakout: IDX_PREV_HL, IDX_NR4, IDX_KC_BRK
+- Pattern: IDX_ENGULF, IDX_3SOLDIERS, IDX_CONSEC_REV
+
+**Resultats NAS100 5ers**: 4/16 strats safe (marge WR > 5%)
+- IDX_PREV_HL: PF 1.44, WR 67%, marge +8.4%
+- IDX_NR4: PF 1.25, WR 62%, marge +5.4%
+- IDX_NY_MOM: PF 1.24, WR 54%, marge +5.4%
+- IDX_BB_REV: PF 1.27, WR 69%, marge +5.3%
+
+Best combo Greedy 2 @ 0.25%: DD -2.6%, +16%, 10/13 mois. Viable mais modeste.
+
+**Decision**: rester sur l'or pour l'instant. L'edge est plus fort (18 strats safe vs 4). Revenir sur indices quand le live gold est stable.
+
 ### Architecture multi-instrument (discussion 2026-03-26)
 
 **Decision**: tester NAS100 d'abord avec --symbol separement, puis refactoriser.
