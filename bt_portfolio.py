@@ -15,6 +15,7 @@ parser = argparse.ArgumentParser(description='Backtest portfolio')
 parser.add_argument('account', nargs='?', default='icm', choices=['icm','ftmo','5ers'])
 parser.add_argument('-c', '--capital', type=float, default=None, help='Capital initial (default: 1000)')
 parser.add_argument('-r', '--risk', type=float, default=None, help='Risk %% par trade (ex: 1 pour 1%%)')
+parser.add_argument('--symbol', default='xauusd', help='Instrument (default xauusd)')
 args = parser.parse_args()
 
 if args.account == 'ftmo':
@@ -29,7 +30,9 @@ RISK = args.risk / 100 if args.risk else RISK_PCT
 
 # ── LOAD DATA ──
 try:
-    pkl_file = f'data/{args.account}/optim_data.pkl'
+    _sym = args.symbol.lower()
+    _sym_dir = f'/{_sym}' if _sym != 'xauusd' else ''
+    pkl_file = f'data/{args.account}{_sym_dir}/optim_data.pkl'
     with open(pkl_file, 'rb') as f:
         data = pickle.load(f)
     strat_arrays = data['strat_arrays']

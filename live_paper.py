@@ -22,8 +22,10 @@ parser.add_argument('account', nargs='?', default='icm', choices=['icm','ftmo','
 parser.add_argument('-c', '--capital', type=float, default=None, help='Capital initial')
 parser.add_argument('-r', '--risk', type=float, default=None, help='Risk %% par trade (ex: 0.5)')
 parser.add_argument('--reset', action='store_true', help='Reset state')
+parser.add_argument('--symbol', default='XAUUSD', help='MT5 symbol')
 args = parser.parse_args()
 _account = args.account
+_SYMBOL = args.symbol.upper()
 
 if _account == 'ftmo':
     from config_ftmo import PORTFOLIO as STRATS, RISK_PCT, BROKER
@@ -60,7 +62,8 @@ def get_conn_autocommit():
 
 def get_recent_candles(conn, n=1500):
     cur = conn.cursor()
-    cur.execute("SELECT ts, open, high, low, close FROM candles_mt5_xauusd_5m ORDER BY ts DESC LIMIT %s", (n,))
+    table = f"candles_mt5_{_SYMBOL.lower()}_5m"
+    cur.execute(f"SELECT ts, open, high, low, close FROM {table} ORDER BY ts DESC LIMIT %s", (n,))
     rows = cur.fetchall(); cur.close()
     if not rows: return pd.DataFrame()
     df = pd.DataFrame(rows, columns=['ts','open','high','low','close']).sort_values('ts').reset_index(drop=True)
@@ -71,7 +74,8 @@ def get_recent_candles(conn, n=1500):
 
 def get_current_bidask(conn):
     cur = conn.cursor()
-    cur.execute("SELECT bid, ask, last FROM market_ticks_xauusd ORDER BY ts DESC LIMIT 1")
+    tick_table = f"market_ticks_{_SYMBOL.lower()}"
+    cur.execute(f"SELECT bid, ask, last FROM {tick_table} ORDER BY ts DESC LIMIT 1")
     row = cur.fetchone(); cur.close()
     if row:
         bid, ask, last = float(row[0]), float(row[1]), float(row[2])
@@ -88,7 +92,8 @@ def get_yesterday_atr(candles_df, today):
 
 def get_spread_rt(conn, today):
     cur = conn.cursor()
-    cur.execute("SELECT AVG(ask-bid) FROM market_ticks_xauusd WHERE ask>bid AND ask-bid<10 AND time >= %s",
+    tick_table = f"market_ticks_{_SYMBOL.lower()}"
+    cur.execute(f"SELECT AVG(ask-bid) FROM {tick_table} WHERE ask>bid AND ask-bid<10 AND time >= %s",
                 (datetime(today.year, today.month, 1, 0, 0),))
     row = cur.fetchone(); cur.close()
     return 2 * float(row[0]) if row and row[0] else 0.188

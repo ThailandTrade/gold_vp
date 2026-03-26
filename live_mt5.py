@@ -180,7 +180,8 @@ def get_conn_autocommit():
 
 def get_recent_candles(conn, n=1500):
     cur = conn.cursor()
-    cur.execute("SELECT ts, open, high, low, close FROM candles_mt5_xauusd_5m ORDER BY ts DESC LIMIT %s", (n,))
+    table = f"candles_mt5_{SYMBOL.lower()}_5m"
+    cur.execute(f"SELECT ts, open, high, low, close FROM {table} ORDER BY ts DESC LIMIT %s", (n,))
     rows = cur.fetchall(); cur.close()
     if not rows: return pd.DataFrame()
     df = pd.DataFrame(rows, columns=['ts','open','high','low','close']).sort_values('ts').reset_index(drop=True)

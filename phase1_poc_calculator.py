@@ -102,10 +102,11 @@ def load_ticks_for_period(conn, start_dt, end_dt):
 
 # ── Calcul ATR sur candles 5m ─────────────────────────────────
 
-def compute_atr(conn, period=14):
+def compute_atr(conn, period=14, symbol='xauusd'):
     """ATR sur candles 5m, calculé par jour (moyenne des TR des candles du jour)."""
+    table = f"candles_mt5_{symbol}_5m"
     cur = conn.cursor()
-    cur.execute("SELECT ts, open, high, low, close FROM candles_mt5_xauusd_5m ORDER BY ts")
+    cur.execute(f"SELECT ts, open, high, low, close FROM {table} ORDER BY ts")
     rows = cur.fetchall()
     cur.close()
 
@@ -140,10 +141,11 @@ def compute_atr(conn, period=14):
 
 # ── Identification des jours de trading ───────────────────────
 
-def get_trading_days(conn):
+def get_trading_days(conn, symbol='xauusd'):
     """Récupère les jours uniques où on a des ticks."""
+    table = f"market_ticks_{symbol}"
     cur = conn.cursor()
-    cur.execute("SELECT DISTINCT DATE(time) FROM market_ticks_xauusd ORDER BY 1")
+    cur.execute(f"SELECT DISTINCT DATE(time) FROM {table} ORDER BY 1")
     days = [r[0] for r in cur.fetchall()]
     cur.close()
     return days

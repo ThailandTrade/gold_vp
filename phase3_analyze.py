@@ -24,9 +24,10 @@ from phase1_poc_calculator import (
 )
 
 
-def load_candles_5m(conn):
+def load_candles_5m(conn, symbol='xauusd'):
+    table = f"candles_mt5_{symbol}_5m"
     cur = conn.cursor()
-    cur.execute("SELECT ts, open, high, low, close FROM candles_mt5_xauusd_5m ORDER BY ts")
+    cur.execute(f"SELECT ts, open, high, low, close FROM {table} ORDER BY ts")
     rows = cur.fetchall()
     cur.close()
     df = pd.DataFrame(rows, columns=['ts', 'open', 'high', 'low', 'close'])

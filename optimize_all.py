@@ -13,14 +13,22 @@ from phase1_poc_calculator import get_conn, compute_atr, get_trading_days
 from phase3_analyze import load_candles_5m
 from strats import detect_all
 
+# ── SYMBOL ──
+import argparse as _ap
+_p = _ap.ArgumentParser(); _p.add_argument('account', nargs='?', default='icm')
+_p.add_argument('--symbol', default='xauusd')
+_a = _p.parse_args()
+SYMBOL = _a.symbol.lower()
+
 # ── DATA ──
-print("Loading data...", flush=True)
+print(f"Loading data ({SYMBOL})...", flush=True)
 conn = get_conn()
-candles = load_candles_5m(conn)
-daily_atr, global_atr = compute_atr(conn)
-trading_days = get_trading_days(conn)
+candles = load_candles_5m(conn, symbol=SYMBOL)
+daily_atr, global_atr = compute_atr(conn, symbol=SYMBOL)
+trading_days = get_trading_days(conn, symbol=SYMBOL)
+tick_table = f"market_ticks_{SYMBOL}"
 cur = conn.cursor()
-cur.execute("""SELECT DATE_TRUNC('month', time), AVG(ask-bid) FROM market_ticks_xauusd WHERE ask>bid AND ask-bid<10 GROUP BY 1""")
+cur.execute(f"""SELECT DATE_TRUNC('month', time), AVG(ask-bid) FROM {tick_table} WHERE ask>bid AND ask-bid<10 GROUP BY 1""")
 monthly_spread = {r[0].strftime("%Y-%m"): float(r[1]) for r in cur.fetchall()}
 cur.close(); conn.close()
 avg_sp = np.mean(list(monthly_spread.values()))
@@ -649,9 +657,10 @@ save_data = {
     'best_configs': best_configs,
     'OPEN_STRATS': list(OPEN_STRATS),
 }
-import sys, os
-_broker = sys.argv[1] if len(sys.argv) > 1 else 'icm'
-_dir = f'data/{_broker}'
+import os
+_broker = _a.account
+_sym_dir = SYMBOL if SYMBOL != 'xauusd' else ''
+_dir = f'data/{_broker}/{_sym_dir}'.rstrip('/')
 os.makedirs(_dir, exist_ok=True)
 _pkl_file = f'{_dir}/optim_data.pkl'
 with open(_pkl_file, 'wb') as f:
