@@ -130,6 +130,10 @@ for i in range(1, len(c)):
         st_val[i]=max(up2.iloc[i],st_val[i-1]) if st_dir[i]==1 else min(dn2.iloc[i],st_val[i-1])
 c['psar_dir'] = st_dir
 
+# Complete with compute_indicators for new strats (BB, VWAP, candle_range, etc.)
+from strats import compute_indicators as _ci
+c = _ci(c)
+
 # Pre-extract numpy arrays for fast exit simulation
 hi = c['high'].values; lo = c['low'].values; cl = c['close'].values
 N = len(c)
