@@ -726,7 +726,25 @@ BTC meilleur que NAS100 (5 safe vs 4, 13/13 vs 10/13). Comparable a l'or sur ren
 - Le filtre unifie (PF>1.05 + split + marge WR>5%) est plus strict et plus honnete
 - BTC et NAS100 ne marchent pas avec nos strats actuelles sur 5min
 
-**Decision**: rester sur l'or pour l'instant. L'edge est plus fort (18 strats safe vs 4). Revenir sur indices quand le live gold est stable.
+### BTCUSD — RESULTATS APRES FIX NaN (2026-03-26)
+Bug trouve: avg_sp = np.mean([]) = NaN quand pas de ticks → tous les PnL NaN → 0 viable.
+Fix: avg_sp = 0 si pas de ticks.
+
+**22/85 strats safe sur BTC** (marge WR > 5%)
+
+Meilleurs combos @ 1% risk:
+| Combo | Trades | PF | WR | DD | Rend | M+ |
+|---|---|---|---|---|---|---|
+| Greedy 5 | 1315 | 1.47 | 54% | -12.7% | +2426% | 12/13 |
+| Greedy 10 | 2391 | 1.47 | 64% | -13.5% | +7113% | 13/13 |
+| Greedy 15 | 3530 | 1.47 | 69% | -18.7% | +12828% | 13/13 |
+
+@ 0.25% risk (5ers): Greedy 10 → DD -3.4%, +1778%, 13/13
+**BTC bien meilleur que gold sur 5ers** (+1778% vs +45%).
+
+ATTENTION: pas de spread decompte (pas de ticks BTC). Resultats probablement optimistes.
+
+**Decision**: BTC tres prometteur. A valider avec ticks pour spread reel. L'edge est plus fort (18 strats safe vs 4). Revenir sur indices quand le live gold est stable.
 
 ### Architecture multi-instrument (discussion 2026-03-26)
 
