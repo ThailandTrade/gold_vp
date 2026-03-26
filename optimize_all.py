@@ -604,6 +604,18 @@ def eval_combo(strats, capital=1000.0, risk=0.01):
 valid = list(best_configs.keys())
 ranked = sorted(valid, key=lambda sn: best_configs[sn]['pf'], reverse=True)
 
+if len(ranked) == 0:
+    print("\nAucune strat safe. Arret.")
+    import pickle, os
+    _broker = _a.account
+    _sym_dir = SYMBOL if SYMBOL != 'xauusd' else ''
+    _dir = f'data/{_broker}/{_sym_dir}'.rstrip('/')
+    os.makedirs(_dir, exist_ok=True)
+    with open(f'{_dir}/optim_data.pkl', 'wb') as f:
+        pickle.dump({'strat_arrays': {}, 'best_configs': {}}, f)
+    print(f"Saved {_dir}/optim_data.pkl (vide)")
+    sys.exit(0)
+
 print(f"\n{'='*130}")
 print(f"GREEDY COMBO BUILDER ({len(valid)} strats)")
 print(f"{'='*130}")

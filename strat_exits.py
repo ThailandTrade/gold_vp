@@ -94,6 +94,24 @@ STRAT_EXITS = {
     'ALL_RSI_EXTREME':   ('TRAIL', 3.00, 0.50, 0.50),
     'ALL_MACD_HIST':     ('TRAIL', 3.00, 0.50, 0.50),
     'ALL_VOL_SPIKE':     ('TRAIL', 3.00, 0.50, 0.50),
+
+    # ── Index/crypto strats (default, optimized per instrument) ──
+    'IDX_ORB15':         ('TRAIL', 3.00, 0.50, 0.50),
+    'IDX_ORB30':         ('TRAIL', 3.00, 0.50, 0.50),
+    'IDX_GAP_FILL':      ('TRAIL', 3.00, 0.50, 0.50),
+    'IDX_GAP_CONT':      ('TRAIL', 3.00, 0.50, 0.50),
+    'IDX_NY_MOM':        ('TRAIL', 3.00, 0.50, 0.50),
+    'IDX_LATE_REV':      ('TRAIL', 3.00, 0.50, 0.50),
+    'IDX_TREND_DAY':     ('TRAIL', 3.00, 0.50, 0.50),
+    'IDX_VWAP_BOUNCE':   ('TRAIL', 3.00, 0.50, 0.50),
+    'IDX_BB_REV':        ('TRAIL', 3.00, 0.50, 0.50),
+    'IDX_RSI_REV':       ('TRAIL', 3.00, 0.50, 0.50),
+    'IDX_PREV_HL':       ('TRAIL', 3.00, 0.50, 0.50),
+    'IDX_NR4':           ('TRAIL', 3.00, 0.50, 0.50),
+    'IDX_KC_BRK':        ('TRAIL', 3.00, 0.50, 0.50),
+    'IDX_ENGULF':        ('TRAIL', 3.00, 0.50, 0.50),
+    'IDX_3SOLDIERS':     ('TRAIL', 3.00, 0.50, 0.50),
+    'IDX_CONSEC_REV':    ('TRAIL', 3.00, 0.50, 0.50),
 }
 
 # Default pour strats pas dans le dict

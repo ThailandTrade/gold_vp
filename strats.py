@@ -15,10 +15,17 @@ ALL_STRATS = [
     'ALL_MACD_RSI','ALL_FVG_BULL','ALL_CONSEC_REV','ALL_FIB_618',
     'ALL_3SOLDIERS','ALL_PSAR_EMA','PO3_SWEEP','ALL_KC_BRK','ALL_DC10',
     'ALL_ADX_FAST','TOK_WILLR',
-    # New strats
+    # Candlestick patterns
     'ALL_ENGULF','ALL_HAMMER','ALL_DOJI_REV','ALL_MSTAR',
-    'LON_ASIAN_BRK','ALL_INSIDE_BRK','ALL_BB_SQUEEZE',
+    'ALL_INSIDE_BRK','ALL_BB_SQUEEZE',
     'ALL_RSI_EXTREME','ALL_MACD_HIST','ALL_VOL_SPIKE',
+    'LON_ASIAN_BRK',
+    # Index/crypto strats (US session)
+    'IDX_ORB15','IDX_ORB30','IDX_GAP_FILL','IDX_GAP_CONT',
+    'IDX_NY_MOM','IDX_LATE_REV','IDX_TREND_DAY',
+    'IDX_VWAP_BOUNCE','IDX_BB_REV','IDX_RSI_REV',
+    'IDX_PREV_HL','IDX_NR4','IDX_KC_BRK',
+    'IDX_ENGULF','IDX_3SOLDIERS','IDX_CONSEC_REV',
 ]
 
 STRAT_NAMES = {
@@ -51,6 +58,22 @@ STRAT_NAMES = {
     'ALL_RSI_EXTREME':'RSI extreme reversal',
     'ALL_MACD_HIST':'MACD histogram reversal',
     'ALL_VOL_SPIKE':'Volume spike with direction',
+    'IDX_ORB15':'Opening range breakout 15min',
+    'IDX_ORB30':'Opening range breakout 30min',
+    'IDX_GAP_FILL':'Overnight gap fill',
+    'IDX_GAP_CONT':'Gap continuation',
+    'IDX_NY_MOM':'NY first hour momentum',
+    'IDX_LATE_REV':'Late day reversal',
+    'IDX_TREND_DAY':'Trend day (IB breakout)',
+    'IDX_VWAP_BOUNCE':'VWAP mean reversion',
+    'IDX_BB_REV':'Bollinger band reversal',
+    'IDX_RSI_REV':'RSI extreme reversal (index)',
+    'IDX_PREV_HL':'Previous day H/L breakout',
+    'IDX_NR4':'Narrow range 4 breakout (index)',
+    'IDX_KC_BRK':'Keltner channel breakout (index)',
+    'IDX_ENGULF':'Engulfing pattern (index)',
+    'IDX_3SOLDIERS':'Three soldiers/crows (index)',
+    'IDX_CONSEC_REV':'Consecutive exhaustion reversal (index)',
 }
 
 STRAT_SESSION = {
@@ -70,6 +93,11 @@ STRAT_SESSION = {
     'LON_ASIAN_BRK':'London',
     'ALL_INSIDE_BRK':'All','ALL_BB_SQUEEZE':'All',
     'ALL_RSI_EXTREME':'All','ALL_MACD_HIST':'All','ALL_VOL_SPIKE':'All',
+    'IDX_ORB15':'US','IDX_ORB30':'US','IDX_GAP_FILL':'US','IDX_GAP_CONT':'US',
+    'IDX_NY_MOM':'US','IDX_LATE_REV':'US Late','IDX_TREND_DAY':'US',
+    'IDX_VWAP_BOUNCE':'US','IDX_BB_REV':'All','IDX_RSI_REV':'All',
+    'IDX_PREV_HL':'US','IDX_NR4':'All','IDX_KC_BRK':'All',
+    'IDX_ENGULF':'All','IDX_3SOLDIERS':'All','IDX_CONSEC_REV':'All',
 }
 
 def sim_exit(cdf, pos, entry, d, atr, check_entry_candle=False):
@@ -201,6 +229,13 @@ def compute_indicators(candles):
     c['upper_wick'] = c['high'] - c[['open','close']].max(axis=1)
     c['lower_wick'] = c[['open','close']].min(axis=1) - c['low']
     c['candle_range'] = c['high'] - c['low']
+    # VWAP proxy (rolling 60-bar mean)
+    c['vwap'] = c['close'].rolling(60).mean()
+    # EMA 9, 50 (for indices)
+    if 'ema9' not in c.columns:
+        c['ema9'] = c['close'].ewm(span=9, adjust=False).mean()
+    if 'ema50' not in c.columns:
+        c['ema50'] = c['close'].ewm(span=50, adjust=False).mean()
     return c
 
 def detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_day_data, add, prev2_day_data=None):
@@ -495,3 +530,135 @@ def detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_
                 add('ALL_VOL_SPIKE','long',row['close']); trig['ALL_VOL_SPIKE']=True
             elif cb < 0 and abs(cb) >= 0.3*atr:
                 add('ALL_VOL_SPIKE','short',row['close']); trig['ALL_VOL_SPIKE']=True
+
+    # ── INDEX / CRYPTO STRATS (US session: 14:30-21:00 UTC) ──
+    ny_open = pd.Timestamp(today.year,today.month,today.day,14,30,tz='UTC')
+    ny_candles = tv[tv['ts_dt']>=ny_open]
+
+    # IDX_ORB15: Opening range breakout 15min
+    if 14.75 <= hour < 21.0 and 'IDX_ORB15' not in trig and len(ny_candles) >= 3:
+        orb = ny_candles.iloc[:3]
+        orb_h = orb['high'].max(); orb_l = orb['low'].min()
+        if row['close'] > orb_h and row['close'] > row['open'] and abs(row['body']) >= 0.2*atr:
+            add('IDX_ORB15','long',row['close']); trig['IDX_ORB15']=True
+        elif row['close'] < orb_l and row['close'] < row['open'] and abs(row['body']) >= 0.2*atr:
+            add('IDX_ORB15','short',row['close']); trig['IDX_ORB15']=True
+
+    # IDX_ORB30: Opening range breakout 30min
+    if 15.0 <= hour < 21.0 and 'IDX_ORB30' not in trig and len(ny_candles) >= 6:
+        orb = ny_candles.iloc[:6]
+        orb_h = orb['high'].max(); orb_l = orb['low'].min()
+        if row['close'] > orb_h and row['close'] > row['open'] and abs(row['body']) >= 0.2*atr:
+            add('IDX_ORB30','long',row['close']); trig['IDX_ORB30']=True
+        elif row['close'] < orb_l and row['close'] < row['open'] and abs(row['body']) >= 0.2*atr:
+            add('IDX_ORB30','short',row['close']); trig['IDX_ORB30']=True
+
+    # IDX_GAP_FILL: Overnight gap fade
+    if 14.5 <= hour < 15.0 and 'IDX_GAP_FILL' not in trig and prev_day_data:
+        gap = (row['close'] - prev_day_data['close']) / atr if atr > 0 else 0
+        if gap >= 0.3: add('IDX_GAP_FILL','short',row['close']); trig['IDX_GAP_FILL']=True
+        elif gap <= -0.3: add('IDX_GAP_FILL','long',row['close']); trig['IDX_GAP_FILL']=True
+
+    # IDX_GAP_CONT: Big gap continuation
+    if 14.5 <= hour < 15.0 and 'IDX_GAP_CONT' not in trig and prev_day_data:
+        gap = (row['close'] - prev_day_data['close']) / atr if atr > 0 else 0
+        if gap >= 1.0: add('IDX_GAP_CONT','long',row['close']); trig['IDX_GAP_CONT']=True
+        elif gap <= -1.0: add('IDX_GAP_CONT','short',row['close']); trig['IDX_GAP_CONT']=True
+
+    # IDX_NY_MOM: First hour NY momentum
+    if 15.5 <= hour < 15.6 and 'IDX_NY_MOM' not in trig and len(ny_candles) >= 12:
+        first_hour = ny_candles.iloc[:12]
+        move = (first_hour.iloc[-1]['close'] - first_hour.iloc[0]['open']) / atr if atr > 0 else 0
+        if abs(move) >= 0.5:
+            add('IDX_NY_MOM','long' if move > 0 else 'short',row['close']); trig['IDX_NY_MOM']=True
+
+    # IDX_LATE_REV: Late day reversal
+    if 19.0 <= hour < 20.5 and 'IDX_LATE_REV' not in trig and len(ny_candles) >= 50:
+        day_move = (ny_candles.iloc[-1]['close'] - ny_candles.iloc[0]['open']) / atr if atr > 0 else 0
+        if day_move > 0.5 and row['close'] < row['open'] and abs(row['body']) >= 0.3*atr:
+            add('IDX_LATE_REV','short',row['close']); trig['IDX_LATE_REV']=True
+        elif day_move < -0.5 and row['close'] > row['open'] and abs(row['body']) >= 0.3*atr:
+            add('IDX_LATE_REV','long',row['close']); trig['IDX_LATE_REV']=True
+
+    # IDX_TREND_DAY: Initial balance breakout
+    if 15.5 <= hour < 21.0 and 'IDX_TREND_DAY' not in trig and len(ny_candles) >= 12:
+        ib = ny_candles.iloc[:12]
+        ib_h = ib['high'].max(); ib_l = ib['low'].min()
+        if ib_h - ib_l >= 0.3*atr:
+            if row['close'] > ib_h and row['close'] > row['open']:
+                add('IDX_TREND_DAY','long',row['close']); trig['IDX_TREND_DAY']=True
+            elif row['close'] < ib_l and row['close'] < row['open']:
+                add('IDX_TREND_DAY','short',row['close']); trig['IDX_TREND_DAY']=True
+
+    # IDX_VWAP_BOUNCE
+    if 14.5 <= hour < 21.0 and 'IDX_VWAP_BOUNCE' not in trig and 'vwap' in row.index and pd.notna(row.get('vwap')):
+        vwap = row['vwap']
+        if prev['low'] <= vwap and row['close'] > vwap and row['close'] > row['open'] and abs(row['body']) >= 0.2*atr:
+            add('IDX_VWAP_BOUNCE','long',row['close']); trig['IDX_VWAP_BOUNCE']=True
+        elif prev['high'] >= vwap and row['close'] < vwap and row['close'] < row['open'] and abs(row['body']) >= 0.2*atr:
+            add('IDX_VWAP_BOUNCE','short',row['close']); trig['IDX_VWAP_BOUNCE']=True
+
+    # IDX_BB_REV: Bollinger band reversal
+    if 'IDX_BB_REV' not in trig and 'bb_up' in row.index and pd.notna(row.get('bb_up')):
+        if prev['high'] >= prev.get('bb_up',99999) and row['close'] < row.get('bb_up',99999) and row['close'] < row['open']:
+            add('IDX_BB_REV','short',row['close']); trig['IDX_BB_REV']=True
+        elif prev['low'] <= prev.get('bb_lo',0) and row['close'] > row.get('bb_lo',0) and row['close'] > row['open']:
+            add('IDX_BB_REV','long',row['close']); trig['IDX_BB_REV']=True
+
+    # IDX_RSI_REV
+    if 'IDX_RSI_REV' not in trig and 'rsi14' in row.index and pd.notna(row.get('rsi14')):
+        if prev['rsi14'] < 25 and row['rsi14'] >= 25 and row['close'] > row['open']:
+            add('IDX_RSI_REV','long',row['close']); trig['IDX_RSI_REV']=True
+        elif prev['rsi14'] > 75 and row['rsi14'] <= 75 and row['close'] < row['open']:
+            add('IDX_RSI_REV','short',row['close']); trig['IDX_RSI_REV']=True
+
+    # IDX_PREV_HL: Previous day high/low breakout
+    if 14.5 <= hour < 21.0 and 'IDX_PREV_HL' not in trig and prev_day_data:
+        if row['close'] > prev_day_data['high'] and row['close'] > row['open'] and abs(row['body']) >= 0.2*atr:
+            add('IDX_PREV_HL','long',row['close']); trig['IDX_PREV_HL']=True
+        elif row['close'] < prev_day_data['low'] and row['close'] < row['open'] and abs(row['body']) >= 0.2*atr:
+            add('IDX_PREV_HL','short',row['close']); trig['IDX_PREV_HL']=True
+
+    # IDX_NR4
+    if 'IDX_NR4' not in trig and ci >= 5 and 'candle_range' in row.index:
+        ranges = [candles.iloc[ci-j]['candle_range'] for j in range(4)]
+        if row['candle_range'] == min(ranges) and row['candle_range'] > 0 and abs(row['body']) >= 0.1*atr:
+            add('IDX_NR4','long' if row['body'] > 0 else 'short',row['close']); trig['IDX_NR4']=True
+
+    # IDX_KC_BRK
+    if 'IDX_KC_BRK' not in trig and 'kc_up' in row.index and pd.notna(row.get('kc_up')):
+        if row['close'] > row['kc_up'] and prev['close'] <= prev.get('kc_up',99999):
+            add('IDX_KC_BRK','long',row['close']); trig['IDX_KC_BRK']=True
+        elif row['close'] < row['kc_lo'] and prev['close'] >= prev.get('kc_lo',0):
+            add('IDX_KC_BRK','short',row['close']); trig['IDX_KC_BRK']=True
+
+    # IDX_ENGULF
+    if 'IDX_ENGULF' not in trig:
+        pb = prev['close'] - prev['open']; cb = row['close'] - row['open']
+        if pb < 0 and cb > 0 and row['close'] > prev['open'] and row['open'] < prev['close'] and abs(cb) >= 0.3*atr:
+            add('IDX_ENGULF','long',row['close']); trig['IDX_ENGULF']=True
+        elif pb > 0 and cb < 0 and row['close'] < prev['open'] and row['open'] > prev['close'] and abs(cb) >= 0.3*atr:
+            add('IDX_ENGULF','short',row['close']); trig['IDX_ENGULF']=True
+
+    # IDX_3SOLDIERS
+    if 'IDX_3SOLDIERS' not in trig and ci >= 3:
+        b1 = candles.iloc[ci-2]; b2 = candles.iloc[ci-1]; b3 = row
+        if (b1['close']>b1['open'] and b2['close']>b2['open'] and b3['close']>b3['open'] and
+            b2['close']>b1['close'] and b3['close']>b2['close'] and
+            min(abs(b1['close']-b1['open']),abs(b2['close']-b2['open']),abs(b3['close']-b3['open']))>=0.2*atr):
+            add('IDX_3SOLDIERS','long',row['close']); trig['IDX_3SOLDIERS']=True
+        elif (b1['close']<b1['open'] and b2['close']<b2['open'] and b3['close']<b3['open'] and
+              b2['close']<b1['close'] and b3['close']<b2['close'] and
+              min(abs(b1['close']-b1['open']),abs(b2['close']-b2['open']),abs(b3['close']-b3['open']))>=0.2*atr):
+            add('IDX_3SOLDIERS','short',row['close']); trig['IDX_3SOLDIERS']=True
+
+    # IDX_CONSEC_REV
+    if 'IDX_CONSEC_REV' not in trig and ci >= 6:
+        last5 = candles.iloc[ci-5:ci]
+        all_bull = all(last5.iloc[j]['close'] > last5.iloc[j]['open'] for j in range(5))
+        all_bear = all(last5.iloc[j]['close'] < last5.iloc[j]['open'] for j in range(5))
+        total_rng = last5['high'].max() - last5['low'].min()
+        if all_bull and total_rng >= 1.0*atr and row['close'] < row['open'] and abs(row['body']) >= 0.2*atr:
+            add('IDX_CONSEC_REV','short',row['close']); trig['IDX_CONSEC_REV']=True
+        elif all_bear and total_rng >= 1.0*atr and row['close'] > row['open'] and abs(row['body']) >= 0.2*atr:
+            add('IDX_CONSEC_REV','long',row['close']); trig['IDX_CONSEC_REV']=True
