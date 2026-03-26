@@ -632,6 +632,52 @@ Audit #1:
 - PnL latent en temps reel depuis MT5 (p.profit)
 - Commit: 4b7da91
 
+### Filtre marge WR > 5% dans optimize_all.py
+- Les strats dont le WR reel est trop proche du WR minimum (breakeven) sont eliminees
+- Formule: marge = WR_reel - (1 / (1 + RR_reel)) * 100. Si marge < 5% → SKIP
+- 5ers: 18/40 strats survivent au filtre
+- Commit: en cours
+
+### Analyse complete combos 5ers (strats saines uniquement)
+- 18 strats safe, 16 combos viables (DD < 4% @ 0.25%)
+- Top 3 (PO3_SWEEP + TOK_PREVEXT + ALL_PSAR_EMA): PF 1.43, DD -2.8%, +15%
+- Top 4 (+TOK_BIG): PF 1.35, DD -3.4%, +22%, 11/13
+- Toutes les 18 ensemble: PF 1.15, DD -17.6% → trop dilue
+- Sweet spot: 3-5 strats
+
+### LON_BIGGAP retiree de ICM
+- Sa condition depend de row['open'] incompatible avec detect_open_strats
+- ICM passe de Calmar 12 a Calmar 11
+
+### Audits 6-9 (4 audits paralleles)
+**Audit 6 (entry timing):** LON_BIGGAP bug confirme. Les 7 close strats OK. Les 4 autres open strats OK (conditions ne dependent pas de row['open']).
+
+**Audit 7 (conflits):** Ordre BT (alphabetique) vs live (open strats first) → resultat peut differer. Magic guard bloque multi-day same-strat (BT autorise). Documente et accepte.
+
+**Audit 8 (trailing edge cases):** 6/6 scenarios safe.
+
+**Audit 9 (DB candles):** Table partagee entre brokers (risque si multi-fetcher). compute_indicators 300x/bougie (performance). DST pas applique aux sessions (coherent BT).
+
+### Comparatif London 26 mars 5ers (BT vs live)
+- LON_TOKEND: BT sort 08:25, live sort 08:17 (trail SL touche par tick intra-bougie)
+- LON_PREV: quasi identique (08:25 vs 08:26)
+- LON_PIN: quasi identique (08:40 vs 08:43)
+- Difference LON_TOKEND = granularite (BT 5min bars vs MT5 tick par tick)
+- Live correct — MT5 plus precis que le backtest
+
+### Analyse RR et marge WR
+- LON_PIN: RR 0.40, WR min 71%, WR reel 72% → marge 3% → trop risque avec frais
+- 8/10 strats du portfolio 5ers etaient RISK (marge < 5%)
+- Seules TOK_PREVEXT et ALL_KC_BRK etaient saines
+
+### Enrichissement dictionnaire de strats (en cours)
+10 nouvelles strats ajoutees au dictionnaire:
+- Candlestick: ALL_ENGULF, ALL_HAMMER, ALL_DOJI_REV, ALL_MSTAR
+- Breakout: LON_ASIAN_BRK, ALL_INSIDE_BRK, ALL_BB_SQUEEZE
+- Momentum: ALL_RSI_EXTREME, ALL_MACD_HIST, ALL_VOL_SPIKE
+Indicateurs ajoutes: bb_width, bb_width_min20, macd_hist, vol_avg, upper/lower wick, candle_range
+Detection: en cours d'implementation
+
 ### 5 audits paralleles — tous les bugs corriges
 
 **Audit 1 (signal detection):** Pas de bug critique. prev2_day_data manquant (D8 pas dans portfolio). prev_day_data.body manquant (jamais lu). OK.

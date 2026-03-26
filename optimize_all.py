@@ -498,6 +498,35 @@ for sn in sorted(SIG.keys()):
 
 print(f"\n  {len(best_configs)}/{len(SIG)} strats avec config viable")
 
+# ── FILTRE MARGE WR (strats rentables en live) ──
+print("\nFiltre marge WR > 5%...", flush=True)
+MIN_MARGIN = 5.0
+safe_configs = {}
+for sn, cfg in best_configs.items():
+    etype = 0 if cfg['type'] == 'TPSL' else 1
+    is_open = sn in OPEN_STRATS
+    pnls = []
+    for ci, di, entry, atr, date, sp in SIG[sn]:
+        b, ex = sim_exit_np(ci, entry, di, atr, etype, cfg['p1'], cfg['p2'], cfg['p3'], is_open)
+        pnl = ((ex - entry) if di == 1 else (entry - ex)) - sp
+        pnls.append(pnl)
+    wins = [p for p in pnls if p > 0]
+    losses = [p for p in pnls if p <= 0]
+    if not wins or not losses: continue
+    wr = len(wins) / len(pnls) * 100
+    avg_w = sum(wins) / len(wins)
+    avg_l = abs(sum(losses) / len(losses))
+    rr = avg_w / avg_l if avg_l > 0 else 0
+    wr_min = 1 / (1 + rr) * 100 if rr > 0 else 100
+    marge = wr - wr_min
+    tag = "OK" if marge > MIN_MARGIN else "SKIP"
+    print(f"  {sn:22s} WR={wr:.0f}% RR={rr:.2f} WRmin={wr_min:.0f}% marge={marge:+.1f}% {tag}")
+    if marge > MIN_MARGIN:
+        safe_configs[sn] = cfg
+
+print(f"\n  {len(safe_configs)}/{len(best_configs)} strats safe (marge>{MIN_MARGIN}%)")
+best_configs = safe_configs
+
 # ── BUILD TRADE ARRAYS WITH BEST CONFIGS ──
 print("\nConstruction arrays trades...", flush=True)
 strat_arrays = {}

@@ -15,6 +15,10 @@ ALL_STRATS = [
     'ALL_MACD_RSI','ALL_FVG_BULL','ALL_CONSEC_REV','ALL_FIB_618',
     'ALL_3SOLDIERS','ALL_PSAR_EMA','PO3_SWEEP','ALL_KC_BRK','ALL_DC10',
     'ALL_ADX_FAST','TOK_WILLR',
+    # New strats
+    'ALL_ENGULF','ALL_HAMMER','ALL_DOJI_REV','ALL_MSTAR',
+    'LON_ASIAN_BRK','ALL_INSIDE_BRK','ALL_BB_SQUEEZE',
+    'ALL_RSI_EXTREME','ALL_MACD_HIST','ALL_VOL_SPIKE',
 ]
 
 STRAT_NAMES = {
@@ -37,6 +41,16 @@ STRAT_NAMES = {
     'ALL_DC10':'Donchian 10 breakout',
     'ALL_ADX_FAST':'ADX fast DI cross + EMA21',
     'TOK_WILLR':'Williams %R Tokyo reversal',
+    'ALL_ENGULF':'Bullish/bearish engulfing',
+    'ALL_HAMMER':'Hammer / shooting star',
+    'ALL_DOJI_REV':'Doji after trend reversal',
+    'ALL_MSTAR':'Morning star / evening star',
+    'LON_ASIAN_BRK':'Asian range breakout London',
+    'ALL_INSIDE_BRK':'Inside bar breakout',
+    'ALL_BB_SQUEEZE':'Bollinger squeeze breakout',
+    'ALL_RSI_EXTREME':'RSI extreme reversal',
+    'ALL_MACD_HIST':'MACD histogram reversal',
+    'ALL_VOL_SPIKE':'Volume spike with direction',
 }
 
 STRAT_SESSION = {
@@ -52,6 +66,10 @@ STRAT_SESSION = {
     'ALL_ADX_FAST':'All',
     'TOK_WILLR':'Tokyo',
     'PO3_SWEEP':'London',
+    'ALL_ENGULF':'All','ALL_HAMMER':'All','ALL_DOJI_REV':'All','ALL_MSTAR':'All',
+    'LON_ASIAN_BRK':'London',
+    'ALL_INSIDE_BRK':'All','ALL_BB_SQUEEZE':'All',
+    'ALL_RSI_EXTREME':'All','ALL_MACD_HIST':'All','ALL_VOL_SPIKE':'All',
 }
 
 def sim_exit(cdf, pos, entry, d, atr, check_entry_candle=False):
@@ -165,6 +183,24 @@ def compute_indicators(candles):
     # Body / abs_body
     c['body'] = c['close'] - c['open']
     c['abs_body'] = c['body'].abs()
+    # Bollinger Bands 20,2 (for BB_SQUEEZE)
+    c['bb_mid'] = c['close'].rolling(20).mean()
+    c['bb_std'] = c['close'].rolling(20).std()
+    c['bb_up'] = c['bb_mid'] + 2.0 * c['bb_std']
+    c['bb_lo'] = c['bb_mid'] - 2.0 * c['bb_std']
+    c['bb_width'] = (c['bb_up'] - c['bb_lo']) / (c['bb_mid'] + 1e-10)
+    c['bb_width_min20'] = c['bb_width'].rolling(20).min()
+    # MACD histogram (for MACD_HIST)
+    c['macd_hist'] = c['macd_med'] - c['macd_med_sig']
+    # Volume average (for VOL_SPIKE)
+    if 'tick_volume' in c.columns:
+        c['vol_avg'] = c['tick_volume'].rolling(20).mean()
+    elif 'volume' in c.columns:
+        c['vol_avg'] = c['volume'].rolling(20).mean()
+    # Upper/lower wick ratios (for HAMMER)
+    c['upper_wick'] = c['high'] - c[['open','close']].max(axis=1)
+    c['lower_wick'] = c[['open','close']].min(axis=1) - c['low']
+    c['candle_range'] = c['high'] - c['low']
     return c
 
 def detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_day_data, add, prev2_day_data=None):
