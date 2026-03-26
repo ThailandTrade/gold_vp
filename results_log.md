@@ -788,7 +788,16 @@ ATTENTION: NAS100 et BTC sans spread decompte. Resultats probablement optimistes
 | XAUUSD | 18 | 1.33 | 68% | -3.7% | +31% | 11/13 |
 
 JPN225 champion: meilleur PF, meilleur WR, 13/13 mois, DD < 2%.
-ATTENTION: tous sauf XAUUSD sans spread decompte. L'edge est plus fort (18 strats safe vs 4). Revenir sur indices quand le live gold est stable.
+ATTENTION: tous sauf XAUUSD sans spread decompte.
+
+### Audit look-ahead nouvelles strats (2026-03-26)
+26 strats auditees (10 ALL_* + 16 IDX_*). **Aucun look-ahead trouve.**
+Toutes utilisent bougie fermee + bougies precedentes + indicateurs forward-only.
+
+Points d'attention (pas de look-ahead mais design questionnable):
+1. Sessions US hardcodees (14:30-21:00 UTC) appliquees a JPN225/DAX40 — trade en off-hours
+2. Gap BTC artificiel (pas de fermeture reelle, 24/7)
+Ces biais favorisent potentiellement les resultats mais ne sont pas du look-ahead. L'edge est plus fort (18 strats safe vs 4). Revenir sur indices quand le live gold est stable.
 
 ### Architecture multi-instrument (discussion 2026-03-26)
 
