@@ -749,7 +749,20 @@ ATTENTION: pas de spread decompte (pas de ticks BTC). Resultats probablement opt
 - Rend 45%→31.5% (baisse due au double compute_indicators, leger)
 - Pas de regression critique. Portfolio identique (6 strats).
 
-**Decision**: BTC tres prometteur. A valider avec ticks pour spread reel. L'edge est plus fort (18 strats safe vs 4). Revenir sur indices quand le live gold est stable.
+### NAS100 — RESULTATS APRES FIX NaN (2026-03-26)
+27/80 strats safe. Greedy 10 @ 0.25%: DD -3.4%, +219%, 11/13 mois.
+Bien meilleur que gold 5ers (+219% vs +31%).
+
+### Comparatif instruments 5ers @ 0.25% risk (Greedy 10)
+| Instrument | Strats safe | PF | DD | Rend | M+ |
+|---|---|---|---|---|---|
+| XAUUSD | 18 | 1.33 | -3.7% | +31% | 11/13 |
+| NAS100 | 27 | 1.39 | -3.4% | +219% | 11/13 |
+| BTCUSD | 22 | 1.47 | -3.4% | +1778% | 13/13 |
+
+ATTENTION: NAS100 et BTC sans spread decompte. Resultats probablement optimistes.
+
+**Decision**: BTC et NAS100 tres prometteurs. A valider avec ticks pour spread reel. L'edge est plus fort (18 strats safe vs 4). Revenir sur indices quand le live gold est stable.
 
 ### Architecture multi-instrument (discussion 2026-03-26)
 
