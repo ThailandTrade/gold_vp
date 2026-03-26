@@ -107,8 +107,9 @@ def load_mt5_live():
             })
 
         # History deals (closed trades)
+        from datetime import timedelta
         from_date = datetime(2025, 1, 1, tzinfo=timezone.utc)
-        to_date = datetime.now(timezone.utc)
+        to_date = datetime.now(timezone.utc) + timedelta(days=1)
         deals = mt5.history_deals_get(from_date, to_date) or []
 
         # Group deals by position ID to reconstruct trades
