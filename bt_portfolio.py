@@ -145,21 +145,11 @@ if len(all_sym_trades) > 1:
     print(f"  AGREGE — {len(all_sym_trades)} instruments — compte unique ${CAPITAL:,.0f}")
     print(f"{'='*W}")
 
-    # Merge all trades into one timeline with events
-    all_accepted = []
+    # Merge all trades (already conflict-filtered per instrument in eval_combo)
+    filtered = []
     for st in all_sym_trades:
         for t in st['accepted']:
-            all_accepted.append((*t, st['risk'], st['sym']))
-    # each = (ei, xi, di, pnl_oz, sl_atr, atr, mo, sn, risk, sym)
-
-    # Conflict filter across instruments (no opposite dirs at same time)
-    all_accepted.sort(key=lambda x: (x[0], x[7]))
-    active = []; filtered = []
-    for ei, xi, di, pnl_oz, sl_atr, atr, mo, sn, risk, sym in all_accepted:
-        active = [(axi, ad) for axi, ad in active if axi >= ei]
-        if any(ad != di for _, ad in active): continue
-        filtered.append((ei, xi, di, pnl_oz, sl_atr, atr, mo, sn, risk, sym))
-        active.append((xi, di))
+            filtered.append((*t, st['risk'], st['sym']))
 
     # Event-based simulation on single capital
     events = [(ei, 0, idx) for idx, (ei,*_) in enumerate(filtered)] + \
