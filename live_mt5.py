@@ -264,7 +264,8 @@ def open_position(state, symbol, sig, atr, risk_pct):
     if not tick:
         log.warning("SKIP {} {} — no tick".format(symbol, sn)); return
     entry = tick['ask'] if d == 'long' else tick['bid']
-    exit_cfg = STRAT_EXITS.get(sn, DEFAULT_EXIT)
+    sym_exits = STRAT_EXITS.get((_account, symbol), {})
+    exit_cfg = sym_exits.get(sn, DEFAULT_EXIT)
     exit_type = exit_cfg[0]; sl_val = exit_cfg[1]
     stop = entry - sl_val * atr if d == 'long' else entry + sl_val * atr
     risk = capital * risk_pct
@@ -327,8 +328,10 @@ def main():
     if not mt5_init(): log.error("MT5 init failed."); return
 
     if args.reset:
-        open_trail = [p for p in mt5_our_positions()
-                      if STRAT_EXITS.get(ALL_MAGICS.get(p.magic, ('',''))[1], DEFAULT_EXIT)[0] == 'TRAIL']
+        def _is_trail(p):
+            sym, sn = ALL_MAGICS.get(p.magic, ('',''))
+            return STRAT_EXITS.get((_account, sym), {}).get(sn, DEFAULT_EXIT)[0] == 'TRAIL'
+        open_trail = [p for p in mt5_our_positions() if _is_trail(p)]
         if open_trail:
             log.warning("!!! RESET avec {} TRAIL ouvertes !!!".format(len(open_trail)))
         state = reset_state()

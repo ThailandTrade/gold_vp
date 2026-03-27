@@ -54,6 +54,13 @@ DD calcule a chaque trade (pas mensuel).
 
 **9,164 trades | WR 76% | PF 1.54 | Max DD -0.81% | $100k -> $179k (+79.4%) | 13/13 mois**
 
+### Bug CRITIQUE corrige: strat_exits.py desaligne de l'optimisation
+strat_exits.py avait UNE config globale par strat. L'optimisation produit des exits DIFFERENTS par instrument.
+Ex: ALL_MACD_HIST DAX40=TRAIL 1.5/0.30/0.30, SP500=TRAIL 1.0/0.50/0.50, mais strat_exits avait TRAIL 3.0/0.50/0.50.
+Fix: strat_exits.py reecrit en multi-instrument, indexe par (broker, symbol).
+live_mt5.py mis a jour pour lookup STRAT_EXITS[(_account, symbol)][strat].
+Verification: 0 mismatch entre strat_exits.py et les pkl d'optimisation.
+
 ### Bug corrige: aggregate cross-instrument conflict filter
 L'agregé filtrait les trades en conflit entre instruments differents (ex: long XAU + short JPN).
 Ca supprimait 1,935 trades. Corrige: le filtre conflit ne s'applique que par instrument (deja fait dans eval_combo).
