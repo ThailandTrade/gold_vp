@@ -178,7 +178,8 @@ def new_state():
     return {'broker': BROKER, 'instruments': list(INSTRUMENTS.keys()),
             'daily_cache': {}, 'trail': {},
             'per_symbol': {sym: {'_triggered_open': {}, '_triggered_close': {},
-                                  '_prev_day_data': None, '_prev_day_date': None,
+                                  '_prev_day_data': None, '_prev2_day_data': None,
+                                  '_prev_day_date': None,
                                   'last_candle_ts': 0} for sym in INSTRUMENTS}}
 
 def load_state():
@@ -190,7 +191,8 @@ def load_state():
             for sym in INSTRUMENTS:
                 state['per_symbol'].setdefault(sym, {
                     '_triggered_open': {}, '_triggered_close': {},
-                    '_prev_day_data': None, '_prev_day_date': None,
+                    '_prev_day_data': None, '_prev2_day_data': None,
+                    '_prev_day_date': None,
                     'last_candle_ts': 0})
             return state
     return new_state()
@@ -220,10 +222,11 @@ def detect_open_strats(candles, sym_state, atr, now_utc, today, portfolio):
     tv = candles[(candles['ts_dt']>=ds)&(candles['ts_dt']<=r['ts_dt'])]
     tok = tv[tv['ts_dt']<te]; lon = tv[(tv['ts_dt']>=ls)&(tv['ts_dt']<ns)]
     prev_day_data = sym_state.get('_prev_day_data')
+    prev2_day_data = sym_state.get('_prev2_day_data')
     def add_sig(sn, d, e):
         if sn in OPEN_STRATS and sn in portfolio:
             signals.append({'strat': sn, 'dir': d})
-    detect_all(candles, ci, r, r['ts_dt'], today, hour, atr, trig, tv, tok, lon, prev_day_data, add_sig)
+    detect_all(candles, ci, r, r['ts_dt'], today, hour, atr, trig, tv, tok, lon, prev_day_data, add_sig, prev2_day_data=prev2_day_data)
     return signals
 
 def detect_close_strats(candles, sym_state, atr, candle_time, today, portfolio):
@@ -238,11 +241,12 @@ def detect_close_strats(candles, sym_state, atr, candle_time, today, portfolio):
     tv = candles[(candles['ts_dt']>=ds)&(candles['ts_dt']<=candle_time)]
     tok = tv[tv['ts_dt']<te]; lon = tv[(tv['ts_dt']>=ls)&(tv['ts_dt']<ns)]
     prev_day_data = sym_state.get('_prev_day_data')
+    prev2_day_data = sym_state.get('_prev2_day_data')
     close_strats = [s for s in portfolio if s not in OPEN_STRATS]
     def add_sig(sn, d, e):
         if sn in close_strats:
             signals.append({'strat': sn, 'dir': d})
-    detect_all(candles, len(candles)-1, r, r['ts_dt'], today, hour, atr, trig, tv, tok, lon, prev_day_data, add_sig)
+    detect_all(candles, len(candles)-1, r, r['ts_dt'], today, hour, atr, trig, tv, tok, lon, prev_day_data, add_sig, prev2_day_data=prev2_day_data)
     return signals
 
 # ── OPEN POSITION ────────────────────────────────────
@@ -404,6 +408,15 @@ def main():
                         ss['_prev_day_data'] = {'open':float(dc.iloc[0]['open']),'close':float(dc.iloc[-1]['close']),
                                                 'high':float(dc['high'].max()),'low':float(dc['low'].min()),
                                                 'range':float(dc['high'].max()-dc['low'].min())}
+                        # prev2 = avant-veille (pour D8 inside day)
+                        yc2 = yc[yc['date'] < ld]
+                        if len(yc2) > 0:
+                            ld2 = yc2['date'].iloc[-1]; dc2 = yc2[yc2['date']==ld2]
+                            ss['_prev2_day_data'] = {'open':float(dc2.iloc[0]['open']),'close':float(dc2.iloc[-1]['close']),
+                                                     'high':float(dc2['high'].max()),'low':float(dc2['low'].min()),
+                                                     'range':float(dc2['high'].max()-dc2['low'].min())}
+                        else:
+                            ss['_prev2_day_data'] = None
                     ss['_prev_day_date'] = str(today)
                     ss['_triggered_open'] = {}
                     ss['_triggered_close'] = {}

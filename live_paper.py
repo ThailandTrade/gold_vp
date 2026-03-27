@@ -260,13 +260,14 @@ def detect_open_strats(candles, state, atr, now_utc, today):
     tv = candles[(candles['ts_dt']>=ds)&(candles['ts_dt']<=r['ts_dt'])]
     tok = tv[tv['ts_dt']<te]; lon = tv[(tv['ts_dt']>=ls)&(tv['ts_dt']<ns)]
     prev_day_data = state.get('_prev_day_data')
+    prev2_day_data = state.get('_prev2_day_data')
 
     def add_sig(sn, d, e):
         if sn in OPEN_STRATS and sn in STRATS:
             # Ignore le prix e de detect_all (= row['open'] de la bougie precedente)
             # Le live entrera au tick courant dans open_position
             signals.append({'strat': sn, 'dir': d, 'entry_price': None})
-    detect_all(candles, ci, r, r['ts_dt'], today, hour, atr, trig, tv, tok, lon, prev_day_data, add_sig)
+    detect_all(candles, ci, r, r['ts_dt'], today, hour, atr, trig, tv, tok, lon, prev_day_data, add_sig, prev2_day_data=prev2_day_data)
     return signals
 
 def detect_close_strats(candles, state, atr, candle_time, today):
@@ -284,11 +285,12 @@ def detect_close_strats(candles, state, atr, candle_time, today):
     tv = candles[(candles['ts_dt']>=ds)&(candles['ts_dt']<=candle_time)]
     tok = tv[tv['ts_dt']<te]; lon = tv[(tv['ts_dt']>=ls)&(tv['ts_dt']<ns)]
     prev_day_data = state.get('_prev_day_data')
+    prev2_day_data = state.get('_prev2_day_data')
 
     def add_sig(sn, d, e):
         if sn in CLOSE_STRATS and sn in STRATS:
             signals.append({'strat': sn, 'dir': d, 'entry_price': None})
-    detect_all(candles, len(candles)-1, r, r['ts_dt'], today, hour, atr, trig, tv, tok, lon, prev_day_data, add_sig)
+    detect_all(candles, len(candles)-1, r, r['ts_dt'], today, hour, atr, trig, tv, tok, lon, prev_day_data, add_sig, prev2_day_data=prev2_day_data)
     return signals
 
 # ── OPEN POSITION ─────────────────────────────────────
@@ -427,6 +429,15 @@ def main():
                     state['_prev_day_data'] = {'open':float(dc.iloc[0]['open']),'close':float(dc.iloc[-1]['close']),
                                                'high':float(dc['high'].max()),'low':float(dc['low'].min()),
                                                'range':float(dc['high'].max()-dc['low'].min())}
+                    # prev2 = avant-veille (pour D8 inside day)
+                    yc2 = yc[yc['date'] < last_day]
+                    if len(yc2) > 0:
+                        ld2 = yc2['date'].iloc[-1]; dc2 = yc2[yc2['date']==ld2]
+                        state['_prev2_day_data'] = {'open':float(dc2.iloc[0]['open']),'close':float(dc2.iloc[-1]['close']),
+                                                    'high':float(dc2['high'].max()),'low':float(dc2['low'].min()),
+                                                    'range':float(dc2['high'].max()-dc2['low'].min())}
+                    else:
+                        state['_prev2_day_data'] = None
                 state['_prev_day_date'] = str(today)
                 state['_triggered_open'] = {}   # RESET journalier open strats
                 state['_triggered_close'] = {}  # RESET journalier close strats
