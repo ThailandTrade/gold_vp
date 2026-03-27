@@ -78,6 +78,7 @@ print(f"\n{'='*W}")
 print(f"  BACKTEST {BROKER} — ${CAPITAL:,.0f}")
 print(f"{'='*W}")
 
+all_results = []
 for sym, icfg in INSTRUMENTS.items():
     portfolio = icfg['portfolio']
     risk = args.risk / 100 if args.risk else icfg['risk_pct']
@@ -123,5 +124,58 @@ for sym, icfg in INSTRUMENTS.items():
     for mo in sorted(r['months'].keys()):
         v = r['months'][mo]
         print(f"  {mo:>8s} ${v:>+9,.0f}")
+
+    # Collect for aggregate
+    all_results.append({'sym': sym, 'r': r, 'risk': risk, 'portfolio': portfolio})
+
+# ── AGGREGATE ALL INSTRUMENTS ──
+if len(all_results) > 1:
+    print(f"\n{'='*W}")
+    print(f"  AGREGE — {len(all_results)} instruments @ ${CAPITAL:,.0f}")
+    print(f"{'='*W}")
+
+    # Merge all monthly PnL
+    agg_months = {}
+    agg_trades = 0; agg_wins = 0; agg_gp = 0; agg_gl = 0
+    for ar in all_results:
+        r = ar['r']
+        agg_trades += r['n']
+        for mo, v in r['months'].items():
+            agg_months[mo] = agg_months.get(mo, 0) + v
+        for ss in r['strat_stats'].values():
+            agg_wins += ss['w']; agg_gp += ss['gp']; agg_gl += ss['gl']
+
+    # Build equity curve month by month
+    cap = CAPITAL * len(all_results)  # total capital across instruments
+    peak = cap; max_dd = 0; max_dd_pct = 0
+    sorted_months = sorted(agg_months.keys())
+
+    print(f"\n  {'Mois':>8s} {'PnL':>10s} {'Capital':>12s} {'Rend cum':>10s} {'WR mois':>8s} {'DD':>8s} {'MaxDD':>8s}")
+    print(f"  {'-'*70}")
+
+    # Per-month WR: count winning instruments
+    cum_pnl = 0
+    start_cap = cap
+    for mo in sorted_months:
+        pnl = agg_months[mo]
+        cap += pnl
+        cum_pnl += pnl
+        if cap > peak: peak = cap
+        dd = (cap - peak) / peak * 100
+        if dd < max_dd_pct: max_dd_pct = dd
+        rend_cum = cum_pnl / start_cap * 100
+        # Count winning instruments this month
+        n_win = sum(1 for ar in all_results if ar['r']['months'].get(mo, 0) > 0)
+        n_tot = sum(1 for ar in all_results if mo in ar['r']['months'])
+        print(f"  {mo:>8s} ${pnl:>+9,.0f} ${cap:>11,.0f} {rend_cum:>+9.1f}%   {n_win}/{n_tot}   {dd:>+7.2f}% {max_dd_pct:>+7.2f}%")
+
+    agg_pf = agg_gp / (agg_gl + 0.01)
+    agg_wr = agg_wins / agg_trades * 100 if agg_trades > 0 else 0
+    pm = sum(1 for v in agg_months.values() if v > 0)
+    total_rend = cum_pnl / start_cap * 100
+
+    print(f"  {'-'*70}")
+    print(f"  Trades: {agg_trades:,d} | PF: {agg_pf:.2f} | WR: {agg_wr:.0f}% | Max DD: {max_dd_pct:+.2f}% | Rend: {total_rend:+.1f}% | M+: {pm}/{len(sorted_months)}")
+    print(f"  Capital: ${start_cap:,.0f} -> ${cap:,.0f}")
 
 print(f"\n{'='*W}")
