@@ -101,11 +101,21 @@ def mt5_our_positions(symbol=None):
         positions = mt5.positions_get() or []
     return [p for p in positions if p.magic in ALL_MAGIC_SET]
 
-def mt5_lot_size(symbol, risk_amount, sl_distance):
+def mt5_lot_size(symbol, risk_amount, entry, stop, direction):
     sym = mt5.symbol_info(symbol)
-    if not sym or sl_distance <= 0: return sym.volume_min if sym else 0.01
-    point_value = sym.trade_tick_value / sym.trade_tick_size if sym.trade_tick_size > 0 else sym.trade_contract_size
-    lots = risk_amount / (sl_distance * point_value)
+    if not sym or entry == stop: return sym.volume_min if sym else 0.01
+    order_type = mt5.ORDER_TYPE_BUY if direction == 'long' else mt5.ORDER_TYPE_SELL
+    try:
+        loss_per_lot = mt5.order_calc_profit(order_type, symbol, 1.0, float(entry), float(stop))
+    except Exception:
+        loss_per_lot = None
+    if loss_per_lot is None:
+        log.warning("LOT {} — order_calc_profit failed, fallback".format(symbol))
+        loss_per_lot = abs(entry - stop) * sym.trade_contract_size
+    else:
+        loss_per_lot = abs(loss_per_lot)
+    if loss_per_lot == 0: return sym.volume_min
+    lots = risk_amount / loss_per_lot
     lots = max(sym.volume_min, round(lots / sym.volume_step) * sym.volume_step)
     lots = min(lots, sym.volume_max)
     return round(lots, 2)
@@ -270,8 +280,7 @@ def open_position(state, symbol, sig, atr, risk_pct):
     exit_type = exit_cfg[0]; sl_val = exit_cfg[1]
     stop = entry - sl_val * atr if d == 'long' else entry + sl_val * atr
     risk = capital * risk_pct
-    sl_distance = abs(entry - stop)
-    lots = mt5_lot_size(symbol, risk, sl_distance)
+    lots = mt5_lot_size(symbol, risk, entry, stop, d)
     tp = 0.0
     if exit_type == 'TPSL':
         tp = entry + exit_cfg[2] * atr if d == 'long' else entry - exit_cfg[2] * atr
