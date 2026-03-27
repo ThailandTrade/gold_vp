@@ -32,17 +32,31 @@ Les open strats (LON_GAP, LON_BIGGAP, LON_KZ, LON_TOKEND, etc.) detectent sur ca
 | UK100 | 3 | PF 3 | 1.66 | 77% | -0.4% | 13/13 | VALIDE |
 | US30 | - | - | - | - | - | - | REJETE — DD trop haut |
 
-### Backtest final 5ers — $100k / 0.05% — 7 instruments
-| Instrument | Strats | Trades | PF | WR | DD | Rend | M+ |
-|---|---|---|---|---|---|---|---|
-| XAUUSD | 6 | 1,025 | 1.33 | 68% | -0.8% | +6% | 11/13 |
-| JPN225 | 8 | 1,282 | 1.63 | 79% | -0.4% | +9% | 13/13 |
-| DAX40 | 6 | 1,180 | 1.84 | 77% | -0.4% | +12% | 13/13 |
-| BTCUSD | 4 | 843 | 1.75 | 79% | -0.4% | +7% | 13/13 |
-| NAS100 | 10 | 1,749 | 1.40 | 77% | -0.4% | +8% | 13/13 |
-| SP500 | 11 | 2,331 | 1.48 | 78% | -0.7% | +13% | 13/13 |
-| UK100 | 3 | 754 | 1.66 | 77% | -0.4% | +6% | 13/13 |
-| **TOTAL** | **48** | **9,164** | - | - | - | **+61%** | - |
+### Backtest final 5ers — compte unique $100k / 0.05% — 7 instruments
+Simulation event-based trade par trade sur un seul capital de $100k.
+DD calcule a chaque trade (pas mensuel).
+
+| Mois | Trades | Wins | WR | PF | PnL | Capital | Rend cum | Max DD |
+|---|---|---|---|---|---|---|---|---|
+| 2025-03 | 129 | 100 | 78% | 1.67 | +$1,002 | $100,841 | +0.8% | -0.50% |
+| 2025-04 | 749 | 590 | 79% | 1.68 | +$5,647 | $110,172 | +10.2% | -0.65% |
+| 2025-05 | 797 | 618 | 78% | 1.62 | +$6,232 | $117,556 | +17.6% | -0.66% |
+| 2025-06 | 778 | 588 | 76% | 1.50 | +$5,553 | $126,740 | +26.7% | -0.66% |
+| 2025-07 | 800 | 623 | 78% | 1.65 | +$6,864 | $135,076 | +35.1% | -0.77% |
+| 2025-08 | 761 | 562 | 74% | 1.39 | +$4,874 | $147,292 | +47.3% | -0.77% |
+| 2025-09 | 792 | 593 | 75% | 1.42 | +$5,703 | $151,709 | +51.7% | -0.77% |
+| 2025-10 | 814 | 613 | 75% | 1.52 | +$7,498 | $163,406 | +63.4% | -0.81% |
+| 2025-11 | 715 | 554 | 77% | 1.51 | +$6,113 | $173,865 | +73.9% | -0.81% |
+| 2025-12 | 742 | 566 | 76% | 1.34 | +$4,523 | $175,342 | +75.3% | -0.81% |
+| 2026-01 | 736 | 562 | 76% | 1.82 | +$11,235 | $178,073 | +78.1% | -0.81% |
+| 2026-02 | 693 | 537 | 77% | 1.48 | +$6,182 | $179,057 | +79.1% | -0.81% |
+| 2026-03 | 658 | 504 | 77% | 1.61 | +$8,017 | $179,441 | +79.4% | -0.81% |
+
+**9,164 trades | WR 76% | PF 1.54 | Max DD -0.81% | $100k -> $179k (+79.4%) | 13/13 mois**
+
+### Bug corrige: aggregate cross-instrument conflict filter
+L'agregé filtrait les trades en conflit entre instruments differents (ex: long XAU + short JPN).
+Ca supprimait 1,935 trades. Corrige: le filtre conflit ne s'applique que par instrument (deja fait dans eval_combo).
 
 ### NAS100 — combos proposes (attente validation)
 Conservateur 13/13 mois:
