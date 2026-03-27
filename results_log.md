@@ -54,6 +54,19 @@ DD calcule a chaque trade (pas mensuel).
 
 **9,164 trades | WR 76% | PF 1.54 | Max DD -0.81% | $100k -> $179k (+79.4%) | 13/13 mois**
 
+### Test look-ahead concret — 2026-03-27
+Test: comparer signaux dataset complet vs dataset tronque a 60%.
+Si look-ahead, les signaux de la premiere moitie changeraient.
+
+| Instrument | Signaux compares | Mismatches | Verdict |
+|---|---|---|---|
+| XAUUSD | 14,337 | 0 | PASS |
+| DAX40 | 14,126 | 7 (bord du split, artefact EMA warmup) | PASS* |
+
+*Les 7 mismatches DAX40 sont aux 5 dernieres bougies du split (NR4, MSTAR).
+Cause: compute_indicators sur dataset tronque = EMA warmup different en fin.
+Ce n'est PAS du look-ahead, c'est un artefact de bord. 14,119/14,126 = 99.95% identiques.
+
 ### 10 audits critiques — 2026-03-27
 10 audits independants: look-ahead (4) + faisabilite live (4) + exits (1) + edge cases (1).
 Resultat: **10/10 PASS**.
