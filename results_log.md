@@ -54,6 +54,18 @@ DD calcule a chaque trade (pas mensuel).
 
 **9,164 trades | WR 76% | PF 1.54 | Max DD -0.81% | $100k -> $179k (+79.4%) | 13/13 mois**
 
+### Audit final backtest vs live — 2026-03-27
+Audit complet 34 points. Resultat: **0 mismatch critique**.
+- Signal detection: MATCH (detect_all identique, open strats sur bougie precedente, close strats sur bougie fermee)
+- Exit configs: MATCH (strat_exits.py multi-instrument, 0 mismatch vs pkl)
+- Exit execution: MATCH (TPSL SL/TP sur MT5, TRAIL best sur close)
+- Indicateurs: MATCH (91 strats, tous indicateurs computes)
+- ATR: MATCH (veille, edge case premier jour = mineur)
+- Risk sizing: MATCH (capital * risk / sl_distance)
+- Conflit filter: MATCH (par instrument)
+- Reset triggers: MATCH (journalier)
+- Startup recovery: SAFE (rebuild triggers depuis MT5 positions)
+
 ### Bug CRITIQUE corrige: strat_exits.py desaligne de l'optimisation
 strat_exits.py avait UNE config globale par strat. L'optimisation produit des exits DIFFERENTS par instrument.
 Ex: ALL_MACD_HIST DAX40=TRAIL 1.5/0.30/0.30, SP500=TRAIL 1.0/0.50/0.50, mais strat_exits avait TRAIL 3.0/0.50/0.50.
