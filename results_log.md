@@ -54,6 +54,20 @@ DD calcule a chaque trade (pas mensuel).
 
 **9,164 trades | WR 76% | PF 1.54 | Max DD -0.81% | $100k -> $179k (+79.4%) | 13/13 mois**
 
+### 10 audits critiques — 2026-03-27
+10 audits independants: look-ahead (4) + faisabilite live (4) + exits (1) + edge cases (1).
+Resultat: **10/10 PASS**.
+- Audit 1: Look-ahead detect_all — PASS (91 strats, toutes forward-only)
+- Audit 2: Look-ahead indicators — PASS (aucun shift negatif, pivot sur prev day)
+- Audit 3: Look-ahead optimize_all — PASS (ATR veille, prev_day_data correct)
+- Audit 4: Look-ahead exit simulation — PASS (sim_exit_np forward, best sur close)
+- Audit 5: Live strats disponibles — PASS (48 strats portfolio toutes dans detect_all)
+- Audit 6: Open strats timing — PASS (candles[-2] + now_utc hour)
+- Audit 7: Trailing stops — PASS (best sur close, MT5 ModifyPosition)
+- Audit 8: Risk sizing — PASS (capital*risk/sl_distance, lot min/max/step)
+- Audit 9: Strat_exits completeness — PASS (0 fallback DEFAULT)
+- Audit 10: Edge cases — PASS (ATR=0, no candles, tick=None geres)
+
 ### Audit final backtest vs live — 2026-03-27
 Audit complet 34 points. Resultat: **0 mismatch critique**.
 - Signal detection: MATCH (detect_all identique, open strats sur bougie precedente, close strats sur bougie fermee)
