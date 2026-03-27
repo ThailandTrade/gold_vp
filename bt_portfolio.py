@@ -79,7 +79,8 @@ def eval_combo(strat_arrays, portfolio, risk):
     pm = sum(1 for v in months.values() if v > 0)
     return {'n': n, 'pf': gp/(gl+0.01), 'wr': wins/n*100, 'mdd': max_dd*100,
             'ret': (cap-CAPITAL)/CAPITAL*100, 'capital': cap, 'pm': pm, 'tm': len(months),
-            'months': months, 'strat_stats': strat_stats, 'month_detail': month_detail}
+            'months': months, 'strat_stats': strat_stats, 'month_detail': month_detail,
+            'accepted': accepted}
 
 # ── RUN ──
 W = 90
@@ -88,6 +89,7 @@ print(f"  BACKTEST {BROKER} — ${CAPITAL:,.0f}")
 print(f"{'='*W}")
 
 all_results = []
+all_sym_trades = []
 for sym, icfg in INSTRUMENTS.items():
     portfolio = icfg['portfolio']
     risk = args.risk / 100 if args.risk else icfg['risk_pct']
@@ -134,52 +136,81 @@ for sym, icfg in INSTRUMENTS.items():
         v = r['months'][mo]
         print(f"  {mo:>8s} ${v:>+9,.0f}")
 
-    # Collect for aggregate
-    all_results.append({'sym': sym, 'r': r, 'risk': risk, 'portfolio': portfolio})
+    # Collect accepted trades for aggregate (with symbol tag)
+    all_sym_trades.append({'sym': sym, 'accepted': r['accepted'], 'risk': risk})
 
-# ── AGGREGATE ALL INSTRUMENTS ──
-if len(all_results) > 1:
+# ── AGGREGATE: single account, all instruments, trade-by-trade ──
+if len(all_sym_trades) > 1:
     print(f"\n{'='*W}")
-    print(f"  AGREGE — {len(all_results)} instruments @ ${CAPITAL:,.0f} chacun")
+    print(f"  AGREGE — {len(all_sym_trades)} instruments — compte unique ${CAPITAL:,.0f}")
     print(f"{'='*W}")
 
-    # Merge month_detail across all instruments
-    all_months = set()
-    for ar in all_results:
-        all_months.update(ar['r']['month_detail'].keys())
-    sorted_months = sorted(all_months)
+    # Merge all trades into one timeline with events
+    all_accepted = []
+    for st in all_sym_trades:
+        for t in st['accepted']:
+            all_accepted.append((*t, st['risk'], st['sym']))
+    # each = (ei, xi, di, pnl_oz, sl_atr, atr, mo, sn, risk, sym)
 
-    start_cap = CAPITAL * len(all_results)
-    cap = start_cap; peak = cap; max_dd_pct = 0
+    # Conflict filter across instruments (no opposite dirs at same time)
+    all_accepted.sort(key=lambda x: (x[0], x[7]))
+    active = []; filtered = []
+    for ei, xi, di, pnl_oz, sl_atr, atr, mo, sn, risk, sym in all_accepted:
+        active = [(axi, ad) for axi, ad in active if axi >= ei]
+        if any(ad != di for _, ad in active): continue
+        filtered.append((ei, xi, di, pnl_oz, sl_atr, atr, mo, sn, risk, sym))
+        active.append((xi, di))
 
+    # Event-based simulation on single capital
+    events = [(ei, 0, idx) for idx, (ei,*_) in enumerate(filtered)] + \
+             [(xi, 1, idx) for idx, (_,xi,*__) in enumerate(filtered)]
+    events.sort()
+
+    cap = CAPITAL; peak = cap; max_dd = 0
+    entry_caps = {}
+    # Monthly aggregation
+    mo_stats = {}  # mo -> {n, w, gp, gl, pnl, cap_end, peak, max_dd}
+
+    for bar, evt, idx in events:
+        if evt == 0:
+            entry_caps[idx] = cap
+        else:
+            ei, xi, di, pnl_oz, sl_atr, atr, mo, sn, risk, sym = filtered[idx]
+            pnl = pnl_oz * (entry_caps[idx] * risk) / (sl_atr * atr)
+            cap += pnl
+            if cap > peak: peak = cap
+            dd = (cap - peak) / peak * 100
+            if dd < max_dd: max_dd = dd
+
+            ms = mo_stats.setdefault(mo, {'n':0,'w':0,'gp':0,'gl':0,'pnl':0})
+            ms['n'] += 1
+            if pnl > 0: ms['w'] += 1; ms['gp'] += pnl
+            else: ms['gl'] += abs(pnl)
+            ms['pnl'] += pnl
+            ms['cap'] = cap
+            ms['peak'] = peak
+            ms['max_dd'] = max_dd
+
+    sorted_months = sorted(mo_stats.keys())
     print(f"\n  {'Mois':>8s} {'Trades':>7s} {'Wins':>6s} {'WR':>5s} {'PF':>6s} {'PnL':>10s} {'Capital':>12s} {'Rend cum':>9s} {'DD':>7s} {'MaxDD':>7s}")
     print(f"  {'-'*85}")
 
     for mo in sorted_months:
-        m_n = 0; m_w = 0; m_gp = 0; m_gl = 0; m_pnl = 0
-        for ar in all_results:
-            md = ar['r']['month_detail'].get(mo)
-            if md:
-                m_n += md['n']; m_w += md['w']; m_gp += md['gp']; m_gl += md['gl']
-            m_pnl += ar['r']['months'].get(mo, 0)
-        cap += m_pnl
-        if cap > peak: peak = cap
-        dd = (cap - peak) / peak * 100
-        if dd < max_dd_pct: max_dd_pct = dd
-        rend_cum = (cap - start_cap) / start_cap * 100
-        wr = m_w / m_n * 100 if m_n > 0 else 0
-        pf = m_gp / (m_gl + 0.01) if m_gl > 0 else m_gp
-        print(f"  {mo:>8s} {m_n:>7d} {m_w:>6d} {wr:>4.0f}% {pf:>5.2f} ${m_pnl:>+9,.0f} ${cap:>11,.0f} {rend_cum:>+8.1f}% {dd:>+6.2f}% {max_dd_pct:>+6.2f}%")
+        ms = mo_stats[mo]
+        wr = ms['w'] / ms['n'] * 100 if ms['n'] > 0 else 0
+        pf = ms['gp'] / (ms['gl'] + 0.01)
+        rend_cum = (ms['cap'] - CAPITAL) / CAPITAL * 100
+        dd_now = (ms['cap'] - ms['peak']) / ms['peak'] * 100 if ms['peak'] > 0 else 0
+        print(f"  {mo:>8s} {ms['n']:>7d} {ms['w']:>6d} {wr:>4.0f}% {pf:>5.2f} ${ms['pnl']:>+9,.0f} ${ms['cap']:>11,.0f} {rend_cum:>+8.1f}% {dd_now:>+6.2f}% {ms['max_dd']:>+6.2f}%")
 
-    # Totals
-    tot_n = sum(ar['r']['n'] for ar in all_results)
-    tot_w = sum(ss['w'] for ar in all_results for ss in ar['r']['strat_stats'].values())
-    tot_gp = sum(ss['gp'] for ar in all_results for ss in ar['r']['strat_stats'].values())
-    tot_gl = sum(ss['gl'] for ar in all_results for ss in ar['r']['strat_stats'].values())
-    pm = sum(1 for mo in sorted_months if sum(ar['r']['months'].get(mo, 0) for ar in all_results) > 0)
+    tot_n = sum(ms['n'] for ms in mo_stats.values())
+    tot_w = sum(ms['w'] for ms in mo_stats.values())
+    tot_gp = sum(ms['gp'] for ms in mo_stats.values())
+    tot_gl = sum(ms['gl'] for ms in mo_stats.values())
+    pm = sum(1 for ms in mo_stats.values() if ms['pnl'] > 0)
 
     print(f"  {'-'*85}")
-    print(f"  Trades: {tot_n:,d} | WR: {tot_w/tot_n*100:.0f}% | PF: {tot_gp/(tot_gl+0.01):.2f} | Max DD: {max_dd_pct:+.2f}% | Rend: {(cap-start_cap)/start_cap*100:+.1f}% | M+: {pm}/{len(sorted_months)}")
-    print(f"  Capital: ${start_cap:,.0f} -> ${cap:,.0f} ({(cap-start_cap)/start_cap*100:+.1f}%)")
+    print(f"  Trades: {tot_n:,d} | WR: {tot_w/tot_n*100:.0f}% | PF: {tot_gp/(tot_gl+0.01):.2f} | Max DD: {max_dd:+.2f}% | Rend: {(cap-CAPITAL)/CAPITAL*100:+.1f}% | M+: {pm}/{len(sorted_months)}")
+    print(f"  Capital: ${CAPITAL:,.0f} -> ${cap:,.0f} ({(cap-CAPITAL)/CAPITAL*100:+.1f}%)")
 
 print(f"\n{'='*W}")
