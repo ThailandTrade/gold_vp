@@ -6,7 +6,7 @@ BROKER = 'FTMO'
 
 INSTRUMENTS = {
     'XAUUSD': {
-        'risk_pct': 0.005,
+        'risk_pct': 0.0005,
         'portfolio': [
             'PO3_SWEEP',       # TRAIL 3.0/0.75/0.75  PF=1.81 WR=67%
             'LON_PREV',        # TRAIL 2.0/0.75/0.75  PF=1.50 WR=71%

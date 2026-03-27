@@ -7,7 +7,7 @@ BROKER = '5ers'
 
 INSTRUMENTS = {
     'XAUUSD': {
-        'risk_pct': 0.0025,
+        'risk_pct': 0.0005,
         'portfolio': [
             'PO3_SWEEP',       # TRAIL 3.0/0.75/0.50  PF=1.48 WR=77%
             'ALL_PSAR_EMA',    # TRAIL 3.0/1.00/0.30  PF=1.30 WR=72%
@@ -19,7 +19,7 @@ INSTRUMENTS = {
         # PF 1.32 | WR 68% | DD -3.6% @ 0.25% | Rend +45% | 11/13
     },
     'JPN225': {
-        'risk_pct': 0.0025,
+        'risk_pct': 0.0005,
         'portfolio': [
             'ALL_FIB_618',     # TRAIL 3.0  PF=1.95 WR=82%
             'IDX_LATE_REV',    # TRAIL 3.0  PF=1.47 WR=83%
@@ -33,7 +33,7 @@ INSTRUMENTS = {
         # PF*WR 9: PF 1.85 | WR 79% | DD -2.0% @ 0.25% | +258% | 13/13
     },
     'DAX40': {
-        'risk_pct': 0.0025,
+        'risk_pct': 0.0005,
         'portfolio': [
             'ALL_MACD_HIST',   # TRAIL 1.5/0.30/0.30  PF=1.96 WR=68%
             'TOK_FADE',        # TRAIL 3.0/0.50/0.50  PF=1.58 WR=71%
@@ -45,7 +45,7 @@ INSTRUMENTS = {
         # MinDD6: PF 1.97 | WR 77% | DD -8.0% @ 0.25% | Rend +768% | 13/13
     },
     'BTCUSD': {
-        'risk_pct': 0.0025,
+        'risk_pct': 0.0005,
         'portfolio': [
             'TOK_PREVEXT',     # TRAIL 0.5/0.30/0.50  PF=3.97 WR=29%
             'ALL_EMA_513',     # TPSL  2.5/0.75       PF=1.39 WR=82%

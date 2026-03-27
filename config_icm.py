@@ -6,7 +6,7 @@ BROKER = 'ICMarkets'
 
 INSTRUMENTS = {
     'XAUUSD': {
-        'risk_pct': 0.01,
+        'risk_pct': 0.0005,
         'portfolio': [
             'PO3_SWEEP',       # TRAIL 3.0/0.75/0.75  PF=2.46 WR=79%
             'LON_PREV',        # TRAIL 2.0/0.75/0.75  PF=1.19 WR=63%

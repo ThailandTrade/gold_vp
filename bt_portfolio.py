@@ -30,7 +30,7 @@ if args.symbol:
         print(f"ERROR: {sym} not in config. Available: {list(cfg.INSTRUMENTS.keys())}")
         sys.exit(1)
 
-CAPITAL = args.capital or 1000.0
+CAPITAL = args.capital or 100000.0
 
 def eval_combo(strat_arrays, portfolio, risk):
     combined = []
