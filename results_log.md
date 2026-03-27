@@ -953,3 +953,9 @@ streamlit run dashboard.py              # dashboard
 ### Portfolios TODO
 Les portfolios JPN225, DAX40, BTCUSD doivent etre remplis dans config_5ers.py
 apres analyse des combos (analyze_combos.py 5ers --symbol jpn225 etc.)
+
+### JPN225 portfolio 5ers: PF*WR 9 (2026-03-27)
+- 9 strats: ALL_FIB_618, IDX_LATE_REV, D8, TOK_NR4, LON_GAP, LON_DC10_MOM, LON_TOKEND, ALL_MACD_RSI, TOK_PREVEXT
+- PF 1.82 | WR 79% | DD -2.0% @ 0.25% | +86% | 13/13 mois
+- TOK_NR4 et LON_DC10_MOM ajoutes a detect_all dans strats.py
+- Attention: pas de spread, resultats possiblement optimistes
