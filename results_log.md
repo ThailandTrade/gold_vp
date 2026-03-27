@@ -30,7 +30,19 @@ Les open strats (LON_GAP, LON_BIGGAP, LON_KZ, LON_TOKEND, etc.) detectent sur ca
 | NAS100 | 10 | MinDD 10 | 1.40 | 77% | -0.4% | 13/13 | VALIDE |
 | SP500 | 11 | MinDD 11 | 1.48 | 78% | -0.7% | 13/13 | VALIDE |
 | UK100 | 3 | PF 3 | 1.66 | 77% | -0.4% | 13/13 | VALIDE |
-| US30 | - | - | - | - | - | - | a faire |
+| US30 | - | - | - | - | - | - | REJETE — DD trop haut |
+
+### Backtest final 5ers — $100k / 0.05% — 7 instruments
+| Instrument | Strats | Trades | PF | WR | DD | Rend | M+ |
+|---|---|---|---|---|---|---|---|
+| XAUUSD | 6 | 1,025 | 1.33 | 68% | -0.8% | +6% | 11/13 |
+| JPN225 | 8 | 1,282 | 1.63 | 79% | -0.4% | +9% | 13/13 |
+| DAX40 | 6 | 1,180 | 1.84 | 77% | -0.4% | +12% | 13/13 |
+| BTCUSD | 4 | 843 | 1.75 | 79% | -0.4% | +7% | 13/13 |
+| NAS100 | 10 | 1,749 | 1.40 | 77% | -0.4% | +8% | 13/13 |
+| SP500 | 11 | 2,331 | 1.48 | 78% | -0.7% | +13% | 13/13 |
+| UK100 | 3 | 754 | 1.66 | 77% | -0.4% | +6% | 13/13 |
+| **TOTAL** | **48** | **9,164** | - | - | - | **+61%** | - |
 
 ### NAS100 — combos proposes (attente validation)
 Conservateur 13/13 mois:
