@@ -28,7 +28,7 @@ Les open strats (LON_GAP, LON_BIGGAP, LON_KZ, LON_TOKEND, etc.) detectent sur ca
 | DAX40 | 6 | MinDD 6 | 1.97 | 77% | -0.3% | 13/13 | ajoute |
 | BTCUSD | 4 | MinDD 4 | 1.73 | 79% | -0.3% | 13/13 | ajoute |
 | NAS100 | 10 | MinDD 10 | 1.40 | 77% | -0.4% | 13/13 | VALIDE |
-| SP500 | - | - | - | - | - | - | a faire |
+| SP500 | 11 | MinDD 11 | 1.48 | 78% | -0.7% | 13/13 | VALIDE |
 | UK100 | - | - | - | - | - | - | a faire |
 | US30 | - | - | - | - | - | - | a faire |
 

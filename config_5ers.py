@@ -70,6 +70,23 @@ INSTRUMENTS = {
         ],
         # MinDD10: PF 1.40 | WR 77% | DD -0.4% @ 0.05% | Rend +8% | 13/13
     },
+    'SP500': {
+        'risk_pct': 0.0005,
+        'portfolio': [
+            'ALL_DOJI_REV',    # TPSL  3.0/0.25       PF=2.31 WR=94%
+            'ALL_ICHI_TK',     # TPSL  3.0/0.50       PF=1.60 WR=90%
+            'ALL_DC50',        # TPSL  3.0/0.50       PF=1.82 WR=90%
+            'ALL_3SOLDIERS',   # TRAIL 3.0/0.30/0.30  PF=1.52 WR=82%
+            'TOK_FISHER',      # TRAIL 3.0/0.50/0.50  PF=1.33 WR=78%
+            'IDX_CONSEC_REV',  # TRAIL 1.5/0.50/0.50  PF=1.62 WR=66%
+            'ALL_FIB_618',     # TRAIL 3.0/1.00/1.00  PF=1.36 WR=69%
+            'ALL_MACD_HIST',   # TRAIL 1.0/0.50/0.50  PF=1.28 WR=56%
+            'ALL_PSAR_EMA',    # TRAIL 3.0/1.00/1.00  PF=1.43 WR=68%
+            'IDX_RSI_REV',     # TRAIL 1.5/0.30/0.30  PF=1.55 WR=70%
+            'LON_PREV',        # TRAIL 3.0/0.30/0.30  PF=1.53 WR=79%
+        ],
+        # MinDD11: PF 1.48 | WR 78% | DD -0.7% @ 0.05% | Rend +13% | 13/13
+    },
 }
 
 # Backward compat: default instrument
