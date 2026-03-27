@@ -24,6 +24,14 @@ with st.sidebar:
     account = st.selectbox("Compte", list(ACCOUNTS.keys()),
                            format_func=lambda x: ACCOUNTS[x]['label'],
                            key='account_selector')
+    period = st.selectbox("Periode", ["Aujourd'hui", "Cette semaine", "Ce mois", "Custom"],
+                          key='period_selector')
+    if period == "Custom":
+        col_from, col_to = st.columns(2)
+        with col_from:
+            date_from = st.date_input("Du", value=datetime.now(timezone.utc).date() - timedelta(days=30), key='date_from')
+        with col_to:
+            date_to = st.date_input("Au", value=datetime.now(timezone.utc).date(), key='date_to')
 
 cfg = importlib.import_module(ACCOUNTS[account]['module'])
 BROKER = cfg.BROKER
@@ -158,25 +166,49 @@ c1, c2, c3, c4, c5, c6 = st.columns(6)
 c1.metric("Balance", f"${balance:,.0f}", f"${pnl_total:+,.0f}")
 
 if n_trades > 0:
-    df = pd.DataFrame(trades)
-    df['pnl'] = df['pnl'].astype(float)
-    df['entry_time'] = pd.to_datetime(df['entry_time'])
-    df['exit_time'] = pd.to_datetime(df['exit_time'])
-    df['date'] = df['entry_time'].dt.date
+    df_all = pd.DataFrame(trades)
+    df_all['pnl'] = df_all['pnl'].astype(float)
+    df_all['entry_time'] = pd.to_datetime(df_all['entry_time'])
+    df_all['exit_time'] = pd.to_datetime(df_all['exit_time'])
+    df_all['date'] = df_all['entry_time'].dt.date
+
+    # Period filter
+    today = now.date()
+    if period == "Aujourd'hui":
+        filter_from = today
+        filter_to = today
+    elif period == "Cette semaine":
+        filter_from = today - timedelta(days=today.weekday())
+        filter_to = today
+    elif period == "Ce mois":
+        filter_from = today.replace(day=1)
+        filter_to = today
+    else:  # Custom
+        filter_from = date_from
+        filter_to = date_to
+
+    df = df_all[(df_all['date'] >= filter_from) & (df_all['date'] <= filter_to)].copy()
+    n_trades_filtered = len(df)
 
     wins = df[df['pnl'] > 0]; losses = df[df['pnl'] <= 0]
     gp = wins['pnl'].sum() if len(wins) else 0
     gl = abs(losses['pnl'].sum()) + 0.01
-    caps = pd.concat([pd.Series([cap_init]), df['capital_after']]).reset_index(drop=True)
-    max_dd = ((caps - caps.cummax()) / caps.cummax() * 100).min()
-    today_df = df[df['date'] == now.date()]
-    today_pnl = today_df['pnl'].sum() if len(today_df) else 0
+    if len(df) > 0:
+        caps = pd.concat([pd.Series([cap_init]), df_all[df_all['date'] <= filter_to]['capital_after']]).reset_index(drop=True)
+        max_dd = ((caps - caps.cummax()) / caps.cummax() * 100).min()
+    else:
+        max_dd = 0
+    period_pnl = df['pnl'].sum() if len(df) else 0
 
-    c2.metric("Trades", n_trades, f"{len(today_df)} aujourd'hui")
-    c3.metric("Win Rate", f"{len(wins)/n_trades*100:.0f}%", f"{len(wins)}W {len(losses)}L")
-    c4.metric("Profit Factor", f"{gp/gl:.2f}")
+    c2.metric("Trades", n_trades_filtered, f"sur {n_trades} total")
+    if n_trades_filtered > 0:
+        c3.metric("Win Rate", f"{len(wins)/n_trades_filtered*100:.0f}%", f"{len(wins)}W {len(losses)}L")
+        c4.metric("Profit Factor", f"{gp/gl:.2f}")
+    else:
+        c3.metric("Win Rate", "—")
+        c4.metric("Profit Factor", "—")
     c5.metric("Max DD", f"{max_dd:.1f}%")
-    c6.metric("PnL du jour", f"${today_pnl:+,.0f}")
+    c6.metric("PnL periode", f"${period_pnl:+,.0f}")
 else:
     c2.metric("Trades", 0)
     c3.metric("Win Rate", "—")
@@ -304,7 +336,7 @@ if n_trades > 0:
     st.divider()
 
     # ── TRADES FERMES ──
-    st.subheader(f"Trades fermes ({n_trades})")
+    st.subheader(f"Trades fermes ({n_trades_filtered})")
     show = df.iloc[::-1].copy()
     show['Ouverture'] = show['entry_time'].dt.strftime('%d/%m %H:%M')
     show['Fermeture'] = show['exit_time'].dt.strftime('%d/%m %H:%M')
@@ -340,7 +372,7 @@ with st.sidebar:
         sym_pnl = 0; sym_trades = 0; sym_wins = 0
         has_trades = False
         if n_trades > 0:
-            s = df[(df['symbol'] == sym) & (df['date'] == now.date())]
+            s = df[(df['symbol'] == sym) & ((df['date'] >= filter_from) & (df['date'] <= filter_to))]
             if len(s) > 0:
                 has_trades = True
                 sym_trades = len(s); sym_wins = (s['pnl'] > 0).sum()
@@ -362,7 +394,7 @@ with st.sidebar:
                     exit_str += f" A={exit_cfg[2]:.1f} T={exit_cfg[3]:.1f}"
 
                 if has_trades:
-                    st_df = df[(df['strat'] == sn) & (df['symbol'] == sym) & (df['date'] == now.date())]
+                    st_df = df[(df['strat'] == sn) & (df['symbol'] == sym) & ((df['date'] >= filter_from) & (df['date'] <= filter_to))]
                     if len(st_df) > 0:
                         w = (st_df['pnl'] > 0).sum(); ns = len(st_df)
                         pnl_s = st_df['pnl'].sum()
