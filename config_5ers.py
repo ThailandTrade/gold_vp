@@ -35,9 +35,14 @@ INSTRUMENTS = {
     'DAX40': {
         'risk_pct': 0.0025,
         'portfolio': [
-            # TODO: run analyze_combos.py 5ers --symbol dax40
+            'ALL_MACD_HIST',   # TRAIL 1.5/0.30/0.30  PF=1.96 WR=68%
+            'TOK_FADE',        # TRAIL 3.0/0.50/0.50  PF=1.58 WR=71%
+            'ALL_FIB_618',     # TRAIL 3.0/0.30/0.30  PF=1.72 WR=77%
+            'ALL_ENGULF',      # TRAIL 3.0/0.30/0.30  PF=1.59 WR=80%
+            'TOK_BIG',         # TRAIL 3.0/0.30/0.30  PF=1.47 WR=74%
+            'ALL_FISHER_9',    # TRAIL 3.0/0.30/0.30  PF=1.61 WR=74%
         ],
-        # PF 1.60 | WR 67% | DD -1.9% @ 0.25% | 13/13
+        # MinDD6: PF 1.97 | WR 77% | DD -8.0% @ 0.25% | Rend +768% | 13/13
     },
     'BTCUSD': {
         'risk_pct': 0.0025,

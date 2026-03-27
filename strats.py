@@ -11,7 +11,7 @@ ALL_STRATS = [
     'LON_PIN','LON_GAP','LON_BIGGAP','LON_KZ','LON_TOKEND','LON_PREV',
     'NY_GAP','NY_LONEND','NY_LONMOM','NY_DAYMOM',
     'D8',
-    # Indicators
+    # Indicators (original)
     'ALL_MACD_RSI','ALL_FVG_BULL','ALL_CONSEC_REV','ALL_FIB_618',
     'ALL_3SOLDIERS','ALL_PSAR_EMA','PO3_SWEEP','ALL_KC_BRK','ALL_DC10',
     'ALL_ADX_FAST','TOK_WILLR',
@@ -27,6 +27,17 @@ ALL_STRATS = [
     'IDX_PREV_HL','IDX_NR4','IDX_KC_BRK',
     'IDX_ENGULF','IDX_3SOLDIERS','IDX_CONSEC_REV',
     'TOK_NR4','LON_DC10_MOM',
+    # Indicator strats (from optimize_all v6)
+    'ALL_RSI_50','ALL_RSI_DIV','ALL_FISHER_9','ALL_DPO_14',
+    'ALL_AO_SAUCER','ALL_HMA_CROSS','ALL_HMA_DIR','ALL_DC10_EMA',
+    'ALL_CMO_14_ZERO','ALL_ICHI_TK','ALL_MACD_ADX',
+    'ALL_MACD_STD_SIG','ALL_MACD_FAST_ZERO',
+    'ALL_BB_TIGHT','ALL_CCI_14_ZERO','ALL_CCI_20_ZERO',
+    'ALL_MTF_BRK','ALL_NR4','ALL_PIVOT_BOUNCE','ALL_PIVOT_BRK',
+    'ALL_EMA_513','ALL_EMA_821','ALL_EMA_921','ALL_EMA_TREND_PB',
+    'ALL_WILLR_14','ALL_MOM_10','ALL_MOM_14','ALL_DC50',
+    'TOK_FISHER','TOK_MACD_MED',
+    'LON_DC10','NY_HMA_CROSS',
 ]
 
 STRAT_NAMES = {
@@ -77,6 +88,38 @@ STRAT_NAMES = {
     'IDX_CONSEC_REV':'Consecutive exhaustion reversal (index)',
     'TOK_NR4':'Narrow range 4 Tokyo',
     'LON_DC10_MOM':'Donchian 10 + momentum London',
+    'ALL_RSI_50':'RSI 50 cross',
+    'ALL_RSI_DIV':'RSI divergence',
+    'ALL_FISHER_9':'Fisher transform 9 cross',
+    'ALL_DPO_14':'DPO 14 zero cross',
+    'ALL_AO_SAUCER':'Awesome Oscillator saucer',
+    'ALL_HMA_CROSS':'HMA 9/21 cross',
+    'ALL_HMA_DIR':'HMA 21 direction change',
+    'ALL_DC10_EMA':'Donchian 10 + EMA21 filter',
+    'ALL_CMO_14_ZERO':'CMO 14 zero cross',
+    'ALL_ICHI_TK':'Ichimoku TK cross above cloud',
+    'ALL_MACD_ADX':'MACD std cross + ADX>25',
+    'ALL_MACD_STD_SIG':'MACD std signal cross',
+    'ALL_MACD_FAST_ZERO':'MACD fast zero cross',
+    'ALL_BB_TIGHT':'Tight Bollinger breakout',
+    'ALL_CCI_14_ZERO':'CCI 14 zero cross',
+    'ALL_CCI_20_ZERO':'CCI 20 zero cross',
+    'ALL_MTF_BRK':'Multi-timeframe 1H breakout',
+    'ALL_NR4':'Narrow range 4 breakout',
+    'ALL_PIVOT_BOUNCE':'Daily pivot bounce',
+    'ALL_PIVOT_BRK':'Daily pivot breakout',
+    'ALL_EMA_513':'EMA 5/13 cross',
+    'ALL_EMA_821':'EMA 8/21 cross',
+    'ALL_EMA_921':'EMA 9/21 cross',
+    'ALL_EMA_TREND_PB':'EMA trend pullback',
+    'ALL_WILLR_14':'Williams %R 14 reversal',
+    'ALL_MOM_10':'Momentum 10 zero cross',
+    'ALL_MOM_14':'Momentum 14 zero cross',
+    'ALL_DC50':'Donchian 50 breakout',
+    'TOK_FISHER':'Fisher transform Tokyo',
+    'TOK_MACD_MED':'MACD med cross Tokyo',
+    'LON_DC10':'Donchian 10 London',
+    'NY_HMA_CROSS':'HMA 9/21 cross NY',
 }
 
 STRAT_SESSION = {
@@ -102,6 +145,16 @@ STRAT_SESSION = {
     'IDX_PREV_HL':'US','IDX_NR4':'All','IDX_KC_BRK':'All',
     'IDX_ENGULF':'All','IDX_3SOLDIERS':'All','IDX_CONSEC_REV':'All',
     'TOK_NR4':'Tokyo','LON_DC10_MOM':'London',
+    'ALL_RSI_50':'All','ALL_RSI_DIV':'All','ALL_FISHER_9':'All','ALL_DPO_14':'All',
+    'ALL_AO_SAUCER':'All','ALL_HMA_CROSS':'All','ALL_HMA_DIR':'All','ALL_DC10_EMA':'All',
+    'ALL_CMO_14_ZERO':'All','ALL_ICHI_TK':'All','ALL_MACD_ADX':'All',
+    'ALL_MACD_STD_SIG':'All','ALL_MACD_FAST_ZERO':'All',
+    'ALL_BB_TIGHT':'All','ALL_CCI_14_ZERO':'All','ALL_CCI_20_ZERO':'All',
+    'ALL_MTF_BRK':'All','ALL_NR4':'All','ALL_PIVOT_BOUNCE':'All','ALL_PIVOT_BRK':'All',
+    'ALL_EMA_513':'All','ALL_EMA_821':'All','ALL_EMA_921':'All','ALL_EMA_TREND_PB':'All',
+    'ALL_WILLR_14':'All','ALL_MOM_10':'All','ALL_MOM_14':'All','ALL_DC50':'All',
+    'TOK_FISHER':'Tokyo','TOK_MACD_MED':'Tokyo',
+    'LON_DC10':'London','NY_HMA_CROSS':'New York',
 }
 
 def sim_exit(cdf, pos, entry, d, atr, check_entry_candle=False):
@@ -235,11 +288,110 @@ def compute_indicators(candles):
     c['candle_range'] = c['high'] - c['low']
     # VWAP proxy (rolling 60-bar mean)
     c['vwap'] = c['close'].rolling(60).mean()
-    # EMA 9, 50 (for indices)
-    if 'ema9' not in c.columns:
-        c['ema9'] = c['close'].ewm(span=9, adjust=False).mean()
-    if 'ema50' not in c.columns:
-        c['ema50'] = c['close'].ewm(span=50, adjust=False).mean()
+    # Extra EMAs
+    for p in [5, 8, 9, 13, 50, 100, 200]:
+        k = f'ema{p}'
+        if k not in c.columns:
+            c[k] = c['close'].ewm(span=p, adjust=False).mean()
+    # MACD std (12,26,9) and fast (5,13,1)
+    for fast,slow,sig,name in [(12,26,9,'std'),(5,13,1,'fast')]:
+        mk = f'macd_{name}'
+        if mk not in c.columns:
+            ef = c['close'].ewm(span=fast, adjust=False).mean()
+            es = c['close'].ewm(span=slow, adjust=False).mean()
+            c[mk] = ef - es
+            c[f'{mk}_sig'] = c[mk].ewm(span=max(sig,2), adjust=False).mean()
+    # HMA (Hull Moving Average)
+    def _wma(s, n):
+        w = np.arange(1, n+1, dtype=float)
+        return s.rolling(n).apply(lambda x: np.dot(x, w)/w.sum(), raw=True)
+    if 'hma9' not in c.columns:
+        c['hma9'] = _wma(2*_wma(c['close'],4)-_wma(c['close'],9), 3)
+    if 'hma21' not in c.columns:
+        c['hma21'] = _wma(2*_wma(c['close'],10)-_wma(c['close'],21), 4)
+    # CCI 14, 20
+    for p in [14, 20]:
+        k = f'cci{p}'
+        if k not in c.columns:
+            tp = (c['high']+c['low']+c['close'])/3
+            sm = tp.rolling(p).mean()
+            mad = tp.rolling(p).apply(lambda x: np.mean(np.abs(x-np.mean(x))), raw=True)
+            c[k] = (tp-sm)/(0.015*mad+1e-10)
+    # CMO 9, 14
+    for p in [9, 14]:
+        k = f'cmo{p}'
+        if k not in c.columns:
+            delta_c = c['close'].diff()
+            su = delta_c.clip(lower=0).rolling(p).sum()
+            sd = (-delta_c.clip(upper=0)).rolling(p).sum()
+            c[k] = 100*(su-sd)/(su+sd+1e-10)
+    # Momentum 10, 14
+    for p in [10, 14]:
+        k = f'mom{p}'
+        if k not in c.columns:
+            c[k] = c['close']/c['close'].shift(p)*100 - 100
+    # DPO 14
+    if 'dpo14' not in c.columns:
+        c['dpo14'] = c['close'] - c['close'].rolling(14).mean().shift(8)
+    # Fisher Transform 9
+    if 'fisher9' not in c.columns:
+        hh = c['high'].rolling(9).max(); ll = c['low'].rolling(9).min()
+        val = 2*((c['close']-ll)/(hh-ll+1e-10)-0.5)
+        val = val.clip(-0.999, 0.999)
+        c['fisher9'] = (0.5*np.log((1+val)/(1-val+1e-10))).ewm(span=3, adjust=False).mean()
+        c['fisher9_sig'] = c['fisher9'].shift(1)
+    # Awesome Oscillator
+    if 'ao' not in c.columns:
+        mid = (c['high']+c['low'])/2
+        c['ao'] = mid.rolling(5).mean() - mid.rolling(34).mean()
+    # Ichimoku (short periods for 5m)
+    if 'i_t' not in c.columns:
+        c['i_t'] = (c['high'].rolling(6).max()+c['low'].rolling(6).min())/2
+        c['i_k'] = (c['high'].rolling(13).max()+c['low'].rolling(13).min())/2
+        c['i_sa'] = ((c['i_t']+c['i_k'])/2).shift(13)
+        c['i_sb'] = ((c['high'].rolling(26).max()+c['low'].rolling(26).min())/2).shift(13)
+    # Tight Bollinger Bands (10, 1.5)
+    if 'bb_t_up' not in c.columns:
+        bb_t_mid = c['close'].rolling(10).mean()
+        bb_t_std = c['close'].rolling(10).std()
+        c['bb_t_up'] = bb_t_mid + 1.5*bb_t_std
+        c['bb_t_lo'] = bb_t_mid - 1.5*bb_t_std
+    # ADX slow (14-period)
+    if 'adx_s' not in c.columns:
+        tr_ = np.maximum(c['high']-c['low'], np.maximum(abs(c['high']-c['close'].shift(1)), abs(c['low']-c['close'].shift(1))))
+        pdm = c['high'].diff().clip(lower=0); mdm = (-c['low'].diff()).clip(lower=0)
+        mask = pdm > mdm; pdm2 = pdm.where(mask, 0); mdm2 = mdm.where(~mask, 0)
+        atr_s = tr_.ewm(span=14, adjust=False).mean()
+        c['pdi_s'] = 100*pdm2.ewm(span=14, adjust=False).mean()/(atr_s+1e-10)
+        c['mdi_s'] = 100*mdm2.ewm(span=14, adjust=False).mean()/(atr_s+1e-10)
+        dx_s = 100*abs(c['pdi_s']-c['mdi_s'])/(c['pdi_s']+c['mdi_s']+1e-10)
+        c['adx_s'] = dx_s.ewm(span=14, adjust=False).mean()
+    # Multi-timeframe 1H high/low
+    if 'high_1h' not in c.columns:
+        c['high_1h'] = c['high'].rolling(12).max()
+        c['low_1h'] = c['low'].rolling(12).min()
+    # Donchian 50
+    if 'dc50_h' not in c.columns:
+        c['dc50_h'] = c['high'].rolling(50).max()
+        c['dc50_l'] = c['low'].rolling(50).min()
+    # Williams %R 7
+    if 'wr7' not in c.columns:
+        hh7 = c['high'].rolling(7).max(); ll7 = c['low'].rolling(7).min()
+        c['wr7'] = -100*(hh7-c['close'])/(hh7-ll7+1e-10)
+    # Daily pivot (prev day H+L+C /3)
+    if 'pivot' not in c.columns and 'date' in c.columns:
+        dates = c['date'].unique()
+        c['prev_h_d'] = np.nan; c['prev_l_d'] = np.nan; c['prev_c_d'] = np.nan
+        for i in range(1, len(dates)):
+            prev_dc = c[c['date']==dates[i-1]]
+            today_mask = c['date']==dates[i]
+            c.loc[today_mask,'prev_h_d'] = prev_dc['high'].max()
+            c.loc[today_mask,'prev_l_d'] = prev_dc['low'].min()
+            c.loc[today_mask,'prev_c_d'] = prev_dc.iloc[-1]['close']
+        c['pivot'] = (c['prev_h_d']+c['prev_l_d']+c['prev_c_d'])/3
+    # range (for ALL_NR4)
+    if 'range' not in c.columns:
+        c['range'] = c['high'] - c['low']
     return c
 
 def detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_day_data, add, prev2_day_data=None):
@@ -680,3 +832,180 @@ def detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_
             add('IDX_CONSEC_REV','short',row['close']); trig['IDX_CONSEC_REV']=True
         elif all_bear and total_rng >= 1.0*atr and row['close'] > row['open'] and abs(row['body']) >= 0.2*atr:
             add('IDX_CONSEC_REV','long',row['close']); trig['IDX_CONSEC_REV']=True
+
+    # ── INDICATOR STRATS V6 (from optimize_all.py) ──
+
+    # ALL_RSI_50: RSI 50 cross
+    if 'ALL_RSI_50' not in trig and 'rsi14' in row.index and pd.notna(row.get('rsi14')):
+        if prev['rsi14']<50 and row['rsi14']>=50: add('ALL_RSI_50','long',row['close']); trig['ALL_RSI_50']=True
+        elif prev['rsi14']>50 and row['rsi14']<=50: add('ALL_RSI_50','short',row['close']); trig['ALL_RSI_50']=True
+
+    # ALL_RSI_DIV: RSI divergence (new low + higher RSI = bullish, etc.)
+    if 'ALL_RSI_DIV' not in trig and ci >= 10 and 'rsi14' in row.index and pd.notna(row.get('rsi14')):
+        l10 = candles.iloc[ci-9:ci+1]
+        if row['low']<l10.iloc[:-1]['low'].min() and row['rsi14']>l10.iloc[:-1]['rsi14'].min() and row['close']>row['open']:
+            add('ALL_RSI_DIV','long',row['close']); trig['ALL_RSI_DIV']=True
+        if row['high']>l10.iloc[:-1]['high'].max() and row['rsi14']<l10.iloc[:-1]['rsi14'].max() and row['close']<row['open']:
+            add('ALL_RSI_DIV','short',row['close']); trig['ALL_RSI_DIV']=True
+
+    # ALL_FISHER_9: Fisher transform signal cross
+    if 'ALL_FISHER_9' not in trig and 'fisher9' in row.index and pd.notna(row.get('fisher9')):
+        if prev['fisher9']<prev['fisher9_sig'] and row['fisher9']>row['fisher9_sig']: add('ALL_FISHER_9','long',row['close']); trig['ALL_FISHER_9']=True
+        elif prev['fisher9']>prev['fisher9_sig'] and row['fisher9']<row['fisher9_sig']: add('ALL_FISHER_9','short',row['close']); trig['ALL_FISHER_9']=True
+
+    # ALL_DPO_14: DPO zero cross
+    if 'ALL_DPO_14' not in trig and 'dpo14' in row.index and pd.notna(row.get('dpo14')):
+        if prev['dpo14']<0 and row['dpo14']>=0: add('ALL_DPO_14','long',row['close']); trig['ALL_DPO_14']=True
+        elif prev['dpo14']>0 and row['dpo14']<=0: add('ALL_DPO_14','short',row['close']); trig['ALL_DPO_14']=True
+
+    # ALL_AO_SAUCER: Awesome Oscillator saucer
+    if 'ALL_AO_SAUCER' not in trig and ci >= 4 and 'ao' in row.index and pd.notna(row.get('ao')):
+        a = [candles.iloc[ci-j]['ao'] for j in range(3,-1,-1)]
+        if all(pd.notna(x) for x in a):
+            if a[0]>0 and a[1]<a[0] and a[2]<a[1] and a[3]>a[2] and a[3]>0: add('ALL_AO_SAUCER','long',row['close']); trig['ALL_AO_SAUCER']=True
+            elif a[0]<0 and a[1]>a[0] and a[2]>a[1] and a[3]<a[2] and a[3]<0: add('ALL_AO_SAUCER','short',row['close']); trig['ALL_AO_SAUCER']=True
+
+    # ALL_HMA_CROSS: HMA 9/21 cross
+    if 'ALL_HMA_CROSS' not in trig and 'hma9' in row.index and pd.notna(row.get('hma9')) and pd.notna(row.get('hma21')):
+        if prev['hma9']<prev['hma21'] and row['hma9']>row['hma21']: add('ALL_HMA_CROSS','long',row['close']); trig['ALL_HMA_CROSS']=True
+        elif prev['hma9']>prev['hma21'] and row['hma9']<row['hma21']: add('ALL_HMA_CROSS','short',row['close']); trig['ALL_HMA_CROSS']=True
+
+    # ALL_HMA_DIR: HMA21 direction change
+    if 'ALL_HMA_DIR' not in trig and ci >= 2 and 'hma21' in row.index and pd.notna(row.get('hma21')):
+        if candles.iloc[ci-2]['hma21']>prev['hma21'] and prev['hma21']<row['hma21']: add('ALL_HMA_DIR','long',row['close']); trig['ALL_HMA_DIR']=True
+        elif candles.iloc[ci-2]['hma21']<prev['hma21'] and prev['hma21']>row['hma21']: add('ALL_HMA_DIR','short',row['close']); trig['ALL_HMA_DIR']=True
+
+    # ALL_DC10_EMA: Donchian 10 + EMA21 filter
+    if 'ALL_DC10_EMA' not in trig and 'dc10_h' in row.index and pd.notna(prev.get('dc10_h')) and pd.notna(row.get('ema21')):
+        if row['close']>prev['dc10_h'] and row['close']>row['ema21']: add('ALL_DC10_EMA','long',row['close']); trig['ALL_DC10_EMA']=True
+        elif row['close']<prev['dc10_l'] and row['close']<row['ema21']: add('ALL_DC10_EMA','short',row['close']); trig['ALL_DC10_EMA']=True
+
+    # ALL_CMO_14_ZERO: CMO 14 zero cross
+    if 'ALL_CMO_14_ZERO' not in trig and 'cmo14' in row.index and pd.notna(row.get('cmo14')):
+        if prev['cmo14']<0 and row['cmo14']>=0: add('ALL_CMO_14_ZERO','long',row['close']); trig['ALL_CMO_14_ZERO']=True
+        elif prev['cmo14']>0 and row['cmo14']<=0: add('ALL_CMO_14_ZERO','short',row['close']); trig['ALL_CMO_14_ZERO']=True
+
+    # ALL_ICHI_TK: Ichimoku TK cross above/below cloud
+    if 'ALL_ICHI_TK' not in trig and 'i_t' in row.index and pd.notna(row.get('i_t')):
+        if prev['i_t']<prev['i_k'] and row['i_t']>row['i_k'] and pd.notna(row.get('i_sa')) and row['close']>max(row['i_sa'],row['i_sb']):
+            add('ALL_ICHI_TK','long',row['close']); trig['ALL_ICHI_TK']=True
+        elif prev['i_t']>prev['i_k'] and row['i_t']<row['i_k'] and pd.notna(row.get('i_sa')) and row['close']<min(row['i_sa'],row['i_sb']):
+            add('ALL_ICHI_TK','short',row['close']); trig['ALL_ICHI_TK']=True
+
+    # ALL_MACD_ADX: MACD std cross + ADX>25
+    if 'ALL_MACD_ADX' not in trig and 'macd_std' in row.index and pd.notna(row.get('macd_std')) and pd.notna(row.get('adx_s')):
+        if row['adx_s']>25 and prev['macd_std']<prev['macd_std_sig'] and row['macd_std']>row['macd_std_sig']: add('ALL_MACD_ADX','long',row['close']); trig['ALL_MACD_ADX']=True
+        elif row['adx_s']>25 and prev['macd_std']>prev['macd_std_sig'] and row['macd_std']<row['macd_std_sig']: add('ALL_MACD_ADX','short',row['close']); trig['ALL_MACD_ADX']=True
+
+    # ALL_MACD_STD_SIG: MACD std signal cross
+    if 'ALL_MACD_STD_SIG' not in trig and 'macd_std' in row.index and pd.notna(row.get('macd_std')):
+        if prev['macd_std']<prev['macd_std_sig'] and row['macd_std']>row['macd_std_sig']: add('ALL_MACD_STD_SIG','long',row['close']); trig['ALL_MACD_STD_SIG']=True
+        elif prev['macd_std']>prev['macd_std_sig'] and row['macd_std']<row['macd_std_sig']: add('ALL_MACD_STD_SIG','short',row['close']); trig['ALL_MACD_STD_SIG']=True
+
+    # ALL_MACD_FAST_ZERO: MACD fast zero cross
+    if 'ALL_MACD_FAST_ZERO' not in trig and 'macd_fast' in row.index and pd.notna(row.get('macd_fast')):
+        if prev['macd_fast']<0 and row['macd_fast']>=0: add('ALL_MACD_FAST_ZERO','long',row['close']); trig['ALL_MACD_FAST_ZERO']=True
+        elif prev['macd_fast']>0 and row['macd_fast']<=0: add('ALL_MACD_FAST_ZERO','short',row['close']); trig['ALL_MACD_FAST_ZERO']=True
+
+    # ALL_BB_TIGHT: Tight Bollinger breakout
+    if 'ALL_BB_TIGHT' not in trig and 'bb_t_up' in row.index and pd.notna(row.get('bb_t_up')):
+        if row['close']>row['bb_t_up'] and prev['close']<=prev['bb_t_up']: add('ALL_BB_TIGHT','long',row['close']); trig['ALL_BB_TIGHT']=True
+        elif row['close']<row['bb_t_lo'] and prev['close']>=prev['bb_t_lo']: add('ALL_BB_TIGHT','short',row['close']); trig['ALL_BB_TIGHT']=True
+
+    # ALL_CCI_14_ZERO: CCI14 zero cross
+    if 'ALL_CCI_14_ZERO' not in trig and 'cci14' in row.index and pd.notna(row.get('cci14')):
+        if prev['cci14']<0 and row['cci14']>=0: add('ALL_CCI_14_ZERO','long',row['close']); trig['ALL_CCI_14_ZERO']=True
+        elif prev['cci14']>0 and row['cci14']<=0: add('ALL_CCI_14_ZERO','short',row['close']); trig['ALL_CCI_14_ZERO']=True
+
+    # ALL_CCI_20_ZERO: CCI20 zero cross
+    if 'ALL_CCI_20_ZERO' not in trig and 'cci20' in row.index and pd.notna(row.get('cci20')):
+        if prev['cci20']<0 and row['cci20']>=0: add('ALL_CCI_20_ZERO','long',row['close']); trig['ALL_CCI_20_ZERO']=True
+        elif prev['cci20']>0 and row['cci20']<=0: add('ALL_CCI_20_ZERO','short',row['close']); trig['ALL_CCI_20_ZERO']=True
+
+    # ALL_MTF_BRK: Multi-timeframe 1H breakout
+    if 'ALL_MTF_BRK' not in trig and 'high_1h' in row.index and pd.notna(row.get('high_1h')) and ci >= 2:
+        if row['close']>prev['high_1h'] and prev['close']<=candles.iloc[ci-2]['high_1h']: add('ALL_MTF_BRK','long',row['close']); trig['ALL_MTF_BRK']=True
+        elif row['close']<prev['low_1h'] and prev['close']>=candles.iloc[ci-2]['low_1h']: add('ALL_MTF_BRK','short',row['close']); trig['ALL_MTF_BRK']=True
+
+    # ALL_NR4: Narrow range 4 breakout
+    if 'ALL_NR4' not in trig and ci >= 5:
+        r_col = 'range' if 'range' in row.index else 'candle_range'
+        if r_col in row.index:
+            ranges = [candles.iloc[ci-j][r_col] for j in range(4)]
+            if row[r_col]==min(ranges) and row[r_col]>0 and abs(row.get('body', row['close']-row['open']))>=0.1*atr:
+                add('ALL_NR4','long' if (row.get('body', row['close']-row['open']))>0 else 'short',row['close']); trig['ALL_NR4']=True
+
+    # ALL_PIVOT_BOUNCE: Daily pivot bounce
+    if 'ALL_PIVOT_BOUNCE' not in trig and 'pivot' in row.index and pd.notna(row.get('pivot')):
+        if prev['low']<=row['pivot']*1.001 and row['close']>row['pivot'] and row['close']>row['open']:
+            add('ALL_PIVOT_BOUNCE','long',row['close']); trig['ALL_PIVOT_BOUNCE']=True
+        elif prev['high']>=row['pivot']*0.999 and row['close']<row['pivot'] and row['close']<row['open']:
+            add('ALL_PIVOT_BOUNCE','short',row['close']); trig['ALL_PIVOT_BOUNCE']=True
+
+    # ALL_PIVOT_BRK: Daily pivot breakout
+    if 'ALL_PIVOT_BRK' not in trig and 'pivot' in row.index and pd.notna(row.get('pivot')):
+        ab = abs(row.get('body', row['close']-row['open']))
+        if prev['close']<row['pivot'] and row['close']>row['pivot'] and ab>=0.2*atr: add('ALL_PIVOT_BRK','long',row['close']); trig['ALL_PIVOT_BRK']=True
+        elif prev['close']>row['pivot'] and row['close']<row['pivot'] and ab>=0.2*atr: add('ALL_PIVOT_BRK','short',row['close']); trig['ALL_PIVOT_BRK']=True
+
+    # ALL_EMA_513: EMA5 cross EMA13
+    if 'ALL_EMA_513' not in trig and 'ema5' in row.index and pd.notna(row.get('ema5')) and pd.notna(row.get('ema13')):
+        if prev['ema5']<prev['ema13'] and row['ema5']>row['ema13']: add('ALL_EMA_513','long',row['close']); trig['ALL_EMA_513']=True
+        elif prev['ema5']>prev['ema13'] and row['ema5']<row['ema13']: add('ALL_EMA_513','short',row['close']); trig['ALL_EMA_513']=True
+
+    # ALL_EMA_821: EMA8 cross EMA21
+    if 'ALL_EMA_821' not in trig and 'ema8' in row.index and pd.notna(row.get('ema8')) and pd.notna(row.get('ema21')):
+        if prev['ema8']<prev['ema21'] and row['ema8']>row['ema21']: add('ALL_EMA_821','long',row['close']); trig['ALL_EMA_821']=True
+        elif prev['ema8']>prev['ema21'] and row['ema8']<row['ema21']: add('ALL_EMA_821','short',row['close']); trig['ALL_EMA_821']=True
+
+    # ALL_EMA_921: EMA9 cross EMA21
+    if 'ALL_EMA_921' not in trig and 'ema9' in row.index and pd.notna(row.get('ema9')) and pd.notna(row.get('ema21')):
+        if prev['ema9']<prev['ema21'] and row['ema9']>row['ema21']: add('ALL_EMA_921','long',row['close']); trig['ALL_EMA_921']=True
+        elif prev['ema9']>prev['ema21'] and row['ema9']<row['ema21']: add('ALL_EMA_921','short',row['close']); trig['ALL_EMA_921']=True
+
+    # ALL_EMA_TREND_PB: EMA trend pullback
+    if 'ALL_EMA_TREND_PB' not in trig and 'ema50' in row.index and pd.notna(row.get('ema50')) and pd.notna(row.get('ema200')) and pd.notna(row.get('ema20')):
+        if row['ema50']>row['ema200'] and prev['low']<=prev['ema20'] and row['close']>row['ema20'] and row['close']>row['open']:
+            add('ALL_EMA_TREND_PB','long',row['close']); trig['ALL_EMA_TREND_PB']=True
+        elif row['ema50']<row['ema200'] and prev['high']>=prev['ema20'] and row['close']<row['ema20'] and row['close']<row['open']:
+            add('ALL_EMA_TREND_PB','short',row['close']); trig['ALL_EMA_TREND_PB']=True
+
+    # ALL_WILLR_14: Williams %R 14 reversal (from -80/-20)
+    if 'ALL_WILLR_14' not in trig and 'wr14' in row.index and pd.notna(row.get('wr14')):
+        if prev['wr14']<-80 and row['wr14']>=-80: add('ALL_WILLR_14','long',row['close']); trig['ALL_WILLR_14']=True
+        elif prev['wr14']>-20 and row['wr14']<=-20: add('ALL_WILLR_14','short',row['close']); trig['ALL_WILLR_14']=True
+
+    # ALL_MOM_10: Momentum 10 zero cross
+    if 'ALL_MOM_10' not in trig and 'mom10' in row.index and pd.notna(row.get('mom10')):
+        if prev['mom10']<0 and row['mom10']>=0: add('ALL_MOM_10','long',row['close']); trig['ALL_MOM_10']=True
+        elif prev['mom10']>0 and row['mom10']<=0: add('ALL_MOM_10','short',row['close']); trig['ALL_MOM_10']=True
+
+    # ALL_MOM_14: Momentum 14 zero cross
+    if 'ALL_MOM_14' not in trig and 'mom14' in row.index and pd.notna(row.get('mom14')):
+        if prev['mom14']<0 and row['mom14']>=0: add('ALL_MOM_14','long',row['close']); trig['ALL_MOM_14']=True
+        elif prev['mom14']>0 and row['mom14']<=0: add('ALL_MOM_14','short',row['close']); trig['ALL_MOM_14']=True
+
+    # ALL_DC50: Donchian 50 breakout
+    if 'ALL_DC50' not in trig and 'dc50_h' in row.index and pd.notna(prev.get('dc50_h')):
+        if row['close']>prev['dc50_h']: add('ALL_DC50','long',row['close']); trig['ALL_DC50']=True
+        elif row['close']<prev['dc50_l']: add('ALL_DC50','short',row['close']); trig['ALL_DC50']=True
+
+    # TOK_FISHER: Fisher transform Tokyo
+    if 0.0<=hour<6.0 and 'TOK_FISHER' not in trig and 'fisher9' in row.index and pd.notna(row.get('fisher9')):
+        if prev['fisher9']<prev['fisher9_sig'] and row['fisher9']>row['fisher9_sig']: add('TOK_FISHER','long',row['close']); trig['TOK_FISHER']=True
+        elif prev['fisher9']>prev['fisher9_sig'] and row['fisher9']<row['fisher9_sig']: add('TOK_FISHER','short',row['close']); trig['TOK_FISHER']=True
+
+    # TOK_MACD_MED: MACD med cross Tokyo
+    if 0.0<=hour<6.0 and 'TOK_MACD_MED' not in trig and 'macd_med' in row.index and pd.notna(row.get('macd_med')):
+        if prev['macd_med']<prev['macd_med_sig'] and row['macd_med']>row['macd_med_sig']: add('TOK_MACD_MED','long',row['close']); trig['TOK_MACD_MED']=True
+        elif prev['macd_med']>prev['macd_med_sig'] and row['macd_med']<row['macd_med_sig']: add('TOK_MACD_MED','short',row['close']); trig['TOK_MACD_MED']=True
+
+    # LON_DC10: Donchian 10 London-only
+    if 8.0<=hour<14.5 and 'LON_DC10' not in trig and 'dc10_h' in row.index and pd.notna(prev.get('dc10_h')):
+        if row['close']>prev['dc10_h']: add('LON_DC10','long',row['close']); trig['LON_DC10']=True
+        elif row['close']<prev['dc10_l']: add('LON_DC10','short',row['close']); trig['LON_DC10']=True
+
+    # NY_HMA_CROSS: HMA 9/21 cross NY
+    if 14.5<=hour<21.0 and 'NY_HMA_CROSS' not in trig and 'hma9' in row.index and pd.notna(row.get('hma9')) and pd.notna(row.get('hma21')):
+        if prev['hma9']<prev['hma21'] and row['hma9']>row['hma21']: add('NY_HMA_CROSS','long',row['close']); trig['NY_HMA_CROSS']=True
+        elif prev['hma9']>prev['hma21'] and row['hma9']<row['hma21']: add('NY_HMA_CROSS','short',row['close']); trig['NY_HMA_CROSS']=True
