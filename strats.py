@@ -38,6 +38,7 @@ ALL_STRATS = [
     'ALL_WILLR_14','ALL_MOM_10','ALL_MOM_14','ALL_DC50',
     'TOK_FISHER','TOK_MACD_MED',
     'LON_DC10','NY_HMA_CROSS',
+    'ALL_CMO_9','ALL_CMO_14','ALL_MACD_FAST_SIG','ALL_MACD_MED_SIG','ALL_WILLR_7',
 ]
 
 STRAT_NAMES = {
@@ -120,6 +121,11 @@ STRAT_NAMES = {
     'TOK_MACD_MED':'MACD med cross Tokyo',
     'LON_DC10':'Donchian 10 London',
     'NY_HMA_CROSS':'HMA 9/21 cross NY',
+    'ALL_CMO_9':'CMO 9 reversal (-50/+50)',
+    'ALL_CMO_14':'CMO 14 reversal (-50/+50)',
+    'ALL_MACD_FAST_SIG':'MACD fast signal cross',
+    'ALL_MACD_MED_SIG':'MACD med signal cross',
+    'ALL_WILLR_7':'Williams %R 7 reversal',
 }
 
 STRAT_SESSION = {
@@ -155,6 +161,8 @@ STRAT_SESSION = {
     'ALL_WILLR_14':'All','ALL_MOM_10':'All','ALL_MOM_14':'All','ALL_DC50':'All',
     'TOK_FISHER':'Tokyo','TOK_MACD_MED':'Tokyo',
     'LON_DC10':'London','NY_HMA_CROSS':'New York',
+    'ALL_CMO_9':'All','ALL_CMO_14':'All',
+    'ALL_MACD_FAST_SIG':'All','ALL_MACD_MED_SIG':'All','ALL_WILLR_7':'All',
 }
 
 def sim_exit(cdf, pos, entry, d, atr, check_entry_candle=False):
@@ -1009,3 +1017,28 @@ def detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_
     if 14.5<=hour<21.0 and 'NY_HMA_CROSS' not in trig and 'hma9' in row.index and pd.notna(row.get('hma9')) and pd.notna(row.get('hma21')):
         if prev['hma9']<prev['hma21'] and row['hma9']>row['hma21']: add('NY_HMA_CROSS','long',row['close']); trig['NY_HMA_CROSS']=True
         elif prev['hma9']>prev['hma21'] and row['hma9']<row['hma21']: add('NY_HMA_CROSS','short',row['close']); trig['NY_HMA_CROSS']=True
+
+    # ALL_CMO_9: CMO 9 reversal (-50/+50)
+    if 'ALL_CMO_9' not in trig and 'cmo9' in row.index and pd.notna(row.get('cmo9')):
+        if prev['cmo9']<-50 and row['cmo9']>=-50: add('ALL_CMO_9','long',row['close']); trig['ALL_CMO_9']=True
+        elif prev['cmo9']>50 and row['cmo9']<=50: add('ALL_CMO_9','short',row['close']); trig['ALL_CMO_9']=True
+
+    # ALL_CMO_14: CMO 14 reversal (-50/+50)
+    if 'ALL_CMO_14' not in trig and 'cmo14' in row.index and pd.notna(row.get('cmo14')):
+        if prev['cmo14']<-50 and row['cmo14']>=-50: add('ALL_CMO_14','long',row['close']); trig['ALL_CMO_14']=True
+        elif prev['cmo14']>50 and row['cmo14']<=50: add('ALL_CMO_14','short',row['close']); trig['ALL_CMO_14']=True
+
+    # ALL_MACD_FAST_SIG: MACD fast signal cross
+    if 'ALL_MACD_FAST_SIG' not in trig and 'macd_fast' in row.index and pd.notna(row.get('macd_fast')):
+        if prev['macd_fast']<prev['macd_fast_sig'] and row['macd_fast']>row['macd_fast_sig']: add('ALL_MACD_FAST_SIG','long',row['close']); trig['ALL_MACD_FAST_SIG']=True
+        elif prev['macd_fast']>prev['macd_fast_sig'] and row['macd_fast']<row['macd_fast_sig']: add('ALL_MACD_FAST_SIG','short',row['close']); trig['ALL_MACD_FAST_SIG']=True
+
+    # ALL_MACD_MED_SIG: MACD med signal cross
+    if 'ALL_MACD_MED_SIG' not in trig and 'macd_med' in row.index and pd.notna(row.get('macd_med')):
+        if prev['macd_med']<prev['macd_med_sig'] and row['macd_med']>row['macd_med_sig']: add('ALL_MACD_MED_SIG','long',row['close']); trig['ALL_MACD_MED_SIG']=True
+        elif prev['macd_med']>prev['macd_med_sig'] and row['macd_med']<row['macd_med_sig']: add('ALL_MACD_MED_SIG','short',row['close']); trig['ALL_MACD_MED_SIG']=True
+
+    # ALL_WILLR_7: Williams %R 7 reversal
+    if 'ALL_WILLR_7' not in trig and 'wr7' in row.index and pd.notna(row.get('wr7')):
+        if prev['wr7']<-80 and row['wr7']>=-80: add('ALL_WILLR_7','long',row['close']); trig['ALL_WILLR_7']=True
+        elif prev['wr7']>-20 and row['wr7']<=-20: add('ALL_WILLR_7','short',row['close']); trig['ALL_WILLR_7']=True

@@ -47,9 +47,12 @@ INSTRUMENTS = {
     'BTCUSD': {
         'risk_pct': 0.0025,
         'portfolio': [
-            # TODO: run analyze_combos.py 5ers --symbol btcusd
+            'TOK_PREVEXT',     # TRAIL 0.5/0.30/0.50  PF=3.97 WR=29%
+            'ALL_EMA_513',     # TPSL  2.5/0.75       PF=1.39 WR=82%
+            'PO3_SWEEP',       # TRAIL 3.0/0.50/0.50  PF=2.49 WR=85%
+            'ALL_HAMMER',      # TRAIL 3.0/0.30/0.30  PF=1.44 WR=80%
         ],
-        # PF 1.47 | WR 54% | DD -3.2% @ 0.25% | 12/13
+        # MinDD4: PF 1.73 | WR 79% | DD -7.1% @ 0.25% | Rend +251% | 13/13
     },
 }
 
