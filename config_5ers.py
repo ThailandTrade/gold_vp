@@ -21,9 +21,17 @@ INSTRUMENTS = {
     'JPN225': {
         'risk_pct': 0.0025,
         'portfolio': [
-            # TODO: run analyze_combos.py 5ers --symbol jpn225
+            'ALL_FIB_618',     # TRAIL 3.0  PF=1.95 WR=82%
+            'IDX_LATE_REV',    # TRAIL 3.0  PF=1.47 WR=83%
+            'D8',              # TRAIL 1.5  PF=2.02 WR=62%
+            'TOK_NR4',         # TRAIL 1.5  PF=1.41 WR=64%
+            'LON_GAP',         # TRAIL 2.0  PF=1.38 WR=68%
+            'LON_DC10_MOM',    # TRAIL 3.0  PF=1.55 WR=74%
+            'LON_TOKEND',      # TRAIL 3.0  PF=1.30 WR=70%
+            'ALL_MACD_RSI',    # TRAIL 3.0  PF=1.26 WR=79%
+            'TOK_PREVEXT',     # TPSL  3.0  PF=1.49 WR=74%
         ],
-        # PF 1.74 | WR 78% | DD -1.8% @ 0.25% | 13/13
+        # PF*WR 9: PF 1.85 | WR 79% | DD -2.0% @ 0.25% | +258% | 13/13
     },
     'DAX40': {
         'risk_pct': 0.0025,

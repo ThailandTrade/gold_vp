@@ -26,6 +26,7 @@ ALL_STRATS = [
     'IDX_VWAP_BOUNCE','IDX_BB_REV','IDX_RSI_REV',
     'IDX_PREV_HL','IDX_NR4','IDX_KC_BRK',
     'IDX_ENGULF','IDX_3SOLDIERS','IDX_CONSEC_REV',
+    'TOK_NR4','LON_DC10_MOM',
 ]
 
 STRAT_NAMES = {
@@ -74,6 +75,8 @@ STRAT_NAMES = {
     'IDX_ENGULF':'Engulfing pattern (index)',
     'IDX_3SOLDIERS':'Three soldiers/crows (index)',
     'IDX_CONSEC_REV':'Consecutive exhaustion reversal (index)',
+    'TOK_NR4':'Narrow range 4 Tokyo',
+    'LON_DC10_MOM':'Donchian 10 + momentum London',
 }
 
 STRAT_SESSION = {
@@ -98,6 +101,7 @@ STRAT_SESSION = {
     'IDX_VWAP_BOUNCE':'US','IDX_BB_REV':'All','IDX_RSI_REV':'All',
     'IDX_PREV_HL':'US','IDX_NR4':'All','IDX_KC_BRK':'All',
     'IDX_ENGULF':'All','IDX_3SOLDIERS':'All','IDX_CONSEC_REV':'All',
+    'TOK_NR4':'Tokyo','LON_DC10_MOM':'London',
 }
 
 def sim_exit(cdf, pos, entry, d, atr, check_entry_candle=False):
@@ -530,6 +534,20 @@ def detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_
                 add('ALL_VOL_SPIKE','long',row['close']); trig['ALL_VOL_SPIKE']=True
             elif cb < 0 and abs(cb) >= 0.3*atr:
                 add('ALL_VOL_SPIKE','short',row['close']); trig['ALL_VOL_SPIKE']=True
+
+    # TOK_NR4: Narrow range 4 during Tokyo session
+    if 0.0 <= hour < 6.0 and 'TOK_NR4' not in trig and ci >= 5 and 'candle_range' in row.index:
+        ranges = [candles.iloc[ci-j]['candle_range'] for j in range(4)]
+        if row['candle_range'] == min(ranges) and row['candle_range'] > 0 and abs(row['body']) >= 0.1*atr:
+            add('TOK_NR4','long' if row['body'] > 0 else 'short',row['close']); trig['TOK_NR4']=True
+
+    # LON_DC10_MOM: Donchian 10 breakout + momentum during London
+    if 8.0 <= hour < 14.5 and 'LON_DC10_MOM' not in trig and 'dc10_h' in row.index and pd.notna(prev.get('dc10_h')):
+        mom = row['close'] / candles.iloc[ci-10]['close'] * 100 - 100 if ci >= 10 else 0
+        if row['close'] > prev['dc10_h'] and mom > 0:
+            add('LON_DC10_MOM','long',row['close']); trig['LON_DC10_MOM']=True
+        elif row['close'] < prev['dc10_l'] and mom < 0:
+            add('LON_DC10_MOM','short',row['close']); trig['LON_DC10_MOM']=True
 
     # ── INDEX / CRYPTO STRATS (US session: 14:30-21:00 UTC) ──
     ny_open = pd.Timestamp(today.year,today.month,today.day,14,30,tz='UTC')
