@@ -27,7 +27,7 @@ Les open strats (LON_GAP, LON_BIGGAP, LON_KZ, LON_TOKEND, etc.) detectent sur ca
 | JPN225 | 8 | PF*WR 9 | 1.85 | 79% | - | 13/13 | deja en place, LON_GAP retire |
 | DAX40 | 6 | MinDD 6 | 1.97 | 77% | -0.3% | 13/13 | ajoute |
 | BTCUSD | 4 | MinDD 4 | 1.73 | 79% | -0.3% | 13/13 | ajoute |
-| NAS100 | - | - | - | - | - | - | EN COURS — attente validation |
+| NAS100 | 10 | MinDD 10 | 1.40 | 77% | -0.4% | 13/13 | VALIDE |
 | SP500 | - | - | - | - | - | - | a faire |
 | UK100 | - | - | - | - | - | - | a faire |
 | US30 | - | - | - | - | - | - | a faire |

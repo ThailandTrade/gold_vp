@@ -54,6 +54,22 @@ INSTRUMENTS = {
         ],
         # MinDD4: PF 1.73 | WR 79% | DD -7.1% @ 0.25% | Rend +251% | 13/13
     },
+    'NAS100': {
+        'risk_pct': 0.0005,
+        'portfolio': [
+            'D8',              # TRAIL 1.5/0.50/0.30  PF=2.02 WR=62%
+            'ALL_DC50',        # TPSL  3.0/0.50       PF=1.54 WR=89%
+            'ALL_DC10_EMA',    # TPSL  2.5/0.75       PF=1.47 WR=81%
+            'TOK_FISHER',      # TRAIL 2.0/0.30/0.30  PF=1.34 WR=75%
+            'TOK_PREVEXT',     # TPSL  3.0/1.50       PF=1.49 WR=74%
+            'ALL_FVG_BULL',    # TRAIL 2.0/0.30/0.30  PF=1.49 WR=78%
+            'ALL_MACD_HIST',   # TRAIL 1.5/0.30/0.30  PF=1.32 WR=69%
+            'IDX_PREV_HL',     # TRAIL 3.0/0.30/0.30  PF=1.44 WR=67%
+            'ALL_MSTAR',       # TPSL  2.5/0.50       PF=1.52 WR=85%
+            'TOK_NR4',         # TRAIL 1.5/0.50/0.50  PF=1.41 WR=64%
+        ],
+        # MinDD10: PF 1.40 | WR 77% | DD -0.4% @ 0.05% | Rend +8% | 13/13
+    },
 }
 
 # Backward compat: default instrument
