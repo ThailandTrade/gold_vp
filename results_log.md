@@ -54,6 +54,11 @@ DD calcule a chaque trade (pas mensuel).
 
 **9,164 trades | WR 76% | PF 1.54 | Max DD -0.81% | $100k -> $179k (+79.4%) | 13/13 mois**
 
+### Bug lot sizing JPN225 — 2026-03-27
+Formule lots utilisait contract_size. Faux pour JPN225 (cote en JPY, pas USD).
+Fix: `point_value = tick_value / tick_size` puis `lots = risk / (sl_distance * point_value)`.
+tick_value est toujours en devise du compte (USD) — fonctionne pour tous les instruments.
+
 ### Test look-ahead concret — 2026-03-27
 Test: comparer signaux dataset complet vs dataset tronque a 60%.
 Si look-ahead, les signaux de la premiere moitie changeraient.
