@@ -87,6 +87,15 @@ INSTRUMENTS = {
         ],
         # MinDD11: PF 1.48 | WR 78% | DD -0.7% @ 0.05% | Rend +13% | 13/13
     },
+    'UK100': {
+        'risk_pct': 0.0005,
+        'portfolio': [
+            'ALL_CONSEC_REV',  # TPSL  3.0/1.00       PF=1.73 WR=81%
+            'NY_HMA_CROSS',    # TRAIL 2.0/0.30/0.30  PF=1.66 WR=71%
+            'IDX_LATE_REV',    # TRAIL 2.0/0.30/0.30  PF=1.66 WR=77%
+        ],
+        # PF3: PF 1.66 | WR 77% | DD -0.4% @ 0.05% | Rend +6% | 13/13
+    },
 }
 
 # Backward compat: default instrument
