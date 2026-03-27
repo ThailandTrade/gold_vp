@@ -165,27 +165,25 @@ n_trades = len(trades)
 c1, c2, c3, c4, c5, c6 = st.columns(6)
 c1.metric("Balance", f"${balance:,.0f}", f"${pnl_total:+,.0f}")
 
+# Period bounds (always computed)
+today = now.date()
+if period == "Aujourd'hui":
+    filter_from = today; filter_to = today
+elif period == "Cette semaine":
+    filter_from = today - timedelta(days=today.weekday()); filter_to = today
+elif period == "Ce mois":
+    filter_from = today.replace(day=1); filter_to = today
+else:
+    filter_from = date_from; filter_to = date_to
+
+n_trades_filtered = 0
+
 if n_trades > 0:
     df_all = pd.DataFrame(trades)
     df_all['pnl'] = df_all['pnl'].astype(float)
     df_all['entry_time'] = pd.to_datetime(df_all['entry_time'])
     df_all['exit_time'] = pd.to_datetime(df_all['exit_time'])
     df_all['date'] = df_all['entry_time'].dt.date
-
-    # Period filter
-    today = now.date()
-    if period == "Aujourd'hui":
-        filter_from = today
-        filter_to = today
-    elif period == "Cette semaine":
-        filter_from = today - timedelta(days=today.weekday())
-        filter_to = today
-    elif period == "Ce mois":
-        filter_from = today.replace(day=1)
-        filter_to = today
-    else:  # Custom
-        filter_from = date_from
-        filter_to = date_to
 
     df = df_all[(df_all['date'] >= filter_from) & (df_all['date'] <= filter_to)].copy()
     n_trades_filtered = len(df)
@@ -257,7 +255,7 @@ else:
 st.divider()
 
 # ── EQUITY + DRAWDOWN ──
-if n_trades > 1:
+if n_trades_filtered > 1:
     st.subheader("Equity & Drawdown")
     fig = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.08, row_heights=[0.7, 0.3])
     eq_x = [df['entry_time'].iloc[0] - pd.Timedelta(minutes=30)] + df['entry_time'].tolist()
@@ -279,7 +277,7 @@ if n_trades > 1:
     st.divider()
 
 # ── PERFORMANCE PAR INSTRUMENT ──
-if n_trades > 0:
+if n_trades_filtered > 0:
     st.subheader("Performance par instrument")
     sym_rows = []
     for sym in sorted(df['symbol'].unique()):
@@ -355,10 +353,10 @@ if n_trades > 0:
         except: c = ''
         return [c] * len(row)
     st.dataframe(tbl.style.apply(color_trade, axis=1),
-                 use_container_width=True, hide_index=True, height=min(n_trades * 38 + 40, 500))
+                 use_container_width=True, hide_index=True, height=min(n_trades_filtered * 38 + 40, 500))
 
 else:
-    st.info(f"En attente du premier trade. {n_strats} strategies sur {n_instruments} instruments.")
+    st.info(f"Aucun trade sur cette periode. {n_strats} strategies sur {n_instruments} instruments.")
 
 # ── SIDEBAR: INSTRUMENTS WITH EXPANDABLE STRATS ──
 with st.sidebar:
@@ -371,8 +369,8 @@ with st.sidebar:
         # Build instrument summary — TODAY only
         sym_pnl = 0; sym_trades = 0; sym_wins = 0
         has_trades = False
-        if n_trades > 0:
-            s = df[(df['symbol'] == sym) & ((df['date'] >= filter_from) & (df['date'] <= filter_to))]
+        if n_trades_filtered > 0:
+            s = df[df['symbol'] == sym]
             if len(s) > 0:
                 has_trades = True
                 sym_trades = len(s); sym_wins = (s['pnl'] > 0).sum()
@@ -394,7 +392,7 @@ with st.sidebar:
                     exit_str += f" A={exit_cfg[2]:.1f} T={exit_cfg[3]:.1f}"
 
                 if has_trades:
-                    st_df = df[(df['strat'] == sn) & (df['symbol'] == sym) & ((df['date'] >= filter_from) & (df['date'] <= filter_to))]
+                    st_df = df[(df['strat'] == sn) & (df['symbol'] == sym)]
                     if len(st_df) > 0:
                         w = (st_df['pnl'] > 0).sum(); ns = len(st_df)
                         pnl_s = st_df['pnl'].sum()
