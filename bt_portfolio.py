@@ -51,6 +51,8 @@ def eval_combo(strat_arrays, portfolio, risk):
     events.sort()
     cap = CAPITAL; peak = cap; max_dd = 0; gp = 0; gl = 0; wins = 0
     months = {}; entry_caps = {}; strat_stats = {}
+    # Per-month detailed stats
+    month_detail = {}  # mo -> {'n','w','gp','gl','cap','peak','dd'}
     for bar, evt, idx in events:
         if evt == 0: entry_caps[idx] = cap
         else:
@@ -63,6 +65,13 @@ def eval_combo(strat_arrays, portfolio, risk):
             if pnl > 0: gp += pnl; wins += 1
             else: gl += abs(pnl)
             months[mo] = months.get(mo, 0.0) + pnl
+            md = month_detail.setdefault(mo, {'n':0,'w':0,'gp':0,'gl':0})
+            md['n'] += 1
+            if pnl > 0: md['w'] += 1; md['gp'] += pnl
+            else: md['gl'] += abs(pnl)
+            month_detail[mo]['cap'] = cap
+            month_detail[mo]['peak'] = peak
+            month_detail[mo]['dd'] = max_dd
             ss = strat_stats.setdefault(_sn, {'n':0,'w':0,'gp':0,'gl':0})
             ss['n'] += 1
             if pnl > 0: ss['w'] += 1; ss['gp'] += pnl
@@ -70,7 +79,7 @@ def eval_combo(strat_arrays, portfolio, risk):
     pm = sum(1 for v in months.values() if v > 0)
     return {'n': n, 'pf': gp/(gl+0.01), 'wr': wins/n*100, 'mdd': max_dd*100,
             'ret': (cap-CAPITAL)/CAPITAL*100, 'capital': cap, 'pm': pm, 'tm': len(months),
-            'months': months, 'strat_stats': strat_stats}
+            'months': months, 'strat_stats': strat_stats, 'month_detail': month_detail}
 
 # ── RUN ──
 W = 90
@@ -131,51 +140,46 @@ for sym, icfg in INSTRUMENTS.items():
 # ── AGGREGATE ALL INSTRUMENTS ──
 if len(all_results) > 1:
     print(f"\n{'='*W}")
-    print(f"  AGREGE — {len(all_results)} instruments @ ${CAPITAL:,.0f}")
+    print(f"  AGREGE — {len(all_results)} instruments @ ${CAPITAL:,.0f} chacun")
     print(f"{'='*W}")
 
-    # Merge all monthly PnL
-    agg_months = {}
-    agg_trades = 0; agg_wins = 0; agg_gp = 0; agg_gl = 0
+    # Merge month_detail across all instruments
+    all_months = set()
     for ar in all_results:
-        r = ar['r']
-        agg_trades += r['n']
-        for mo, v in r['months'].items():
-            agg_months[mo] = agg_months.get(mo, 0) + v
-        for ss in r['strat_stats'].values():
-            agg_wins += ss['w']; agg_gp += ss['gp']; agg_gl += ss['gl']
+        all_months.update(ar['r']['month_detail'].keys())
+    sorted_months = sorted(all_months)
 
-    # Build equity curve month by month
-    cap = CAPITAL * len(all_results)  # total capital across instruments
-    peak = cap; max_dd = 0; max_dd_pct = 0
-    sorted_months = sorted(agg_months.keys())
+    start_cap = CAPITAL * len(all_results)
+    cap = start_cap; peak = cap; max_dd_pct = 0
 
-    print(f"\n  {'Mois':>8s} {'PnL':>10s} {'Capital':>12s} {'Rend cum':>10s} {'WR mois':>8s} {'DD':>8s} {'MaxDD':>8s}")
-    print(f"  {'-'*70}")
+    print(f"\n  {'Mois':>8s} {'Trades':>7s} {'Wins':>6s} {'WR':>5s} {'PF':>6s} {'PnL':>10s} {'Capital':>12s} {'Rend cum':>9s} {'DD':>7s} {'MaxDD':>7s}")
+    print(f"  {'-'*85}")
 
-    # Per-month WR: count winning instruments
-    cum_pnl = 0
-    start_cap = cap
     for mo in sorted_months:
-        pnl = agg_months[mo]
-        cap += pnl
-        cum_pnl += pnl
+        m_n = 0; m_w = 0; m_gp = 0; m_gl = 0; m_pnl = 0
+        for ar in all_results:
+            md = ar['r']['month_detail'].get(mo)
+            if md:
+                m_n += md['n']; m_w += md['w']; m_gp += md['gp']; m_gl += md['gl']
+            m_pnl += ar['r']['months'].get(mo, 0)
+        cap += m_pnl
         if cap > peak: peak = cap
         dd = (cap - peak) / peak * 100
         if dd < max_dd_pct: max_dd_pct = dd
-        rend_cum = cum_pnl / start_cap * 100
-        # Count winning instruments this month
-        n_win = sum(1 for ar in all_results if ar['r']['months'].get(mo, 0) > 0)
-        n_tot = sum(1 for ar in all_results if mo in ar['r']['months'])
-        print(f"  {mo:>8s} ${pnl:>+9,.0f} ${cap:>11,.0f} {rend_cum:>+9.1f}%   {n_win}/{n_tot}   {dd:>+7.2f}% {max_dd_pct:>+7.2f}%")
+        rend_cum = (cap - start_cap) / start_cap * 100
+        wr = m_w / m_n * 100 if m_n > 0 else 0
+        pf = m_gp / (m_gl + 0.01) if m_gl > 0 else m_gp
+        print(f"  {mo:>8s} {m_n:>7d} {m_w:>6d} {wr:>4.0f}% {pf:>5.2f} ${m_pnl:>+9,.0f} ${cap:>11,.0f} {rend_cum:>+8.1f}% {dd:>+6.2f}% {max_dd_pct:>+6.2f}%")
 
-    agg_pf = agg_gp / (agg_gl + 0.01)
-    agg_wr = agg_wins / agg_trades * 100 if agg_trades > 0 else 0
-    pm = sum(1 for v in agg_months.values() if v > 0)
-    total_rend = cum_pnl / start_cap * 100
+    # Totals
+    tot_n = sum(ar['r']['n'] for ar in all_results)
+    tot_w = sum(ss['w'] for ar in all_results for ss in ar['r']['strat_stats'].values())
+    tot_gp = sum(ss['gp'] for ar in all_results for ss in ar['r']['strat_stats'].values())
+    tot_gl = sum(ss['gl'] for ar in all_results for ss in ar['r']['strat_stats'].values())
+    pm = sum(1 for mo in sorted_months if sum(ar['r']['months'].get(mo, 0) for ar in all_results) > 0)
 
-    print(f"  {'-'*70}")
-    print(f"  Trades: {agg_trades:,d} | PF: {agg_pf:.2f} | WR: {agg_wr:.0f}% | Max DD: {max_dd_pct:+.2f}% | Rend: {total_rend:+.1f}% | M+: {pm}/{len(sorted_months)}")
-    print(f"  Capital: ${start_cap:,.0f} -> ${cap:,.0f}")
+    print(f"  {'-'*85}")
+    print(f"  Trades: {tot_n:,d} | WR: {tot_w/tot_n*100:.0f}% | PF: {tot_gp/(tot_gl+0.01):.2f} | Max DD: {max_dd_pct:+.2f}% | Rend: {(cap-start_cap)/start_cap*100:+.1f}% | M+: {pm}/{len(sorted_months)}")
+    print(f"  Capital: ${start_cap:,.0f} -> ${cap:,.0f} ({(cap-start_cap)/start_cap*100:+.1f}%)")
 
 print(f"\n{'='*W}")
