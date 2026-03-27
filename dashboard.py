@@ -328,31 +328,22 @@ if n_trades > 0:
 else:
     st.info(f"En attente du premier trade. {n_strats} strategies sur {n_instruments} instruments.")
 
-# ── SIDEBAR: INSTRUMENTS & STRATS ──
+# ── SIDEBAR: INSTRUMENTS SUMMARY ──
 with st.sidebar:
     st.subheader(f"Portfolio {BROKER}")
     for sym, icfg in INSTRUMENTS.items():
         portfolio = icfg['portfolio']
         if not portfolio: continue
-        sym_exits = STRAT_EXITS.get((account, sym), {})
-        st.caption(f"**{sym}** — {len(portfolio)} strats")
-        for sn in portfolio:
-            exit_cfg = sym_exits.get(sn, DEFAULT_EXIT)
-            exit_str = f"SL={exit_cfg[1]:.1f}"
-            if exit_cfg[0] == 'TPSL':
-                exit_str += f" TP={exit_cfg[2]:.1f}"
-            else:
-                exit_str += f" ACT={exit_cfg[2]:.1f} TR={exit_cfg[3]:.1f}"
-
-            if n_trades > 0 and sn in df['strat'].values:
-                s = df[(df['strat'] == sn) & (df['symbol'] == sym)]
-                if len(s) > 0:
-                    w = (s['pnl'] > 0).sum(); ns = len(s)
-                    pnl_s = s['pnl'].sum()
-                    icon = "🟢" if pnl_s >= 0 else "🔴"
-                    st.markdown(f"{icon} **{sn}** {ns}t WR{w/ns*100:.0f}% ${pnl_s:+,.0f}")
-                    continue
-            st.markdown(f"⚪ **{sn}** {exit_cfg[0]} {exit_str}")
+        n_s = len(portfolio)
+        if n_trades > 0:
+            s = df[df['symbol'] == sym]
+            if len(s) > 0:
+                w = (s['pnl'] > 0).sum(); ns = len(s)
+                pnl_s = s['pnl'].sum()
+                icon = "🟢" if pnl_s >= 0 else "🔴"
+                st.markdown(f"{icon} **{sym}** · {n_s} strats · {ns}t · WR{w/ns*100:.0f}% · ${pnl_s:+,.0f}")
+                continue
+        st.markdown(f"⚪ **{sym}** · {n_s} strats")
 
 # Auto-refresh
 from streamlit_autorefresh import st_autorefresh
