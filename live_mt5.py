@@ -104,7 +104,8 @@ def mt5_our_positions(symbol=None):
 def mt5_lot_size(symbol, risk_amount, sl_distance):
     sym = mt5.symbol_info(symbol)
     if not sym or sl_distance <= 0: return sym.volume_min if sym else 0.01
-    lots = (risk_amount / sl_distance) / sym.trade_contract_size
+    point_value = sym.trade_tick_value / sym.trade_tick_size if sym.trade_tick_size > 0 else sym.trade_contract_size
+    lots = risk_amount / (sl_distance * point_value)
     lots = max(sym.volume_min, round(lots / sym.volume_step) * sym.volume_step)
     lots = min(lots, sym.volume_max)
     return round(lots, 2)
