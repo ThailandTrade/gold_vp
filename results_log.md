@@ -937,3 +937,19 @@ streamlit run dashboard.py              # dashboard
 - Warning si risk reel > 1.5x la cible (ex: $1000 capital avec SL 3*ATR → min lot donne 3.4% risk au lieu de 1%)
 - A $100k+ l'arrondi est negligeable (<0.1%)
 - Commit: 7f4a5cb
+
+---
+
+## 2026-03-27 — Architecture multi-instrument
+
+### Implementation
+- Config: `config_{broker}.py` avec `INSTRUMENTS` dict (portfolio + risk par symbole)
+- `live_mt5.py`: un seul process par broker, boucle sur tous les instruments
+  - Magic = broker_base + symbol_offset + strat_hash
+  - State unique avec `per_symbol` dict
+- `bt_portfolio.py`: backtest tous instruments ou `--symbol` pour un seul
+- Commit: fc27c3c
+
+### Portfolios TODO
+Les portfolios JPN225, DAX40, BTCUSD doivent etre remplis dans config_5ers.py
+apres analyse des combos (analyze_combos.py 5ers --symbol jpn225 etc.)
