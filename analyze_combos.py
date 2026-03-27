@@ -12,6 +12,7 @@ from itertools import combinations
 
 # ── LOAD DATA ──
 import argparse
+import importlib
 _parser = argparse.ArgumentParser(); _parser.add_argument('account', nargs='?', default='icm')
 _parser.add_argument('--symbol', default='xauusd')
 _args = _parser.parse_args()
@@ -25,10 +26,18 @@ strat_arrays = data['strat_arrays']
 best_configs = data['best_configs']
 OPEN_STRATS = set(data['OPEN_STRATS'])
 all_strats = sorted(strat_arrays.keys())
-print(f"  {len(all_strats)} strats loaded.")
+# Load capital & risk from config
+_cfg = importlib.import_module(f'config_{_args.account}')
+_sym_upper = _sym.upper()
+if hasattr(_cfg, 'INSTRUMENTS') and _sym_upper in _cfg.INSTRUMENTS:
+    RISK = _cfg.INSTRUMENTS[_sym_upper]['risk_pct']
+else:
+    RISK = getattr(_cfg, 'RISK_PCT', 0.0005)
+CAPITAL = 100000.0
+print(f"  {len(all_strats)} strats loaded. Capital=${CAPITAL:,.0f} Risk={RISK*100:.2f}%")
 
 # ── EVAL COMBO (event-based, identique a optimize_all.py) ──
-def eval_combo(strats, capital=1000.0, risk=0.01):
+def eval_combo(strats, capital=CAPITAL, risk=RISK):
     combined = []
     for sn in strats:
         if sn in strat_arrays: combined.extend(strat_arrays[sn])

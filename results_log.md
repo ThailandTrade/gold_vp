@@ -1,5 +1,44 @@
 # Results Log — Evolution des resultats
 
+## 2026-03-27 — Multi-instrument: audit live + migration strats + portfolios
+
+### Changements config globaux
+- Capital par defaut: $100,000
+- Risk par defaut: 0.05% (0.0005) sur tous les brokers (ICM, FTMO, 5ers)
+- analyze_combos.py corrige pour utiliser capital/risk du config au lieu de hardcode
+
+### Migration 39 strats vers strats.py
+Toutes les strats qui etaient dans optimize_all.py uniquement ont ete migrees dans strats.py:
+- detect_all(): 39 nouvelles strats (ALL_FISHER_9, TOK_FISHER, ALL_HMA_CROSS, ALL_CCI_20_ZERO, ALL_DPO_14, ALL_RSI_50, ALL_RSI_DIV, ALL_MACD_STD_SIG, ALL_MACD_MED_SIG, ALL_MACD_FAST_SIG, ALL_BB_TIGHT, ALL_MTF_BRK, ALL_PIVOT_BOUNCE, ALL_PIVOT_BRK, ALL_EMA_513, ALL_EMA_821, ALL_EMA_921, ALL_EMA_TREND_PB, ALL_CMO_9, ALL_CMO_14, ALL_CMO_14_ZERO, ALL_WILLR_7, ALL_WILLR_14, ALL_MOM_10, ALL_MOM_14, ALL_DC50, ALL_DC10_EMA, ALL_AO_SAUCER, ALL_HMA_DIR, ALL_ICHI_TK, ALL_MACD_ADX, ALL_MACD_FAST_ZERO, ALL_NR4, TOK_FISHER, TOK_MACD_MED, LON_DC10, NY_HMA_CROSS)
+- compute_indicators(): fisher9, hma9/21, cci14/20, cmo9/14, dpo14, ao, bb_tight, ichimoku, adx_s, high_1h/low_1h, dc50, wr7, pivot, ema5/8/13/200
+- Total: 91 strats dans strats.py, 100% alignes avec strat_exits.py
+
+### Audit JPN225 5ers
+- LON_GAP retire du portfolio (uses row['open'] dans condition gap — MAIS en fait c'est live-tradeable car open strat detecte sur bougie precedente fermee)
+- D8 corrige: prev2_day_data ajoute dans live_mt5.py et live_paper.py
+
+### REGLE: Open strats et row['open']
+Les open strats (LON_GAP, LON_BIGGAP, LON_KZ, LON_TOKEND, etc.) detectent sur candles.iloc[-2] (bougie precedente fermee) avec now_utc hour. Le row['open'] est celui de la bougie fermee = connu. L'entree se fait au tick courant. DONC LON_GAP et LON_BIGGAP SONT live-tradeable.
+
+### Portfolios 5ers valides
+| Instrument | Strats | Combo | PF | WR | DD (0.05%) | M+ | Status |
+|---|---|---|---|---|---|---|---|
+| XAUUSD | 6 | existant | 1.32 | 68% | - | 11/13 | deja en place |
+| JPN225 | 8 | PF*WR 9 | 1.85 | 79% | - | 13/13 | deja en place, LON_GAP retire |
+| DAX40 | 6 | MinDD 6 | 1.97 | 77% | -0.3% | 13/13 | ajoute |
+| BTCUSD | 4 | MinDD 4 | 1.73 | 79% | -0.3% | 13/13 | ajoute |
+| NAS100 | - | - | - | - | - | - | EN COURS — attente validation |
+| SP500 | - | - | - | - | - | - | a faire |
+| UK100 | - | - | - | - | - | - | a faire |
+| US30 | - | - | - | - | - | - | a faire |
+
+### NAS100 — combos proposes (attente validation)
+Conservateur 13/13 mois:
+- Calmar 9: PF=1.47 WR=75% DD=-0.6% Rend=+10% — D8, ALL_WILLR_7, LON_BIGGAP, ALL_MSTAR, TOK_NR4, ALL_FVG_BULL, ALL_DC50, TOK_FISHER, ALL_MACD_HIST
+- MinDD 9: PF=1.39 WR=78% DD=-0.4% Rend=+7% — D8, ALL_DC50, ALL_DC10_EMA, TOK_FISHER, TOK_PREVEXT, ALL_FVG_BULL, ALL_MACD_HIST, IDX_PREV_HL, ALL_MSTAR
+
+---
+
 ## 2026-03-23 — Combo greedy brut (sans filtre correlation)
 
 ### 10 strats (greedy Calmar)
