@@ -67,6 +67,19 @@ sanitize_symbol ajoute pour gerer GER40.cash -> ger40_cash en DB.
 | US500.cash | PF 5 | 5 | 1.55 | 79% | -0.5% | +8% | 13/13 |
 | US30.cash | PF 12 | 12 | 1.68 | 64% | -1.0% | +30% | 13/13 |
 
+### Look-ahead test FTMO — 2026-03-28
+Test full vs truncated (60%) sur les 6 instruments.
+85,115 signaux compares, 0 mismatch, 0 price diff. **6/6 PASS.**
+
+| Instrument | Signaux | Mismatches | Verdict |
+|---|---|---|---|
+| XAUUSD | 14,212 | 0 | PASS |
+| GER40.cash | 14,056 | 0 | PASS |
+| UK100.cash | 13,884 | 0 | PASS |
+| US100.cash | 14,345 | 0 | PASS |
+| US500.cash | 14,294 | 0 | PASS |
+| US30.cash | 14,324 | 0 | PASS |
+
 ### Backtest FTMO — $100k / 0.05% — 6 instruments — 2026-03-28
 8,182 trades | WR 73% | PF 1.69 | Max DD -1.16% | $100k -> $212k (+112.2%) | 13/13 mois
 Audit: 0 mismatch exits, toutes strats dans detect_all.
