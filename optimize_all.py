@@ -599,8 +599,10 @@ ranked = sorted(valid, key=lambda sn: best_configs[sn]['pf'], reverse=True)
 if len(ranked) == 0:
     print("\nAucune strat safe. Arret.")
     import pickle, os
+    import re
     _broker = _a.account
-    _sym_dir = SYMBOL if SYMBOL != 'xauusd' else ''
+    _sym_san = re.sub(r"[^a-z0-9]+", "_", SYMBOL).strip("_")
+    _sym_dir = _sym_san if _sym_san != 'xauusd' else ''
     _dir = f'data/{_broker}/{_sym_dir}'.rstrip('/')
     os.makedirs(_dir, exist_ok=True)
     with open(f'{_dir}/optim_data.pkl', 'wb') as f:
@@ -667,8 +669,10 @@ save_data = {
     'OPEN_STRATS': list(OPEN_STRATS),
 }
 import os
+import re as _re
 _broker = _a.account
-_sym_dir = SYMBOL if SYMBOL != 'xauusd' else ''
+_sym_san = _re.sub(r"[^a-z0-9]+", "_", SYMBOL).strip("_")
+_sym_dir = _sym_san if _sym_san != 'xauusd' else ''
 _dir = f'data/{_broker}/{_sym_dir}'.rstrip('/')
 os.makedirs(_dir, exist_ok=True)
 _pkl_file = f'{_dir}/optim_data.pkl'

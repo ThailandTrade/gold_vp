@@ -96,7 +96,9 @@ for sym, icfg in INSTRUMENTS.items():
     if not portfolio:
         print(f"\n  {sym}: portfolio vide (TODO)"); continue
 
-    sym_dir = f'/{sym.lower()}' if sym != 'XAUUSD' else ''
+    import re
+    sym_san = re.sub(r"[^a-z0-9]+", "_", sym.lower()).strip("_")
+    sym_dir = f'/{sym_san}' if sym != 'XAUUSD' else ''
     pkl_file = f'data/{args.account}{sym_dir}/optim_data.pkl'
     try:
         with open(pkl_file, 'rb') as f:

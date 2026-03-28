@@ -16,7 +16,8 @@ import importlib
 _parser = argparse.ArgumentParser(); _parser.add_argument('account', nargs='?', default='icm')
 _parser.add_argument('--symbol', default='xauusd')
 _args = _parser.parse_args()
-_sym = _args.symbol.lower()
+import re
+_sym = re.sub(r"[^a-z0-9]+", "_", _args.symbol.lower()).strip("_")
 _sym_dir = f'/{_sym}' if _sym != 'xauusd' else ''
 _pkl = f'data/{_args.account}{_sym_dir}/optim_data.pkl'
 print(f"Loading {_pkl}...", flush=True)
