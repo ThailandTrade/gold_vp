@@ -25,7 +25,8 @@ from phase1_poc_calculator import (
 
 
 def load_candles_5m(conn, symbol='xauusd'):
-    table = f"candles_mt5_{symbol}_5m"
+    import re
+    table = f"candles_mt5_{re.sub(r'[^a-z0-9]+', '_', symbol.lower()).strip('_')}_5m"
     cur = conn.cursor()
     cur.execute(f"SELECT ts, open, high, low, close FROM {table} ORDER BY ts")
     rows = cur.fetchall()
