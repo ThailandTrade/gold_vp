@@ -54,6 +54,22 @@ DD calcule a chaque trade (pas mensuel).
 
 **9,164 trades | WR 76% | PF 1.54 | Max DD -0.81% | $100k -> $179k (+79.4%) | 13/13 mois**
 
+### Test DST impact — 2026-03-28
+Compare backtest FIXED (14:30 NY) vs DST-adjusted (13:30 pendant DST US).
+Resultat: FIXED meilleur sur 6/7 instruments. Seul NAS100 mieux avec DST (+0.05 PF).
+Raison: exits optimises avec heures fixes. DST sans re-optimisation degrade.
+Decision: on garde les heures fixes.
+
+| Instrument | PF Fixed | PF DST | Rend Fixed | Rend DST |
+|---|---|---|---|---|
+| XAUUSD | 1.64 | 1.59 | +10.7% | +9.8% |
+| JPN225 | 1.68 | 1.50 | +10.1% | +7.4% |
+| DAX40 | 1.90 | 1.80 | +12.9% | +11.1% |
+| BTCUSD | 1.75 | 1.65 | +6.9% | +5.3% |
+| NAS100 | 1.41 | 1.46 | +8.8% | +9.9% |
+| SP500 | 1.43 | 1.38 | +12.0% | +11.0% |
+| UK100 | 1.61 | 1.24 | +5.8% | +2.5% |
+
 ### Bug lot sizing JPN225 — 2026-03-27
 Formule lots utilisait contract_size. Faux pour JPN225 (cote en JPY, pas USD).
 Fix: `point_value = tick_value / tick_size` puis `lots = risk / (sl_distance * point_value)`.
