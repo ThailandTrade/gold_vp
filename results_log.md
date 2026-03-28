@@ -67,6 +67,11 @@ sanitize_symbol ajoute pour gerer GER40.cash -> ger40_cash en DB.
 | US500.cash | PF 5 | 5 | 1.55 | 79% | -0.5% | +8% | 13/13 |
 | US30.cash | PF 12 | 12 | 1.68 | 64% | -1.0% | +30% | 13/13 |
 
+### Backtest FTMO — $100k / 0.05% — 6 instruments — 2026-03-28
+8,182 trades | WR 73% | PF 1.69 | Max DD -1.16% | $100k -> $212k (+112.2%) | 13/13 mois
+Audit: 0 mismatch exits, toutes strats dans detect_all.
+Spread: 1 DANGER (ALL_DOJI_REV US500 Sp/Win=61%), 5 RISQUE.
+
 ### BTCUSD retire du portfolio — 2026-03-28
 Fees et spread BTC trop eleves. Compare today montre PnL live tres inferieur au BT.
 Les strats ne sont pas viables en live sur BTC. Portfolio passe a 6 instruments.
