@@ -8,11 +8,15 @@ warnings.filterwarnings('ignore')
 import sys
 sys.stdout.reconfigure(encoding='utf-8')
 
-import os
+import os, re
 import numpy as np
 import pandas as pd
 import psycopg2
 from collections import defaultdict
+
+def sanitize_symbol(s):
+    """GER40.cash -> ger40_cash, XAUUSD -> xauusd"""
+    return re.sub(r"[^a-z0-9]+", "_", s.lower()).strip("_")
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 
@@ -104,7 +108,7 @@ def load_ticks_for_period(conn, start_dt, end_dt):
 
 def compute_atr(conn, period=14, symbol='xauusd'):
     """ATR sur candles 5m, calculé par jour (moyenne des TR des candles du jour)."""
-    table = f"candles_mt5_{symbol}_5m"
+    table = f"candles_mt5_{sanitize_symbol(symbol)}_5m"
     cur = conn.cursor()
     cur.execute(f"SELECT ts, open, high, low, close FROM {table} ORDER BY ts")
     rows = cur.fetchall()
@@ -143,7 +147,7 @@ def compute_atr(conn, period=14, symbol='xauusd'):
 
 def get_trading_days(conn, symbol='xauusd'):
     """Récupère les jours uniques depuis les candles."""
-    table = f"candles_mt5_{symbol}_5m"
+    table = f"candles_mt5_{sanitize_symbol(symbol)}_5m"
     cur = conn.cursor()
     cur.execute(f"SELECT DISTINCT DATE(to_timestamp(ts/1000)) FROM {table} ORDER BY 1")
     days = [r[0].date() if hasattr(r[0], 'date') else r[0] for r in cur.fetchall()]

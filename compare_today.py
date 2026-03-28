@@ -109,7 +109,8 @@ for sym, icfg in INSTRUMENTS.items():
     sym_exits = STRAT_EXITS.get((args.account, sym), {})
 
     # Load candles
-    table = f"candles_mt5_{sym.lower()}_5m"
+    import re
+    table = f"candles_mt5_{re.sub(r'[^a-z0-9]+', '_', sym.lower()).strip('_')}_5m"
     cur = conn.cursor()
     cur.execute(f"SELECT ts, open, high, low, close FROM {table} ORDER BY ts DESC LIMIT 2000")
     rows = cur.fetchall(); cur.close()

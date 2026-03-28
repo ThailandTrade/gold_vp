@@ -164,7 +164,8 @@ def get_conn_autocommit():
     conn = get_conn(); conn.autocommit = True; return conn
 
 def get_recent_candles(conn, symbol, n=1500):
-    table = f"candles_mt5_{symbol.lower()}_5m"
+    import re
+    table = f"candles_mt5_{re.sub(r'[^a-z0-9]+', '_', symbol.lower()).strip('_')}_5m"
     cur = conn.cursor()
     cur.execute(f"SELECT ts, open, high, low, close FROM {table} ORDER BY ts DESC LIMIT %s", (n,))
     rows = cur.fetchall(); cur.close()
