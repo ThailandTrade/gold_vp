@@ -54,6 +54,10 @@ DD calcule a chaque trade (pas mensuel).
 
 **9,164 trades | WR 76% | PF 1.54 | Max DD -0.81% | $100k -> $179k (+79.4%) | 13/13 mois**
 
+### BTCUSD retire du portfolio — 2026-03-28
+Fees et spread BTC trop eleves. Compare today montre PnL live tres inferieur au BT.
+Les strats ne sont pas viables en live sur BTC. Portfolio passe a 6 instruments.
+
 ### Test DST impact — 2026-03-28
 Compare backtest FIXED (14:30 NY) vs DST-adjusted (13:30 pendant DST US).
 Resultat: FIXED meilleur sur 6/7 instruments. Seul NAS100 mieux avec DST (+0.05 PF).
