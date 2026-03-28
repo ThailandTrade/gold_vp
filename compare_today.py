@@ -205,8 +205,8 @@ for sym, icfg in INSTRUMENTS.items():
     for p in lo: lo_map.setdefault(p['strat'], []).append(p)
     all_sn = sorted(set(list(bt_map.keys()) + list(lv_map.keys()) + list(lo_map.keys())))
 
-    print(f"  {'Strat':>18s} | {'BT dir':>6s} {'BT entry':>9s} {'BT exit':>9s} {'BT pnl':>8s} {'Time':>12s} | {'LV dir':>6s} {'LV entry':>9s} {'LV pnl':>8s} {'Status':>8s}")
-    print(f"  {'-'*105}")
+    print(f"  {'Strat':>18s} | {'BT dir':>6s} {'BT entry':>9s} {'BT exit':>9s} {'BT pnl':>8s} {'BT time':>12s} | {'LV dir':>6s} {'LV entry':>9s} {'LV pnl':>8s} {'LV time':>12s} {'Status':>8s}")
+    print(f"  {'-'*115}")
 
     for sn in all_sn:
         bts = bt_map.get(sn, [])
@@ -228,11 +228,14 @@ for sym, icfg in INSTRUMENTS.items():
 
             # LV column
             if lv_t:
-                lv_str = f"{lv_t['dir']:>6s} {lv_t['entry']:>9.2f} {lv_t['pnl']:>+8.2f} {'closed':>8s}"
+                et = lv_t['entry_time'].strftime('%H:%M') if hasattr(lv_t['entry_time'], 'strftime') else str(lv_t['entry_time'])[11:16]
+                xt = lv_t['exit_time'].strftime('%H:%M') if hasattr(lv_t['exit_time'], 'strftime') else str(lv_t['exit_time'])[11:16]
+                lv_str = f"{lv_t['dir']:>6s} {lv_t['entry']:>9.2f} {lv_t['pnl']:>+8.2f} {et}->{xt:>5s} {'closed':>8s}"
             elif lo_t:
-                lv_str = f"{lo_t['dir']:>6s} {lo_t['entry']:>9.2f} {lo_t['pnl']:>+8.2f} {'OPEN':>8s}"
+                et = lo_t['time'].strftime('%H:%M') if hasattr(lo_t['time'], 'strftime') else str(lo_t['time'])[11:16]
+                lv_str = f"{lo_t['dir']:>6s} {lo_t['entry']:>9.2f} {lo_t['pnl']:>+8.2f} {et}->  ... {'OPEN':>8s}"
             else:
-                lv_str = f"{'---':>6s} {'---':>9s} {'---':>8s} {'---':>8s}"
+                lv_str = f"{'---':>6s} {'---':>9s} {'---':>8s} {'---':>12s} {'---':>8s}"
 
             label = sn if i == 0 else ''
             print(f"  {label:>18s} | {bt_str} | {lv_str}")
