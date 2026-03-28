@@ -54,6 +54,19 @@ DD calcule a chaque trade (pas mensuel).
 
 **9,164 trades | WR 76% | PF 1.54 | Max DD -0.81% | $100k -> $179k (+79.4%) | 13/13 mois**
 
+### FTMO — Optimisation + combos valides — 2026-03-28
+6 instruments optimises et valides.
+sanitize_symbol ajoute pour gerer GER40.cash -> ger40_cash en DB.
+
+| Instrument | Combo | Nb strats | PF | WR | DD | Rend | M+ |
+|---|---|---|---|---|---|---|---|
+| XAUUSD | Diverse 9 | 9 | 1.92 | 79% | -0.6% | +13% | 13/13 |
+| GER40.cash | PF*WR 7 | 7 | 2.16 | 79% | -0.5% | +15% | 13/13 |
+| UK100.cash | Calmar 6 | 6 | 1.44 | 71% | -0.6% | +10% | 13/13 |
+| US100.cash | Calmar 5 | 5 | 1.52 | 73% | -0.4% | +7% | 13/13 |
+| US500.cash | PF 5 | 5 | 1.55 | 79% | -0.5% | +8% | 13/13 |
+| US30.cash | PF 12 | 12 | 1.68 | 64% | -1.0% | +30% | 13/13 |
+
 ### BTCUSD retire du portfolio — 2026-03-28
 Fees et spread BTC trop eleves. Compare today montre PnL live tres inferieur au BT.
 Les strats ne sont pas viables en live sur BTC. Portfolio passe a 6 instruments.
