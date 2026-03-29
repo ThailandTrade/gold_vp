@@ -5,11 +5,11 @@ Multi-compte, multi-instrument, Live MT5 uniquement.
 import streamlit as st
 import pandas as pd
 import numpy as np
-import hashlib, importlib
+import importlib
 from datetime import datetime, timezone, timedelta
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-from strats import STRAT_NAMES, STRAT_SESSION
+from strats import STRAT_NAMES, STRAT_SESSION, make_magic
 from strat_exits import STRAT_EXITS, DEFAULT_EXIT
 
 st.set_page_config(page_title="VP Swing", layout="wide")
@@ -37,14 +37,9 @@ cfg = importlib.import_module(ACCOUNTS[account]['module'])
 BROKER = cfg.BROKER
 INSTRUMENTS = cfg.INSTRUMENTS
 
-# ── MAGIC NUMBERS (same as live_mt5.py) ──
-MAGIC_BASES = {'icm': 240000, 'ftmo': 250000, '5ers': 260000}
-MAGIC_BASE = MAGIC_BASES.get(account, 240000)
-
+# ── MAGIC NUMBERS (from strats.py — garanti unique) ──
 def _magic(symbol, strat):
-    sym_offset = int(hashlib.md5(symbol.encode()).hexdigest()[:2], 16) * 100
-    strat_hash = int(hashlib.md5(strat.encode()).hexdigest()[:4], 16) % 99
-    return MAGIC_BASE + sym_offset + strat_hash
+    return make_magic(account, symbol, strat)
 
 # Build reverse magic map for all instruments
 MAGIC_REVERSE = {}  # magic -> (symbol, strat)

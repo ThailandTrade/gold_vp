@@ -7,10 +7,9 @@ import sys, argparse, importlib; sys.stdout.reconfigure(encoding='utf-8')
 import pandas as pd, numpy as np
 from dotenv import load_dotenv; load_dotenv()
 from phase1_poc_calculator import get_conn
-from strats import detect_all, compute_indicators, sim_exit_custom
+from strats import detect_all, compute_indicators, sim_exit_custom, make_magic
 from strat_exits import STRAT_EXITS, DEFAULT_EXIT
 from datetime import datetime, timezone
-import hashlib
 
 parser = argparse.ArgumentParser()
 parser.add_argument('account', nargs='?', default='5ers', choices=['icm','ftmo','5ers'])
@@ -23,12 +22,8 @@ INSTRUMENTS = cfg.INSTRUMENTS
 OPEN_STRATS = {'TOK_FADE','TOK_PREVEXT','LON_GAP','LON_BIGGAP','LON_KZ','LON_TOKEND','LON_PREV',
                'NY_GAP','NY_LONEND','NY_LONMOM','NY_DAYMOM'}
 
-MAGIC_BASES = {'icm': 240000, 'ftmo': 250000, '5ers': 260000}
-MAGIC_BASE = MAGIC_BASES.get(args.account, 240000)
 def _magic(symbol, strat):
-    sym_offset = int(hashlib.md5(symbol.encode()).hexdigest()[:2], 16) * 100
-    strat_hash = int(hashlib.md5(strat.encode()).hexdigest()[:4], 16) % 99
-    return MAGIC_BASE + sym_offset + strat_hash
+    return make_magic(args.account, symbol, strat)
 
 MAGIC_REVERSE = {}
 for sym, icfg in INSTRUMENTS.items():

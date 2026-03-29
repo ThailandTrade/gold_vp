@@ -48,6 +48,22 @@ ALL_STRATS = [
     'TOK_STOCH','TOK_TRIX','LON_STOCH','NY_ELDER',
 ]
 
+# Index unique par strat pour magic numbers (ne jamais changer l'ordre, ajouter en fin)
+STRAT_ID = {s: i for i, s in enumerate(ALL_STRATS)}
+
+# Symboles connus et leur offset (ne jamais changer, ajouter en fin)
+SYMBOL_ID = {
+    'XAUUSD': 0, 'JPN225': 1, 'DAX40': 2, 'NAS100': 3, 'SP500': 4, 'UK100': 5,
+    'BTCUSD': 6, 'GER40.cash': 7, 'UK100.cash': 8, 'US100.cash': 9,
+    'US500.cash': 10, 'US30.cash': 11,
+}
+
+MAGIC_BASES = {'icm': 240000, 'ftmo': 250000, '5ers': 260000}
+
+def make_magic(broker, symbol, strat):
+    """Magic = broker_base + symbol_id * 200 + strat_id. Garanti unique."""
+    return MAGIC_BASES[broker] + SYMBOL_ID[symbol] * 200 + STRAT_ID[strat]
+
 STRAT_NAMES = {
     'TOK_2BAR':'2BAR reversal Tokyo','TOK_BIG':'Big candle Tokyo >1ATR',
     'TOK_FADE':'Fade prev day Tokyo','TOK_PREVEXT':'Prev day close extreme->Tokyo',

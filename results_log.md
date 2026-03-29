@@ -1,5 +1,22 @@
 # Results Log — Evolution des resultats
 
+## 2026-03-30 — Fix magic numbers: collision hash → index unique
+
+### Bug CRITIQUE: collisions magic numbers
+L'ancien systeme utilisait `md5(strat)[:4] % 99` → seulement 99 slots pour 110 strats.
+77 strats sur 110 avaient des collisions (ex: TOK_PREVEXT = ALL_MACD_STD_SIG = 275187).
+Impact: le live ne pouvait pas distinguer les trades de 2 strats differentes.
+
+### Fix: STRAT_ID + SYMBOL_ID dans strats.py
+- STRAT_ID: index fixe 0-109, base sur l'ordre dans ALL_STRATS
+- SYMBOL_ID: index fixe par instrument (XAUUSD=0, JPN225=1, ..., US30.cash=11)
+- `make_magic(broker, symbol, strat) = MAGIC_BASE + SYMBOL_ID * 200 + STRAT_ID`
+- 3960 combinaisons (3 brokers x 12 symbols x 110 strats), **0 collision**
+- Mis a jour dans: live_mt5.py, compare_today.py, dashboard.py (import depuis strats.py)
+- REGLE: ne jamais changer l'ordre dans ALL_STRATS, ajouter en fin uniquement
+
+---
+
 ## 2026-03-29 — Audit look-ahead complet 5ers (110 strats)
 
 ### Audit look-ahead exhaustif — toutes les strats du portfolio 5ers
