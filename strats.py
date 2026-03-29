@@ -39,6 +39,13 @@ ALL_STRATS = [
     'TOK_FISHER','TOK_MACD_MED',
     'LON_DC10','NY_HMA_CROSS',
     'ALL_CMO_9','ALL_CMO_14','ALL_MACD_FAST_SIG','ALL_MACD_MED_SIG','ALL_WILLR_7',
+    # New strats v7
+    'ALL_STOCH_CROSS','ALL_STOCH_OB','ALL_TRIX','ALL_SUPERTREND',
+    'ALL_ROC_ZERO','ALL_ELDER_BULL','ALL_ELDER_BEAR',
+    'ALL_AROON_CROSS','ALL_STOCH_RSI','ALL_CCI_100',
+    'ALL_KB_SQUEEZE','ALL_LR_BREAK','ALL_ADX_RSI50',
+    'ALL_MACD_DIV','ALL_STOCH_PIVOT',
+    'TOK_STOCH','TOK_TRIX','LON_STOCH','NY_ELDER',
 ]
 
 STRAT_NAMES = {
@@ -126,6 +133,25 @@ STRAT_NAMES = {
     'ALL_MACD_FAST_SIG':'MACD fast signal cross',
     'ALL_MACD_MED_SIG':'MACD med signal cross',
     'ALL_WILLR_7':'Williams %R 7 reversal',
+    'ALL_STOCH_CROSS':'Stochastic K/D cross',
+    'ALL_STOCH_OB':'Stochastic overbought/oversold reversal',
+    'ALL_TRIX':'TRIX signal cross',
+    'ALL_SUPERTREND':'Supertrend direction change',
+    'ALL_ROC_ZERO':'Rate of Change zero cross',
+    'ALL_ELDER_BULL':'Elder Ray bull power reversal',
+    'ALL_ELDER_BEAR':'Elder Ray bear power reversal',
+    'ALL_AROON_CROSS':'Aroon up/down cross',
+    'ALL_STOCH_RSI':'Stochastic RSI cross',
+    'ALL_CCI_100':'CCI 100 extreme reversal',
+    'ALL_KB_SQUEEZE':'Keltner-Bollinger squeeze breakout',
+    'ALL_LR_BREAK':'Linear regression slope reversal',
+    'ALL_ADX_RSI50':'ADX trend + RSI 50 cross',
+    'ALL_MACD_DIV':'MACD divergence',
+    'ALL_STOCH_PIVOT':'Stochastic + pivot bounce',
+    'TOK_STOCH':'Stochastic reversal Tokyo',
+    'TOK_TRIX':'TRIX cross Tokyo',
+    'LON_STOCH':'Stochastic reversal London',
+    'NY_ELDER':'Elder Ray reversal NY',
 }
 
 STRAT_SESSION = {
@@ -163,6 +189,12 @@ STRAT_SESSION = {
     'LON_DC10':'London','NY_HMA_CROSS':'New York',
     'ALL_CMO_9':'All','ALL_CMO_14':'All',
     'ALL_MACD_FAST_SIG':'All','ALL_MACD_MED_SIG':'All','ALL_WILLR_7':'All',
+    'ALL_STOCH_CROSS':'All','ALL_STOCH_OB':'All','ALL_TRIX':'All','ALL_SUPERTREND':'All',
+    'ALL_ROC_ZERO':'All','ALL_ELDER_BULL':'All','ALL_ELDER_BEAR':'All',
+    'ALL_AROON_CROSS':'All','ALL_STOCH_RSI':'All','ALL_CCI_100':'All',
+    'ALL_KB_SQUEEZE':'All','ALL_LR_BREAK':'All','ALL_ADX_RSI50':'All',
+    'ALL_MACD_DIV':'All','ALL_STOCH_PIVOT':'All',
+    'TOK_STOCH':'Tokyo','TOK_TRIX':'Tokyo','LON_STOCH':'London','NY_ELDER':'New York',
 }
 
 def sim_exit(cdf, pos, entry, d, atr, check_entry_candle=False):
@@ -400,6 +432,52 @@ def compute_indicators(candles):
     # range (for ALL_NR4)
     if 'range' not in c.columns:
         c['range'] = c['high'] - c['low']
+    # Stochastic (14,3,3)
+    if 'stoch_k' not in c.columns:
+        hh14 = c['high'].rolling(14).max(); ll14 = c['low'].rolling(14).min()
+        c['stoch_k'] = 100 * (c['close'] - ll14) / (hh14 - ll14 + 1e-10)
+        c['stoch_k'] = c['stoch_k'].rolling(3).mean()  # %K smoothed
+        c['stoch_d'] = c['stoch_k'].rolling(3).mean()   # %D
+    # TRIX (15-period triple smoothed EMA)
+    if 'trix' not in c.columns:
+        e1 = c['close'].ewm(span=15, adjust=False).mean()
+        e2 = e1.ewm(span=15, adjust=False).mean()
+        e3 = e2.ewm(span=15, adjust=False).mean()
+        c['trix'] = e3.pct_change() * 10000  # in basis points
+        c['trix_sig'] = c['trix'].ewm(span=9, adjust=False).mean()
+    # Supertrend direct signal (direction change)
+    if 'st_dir' not in c.columns:
+        c['st_dir'] = st_dir if 'st_dir' in dir() else c.get('psar_dir', 0)
+    # ROC (Rate of Change 10)
+    if 'roc10' not in c.columns:
+        c['roc10'] = (c['close'] / c['close'].shift(10) - 1) * 100
+    # Elder Ray (bull/bear power)
+    if 'bull_power' not in c.columns:
+        ema13_er = c['close'].ewm(span=13, adjust=False).mean()
+        c['bull_power'] = c['high'] - ema13_er
+        c['bear_power'] = c['low'] - ema13_er
+    # Aroon (25-period)
+    if 'aroon_up' not in c.columns:
+        p = 25
+        c['aroon_up'] = c['high'].rolling(p+1).apply(lambda x: x.argmax() / p * 100, raw=True)
+        c['aroon_dn'] = c['low'].rolling(p+1).apply(lambda x: x.argmin() / p * 100, raw=True)
+    # Stochastic RSI
+    if 'stoch_rsi' not in c.columns and 'rsi14' in c.columns:
+        rsi_min = c['rsi14'].rolling(14).min(); rsi_max = c['rsi14'].rolling(14).max()
+        c['stoch_rsi'] = (c['rsi14'] - rsi_min) / (rsi_max - rsi_min + 1e-10)
+        c['stoch_rsi_k'] = c['stoch_rsi'].rolling(3).mean()
+        c['stoch_rsi_d'] = c['stoch_rsi_k'].rolling(3).mean()
+    # CCI extreme flag (for CCI > 100 reversal)
+    # (cci14 and cci20 already computed)
+    # Keltner + Bollinger squeeze (BB inside KC)
+    if 'kb_squeeze' not in c.columns and 'bb_up' in c.columns and 'kc_up' in c.columns:
+        c['kb_squeeze'] = ((c['bb_up'] < c['kc_up']) & (c['bb_lo'] > c['kc_lo'])).astype(int)
+    # Linear regression slope (20-period)
+    if 'lr_slope' not in c.columns:
+        def _lr_slope(x):
+            n = len(x); xs = np.arange(n)
+            return (n * np.dot(xs, x) - xs.sum() * x.sum()) / (n * (xs**2).sum() - xs.sum()**2 + 1e-10)
+        c['lr_slope'] = c['close'].rolling(20).apply(_lr_slope, raw=True)
     return c
 
 def detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_day_data, add, prev2_day_data=None):
@@ -1042,3 +1120,109 @@ def detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_
     if 'ALL_WILLR_7' not in trig and 'wr7' in row.index and pd.notna(row.get('wr7')):
         if prev['wr7']<-80 and row['wr7']>=-80: add('ALL_WILLR_7','long',row['close']); trig['ALL_WILLR_7']=True
         elif prev['wr7']>-20 and row['wr7']<=-20: add('ALL_WILLR_7','short',row['close']); trig['ALL_WILLR_7']=True
+
+    # ── NEW STRATS V7 ──
+
+    # ALL_STOCH_CROSS: Stochastic K crosses D
+    if 'ALL_STOCH_CROSS' not in trig and 'stoch_k' in row.index and pd.notna(row.get('stoch_k')):
+        if prev['stoch_k']<prev['stoch_d'] and row['stoch_k']>row['stoch_d']: add('ALL_STOCH_CROSS','long',row['close']); trig['ALL_STOCH_CROSS']=True
+        elif prev['stoch_k']>prev['stoch_d'] and row['stoch_k']<row['stoch_d']: add('ALL_STOCH_CROSS','short',row['close']); trig['ALL_STOCH_CROSS']=True
+
+    # ALL_STOCH_OB: Stochastic overbought/oversold reversal (cross back from extremes)
+    if 'ALL_STOCH_OB' not in trig and 'stoch_k' in row.index and pd.notna(row.get('stoch_k')):
+        if prev['stoch_k']<20 and row['stoch_k']>=20 and row['close']>row['open']: add('ALL_STOCH_OB','long',row['close']); trig['ALL_STOCH_OB']=True
+        elif prev['stoch_k']>80 and row['stoch_k']<=80 and row['close']<row['open']: add('ALL_STOCH_OB','short',row['close']); trig['ALL_STOCH_OB']=True
+
+    # ALL_TRIX: TRIX signal cross
+    if 'ALL_TRIX' not in trig and 'trix' in row.index and pd.notna(row.get('trix')):
+        if prev['trix']<prev['trix_sig'] and row['trix']>row['trix_sig']: add('ALL_TRIX','long',row['close']); trig['ALL_TRIX']=True
+        elif prev['trix']>prev['trix_sig'] and row['trix']<row['trix_sig']: add('ALL_TRIX','short',row['close']); trig['ALL_TRIX']=True
+
+    # ALL_SUPERTREND: Supertrend direction change
+    if 'ALL_SUPERTREND' not in trig and 'psar_dir' in row.index:
+        if prev.get('psar_dir',0)==-1 and row['psar_dir']==1: add('ALL_SUPERTREND','long',row['close']); trig['ALL_SUPERTREND']=True
+        elif prev.get('psar_dir',0)==1 and row['psar_dir']==-1: add('ALL_SUPERTREND','short',row['close']); trig['ALL_SUPERTREND']=True
+
+    # ALL_ROC_ZERO: Rate of Change 10 zero cross
+    if 'ALL_ROC_ZERO' not in trig and 'roc10' in row.index and pd.notna(row.get('roc10')):
+        if prev['roc10']<0 and row['roc10']>=0: add('ALL_ROC_ZERO','long',row['close']); trig['ALL_ROC_ZERO']=True
+        elif prev['roc10']>0 and row['roc10']<=0: add('ALL_ROC_ZERO','short',row['close']); trig['ALL_ROC_ZERO']=True
+
+    # ALL_ELDER_BULL: Bull power crosses zero from below
+    if 'ALL_ELDER_BULL' not in trig and 'bull_power' in row.index and pd.notna(row.get('bull_power')):
+        if prev['bull_power']<0 and row['bull_power']>=0: add('ALL_ELDER_BULL','long',row['close']); trig['ALL_ELDER_BULL']=True
+
+    # ALL_ELDER_BEAR: Bear power crosses zero from above
+    if 'ALL_ELDER_BEAR' not in trig and 'bear_power' in row.index and pd.notna(row.get('bear_power')):
+        if prev['bear_power']>0 and row['bear_power']<=0: add('ALL_ELDER_BEAR','short',row['close']); trig['ALL_ELDER_BEAR']=True
+
+    # ALL_AROON_CROSS: Aroon up crosses above Aroon down
+    if 'ALL_AROON_CROSS' not in trig and 'aroon_up' in row.index and pd.notna(row.get('aroon_up')):
+        if prev['aroon_up']<prev['aroon_dn'] and row['aroon_up']>row['aroon_dn']: add('ALL_AROON_CROSS','long',row['close']); trig['ALL_AROON_CROSS']=True
+        elif prev['aroon_up']>prev['aroon_dn'] and row['aroon_up']<row['aroon_dn']: add('ALL_AROON_CROSS','short',row['close']); trig['ALL_AROON_CROSS']=True
+
+    # ALL_STOCH_RSI: Stochastic RSI K crosses D from oversold/overbought
+    if 'ALL_STOCH_RSI' not in trig and 'stoch_rsi_k' in row.index and pd.notna(row.get('stoch_rsi_k')):
+        if prev['stoch_rsi_k']<prev['stoch_rsi_d'] and row['stoch_rsi_k']>row['stoch_rsi_d'] and row['stoch_rsi_k']<0.3:
+            add('ALL_STOCH_RSI','long',row['close']); trig['ALL_STOCH_RSI']=True
+        elif prev['stoch_rsi_k']>prev['stoch_rsi_d'] and row['stoch_rsi_k']<row['stoch_rsi_d'] and row['stoch_rsi_k']>0.7:
+            add('ALL_STOCH_RSI','short',row['close']); trig['ALL_STOCH_RSI']=True
+
+    # ALL_CCI_100: CCI 14 crosses back from extreme (>100 or <-100)
+    if 'ALL_CCI_100' not in trig and 'cci14' in row.index and pd.notna(row.get('cci14')):
+        if prev['cci14']<-100 and row['cci14']>=-100 and row['close']>row['open']: add('ALL_CCI_100','long',row['close']); trig['ALL_CCI_100']=True
+        elif prev['cci14']>100 and row['cci14']<=100 and row['close']<row['open']: add('ALL_CCI_100','short',row['close']); trig['ALL_CCI_100']=True
+
+    # ALL_KB_SQUEEZE: Keltner-Bollinger squeeze breakout (BB was inside KC, now breaks out)
+    if 'ALL_KB_SQUEEZE' not in trig and 'kb_squeeze' in row.index and pd.notna(row.get('kb_squeeze')):
+        if prev.get('kb_squeeze',0)==1 and row['kb_squeeze']==0:
+            if row['close']>row.get('kc_up',99999): add('ALL_KB_SQUEEZE','long',row['close']); trig['ALL_KB_SQUEEZE']=True
+            elif row['close']<row.get('kc_lo',0): add('ALL_KB_SQUEEZE','short',row['close']); trig['ALL_KB_SQUEEZE']=True
+
+    # ALL_LR_BREAK: Linear regression slope reversal (slope changes sign)
+    if 'ALL_LR_BREAK' not in trig and 'lr_slope' in row.index and pd.notna(row.get('lr_slope')):
+        if prev['lr_slope']<0 and row['lr_slope']>0: add('ALL_LR_BREAK','long',row['close']); trig['ALL_LR_BREAK']=True
+        elif prev['lr_slope']>0 and row['lr_slope']<0: add('ALL_LR_BREAK','short',row['close']); trig['ALL_LR_BREAK']=True
+
+    # ALL_ADX_RSI50: ADX > 25 + RSI crosses 50 (trend confirmation + momentum)
+    if 'ALL_ADX_RSI50' not in trig and 'adx_f' in row.index and pd.notna(row.get('adx_f')) and pd.notna(row.get('rsi14')):
+        if row['adx_f']>25 and prev['rsi14']<50 and row['rsi14']>=50: add('ALL_ADX_RSI50','long',row['close']); trig['ALL_ADX_RSI50']=True
+        elif row['adx_f']>25 and prev['rsi14']>50 and row['rsi14']<=50: add('ALL_ADX_RSI50','short',row['close']); trig['ALL_ADX_RSI50']=True
+
+    # ALL_MACD_DIV: MACD divergence (price new low but MACD higher low = bullish)
+    if 'ALL_MACD_DIV' not in trig and ci >= 20 and 'macd_hist' in row.index and pd.notna(row.get('macd_hist')):
+        l20 = candles.iloc[ci-19:ci+1]
+        if row['low']<l20.iloc[:-1]['low'].min() and row['macd_hist']>l20.iloc[:-1]['macd_hist'].min() and row['close']>row['open']:
+            add('ALL_MACD_DIV','long',row['close']); trig['ALL_MACD_DIV']=True
+        elif row['high']>l20.iloc[:-1]['high'].max() and row['macd_hist']<l20.iloc[:-1]['macd_hist'].max() and row['close']<row['open']:
+            add('ALL_MACD_DIV','short',row['close']); trig['ALL_MACD_DIV']=True
+
+    # ALL_STOCH_PIVOT: Stochastic oversold + price near pivot support
+    if 'ALL_STOCH_PIVOT' not in trig and 'stoch_k' in row.index and 'pivot' in row.index and pd.notna(row.get('stoch_k')) and pd.notna(row.get('pivot')):
+        if row['stoch_k']<20 and prev['low']<=row['pivot']*1.002 and row['close']>row['pivot'] and row['close']>row['open']:
+            add('ALL_STOCH_PIVOT','long',row['close']); trig['ALL_STOCH_PIVOT']=True
+        elif row['stoch_k']>80 and prev['high']>=row['pivot']*0.998 and row['close']<row['pivot'] and row['close']<row['open']:
+            add('ALL_STOCH_PIVOT','short',row['close']); trig['ALL_STOCH_PIVOT']=True
+
+    # Session-filtered versions
+    # TOK_STOCH: Stochastic reversal Tokyo
+    if 0.0<=hour<6.0 and 'TOK_STOCH' not in trig and 'stoch_k' in row.index and pd.notna(row.get('stoch_k')):
+        if prev['stoch_k']<20 and row['stoch_k']>=20: add('TOK_STOCH','long',row['close']); trig['TOK_STOCH']=True
+        elif prev['stoch_k']>80 and row['stoch_k']<=80: add('TOK_STOCH','short',row['close']); trig['TOK_STOCH']=True
+
+    # TOK_TRIX: TRIX cross Tokyo
+    if 0.0<=hour<6.0 and 'TOK_TRIX' not in trig and 'trix' in row.index and pd.notna(row.get('trix')):
+        if prev['trix']<prev['trix_sig'] and row['trix']>row['trix_sig']: add('TOK_TRIX','long',row['close']); trig['TOK_TRIX']=True
+        elif prev['trix']>prev['trix_sig'] and row['trix']<row['trix_sig']: add('TOK_TRIX','short',row['close']); trig['TOK_TRIX']=True
+
+    # LON_STOCH: Stochastic reversal London
+    if 8.0<=hour<14.5 and 'LON_STOCH' not in trig and 'stoch_k' in row.index and pd.notna(row.get('stoch_k')):
+        if prev['stoch_k']<20 and row['stoch_k']>=20: add('LON_STOCH','long',row['close']); trig['LON_STOCH']=True
+        elif prev['stoch_k']>80 and row['stoch_k']<=80: add('LON_STOCH','short',row['close']); trig['LON_STOCH']=True
+
+    # NY_ELDER: Elder Ray reversal NY session
+    if 14.5<=hour<21.0 and 'NY_ELDER' not in trig and 'bull_power' in row.index and pd.notna(row.get('bull_power')):
+        if prev['bull_power']<0 and row['bull_power']>=0 and row['close']>row['open']:
+            add('NY_ELDER','long',row['close']); trig['NY_ELDER']=True
+        elif prev['bear_power']>0 and row['bear_power']<=0 and row['close']<row['open']:
+            add('NY_ELDER','short',row['close']); trig['NY_ELDER']=True
