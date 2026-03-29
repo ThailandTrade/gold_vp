@@ -162,7 +162,7 @@ if len(all_sym_trades) > 1:
     entry_caps = {}
     # Monthly aggregation
     mo_stats = {}
-    cur_mo = None; mo_peak = cap; mo_worst_dd = 0
+    cur_mo = None; mo_worst_dd = 0
 
     for bar, evt, idx in events:
         if evt == 0:
@@ -175,12 +175,10 @@ if len(all_sym_trades) > 1:
             dd = (cap - peak) / peak * 100
             if dd < max_dd: max_dd = dd
 
-            # Track worst DD per month
+            # Track worst DD vs all-time peak per month
             if mo != cur_mo:
-                cur_mo = mo; mo_peak = cap; mo_worst_dd = 0
-            if cap > mo_peak: mo_peak = cap
-            mo_dd = (cap - mo_peak) / mo_peak * 100
-            if mo_dd < mo_worst_dd: mo_worst_dd = mo_dd
+                cur_mo = mo; mo_worst_dd = 0
+            if dd < mo_worst_dd: mo_worst_dd = dd
 
             ms = mo_stats.setdefault(mo, {'n':0,'w':0,'gp':0,'gl':0,'pnl':0})
             ms['n'] += 1
