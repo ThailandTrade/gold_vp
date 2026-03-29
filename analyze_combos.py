@@ -337,6 +337,36 @@ for c in sorted(all_combos, key=lambda x: -x['sharpe'])[:5]:
     print(f"      Strats: {', '.join(c['combo'])}")
 
 # ══════════════════════════════════════════════════════════════════════════
+# 5b. TOP 20 — SCORE COMPOSITE
+# ══════════════════════════════════════════════════════════════════════════
+import math
+print(f"\n{'='*130}")
+print("5b. TOP 20 — SCORE = PF x WR x Rend x M+/TM / (1+|DD|) x min(1, n/500)")
+print(f"{'='*130}")
+
+seen_top = set()
+scored = []
+for c in all_combos:
+    key = tuple(sorted(c['combo']))
+    if key in seen_top: continue
+    seen_top.add(key)
+    n = c['n']; pf = c['pf']; wr = c['wr']; ret = max(c['ret'], 0.1); dd = abs(c['mdd'])
+    pm = c['pm']; tm = c['tm']
+    trade_factor = min(1.0, n / 500.0)
+    month_factor = pm / tm if tm > 0 else 0
+    score = pf * (wr/100) * (ret/10) / (1 + dd) * month_factor * trade_factor
+    c['score'] = score
+    scored.append(c)
+
+scored.sort(key=lambda x: -x['score'])
+print(f"\n  {'#':>3s} {'Score':>6s} {'Nb':>3s} {'Trades':>7s} {'PF':>5s} {'WR':>4s} {'DD':>7s} {'Rend':>6s} {'M+':>5s} {'Combo':>6s} Strats")
+print(f"  {'-'*120}")
+for i, c in enumerate(scored[:20]):
+    strats_str = ', '.join(c['combo'][:8])
+    if len(c['combo']) > 8: strats_str += f' +{len(c["combo"])-8}'
+    print(f"  {i+1:>3d} {c['score']:>6.2f} {len(c['combo']):>3d} {c['n']:>7d} {c['pf']:>5.2f} {c['wr']:>3.0f}% {c['mdd']:>+6.1f}% {c['ret']:>+5.0f}% {c['pm']}/{c['tm']:>2d} [{c['method']:>7s}] {strats_str}")
+
+# ══════════════════════════════════════════════════════════════════════════
 # 6. DETAIL DES MEILLEURES COMPOSITIONS
 # ══════════════════════════════════════════════════════════════════════════
 print(f"\n{'='*130}")
