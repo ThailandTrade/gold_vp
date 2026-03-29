@@ -94,6 +94,21 @@ Test full vs truncated (60%) sur les 6 instruments.
 Audit: 0 mismatch exits, toutes strats dans detect_all.
 Spread: 1 DANGER (ALL_DOJI_REV US500 Sp/Win=61%), 5 RISQUE.
 
+### Re-optimisation FTMO avec 110 strats — 2026-03-29
+Re-optimisation en cours apres ajout 19 nouvelles strats.
+
+VALIDES (re-optimise 110 strats):
+1. XAUUSD: **Diverse 8** (NOUVEAU) — PO3_SWEEP, D8, LON_TOKEND, ALL_SUPERTREND, TOK_WILLR, LON_KZ, LON_PREV, LON_BIGGAP
+   PF=1.91 WR=80% DD=-0.5% 13/13 — 60 strats viables
+2. GER40.cash: **Sharpe 6** (NOUVEAU) — TOK_FISHER, ALL_FVG_BULL, ALL_ELDER_BULL, ALL_LR_BREAK, TOK_PREVEXT, ALL_INSIDE_BRK
+   PF=1.98 WR=76% DD=-0.5% 13/13 — 69 strats viables
+
+A FAIRE:
+3. UK100.cash — a re-optimiser
+4. US100.cash — a re-optimiser
+5. US500.cash — a re-optimiser
+6. US30.cash — a re-optimiser
+
 ### 19 nouvelles strats ajoutees — 2026-03-29
 Total passe de 91 a 110 strats. Nouvelles familles:
 - Stochastic (cross, OB/OS, RSI, pivot combo, session Tokyo/London)
