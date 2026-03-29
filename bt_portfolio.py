@@ -161,7 +161,8 @@ if len(all_sym_trades) > 1:
     cap = CAPITAL; peak = cap; max_dd = 0
     entry_caps = {}
     # Monthly aggregation
-    mo_stats = {}  # mo -> {n, w, gp, gl, pnl, cap_end, peak, max_dd}
+    mo_stats = {}
+    cur_mo = None; mo_peak = cap; mo_worst_dd = 0
 
     for bar, evt, idx in events:
         if evt == 0:
@@ -174,6 +175,13 @@ if len(all_sym_trades) > 1:
             dd = (cap - peak) / peak * 100
             if dd < max_dd: max_dd = dd
 
+            # Track worst DD per month
+            if mo != cur_mo:
+                cur_mo = mo; mo_peak = cap; mo_worst_dd = 0
+            if cap > mo_peak: mo_peak = cap
+            mo_dd = (cap - mo_peak) / mo_peak * 100
+            if mo_dd < mo_worst_dd: mo_worst_dd = mo_dd
+
             ms = mo_stats.setdefault(mo, {'n':0,'w':0,'gp':0,'gl':0,'pnl':0})
             ms['n'] += 1
             if pnl > 0: ms['w'] += 1; ms['gp'] += pnl
@@ -182,18 +190,18 @@ if len(all_sym_trades) > 1:
             ms['cap'] = cap
             ms['peak'] = peak
             ms['max_dd'] = max_dd
+            ms['mo_dd'] = mo_worst_dd
 
     sorted_months = sorted(mo_stats.keys())
-    print(f"\n  {'Mois':>8s} {'Trades':>7s} {'Wins':>6s} {'WR':>5s} {'PF':>6s} {'PnL':>10s} {'Capital':>12s} {'Rend cum':>9s} {'DD':>7s} {'MaxDD':>7s}")
-    print(f"  {'-'*85}")
+    print(f"\n  {'Mois':>8s} {'Trades':>7s} {'Wins':>6s} {'WR':>5s} {'PF':>6s} {'PnL':>10s} {'Capital':>12s} {'Rend cum':>9s} {'DD mois':>8s} {'MaxDD':>7s}")
+    print(f"  {'-'*87}")
 
     for mo in sorted_months:
         ms = mo_stats[mo]
         wr = ms['w'] / ms['n'] * 100 if ms['n'] > 0 else 0
         pf = ms['gp'] / (ms['gl'] + 0.01)
         rend_cum = (ms['cap'] - CAPITAL) / CAPITAL * 100
-        dd_now = (ms['cap'] - ms['peak']) / ms['peak'] * 100 if ms['peak'] > 0 else 0
-        print(f"  {mo:>8s} {ms['n']:>7d} {ms['w']:>6d} {wr:>4.0f}% {pf:>5.2f} ${ms['pnl']:>+9,.0f} ${ms['cap']:>11,.0f} {rend_cum:>+8.1f}% {dd_now:>+6.2f}% {ms['max_dd']:>+6.2f}%")
+        print(f"  {mo:>8s} {ms['n']:>7d} {ms['w']:>6d} {wr:>4.0f}% {pf:>5.2f} ${ms['pnl']:>+9,.0f} ${ms['cap']:>11,.0f} {rend_cum:>+8.1f}% {ms['mo_dd']:>+7.2f}% {ms['max_dd']:>+6.2f}%")
 
     tot_n = sum(ms['n'] for ms in mo_stats.values())
     tot_w = sum(ms['w'] for ms in mo_stats.values())
