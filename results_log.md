@@ -115,6 +115,22 @@ VALIDES (re-optimise 110 strats):
 Nouvelles strats dans les combos: ALL_SUPERTREND, ALL_ELDER_BULL, ALL_LR_BREAK, ALL_KB_SQUEEZE,
 ALL_MACD_DIV, ALL_ADX_RSI50, TOK_STOCH, ALL_STOCH_RSI, ALL_EMA_821, ALL_INSIDE_BRK, LON_STOCH, NY_ELDER
 
+### Re-optimisation 5ers avec 110 strats — 2026-03-29
+Score composite: PF x WR x Rend / (1+|DD|) x M+/TM x min(1,n/500)
+
+| Instrument | Combo | Nb | PF | WR | DD | Rend | M+ | Score |
+|---|---|---|---|---|---|---|---|---|
+| XAUUSD | Calmar 19 | 19 | 1.62 | 79% | -0.6% | +24% | 13/13 | 2.00 |
+| JPN225 | Calmar 21 | 21 | 1.67 | 75% | -0.6% | +37% | 13/13 | 2.80 |
+| DAX40 | PF 17 | 17 | 1.84 | 75% | -1.3% | +40% | 12/13 | 2.23 |
+| NAS100 | Calmar 19 | 19 | 1.51 | 69% | -0.8% | +30% | 13/13 | 1.66 |
+| SP500 | Calmar 16 | 16 | 1.53 | 71% | -1.0% | +29% | 13/13 | 1.57 |
+| UK100 | Calmar 14 | 14 | 1.46 | 73% | -0.7% | +20% | 12/13 | 1.17 |
+
+Nouvelles strats dans les combos: ALL_STOCH_OB, ALL_STOCH_PIVOT, ALL_STOCH_RSI, ALL_STOCH_CROSS,
+ALL_ELDER_BULL, ALL_ADX_RSI50, ALL_HMA_CROSS, ALL_SUPERTREND, ALL_MACD_DIV,
+ALL_KB_SQUEEZE, ALL_LR_BREAK, NY_ELDER, TOK_STOCH
+
 ### 19 nouvelles strats ajoutees — 2026-03-29
 Total passe de 91 a 110 strats. Nouvelles familles:
 - Stochastic (cross, OB/OS, RSI, pivot combo, session Tokyo/London)

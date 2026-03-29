@@ -1,7 +1,6 @@
 """
-Config 5ers — Multi-instrument (optimise 2026-03-26)
+Config 5ers — Multi-instrument (re-optimise 2026-03-29 avec 110 strats)
 Max DD 5ers: 4% challenge
-Filtre: toutes strats marge WR > 5%
 """
 BROKER = '5ers'
 
@@ -9,84 +8,145 @@ INSTRUMENTS = {
     'XAUUSD': {
         'risk_pct': 0.0005,
         'portfolio': [
-            'PO3_SWEEP',       # TRAIL 3.0/0.75/0.50  PF=1.48 WR=77%
-            'ALL_PSAR_EMA',    # TRAIL 3.0/1.00/0.30  PF=1.30 WR=72%
-            'TOK_2BAR',        # TRAIL 2.0/1.00/0.75  PF=1.32 WR=58%
-            'ALL_DC10',        # TRAIL 3.0/1.00/0.75  PF=1.30 WR=66%
-            'TOK_BIG',         # TRAIL 3.0/1.00/0.50  PF=1.33 WR=70%
-            'TOK_PREVEXT',     # TRAIL 2.0/0.75/0.75  PF=1.39 WR=56%
+            'IDX_VWAP_BOUNCE',  # Calmar 19 — score 2.00
+            'LON_PREV',
+            'ALL_STOCH_OB',
+            'LON_KZ',
+            'ALL_FIB_618',
+            'ALL_MACD_STD_SIG',
+            'ALL_PSAR_EMA',
+            'TOK_FISHER',
+            'ALL_BB_TIGHT',
+            'ALL_MSTAR',
+            'ALL_SUPERTREND',
+            'LON_BIGGAP',
+            'PO3_SWEEP',
+            'TOK_PREVEXT',
+            'LON_TOKEND',
+            'IDX_CONSEC_REV',
+            'D8',
+            'TOK_WILLR',
+            'IDX_NR4',
         ],
-        # PF 1.32 | WR 68% | DD -3.6% @ 0.25% | Rend +45% | 11/13
+        # Calmar19: PF 1.62 | WR 79% | DD -0.6% | Rend +24% | 13/13
     },
     'JPN225': {
         'risk_pct': 0.0005,
         'portfolio': [
-            'ALL_FIB_618',     # TRAIL 3.0  PF=1.95 WR=82%
-            'IDX_LATE_REV',    # TRAIL 3.0  PF=1.47 WR=83%
-            'D8',              # TRAIL 1.5  PF=2.02 WR=62%
-            'TOK_NR4',         # TRAIL 1.5  PF=1.41 WR=64%
-            'LON_DC10_MOM',    # TRAIL 3.0  PF=1.55 WR=74%
-            'LON_TOKEND',      # TRAIL 3.0  PF=1.30 WR=70%
-            'ALL_MACD_RSI',    # TRAIL 3.0  PF=1.26 WR=79%
-            'TOK_PREVEXT',     # TPSL  3.0  PF=1.49 WR=74%
+            'ALL_FIB_618',     # Calmar 21 — score 2.80
+            'LON_GAP',
+            'ALL_NR4',
+            'ALL_STOCH_PIVOT',
+            'ALL_MTF_BRK',
+            'LON_DC10',
+            'ALL_FISHER_9',
+            'IDX_GAP_CONT',
+            'ALL_MACD_RSI',
+            'IDX_LATE_REV',
+            'TOK_NR4',
+            'ALL_WILLR_14',
+            'ALL_PIVOT_BOUNCE',
+            'LON_DC10_MOM',
+            'ALL_CMO_14',
+            'D8',
+            'LON_TOKEND',
+            'TOK_PREVEXT',
+            'NY_LONEND',
+            'ALL_STOCH_RSI',
+            'ALL_MACD_MED_SIG',
         ],
-        # PF*WR 9: PF 1.85 | WR 79% | DD -2.0% @ 0.25% | +258% | 13/13
+        # Calmar21: PF 1.67 | WR 75% | DD -0.6% | Rend +37% | 13/13
     },
     'DAX40': {
         'risk_pct': 0.0005,
         'portfolio': [
-            'ALL_MACD_HIST',   # TRAIL 1.5/0.30/0.30  PF=1.96 WR=68%
-            'TOK_FADE',        # TRAIL 3.0/0.50/0.50  PF=1.58 WR=71%
-            'ALL_FIB_618',     # TRAIL 3.0/0.30/0.30  PF=1.72 WR=77%
-            'ALL_ENGULF',      # TRAIL 3.0/0.30/0.30  PF=1.59 WR=80%
-            'TOK_BIG',         # TRAIL 3.0/0.30/0.30  PF=1.47 WR=74%
-            'ALL_FISHER_9',    # TRAIL 3.0/0.30/0.30  PF=1.61 WR=74%
+            'ALL_FVG_BULL',    # PF 17 — score 2.23
+            'ALL_STOCH_OB',
+            'ALL_CCI_20_ZERO',
+            'ALL_MACD_HIST',
+            'ALL_ELDER_BULL',
+            'ALL_ADX_RSI50',
+            'ALL_MACD_STD_SIG',
+            'TOK_FADE',
+            'ALL_FISHER_9',
+            'ALL_INSIDE_BRK',
+            'TOK_WILLR',
+            'ALL_BB_TIGHT',
+            'TOK_BIG',
+            'ALL_RSI_DIV',
+            'ALL_DC10',
+            'ALL_DC10_EMA',
+            'TOK_PREVEXT',
         ],
-        # MinDD6: PF 1.97 | WR 77% | DD -8.0% @ 0.25% | Rend +768% | 13/13
+        # PF17: PF 1.84 | WR 75% | DD -1.3% | Rend +40% | 12/13
     },
-    # BTCUSD retire — fees/spread trop eleves, strats non viables en live
-
+    # BTCUSD retire — fees/spread trop eleves
     'NAS100': {
         'risk_pct': 0.0005,
         'portfolio': [
-            'D8',              # TRAIL 1.5/0.50/0.30  PF=2.02 WR=62%
-            'ALL_DC50',        # TPSL  3.0/0.50       PF=1.54 WR=89%
-            'ALL_DC10_EMA',    # TPSL  2.5/0.75       PF=1.47 WR=81%
-            'TOK_FISHER',      # TRAIL 2.0/0.30/0.30  PF=1.34 WR=75%
-            'TOK_PREVEXT',     # TPSL  3.0/1.50       PF=1.49 WR=74%
-            'ALL_FVG_BULL',    # TRAIL 2.0/0.30/0.30  PF=1.49 WR=78%
-            'ALL_MACD_HIST',   # TRAIL 1.5/0.30/0.30  PF=1.32 WR=69%
-            'IDX_PREV_HL',     # TRAIL 3.0/0.30/0.30  PF=1.44 WR=67%
-            'ALL_MSTAR',       # TPSL  2.5/0.50       PF=1.52 WR=85%
-            'TOK_NR4',         # TRAIL 1.5/0.50/0.50  PF=1.41 WR=64%
+            'D8',              # Calmar 19 — score 1.66
+            'ALL_HMA_CROSS',
+            'ALL_SUPERTREND',
+            'TOK_NR4',
+            'TOK_FADE',
+            'ALL_RSI_50',
+            'ALL_PIVOT_BOUNCE',
+            'ALL_MSTAR',
+            'IDX_PREV_HL',
+            'ALL_MACD_HIST',
+            'ALL_FVG_BULL',
+            'IDX_NY_MOM',
+            'ALL_NR4',
+            'TOK_PREVEXT',
+            'ALL_ELDER_BULL',
+            'LON_BIGGAP',
+            'ALL_DC50',
+            'IDX_TREND_DAY',
+            'ALL_STOCH_PIVOT',
         ],
-        # MinDD10: PF 1.40 | WR 77% | DD -0.4% @ 0.05% | Rend +8% | 13/13
+        # Calmar19: PF 1.51 | WR 69% | DD -0.8% | Rend +30% | 13/13
     },
     'SP500': {
         'risk_pct': 0.0005,
         'portfolio': [
-            'ALL_DOJI_REV',    # TPSL  3.0/0.25       PF=2.31 WR=94%
-            'ALL_ICHI_TK',     # TPSL  3.0/0.50       PF=1.60 WR=90%
-            'ALL_DC50',        # TPSL  3.0/0.50       PF=1.82 WR=90%
-            'ALL_3SOLDIERS',   # TRAIL 3.0/0.30/0.30  PF=1.52 WR=82%
-            'TOK_FISHER',      # TRAIL 3.0/0.50/0.50  PF=1.33 WR=78%
-            'IDX_CONSEC_REV',  # TRAIL 1.5/0.50/0.50  PF=1.62 WR=66%
-            'ALL_FIB_618',     # TRAIL 3.0/1.00/1.00  PF=1.36 WR=69%
-            'ALL_MACD_HIST',   # TRAIL 1.0/0.50/0.50  PF=1.28 WR=56%
-            'ALL_PSAR_EMA',    # TRAIL 3.0/1.00/1.00  PF=1.43 WR=68%
-            'IDX_RSI_REV',     # TRAIL 1.5/0.30/0.30  PF=1.55 WR=70%
-            'LON_PREV',        # TRAIL 3.0/0.30/0.30  PF=1.53 WR=79%
+            'ALL_DOJI_REV',    # Calmar 16 — score 1.57
+            'TOK_FISHER',
+            'IDX_CONSEC_REV',
+            'ALL_ICHI_TK',
+            'ALL_DC50',
+            'ALL_RSI_EXTREME',
+            'ALL_FVG_BULL',
+            'LON_PREV',
+            'ALL_3SOLDIERS',
+            'ALL_PSAR_EMA',
+            'ALL_SUPERTREND',
+            'ALL_MACD_HIST',
+            'IDX_RSI_REV',
+            'ALL_ELDER_BULL',
+            'ALL_STOCH_CROSS',
+            'ALL_MACD_FAST_SIG',
         ],
-        # MinDD11: PF 1.48 | WR 78% | DD -0.7% @ 0.05% | Rend +13% | 13/13
+        # Calmar16: PF 1.53 | WR 71% | DD -1.0% | Rend +29% | 13/13
     },
     'UK100': {
         'risk_pct': 0.0005,
         'portfolio': [
-            'ALL_CONSEC_REV',  # TPSL  3.0/1.00       PF=1.73 WR=81%
-            'NY_HMA_CROSS',    # TRAIL 2.0/0.30/0.30  PF=1.66 WR=71%
-            'IDX_LATE_REV',    # TRAIL 2.0/0.30/0.30  PF=1.66 WR=77%
+            'ALL_CONSEC_REV',  # Calmar 14 — score 1.17
+            'NY_HMA_CROSS',
+            'NY_ELDER',
+            'ALL_ELDER_BULL',
+            'IDX_TREND_DAY',
+            'LON_BIGGAP',
+            'IDX_LATE_REV',
+            'ALL_MACD_DIV',
+            'IDX_CONSEC_REV',
+            'LON_GAP',
+            'ALL_HAMMER',
+            'TOK_NR4',
+            'ALL_MSTAR',
+            'LON_PREV',
         ],
-        # PF3: PF 1.66 | WR 77% | DD -0.4% @ 0.05% | Rend +6% | 13/13
+        # Calmar14: PF 1.46 | WR 73% | DD -0.7% | Rend +20% | 12/13
     },
 }
 
