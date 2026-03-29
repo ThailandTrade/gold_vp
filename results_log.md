@@ -67,6 +67,15 @@ sanitize_symbol ajoute pour gerer GER40.cash -> ger40_cash en DB.
 | US500.cash | PF 5 | 5 | 1.55 | 79% | -0.5% | +8% | 13/13 |
 | US30.cash | PF 12 | 12 | 1.68 | 64% | -1.0% | +30% | 13/13 |
 
+### Audit critique exhaustif FTMO — 2026-03-29
+Audit base sur recherche web exhaustive (10 categories, 40+ points).
+- Code: 0 look-ahead technique (Donchian/BB/MTF tous comparent a prev, pas courant)
+- Truncation test: 6/6 PASS (85,115 signaux, 0 mismatch)
+- Risques structurels: overfitting in-sample (exits + combos optimises sur memes donnees)
+- ALL_FIB_618 LONG ONLY sur 4 instruments
+- ALL_DOJI_REV US500 spread=61% du gain moyen → DANGER
+- XAUUSD/TOK_PREVEXT (42 trades) et US100/D8 (37 trades) faible significativite
+
 ### Look-ahead test FTMO — 2026-03-28
 Test full vs truncated (60%) sur les 6 instruments.
 85,115 signaux compares, 0 mismatch, 0 price diff. **6/6 PASS.**
