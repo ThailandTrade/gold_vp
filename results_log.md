@@ -1,5 +1,82 @@
 # Results Log — Evolution des resultats
 
+## 2026-03-29 — Audit look-ahead complet 5ers (110 strats)
+
+### Audit look-ahead exhaustif — toutes les strats du portfolio 5ers
+Audit systematique de chaque composant pour detecter tout look-ahead bias.
+
+#### 1. ATR — PASS
+- `daily_atr` = EWM(14) sur candles 5m, derniere valeur par jour (causal)
+- Usage: `day_atr = daily_atr.get(prev_day(today))` = ATR de la VEILLE
+- `global_atr` fallback inclut futur mais jamais utilise (warmup 200 bars)
+
+#### 2. compute_indicators() — 35+ indicateurs — PASS
+Tous causaux (backward-looking):
+- EWM: MACD (std/fast/med), RSI, EMA (5-200), ATR14, ADX, TRIX, Elder Ray
+- Rolling: Donchian (10/50), BB (20,2), Tight BB (10,1.5), Keltner, Williams %R (7/14), CCI (14/20), CMO (9/14), Stochastic (14,3,3), Stochastic RSI, HMA (9/21), Aroon (25), AO, LR slope (20)
+- Shift: Momentum (10/14), ROC 10, DPO 14, Fisher signal, Ichimoku senkou
+- Boucle forward: Supertrend (compare close[i] vs boundary[i-1])
+- Pivot: boucle dates[i-1] → prev day H+L+C
+
+#### 3. detect_all() — 110 strats — PASS
+**Open strats** (entree row['open'], detection bougie precedente fermee):
+- TOK_FADE, TOK_PREVEXT: prev_day_data (veille). PASS
+- LON_GAP, LON_BIGGAP: derniere Tokyo fermee + row['open']. PASS
+- LON_KZ, LON_TOKEND, LON_PREV: candles passees + row['open']. PASS
+- NY_GAP, NY_LONEND, NY_LONMOM, NY_DAYMOM: candles passees + row['open']. PASS
+
+**Close strats** (entree row['close'], bougie courante fermee):
+- TOK_2BAR, TOK_BIG, LON_PIN: row OHLC courant. PASS
+- D8: prev_day + prev2_day + row['close']. PASS
+- PO3_SWEEP, LON_ASIAN_BRK: Asian range (0-6h, fermee a detection 7-10h). PASS
+
+**Indicator strats** (pattern prev[ind] cross row[ind]):
+- Toutes les 80+ strats indicator suivent le meme pattern: compare prev (bar i-1) vs row (bar i)
+- Aucun indicateur n'utilise de donnees futures
+- Les Donchian/DC comparent row['close'] vs **prev**['dc_h'] (pas row['dc_h'])
+- ALL_RSI_DIV: candles.iloc[ci-9:ci+1] — row vs min des 9 precedentes. PASS
+- ALL_MACD_DIV: candles.iloc[ci-19:ci+1] — idem. PASS
+- ALL_MTF_BRK: row vs prev['high_1h'] + prev vs [ci-2]['high_1h']. PASS
+- ALL_NR4/TOK_NR4/IDX_NR4: ranges [ci..ci-3], min = courant. PASS
+- ALL_BB_SQUEEZE: prev.bb_width vs prev.bb_width_min20. PASS
+- ALL_KB_SQUEEZE: prev.squeeze=1 → row.squeeze=0 + break KC. PASS
+
+**IDX strats** (US session):
+- IDX_ORB15/30: ny_candles[:3/6] = premieres bougies NY fermees. PASS
+- IDX_LATE_REV: ny_candles[-1] = courant (19-20h). PASS
+- IDX_TREND_DAY: IB = ny_candles[:12] fermees. PASS
+- IDX_PREV_HL: prev_day_data H/L. PASS
+
+#### 4. sim_exit_custom() — PASS
+- Boucle forward only: `for j in range(start, len(cdf)-pos)`
+- TRAIL: best tracke sur close (pas future bars)
+- TPSL: SL prioritaire si meme bougie (conservateur)
+- Timeout 288 bougies pour TPSL
+
+#### 5. Pipeline backtest (optimize_all.py) — PASS
+- Indicateurs precalcules sur dataset complet mais tous causaux (EWM/rolling)
+- Warmup 200 bars avant premiere detection
+- prev_day_data construit a chaque changement de jour (jour precedent)
+- trig={} reset chaque jour (1 signal max/strat/jour)
+
+#### VERDICT: 0 LOOK-AHEAD sur 110 strats
+| Categorie | Resultat |
+|---|---|
+| Indicateurs (35+) | 0 look-ahead |
+| Signaux detect_all (110 strats) | 0 look-ahead |
+| ATR | PASS (veille) |
+| prev_day_data / pivot | PASS (jour precedent) |
+| Exit simulation | PASS (forward only) |
+| Pipeline backtest | PASS |
+
+Notes mineures (non-critiques):
+- global_atr fallback inclut futur — jamais utilise avec warmup 200
+- ALL_ELDER_BULL = LONG ONLY, ALL_ELDER_BEAR = SHORT ONLY (par design)
+- ALL_FIB_618 = LONG ONLY (documente ligne 593)
+- Confirme par test truncation precedent: 85,115 signaux, 0 mismatch
+
+---
+
 ## 2026-03-27 — Multi-instrument: audit live + migration strats + portfolios
 
 ### Changements config globaux
