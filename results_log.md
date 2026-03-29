@@ -94,6 +94,21 @@ Test full vs truncated (60%) sur les 6 instruments.
 Audit: 0 mismatch exits, toutes strats dans detect_all.
 Spread: 1 DANGER (ALL_DOJI_REV US500 Sp/Win=61%), 5 RISQUE.
 
+### 19 nouvelles strats ajoutees — 2026-03-29
+Total passe de 91 a 110 strats. Nouvelles familles:
+- Stochastic (cross, OB/OS, RSI, pivot combo, session Tokyo/London)
+- TRIX (signal cross, Tokyo)
+- Supertrend direct
+- ROC zero cross
+- Elder Ray (bull/bear power, NY session)
+- Aroon cross
+- CCI 100 extreme reversal
+- Keltner-Bollinger squeeze breakout
+- Linear regression slope reversal
+- ADX + RSI 50 combo
+- MACD divergence
+A optimiser sur tous les instruments pour trouver les pepites.
+
 ### BTCUSD retire du portfolio — 2026-03-28
 Fees et spread BTC trop eleves. Compare today montre PnL live tres inferieur au BT.
 Les strats ne sont pas viables en live sur BTC. Portfolio passe a 6 instruments.
