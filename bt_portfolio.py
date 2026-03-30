@@ -19,7 +19,7 @@ args = parser.parse_args()
 
 cfg = importlib.import_module(f'config_{args.account}')
 BROKER = cfg.BROKER
-INSTRUMENTS = cfg.INSTRUMENTS
+INSTRUMENTS = getattr(cfg, 'ALL_INSTRUMENTS', cfg.INSTRUMENTS)
 
 # Filter to single symbol if specified
 if args.symbol:
