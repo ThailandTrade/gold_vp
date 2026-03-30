@@ -459,7 +459,7 @@ def main():
                 # Close strats
                 our_pos = mt5_our_positions(sym)
                 open_dirs = set('long' if p.type == 0 else 'short' for p in our_pos)
-                for sig in detect_close_strats(candles, ss, atr, candle_time, today, portfolio):
+                for sig in sorted(detect_close_strats(candles, ss, atr, candle_time, today, portfolio), key=lambda s: s['strat']):
                     if sig['dir'] == 'long' and 'short' in open_dirs: continue
                     if sig['dir'] == 'short' and 'long' in open_dirs: continue
                     open_position(state, sym, sig, atr, risk_pct)

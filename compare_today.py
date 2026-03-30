@@ -155,7 +155,8 @@ for sym, icfg in INSTRUMENTS.items():
                 bt_signals.append((ci, sn, d_dir, e, str(ct)))
         detect_all(df, ci, row, ct, d, hour, atr, trig, tv, tok, lon, prev_day_data, add, prev2_day_data)
 
-    # Simulate with conflict filter
+    # Simulate with conflict filter (tri alphabetique = identique a analyze_combos.py)
+    bt_signals.sort(key=lambda x: (x[0], x[1]))
     bt_trades = []
     active_pos = []
     for ci, sn, d_dir, entry, ct_str in bt_signals:

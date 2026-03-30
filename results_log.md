@@ -38,6 +38,13 @@ Bugs constates:
 1. Filtre conflit: BT skip 2 longs (conflit short), live les a pris → -$77
 2. TOK_PREVEXT entry diff 13 pts (open strat, timing bougie)
 
+### Fix ordre resolution conflits BT vs live
+BT (analyze_combos.py): tri par (candle_index, strat_name) → ordre **alphabetique** quand meme bougie.
+Live (live_mt5.py): ordre de detect_all() → ordre du **code** (different).
+Quand 2 strats opposees triggent sur la meme bougie, la premiere bloque la seconde.
+L'ordre different entre BT et live = resultat different.
+Fix: tri alphabetique `sorted(signals, key=lambda s: s['strat'])` dans live_mt5.py et compare_today.py.
+
 ---
 
 ## 2026-03-30 — Fix magic numbers: collision hash → index unique
