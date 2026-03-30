@@ -10,6 +10,7 @@ from phase1_poc_calculator import get_conn
 from strats import detect_all, compute_indicators, sim_exit_custom, make_magic
 from strat_exits import STRAT_EXITS, DEFAULT_EXIT
 from datetime import datetime, timezone
+from prettytable import PrettyTable
 
 parser = argparse.ArgumentParser()
 parser.add_argument('account', nargs='?', default='5ers', choices=['icm','ftmo','5ers'])
@@ -32,11 +33,8 @@ for sym, icfg in INSTRUMENTS.items():
 
 today = datetime.now(timezone.utc).date()
 conn = get_conn(); conn.autocommit = True
-W = 130
 
-print(f"\n{'='*W}")
-print(f"  COMPARE BT vs LIVE — {BROKER} — {today}")
-print(f"{'='*W}")
+print(f"\n  COMPARE BT vs LIVE — {BROKER} — {today}")
 
 # ── Load MT5 live trades ──
 live_trades = {}  # sym -> [trades]
@@ -174,7 +172,7 @@ for sym, icfg in INSTRUMENTS.items():
         if not skipped:
             active_pos.append((xi, di))
         bt_trades.append({'strat':sn, 'dir':d_dir, 'entry':entry, 'exit':ex,
-                          'pnl_oz': pnl if not skipped else 0,
+                          'pnl_pts': pnl if not skipped else 0,
                           'bars':b, 'entry_time':ct_str,
                           'exit_time':str(df.iloc[min(xi,len(df)-1)]['ts_dt']),
                           'skipped': skipped})
@@ -186,12 +184,10 @@ for sym, icfg in INSTRUMENTS.items():
     bt_active = [t for t in bt_trades if not t['skipped']]
     bt_skip = [t for t in bt_trades if t['skipped']]
 
-    if not bt_active and not lv and not lo: continue
+    if not bt_active and not bt_skip and not lv and not lo: continue
 
-    print(f"\n{'-'*W}")
-    print(f"  {sym} — ATR={atr:.2f} — {len(portfolio)} strats")
+    print(f"\n  {sym} — ATR={atr:.2f} — {len(portfolio)} strats")
     print(f"  BT: {len(bt_active)} trades ({len(bt_skip)} skipped) | Live: {len(lv)} closed + {len(lo)} open")
-    print(f"{'-'*W}")
 
     # Build maps
     bt_map = {}
@@ -202,47 +198,87 @@ for sym, icfg in INSTRUMENTS.items():
     for p in lo: lo_map.setdefault(p['strat'], []).append(p)
     all_sn = sorted(set(list(bt_map.keys()) + list(lv_map.keys()) + list(lo_map.keys())))
 
-    print(f"  {'Strat':>18s} | {'BT dir':>6s} {'BT entry':>9s} {'BT exit':>9s} {'BT pnl':>8s} {'BT time':>12s} | {'LV dir':>6s} {'LV entry':>9s} {'LV exit':>9s} {'LV pnl':>8s} {'LV time':>12s}")
-    print(f"  {'-'*115}")
+    # Build table
+    tbl = PrettyTable()
+    tbl.field_names = ['Strat', 'Exit', 'BT Dir', 'BT Entry', 'BT Exit', 'BT pts',
+                       'LV Dir', 'LV Entry', 'LV Exit', 'LV pts',
+                       'd Entry', 'd Exit', 'Verdict']
+    tbl.align = 'r'
+    tbl.align['Strat'] = 'l'
+    tbl.align['Verdict'] = 'l'
+
+    bt_total_pts = 0; lv_total_pts = 0
 
     for sn in all_sn:
         bts = bt_map.get(sn, [])
         lvs = lv_map.get(sn, [])
         los = lo_map.get(sn, [])
-        n = max(len(bts), len(lvs) + len(los))
-        for i in range(max(n, 1)):
-            bt = bts[i] if i < len(bts) else None
-            lv_t = lvs[i] if i < len(lvs) else None
-            lo_t = los[i - len(lvs)] if i >= len(lvs) and (i - len(lvs)) < len(los) else None
+        bt = bts[0] if bts else None
+        lv_t = lvs[0] if lvs else None
+        lo_t = los[0] if los else None
 
-            # BT column
-            if bt and bt['skipped']:
-                bt_str = f"{'SKIP':>6s} {bt['entry']:>9.2f} {'---':>9s} {'---':>8s} {bt['entry_time'][11:16]:>5s}       "
-            elif bt:
-                bt_str = f"{bt['dir']:>6s} {bt['entry']:>9.2f} {bt['exit']:>9.2f} {bt['pnl_oz']:>+8.2f} {bt['entry_time'][11:16]:>5s}->{bt['exit_time'][11:16]:>5s}"
-            else:
-                bt_str = f"{'---':>6s} {'---':>9s} {'---':>9s} {'---':>8s} {'---':>12s}"
+        exit_cfg = sym_exits.get(sn, DEFAULT_EXIT)
+        exit_type = exit_cfg[0]
 
-            # LV column
+        # BT columns
+        if bt and bt['skipped']:
+            bt_dir = 'SKIP'; bt_entry = f"{bt['entry']:.2f}"; bt_exit = '-'; bt_pts = '-'
+        elif bt:
+            bt_dir = bt['dir']; bt_entry = f"{bt['entry']:.2f}"; bt_exit = f"{bt['exit']:.2f}"
+            bt_pts = f"{bt['pnl_pts']:+.2f}"
+            bt_total_pts += bt['pnl_pts']
+        else:
+            bt_dir = '-'; bt_entry = '-'; bt_exit = '-'; bt_pts = '-'
+
+        # LV columns + pts
+        if lv_t:
+            lv_dir = lv_t['dir']; lv_entry = f"{lv_t['entry']:.2f}"; lv_exit = f"{lv_t['exit']:.2f}"
+            lv_pnl_pts = (lv_t['exit'] - lv_t['entry']) if lv_t['dir'] == 'long' else (lv_t['entry'] - lv_t['exit'])
+            lv_pts = f"{lv_pnl_pts:+.2f}"
+            lv_total_pts += lv_pnl_pts
+        elif lo_t:
+            lv_dir = lo_t['dir']; lv_entry = f"{lo_t['entry']:.2f}"; lv_exit = 'OPEN'
+            lv_pts = '...'
+        else:
+            lv_dir = '-'; lv_entry = '-'; lv_exit = '-'; lv_pts = '-'
+
+        # Deltas (entry diff, exit diff)
+        d_entry = '-'; d_exit = '-'
+        if bt and not bt['skipped'] and (lv_t or lo_t):
+            lv_e = lv_t['entry'] if lv_t else lo_t['entry']
+            diff_e = lv_e - bt['entry']
+            d_entry = f"{diff_e:+.2f}"
             if lv_t:
-                et = lv_t['entry_time'].strftime('%H:%M') if hasattr(lv_t['entry_time'], 'strftime') else str(lv_t['entry_time'])[11:16]
-                xt = lv_t['exit_time'].strftime('%H:%M') if hasattr(lv_t['exit_time'], 'strftime') else str(lv_t['exit_time'])[11:16]
-                lv_str = f"{lv_t['dir']:>6s} {lv_t['entry']:>9.2f} {lv_t['exit']:>9.2f} {lv_t['pnl']:>+8.2f} {et}->{xt:>5s}"
-            elif lo_t:
-                et = lo_t['time'].strftime('%H:%M') if hasattr(lo_t['time'], 'strftime') else str(lo_t['time'])[11:16]
-                lv_str = f"{lo_t['dir']:>6s} {lo_t['entry']:>9.2f} {'...':>9s} {lo_t['pnl']:>+8.2f} {et}->  ..."
+                diff_x = lv_t['exit'] - bt['exit']
+                d_exit = f"{diff_x:+.2f}"
+
+        # Verdict
+        if bt and not bt['skipped'] and (lv_t or lo_t):
+            lv_d = lv_t['dir'] if lv_t else lo_t['dir']
+            lv_e = lv_t['entry'] if lv_t else lo_t['entry']
+            if bt['dir'] != lv_d:
+                verdict = 'DIR MISMATCH!'
             else:
-                lv_str = f"{'---':>6s} {'---':>9s} {'---':>9s} {'---':>8s} {'---':>12s}"
+                entry_diff = abs(bt['entry'] - lv_e)
+                if entry_diff < 0.5: verdict = 'MATCH'
+                elif entry_diff < 2.0: verdict = 'CLOSE'
+                else: verdict = f'DIFF {entry_diff:.1f}pts'
+        elif bt and bt['skipped'] and (lv_t or lo_t):
+            verdict = 'BT=SKIP LV=PRIS!'
+        elif bt and not bt['skipped'] and not lv_t and not lo_t:
+            verdict = 'BT ONLY'
+        elif not bt and (lv_t or lo_t):
+            verdict = 'LV ONLY!'
+        elif bt and bt['skipped'] and not lv_t and not lo_t:
+            verdict = 'SKIP OK'
+        else:
+            verdict = '?'
 
-            label = sn if i == 0 else ''
-            print(f"  {label:>18s} | {bt_str} | {lv_str}")
+        tbl.add_row([sn, exit_type, bt_dir, bt_entry, bt_exit, bt_pts,
+                     lv_dir, lv_entry, lv_exit, lv_pts,
+                     d_entry, d_exit, verdict])
 
-    # Totals
-    bt_pnl = sum(t['pnl_oz'] for t in bt_trades if not t['skipped'])
-    lv_pnl = sum(t['pnl'] for t in lv)
-    lo_pnl = sum(p['pnl'] for p in lo)
-    print(f"  {'-'*105}")
-    print(f"  {'TOTAL':>18s} | {'':>6s} {'':>9s} {'':>9s} {bt_pnl:>+8.2f} {'':>12s} | {'':>6s} {'':>9s} {lv_pnl+lo_pnl:>+8.2f} {'':>8s}")
+    print(tbl)
+    print(f"  TOTAL:  BT {bt_total_pts:+.2f} pts  |  LV {lv_total_pts:+.2f} pts")
 
 conn.close()
-print(f"\n{'='*W}")
