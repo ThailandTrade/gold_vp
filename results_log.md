@@ -1,5 +1,45 @@
 # Results Log — Evolution des resultats
 
+## 2026-03-30 — Retrait open strats + fix magic numbers
+
+### REGLE: JAMAIS de strats open dans les portfolios live
+Les open strats (TOK_FADE, TOK_PREVEXT, LON_GAP, LON_BIGGAP, LON_KZ, LON_TOKEND, LON_PREV,
+NY_GAP, NY_LONEND, NY_LONMOM, NY_DAYMOM) entrent sur row['open'] = tick au moment de la detection.
+Le timing exact (quelle bougie est iloc[-2] au moment du poll) est impossible a reproduire
+entre backtest et live. Bug confirme en live le 2026-03-30: entries decalees, conflits non filtres.
+
+Impact retrait sur XAUUSD 5ers:
+- Avant: 19 strats (5 open + 14 close), PF 1.57, 4059 trades
+- Apres: 14 strats (close only), PF 1.60, 3235 trades (-20%)
+- Perte: 18% du PnL net (955 oz sur 5265)
+- Le PF MONTE car les open strats avaient un PF plus faible (1.46)
+
+Strats open retirees de TOUS les configs:
+- config_5ers: LON_PREV, LON_KZ, LON_BIGGAP, TOK_PREVEXT, LON_TOKEND
+- config_ftmo: LON_TOKEND, LON_KZ, LON_PREV, LON_BIGGAP, TOK_PREVEXT, LON_GAP, NY_LONEND, TOK_FADE
+- config_icm: LON_PREV, LON_KZ, TOK_PREVEXT, LON_TOKEND
+
+Cette regle s'applique aussi a analyze_combos.py: ne JAMAIS inclure d'open strats dans les combos.
+
+### Compare BT vs Live 2026-03-30 (avant retrait)
+7 signaux detectes, 4 BT trades (3 skipped conflit):
+
+| Strat | BT Dir | BT Entry | BT PnL | LV Dir | LV Entry | LV PnL | Verdict |
+|---|---|---|---|---|---|---|---|
+| ALL_BB_TIGHT | short | 4435.18 | +1.12 | short | 4434.99 | +$0.24 | MATCH |
+| ALL_MACD_STD_SIG | SKIP | 4461.62 | - | long | 4462.21 | -$55.31 | BT=SKIP LV=PRIS! |
+| ALL_STOCH_OB | SKIP | 4461.62 | - | long | 4461.07 | -$21.76 | BT=SKIP LV=PRIS! |
+| IDX_NR4 | long | 4452.20 | -11.09 | long | 4452.88 | -$44.54 | MATCH |
+| TOK_FISHER | short | 4435.18 | -22.17 | short | 4434.96 | -$44.89 | MATCH |
+| TOK_PREVEXT | short | 4448.42 | +14.36 | short | 4435.27 | +$1.03 | ENTRY DIFF 13.1 |
+| TOK_WILLR | SKIP | 4445.42 | - | - | - | - | SKIP OK |
+
+Bugs constates:
+1. Filtre conflit: BT skip 2 longs (conflit short), live les a pris → -$77
+2. TOK_PREVEXT entry diff 13 pts (open strat, timing bougie)
+
+---
+
 ## 2026-03-30 — Fix magic numbers: collision hash → index unique
 
 ### Bug CRITIQUE: collisions magic numbers
