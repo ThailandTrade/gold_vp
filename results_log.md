@@ -38,6 +38,21 @@ Bugs constates:
 1. Filtre conflit: BT skip 2 longs (conflit short), live les a pris → -$77
 2. TOK_PREVEXT entry diff 13 pts (open strat, timing bougie)
 
+### Re-optimisation combos close-only 5ers — 6 instruments
+analyze_combos.py modifie pour exclure OPEN_STRATS avant la recherche.
+Combos valides par l'utilisateur instrument par instrument:
+
+| Instrument | Combo | Nb | Trades | PF | WR | DD | Rend | M+ |
+|---|---|---|---|---|---|---|---|---|
+| XAUUSD | PF*WR 19 | 19 | 3463 | 1.53 | 80% | -0.7% | +20% | 13/13 |
+| JPN225 | Sharpe 19 | 19 | 3822 | 1.57 | 75% | -0.8% | +32% | 13/13 |
+| DAX40 | PF 15 | 15 | 3092 | 1.82 | 72% | -1.1% | +41% | 12/13 |
+| NAS100 | Calmar 16 | 16 | 3091 | 1.45 | 72% | -1.0% | +21% | 13/13 |
+| SP500 | Calmar 13 | 13 | 2788 | 1.47 | 73% | -0.8% | +19% | 13/13 |
+| UK100 | PF 12 | 12 | 2628 | 1.49 | 74% | -0.8% | +18% | 12/13 |
+
+Live: XAUUSD seul pour le moment, autres instruments commentes.
+
 ### Fix ordre resolution conflits BT vs live
 BT (analyze_combos.py): tri par (candle_index, strat_name) → ordre **alphabetique** quand meme bougie.
 Live (live_mt5.py): ordre de detect_all() → ordre du **code** (different).

@@ -26,7 +26,7 @@ with open(_pkl, 'rb') as f:
 strat_arrays = data['strat_arrays']
 best_configs = data['best_configs']
 OPEN_STRATS = set(data['OPEN_STRATS'])
-all_strats = sorted(strat_arrays.keys())
+all_strats = sorted(sn for sn in strat_arrays.keys() if sn not in OPEN_STRATS)
 # Load capital & risk from config
 _cfg = importlib.import_module(f'config_{_args.account}')
 _sym_upper = _sym.upper()

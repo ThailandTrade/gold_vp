@@ -1,7 +1,7 @@
 """
-Config 5ers — Multi-instrument (re-optimise 2026-03-29 avec 110 strats)
+Config 5ers — Multi-instrument (re-optimise 2026-03-30 close-only, sans open strats)
 Max DD 5ers: 4% challenge
-TEST LIVE: XAUUSD seul pour le moment
+LIVE: XAUUSD seul pour le moment
 REGLE: PAS de strats open (timing impossible a reproduire exactement en live)
 """
 BROKER = '5ers'
@@ -10,73 +10,78 @@ INSTRUMENTS = {
     'XAUUSD': {
         'risk_pct': 0.0005,
         'portfolio': [
-            'IDX_VWAP_BOUNCE',  # ex-Calmar 19, open strats retirees -> 14 close strats
-            'ALL_STOCH_OB',
-            'ALL_FIB_618',
-            'ALL_MACD_STD_SIG',
-            'ALL_PSAR_EMA',
-            'TOK_FISHER',
-            'ALL_BB_TIGHT',
-            'ALL_MSTAR',
-            'ALL_SUPERTREND',
-            'PO3_SWEEP',
+            'IDX_VWAP_BOUNCE',   # PF*WR 19 — score 1.41
             'IDX_CONSEC_REV',
+            'PO3_SWEEP',
+            'ALL_PSAR_EMA',
+            'ALL_SUPERTREND',
+            'ALL_PIVOT_BRK',
+            'ALL_MACD_STD_SIG',
+            'ALL_ELDER_BULL',
             'D8',
+            'IDX_NY_MOM',
+            'ALL_FIB_618',
+            'ALL_MSTAR',
+            'ALL_CCI_20_ZERO',
+            'ALL_MACD_RSI',
+            'ALL_BB_SQUEEZE',
+            'TOK_FISHER',
+            'TOK_BIG',
+            'ALL_STOCH_OB',
             'TOK_WILLR',
-            'IDX_NR4',
         ],
-        # Sans open: PF 1.60 | WR 74% | 3235 trades | 14 strats
+        # PF*WR 19: PF 1.53 | WR 80% | DD -0.7% | Rend +20% | 13/13
     },
     # ── DESACTIVE pour test live XAUUSD seul — decommenter pour activer ──
     # 'JPN225': {
     #     'risk_pct': 0.0005,
     #     'portfolio': [
-    #         'ALL_FIB_618','ALL_NR4','ALL_STOCH_PIVOT','ALL_MTF_BRK',
-    #         'LON_DC10','ALL_FISHER_9','IDX_GAP_CONT','ALL_MACD_RSI','IDX_LATE_REV',
-    #         'TOK_NR4','ALL_WILLR_14','ALL_PIVOT_BOUNCE','LON_DC10_MOM','ALL_CMO_14',
-    #         'D8','ALL_STOCH_RSI','ALL_MACD_MED_SIG',
+    #         'ALL_FIB_618','ALL_MTF_BRK','ALL_WILLR_14','LON_DC10_MOM',
+    #         'IDX_GAP_CONT','TOK_NR4','ALL_PIVOT_BOUNCE','ALL_STOCH_PIVOT',
+    #         'ALL_NR4','ALL_MACD_FAST_SIG','LON_DC10','TOK_MACD_MED',
+    #         'ALL_DC10_EMA','IDX_NR4','ALL_CMO_14','ALL_EMA_821',
+    #         'D8','IDX_LATE_REV','ALL_FISHER_9',
     #     ],
-    #     # ex-Calmar21 sans open (LON_GAP, LON_TOKEND, TOK_PREVEXT, NY_LONEND retirees)
+    #     # Sharpe 19: PF 1.57 | WR 75% | DD -0.8% | Rend +32% | 13/13
     # },
     # 'DAX40': {
     #     'risk_pct': 0.0005,
     #     'portfolio': [
     #         'ALL_FVG_BULL','ALL_STOCH_OB','ALL_CCI_20_ZERO','ALL_MACD_HIST',
-    #         'ALL_ELDER_BULL','ALL_ADX_RSI50','ALL_MACD_STD_SIG',
-    #         'ALL_FISHER_9','ALL_INSIDE_BRK','TOK_WILLR','ALL_BB_TIGHT',
-    #         'TOK_BIG','ALL_RSI_DIV','ALL_DC10','ALL_DC10_EMA',
+    #         'ALL_ELDER_BULL','ALL_ADX_RSI50','ALL_MACD_STD_SIG','ALL_ENGULF',
+    #         'IDX_ENGULF','ALL_HMA_CROSS','ALL_CMO_9','ALL_DOJI_REV',
+    #         'ALL_KB_SQUEEZE','TOK_WILLR','ALL_FIB_618',
     #     ],
-    #     # ex-PF17 sans open (TOK_FADE, TOK_PREVEXT retirees)
+    #     # PF 15: PF 1.82 | WR 72% | DD -1.1% | Rend +41% | 12/13
     # },
     # 'NAS100': {
     #     'risk_pct': 0.0005,
     #     'portfolio': [
     #         'D8','ALL_HMA_CROSS','ALL_SUPERTREND','TOK_NR4',
-    #         'ALL_RSI_50','ALL_PIVOT_BOUNCE','ALL_MSTAR','IDX_PREV_HL',
-    #         'ALL_MACD_HIST','ALL_FVG_BULL','IDX_NY_MOM','ALL_NR4',
-    #         'ALL_ELDER_BULL','ALL_DC50',
-    #         'IDX_TREND_DAY','ALL_STOCH_PIVOT',
+    #         'ALL_ELDER_BULL','ALL_MSTAR','LON_STOCH','ALL_PIVOT_BOUNCE',
+    #         'ALL_MACD_HIST','ALL_RSI_50','IDX_TREND_DAY','ALL_WILLR_14',
+    #         'ALL_ADX_RSI50','TOK_FISHER','ALL_PSAR_EMA','ALL_EMA_821',
     #     ],
-    #     # ex-Calmar19 sans open (TOK_FADE, TOK_PREVEXT, LON_BIGGAP retirees)
+    #     # Calmar 16: PF 1.45 | WR 72% | DD -1.0% | Rend +21% | 13/13
     # },
     # 'SP500': {
     #     'risk_pct': 0.0005,
     #     'portfolio': [
     #         'ALL_DOJI_REV','TOK_FISHER','IDX_CONSEC_REV','ALL_ICHI_TK',
-    #         'ALL_DC50','ALL_RSI_EXTREME','ALL_FVG_BULL',
-    #         'ALL_3SOLDIERS','ALL_PSAR_EMA','ALL_SUPERTREND','ALL_MACD_HIST',
-    #         'IDX_RSI_REV','ALL_ELDER_BULL','ALL_STOCH_CROSS','ALL_MACD_FAST_SIG',
+    #         'ALL_DC50','ALL_RSI_EXTREME','ALL_FVG_BULL','ALL_HAMMER',
+    #         'ALL_MACD_FAST_SIG','IDX_RSI_REV','ALL_KB_SQUEEZE',
+    #         'ALL_SUPERTREND','ALL_PSAR_EMA',
     #     ],
-    #     # ex-Calmar16 sans open (LON_PREV retiree)
+    #     # Calmar 13: PF 1.47 | WR 73% | DD -0.8% | Rend +19% | 13/13
     # },
     # 'UK100': {
     #     'risk_pct': 0.0005,
     #     'portfolio': [
-    #         'ALL_CONSEC_REV','NY_HMA_CROSS','NY_ELDER','ALL_ELDER_BULL',
-    #         'IDX_TREND_DAY','IDX_LATE_REV','ALL_MACD_DIV',
-    #         'IDX_CONSEC_REV','ALL_HAMMER','TOK_NR4','ALL_MSTAR',
+    #         'ALL_CONSEC_REV','NY_HMA_CROSS','NY_ELDER','IDX_LATE_REV',
+    #         'ALL_ELDER_BULL','TOK_NR4','IDX_CONSEC_REV','ALL_MSTAR',
+    #         'IDX_TREND_DAY','ALL_HAMMER','ALL_MACD_DIV','IDX_VWAP_BOUNCE',
     #     ],
-    #     # ex-Calmar14 sans open (LON_BIGGAP, LON_GAP, LON_PREV retirees)
+    #     # PF 12: PF 1.49 | WR 74% | DD -0.8% | Rend +18% | 12/13
     # },
 }
 
