@@ -1,5 +1,50 @@
 # Results Log — Evolution des resultats
 
+## 2026-03-30 — Filtre marge WR, retrait open strats, fix magic/conflit
+
+### REGLE: Filtre marge WR >= 8% obligatoire
+La marge = WR_reel - WR_breakeven. Le WR_breakeven = 1/(1+RR) ou RR = avg_win/avg_loss.
+Si la marge est trop faible, un leger glissement en live suffit a rendre la strat perdante.
+
+Seuils testes (XAUUSD 5ers, toutes strats close-only ensemble):
+| Marge | Strats | Trades | PF | WR | DD | Rend | M+ |
+|---|---|---|---|---|---|---|---|
+| 0% | 47 | 8283 | 1.32 | 73% | -4.3% | +41% | 10/13 |
+| 5% | 47 | 8283 | 1.32 | 73% | -4.3% | +41% | 10/13 |
+| 7% | 27 | 4841 | 1.32 | 70% | -3.2% | +25% | 11/13 |
+| **8%** | **18** | **3299** | **1.37** | **70%** | **-1.6%** | **+19%** | **13/13** |
+| 10% | 11 | 1933 | 1.42 | 69% | -0.9% | +13% | 12/13 |
+| 12% | 1 | 234 | 1.52 | 65% | -0.8% | +2% | 10/13 |
+
+Decision: **8%** — compromis entre qualite et diversification sur 6 instruments.
+- 10% tue SP500, UK100, NAS100 (trop peu de strats)
+- 8% garde 4-25 strats par instrument, tous viables
+
+Filtre applique dans:
+1. optimize_all.py: filtre les strats AVANT de construire les arrays du pkl
+2. analyze_combos.py: re-filtre au chargement AVANT la recherche de combos
+
+### Audit marge dans le combo (XAUUSD PF*WR 19 — AVANT correction)
+2 strats DANGER detectees dans le contexte du combo (conflit filter change la WR):
+| Strat | WR combo | RR | WRmin | Marge | PF combo | Verdict |
+|---|---|---|---|---|---|---|
+| D8 | 48% | 1.12 | 47% | +0.5% | 1.02 | DANGER — quasi random |
+| ALL_BB_SQUEEZE | 85% | 0.24 | 80% | +5.0% | 1.42 | DANGER — RR=0.17:1, risque 16.5pts pour 2.8pts |
+
+### Strats viables par instrument (marge >= 8%, close-only)
+| Instrument | Viables | Filtrees | Best combo | PF | DD | Rend | M+ |
+|---|---|---|---|---|---|---|---|
+| XAUUSD | 18 | 29 | PF 16 (1.43) | 1.43 | -1.1% | +20% | 13/13 |
+| JPN225 | 8 | 19 | Calmar 8 (1.49) | 1.49 | -0.7% | +11% | 11/13 |
+| DAX40 | 25 | 32 | Calmar 15 (1.66) | 1.66 | -0.9% | +36% | 12/13 |
+| NAS100 | 7 | 20 | Calmar 7 (1.45) | 1.45 | -1.0% | +11% | 12/13 |
+| SP500 | 6 | 11 | Calmar 5 (1.53) | 1.53 | -0.8% | +10% | 12/13 |
+| UK100 | 4 | 11 | Calmar 4 (1.63) | 1.63 | -0.6% | +10% | 12/13 |
+
+Combos en attente de validation utilisateur instrument par instrument.
+
+---
+
 ## 2026-03-30 — Retrait open strats + fix magic numbers
 
 ### REGLE: JAMAIS de strats open dans les portfolios live

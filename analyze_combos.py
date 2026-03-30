@@ -26,16 +26,42 @@ with open(_pkl, 'rb') as f:
 strat_arrays = data['strat_arrays']
 best_configs = data['best_configs']
 OPEN_STRATS = set(data['OPEN_STRATS'])
-all_strats = sorted(sn for sn in strat_arrays.keys() if sn not in OPEN_STRATS)
+MIN_MARGIN = 8.0  # marge WR minimum (WR - WR_breakeven)
+
+# Filtre: pas d'open strats + marge WR > 10% en solo
+_all_candidates = sorted(sn for sn in strat_arrays.keys() if sn not in OPEN_STRATS)
+all_strats = []
+_skipped_margin = []
+for _sn in _all_candidates:
+    _trades = strat_arrays[_sn]
+    _pnls = [t[3] for t in _trades]
+    _wins = [p for p in _pnls if p > 0]
+    _losses = [p for p in _pnls if p <= 0]
+    if not _wins or not _losses: _skipped_margin.append(_sn); continue
+    _wr = len(_wins) / len(_pnls) * 100
+    _avg_w = sum(_wins) / len(_wins)
+    _avg_l = abs(sum(_losses) / len(_losses))
+    _rr = _avg_w / _avg_l if _avg_l > 0 else 0
+    _wr_min = 1 / (1 + _rr) * 100 if _rr > 0 else 100
+    _marge = _wr - _wr_min
+    if _marge >= MIN_MARGIN:
+        all_strats.append(_sn)
+    else:
+        _skipped_margin.append(_sn)
+
 # Load capital & risk from config
 _cfg = importlib.import_module(f'config_{_args.account}')
 _sym_upper = _sym.upper()
 if hasattr(_cfg, 'INSTRUMENTS') and _sym_upper in _cfg.INSTRUMENTS:
     RISK = _cfg.INSTRUMENTS[_sym_upper]['risk_pct']
+elif hasattr(_cfg, 'ALL_INSTRUMENTS') and _sym_upper in _cfg.ALL_INSTRUMENTS:
+    RISK = _cfg.ALL_INSTRUMENTS[_sym_upper]['risk_pct']
 else:
     RISK = getattr(_cfg, 'RISK_PCT', 0.0005)
 CAPITAL = 100000.0
-print(f"  {len(all_strats)} strats loaded. Capital=${CAPITAL:,.0f} Risk={RISK*100:.2f}%")
+print(f"  {len(all_strats)} strats viable (marge>{MIN_MARGIN}%), {len(_skipped_margin)} filtrees. Capital=${CAPITAL:,.0f} Risk={RISK*100:.2f}%")
+if _skipped_margin:
+    print(f"  Filtrees: {', '.join(_skipped_margin)}")
 
 # ── EVAL COMBO (event-based, identique a optimize_all.py) ──
 def eval_combo(strats, capital=CAPITAL, risk=RISK):
