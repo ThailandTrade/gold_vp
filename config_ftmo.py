@@ -96,7 +96,7 @@ ALL_INSTRUMENTS = {
 }
 
 # Instruments actifs en live (subset de ALL_INSTRUMENTS)
-LIVE_INSTRUMENTS = []  # aucun pour le moment
+LIVE_INSTRUMENTS = ['XAUUSD']
 
 INSTRUMENTS = {k: v for k, v in ALL_INSTRUMENTS.items() if k in LIVE_INSTRUMENTS}
 
