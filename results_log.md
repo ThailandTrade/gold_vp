@@ -80,6 +80,22 @@ Combos revalides par l'utilisateur sur les pkl frais:
 
 Live 5ers: XAUUSD seul (LIVE_INSTRUMENTS dans config).
 
+### Bug strat_exits.py desaligne des pkl (2026-03-31)
+Apres optimize_all.py, strat_exits.py n'avait PAS ete regenere.
+D8: pkl=TPSL SL=1.0 TP=2.0, strat_exits=TRAIL SL=1.0 ACT=1.0 TR=0.75 → DIFFERENT
+PO3_SWEEP: pkl=TRAIL SL=2.0, strat_exits=TRAIL SL=3.0 → DIFFERENT
+Impact: 779 mismatches sur 1627 trades dans l'audit pipeline.
+Le live et compare_today utilisaient les mauvaises configs exit.
+
+### REGLE PIPELINE — ordre obligatoire apres chaque optimize:
+1. optimize_all.py → genere pkl
+2. strat_exits.py → REGENERER depuis pkl (memes configs exactes)
+3. analyze_combos.py → combos sur pkl frais
+4. config_{account}.py → portfolio choisi
+5. bt_portfolio.py → verifier agrege
+6. AUDIT PIPELINE → 0 mismatch obligatoire
+7. Lancer le live
+
 ### FTMO — Combos valides (marge >= 8%, close-only)
 
 | Instrument | Combo | Nb | Trades | PF | WR | DD | Rend | M+ |
