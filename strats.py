@@ -46,6 +46,11 @@ ALL_STRATS = [
     'ALL_KB_SQUEEZE','ALL_LR_BREAK','ALL_ADX_RSI50',
     'ALL_MACD_DIV','ALL_STOCH_PIVOT',
     'TOK_STOCH','TOK_TRIX','LON_STOCH','NY_ELDER',
+    # New strats v8
+    'ALL_VWMA_CROSS','ALL_SCHAFF','ALL_CONNORS_RSI','ALL_MFI_REV',
+    'ALL_HA_REV','ALL_KAMA_CROSS','ALL_CHOP_BRK','ALL_TTM_SQUEEZE',
+    'ALL_OBV_DIV','ALL_VORTEX','ALL_MASS_REV','ALL_RVI',
+    'ALL_KST','ALL_3INSIDE','ALL_TWEEZER','ALL_VCP',
 ]
 
 # Index unique par strat pour magic numbers (ne jamais changer l'ordre, ajouter en fin)
@@ -168,6 +173,22 @@ STRAT_NAMES = {
     'TOK_TRIX':'TRIX cross Tokyo',
     'LON_STOCH':'Stochastic reversal London',
     'NY_ELDER':'Elder Ray reversal NY',
+    'ALL_VWMA_CROSS':'VWMA 10/30 cross',
+    'ALL_SCHAFF':'Schaff Trend Cycle cross 25/75',
+    'ALL_CONNORS_RSI':'Connors RSI(3,2,100) extreme reversal',
+    'ALL_MFI_REV':'Money Flow Index reversal from extremes',
+    'ALL_HA_REV':'Heikin Ashi color reversal after trend',
+    'ALL_KAMA_CROSS':'KAMA(10) cross EMA(21)',
+    'ALL_CHOP_BRK':'Choppiness Index trend breakout',
+    'ALL_TTM_SQUEEZE':'TTM Squeeze release with momentum',
+    'ALL_OBV_DIV':'On Balance Volume divergence',
+    'ALL_VORTEX':'Vortex Indicator cross',
+    'ALL_MASS_REV':'Mass Index reversal bulge',
+    'ALL_RVI':'Relative Vigor Index cross',
+    'ALL_KST':'Know Sure Thing cross signal',
+    'ALL_3INSIDE':'Three inside up/down',
+    'ALL_TWEEZER':'Tweezer top/bottom',
+    'ALL_VCP':'Volatility Contraction Pattern breakout',
 }
 
 STRAT_SESSION = {
@@ -211,6 +232,10 @@ STRAT_SESSION = {
     'ALL_KB_SQUEEZE':'All','ALL_LR_BREAK':'All','ALL_ADX_RSI50':'All',
     'ALL_MACD_DIV':'All','ALL_STOCH_PIVOT':'All',
     'TOK_STOCH':'Tokyo','TOK_TRIX':'Tokyo','LON_STOCH':'London','NY_ELDER':'New York',
+    'ALL_VWMA_CROSS':'All','ALL_SCHAFF':'All','ALL_CONNORS_RSI':'All','ALL_MFI_REV':'All',
+    'ALL_HA_REV':'All','ALL_KAMA_CROSS':'All','ALL_CHOP_BRK':'All','ALL_TTM_SQUEEZE':'All',
+    'ALL_OBV_DIV':'All','ALL_VORTEX':'All','ALL_MASS_REV':'All','ALL_RVI':'All',
+    'ALL_KST':'All','ALL_3INSIDE':'All','ALL_TWEEZER':'All','ALL_VCP':'All',
 }
 
 def sim_exit(cdf, pos, entry, d, atr, check_entry_candle=False):
@@ -494,6 +519,120 @@ def compute_indicators(candles):
             n = len(x); xs = np.arange(n)
             return (n * np.dot(xs, x) - xs.sum() * x.sum()) / (n * (xs**2).sum() - xs.sum()**2 + 1e-10)
         c['lr_slope'] = c['close'].rolling(20).apply(_lr_slope, raw=True)
+    # ── NEW V8 INDICATORS ──
+    vol_col = 'tick_volume' if 'tick_volume' in c.columns else 'volume' if 'volume' in c.columns else None
+    # VWMA (Volume Weighted Moving Average)
+    if 'vwma10' not in c.columns and vol_col:
+        v = c[vol_col].astype(float)
+        c['vwma10'] = (c['close'] * v).rolling(10).sum() / (v.rolling(10).sum() + 1e-10)
+        c['vwma30'] = (c['close'] * v).rolling(30).sum() / (v.rolling(30).sum() + 1e-10)
+    # Schaff Trend Cycle
+    if 'schaff' not in c.columns:
+        macd_s = c['close'].ewm(span=23, adjust=False).mean() - c['close'].ewm(span=50, adjust=False).mean()
+        ll = macd_s.rolling(10).min(); hh = macd_s.rolling(10).max()
+        frac1 = (macd_s - ll) / (hh - ll + 1e-10) * 100
+        pf1 = frac1.ewm(span=3, adjust=False).mean()
+        ll2 = pf1.rolling(10).min(); hh2 = pf1.rolling(10).max()
+        frac2 = (pf1 - ll2) / (hh2 - ll2 + 1e-10) * 100
+        c['schaff'] = frac2.ewm(span=3, adjust=False).mean()
+    # Connors RSI (3,2,100)
+    if 'connors_rsi' not in c.columns:
+        # RSI(3)
+        d3 = c['close'].diff(); g3 = d3.clip(lower=0); l3 = (-d3).clip(lower=0)
+        ag3 = g3.ewm(alpha=1/3, min_periods=3, adjust=False).mean()
+        al3 = l3.ewm(alpha=1/3, min_periods=3, adjust=False).mean()
+        rsi3 = 100 - 100/(1+ag3/(al3+1e-10))
+        # Streak RSI(2): consecutive up/down days
+        streak = pd.Series(0, index=c.index, dtype=float)
+        for i in range(1, len(c)):
+            if c.iloc[i]['close'] > c.iloc[i-1]['close']:
+                streak.iloc[i] = max(streak.iloc[i-1], 0) + 1
+            elif c.iloc[i]['close'] < c.iloc[i-1]['close']:
+                streak.iloc[i] = min(streak.iloc[i-1], 0) - 1
+        gs = streak.diff().clip(lower=0); ls = (-streak.diff()).clip(lower=0)
+        ags = gs.ewm(alpha=0.5, min_periods=2, adjust=False).mean()
+        als = ls.ewm(alpha=0.5, min_periods=2, adjust=False).mean()
+        streak_rsi = 100 - 100/(1+ags/(als+1e-10))
+        # ROC percentile rank (100-period)
+        roc1 = c['close'].pct_change()
+        roc_pctrank = roc1.rolling(100).apply(lambda x: (x[-1] > x[:-1]).sum() / (len(x)-1) * 100 if len(x) > 1 else 50, raw=True)
+        c['connors_rsi'] = (rsi3 + streak_rsi + roc_pctrank) / 3
+    # MFI (Money Flow Index)
+    if 'mfi14' not in c.columns and vol_col:
+        tp = (c['high'] + c['low'] + c['close']) / 3
+        mf = tp * c[vol_col].astype(float)
+        pos_mf = mf.where(tp > tp.shift(1), 0).rolling(14).sum()
+        neg_mf = mf.where(tp < tp.shift(1), 0).rolling(14).sum()
+        c['mfi14'] = 100 - 100 / (1 + pos_mf / (neg_mf + 1e-10))
+    # Heikin Ashi
+    if 'ha_close' not in c.columns:
+        c['ha_close'] = (c['open'] + c['high'] + c['low'] + c['close']) / 4
+        ha_open = pd.Series(0.0, index=c.index)
+        ha_open.iloc[0] = (c.iloc[0]['open'] + c.iloc[0]['close']) / 2
+        for i in range(1, len(c)):
+            ha_open.iloc[i] = (ha_open.iloc[i-1] + c['ha_close'].iloc[i-1]) / 2
+        c['ha_open'] = ha_open
+        c['ha_body'] = c['ha_close'] - c['ha_open']
+    # KAMA (Kaufman Adaptive Moving Average)
+    if 'kama10' not in c.columns:
+        fast_sc = 2/(2+1); slow_sc = 2/(30+1)
+        direction = abs(c['close'] - c['close'].shift(10))
+        volatility = c['close'].diff().abs().rolling(10).sum()
+        er = direction / (volatility + 1e-10)
+        sc = (er * (fast_sc - slow_sc) + slow_sc) ** 2
+        kama = pd.Series(0.0, index=c.index)
+        kama.iloc[10] = c.iloc[10]['close']
+        for i in range(11, len(c)):
+            kama.iloc[i] = kama.iloc[i-1] + sc.iloc[i] * (c.iloc[i]['close'] - kama.iloc[i-1])
+        kama.iloc[:11] = np.nan
+        c['kama10'] = kama
+    # Choppiness Index (14)
+    if 'chop14' not in c.columns:
+        atr1 = np.maximum(c['high']-c['low'], np.maximum(abs(c['high']-c['close'].shift(1)), abs(c['low']-c['close'].shift(1))))
+        atr_sum = atr1.rolling(14).sum()
+        hh14 = c['high'].rolling(14).max(); ll14 = c['low'].rolling(14).min()
+        c['chop14'] = 100 * np.log10(atr_sum / (hh14 - ll14 + 1e-10)) / np.log10(14)
+    # TTM Squeeze momentum (close - avg of KC midline and BB midline)
+    if 'ttm_mom' not in c.columns and 'bb_mid' in c.columns and 'ema20' in c.columns:
+        midline = (c['bb_mid'] + c['ema20']) / 2
+        c['ttm_mom'] = c['close'] - midline
+    # OBV (On Balance Volume)
+    if 'obv' not in c.columns and vol_col:
+        v = c[vol_col].astype(float)
+        obv = pd.Series(0.0, index=c.index)
+        for i in range(1, len(c)):
+            if c.iloc[i]['close'] > c.iloc[i-1]['close']: obv.iloc[i] = obv.iloc[i-1] + v.iloc[i]
+            elif c.iloc[i]['close'] < c.iloc[i-1]['close']: obv.iloc[i] = obv.iloc[i-1] - v.iloc[i]
+            else: obv.iloc[i] = obv.iloc[i-1]
+        c['obv'] = obv
+    # Vortex Indicator (14)
+    if 'vi_plus' not in c.columns:
+        vm_plus = abs(c['high'] - c['low'].shift(1))
+        vm_minus = abs(c['low'] - c['high'].shift(1))
+        tr_v = np.maximum(c['high']-c['low'], np.maximum(abs(c['high']-c['close'].shift(1)), abs(c['low']-c['close'].shift(1))))
+        c['vi_plus'] = vm_plus.rolling(14).sum() / (tr_v.rolling(14).sum() + 1e-10)
+        c['vi_minus'] = vm_minus.rolling(14).sum() / (tr_v.rolling(14).sum() + 1e-10)
+    # Mass Index (25-period, EMA 9)
+    if 'mass_idx' not in c.columns:
+        rng = c['high'] - c['low']
+        ema9_r = rng.ewm(span=9, adjust=False).mean()
+        ema9_r2 = ema9_r.ewm(span=9, adjust=False).mean()
+        ratio = ema9_r / (ema9_r2 + 1e-10)
+        c['mass_idx'] = ratio.rolling(25).sum()
+    # RVI (Relative Vigor Index)
+    if 'rvi' not in c.columns:
+        num = ((c['close']-c['open']) + 2*(c['close'].shift(1)-c['open'].shift(1)) + 2*(c['close'].shift(2)-c['open'].shift(2)) + (c['close'].shift(3)-c['open'].shift(3))) / 6
+        den = ((c['high']-c['low']) + 2*(c['high'].shift(1)-c['low'].shift(1)) + 2*(c['high'].shift(2)-c['low'].shift(2)) + (c['high'].shift(3)-c['low'].shift(3))) / 6
+        c['rvi'] = num.rolling(10).mean() / (den.rolling(10).mean() + 1e-10)
+        c['rvi_sig'] = (c['rvi'] + 2*c['rvi'].shift(1) + 2*c['rvi'].shift(2) + c['rvi'].shift(3)) / 6
+    # KST (Know Sure Thing)
+    if 'kst' not in c.columns:
+        r1 = c['close'].pct_change(10).rolling(10).mean()
+        r2 = c['close'].pct_change(15).rolling(10).mean()
+        r3 = c['close'].pct_change(20).rolling(10).mean()
+        r4 = c['close'].pct_change(30).rolling(15).mean()
+        c['kst'] = r1 + r2*2 + r3*3 + r4*4
+        c['kst_sig'] = c['kst'].rolling(9).mean()
     return c
 
 def detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_day_data, add, prev2_day_data=None):
@@ -1242,3 +1381,120 @@ def detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_
             add('NY_ELDER','long',row['close']); trig['NY_ELDER']=True
         elif prev['bear_power']>0 and row['bear_power']<=0 and row['close']<row['open']:
             add('NY_ELDER','short',row['close']); trig['NY_ELDER']=True
+
+    # ── NEW STRATS V8 ──
+
+    # ALL_VWMA_CROSS: VWMA 10 crosses VWMA 30
+    if 'ALL_VWMA_CROSS' not in trig and 'vwma10' in row.index and pd.notna(row.get('vwma10')) and pd.notna(row.get('vwma30')):
+        if prev['vwma10']<prev['vwma30'] and row['vwma10']>row['vwma30']: add('ALL_VWMA_CROSS','long',row['close']); trig['ALL_VWMA_CROSS']=True
+        elif prev['vwma10']>prev['vwma30'] and row['vwma10']<row['vwma30']: add('ALL_VWMA_CROSS','short',row['close']); trig['ALL_VWMA_CROSS']=True
+
+    # ALL_SCHAFF: Schaff Trend Cycle crosses 25 (up) or 75 (down)
+    if 'ALL_SCHAFF' not in trig and 'schaff' in row.index and pd.notna(row.get('schaff')):
+        if prev['schaff']<25 and row['schaff']>=25: add('ALL_SCHAFF','long',row['close']); trig['ALL_SCHAFF']=True
+        elif prev['schaff']>75 and row['schaff']<=75: add('ALL_SCHAFF','short',row['close']); trig['ALL_SCHAFF']=True
+
+    # ALL_CONNORS_RSI: Connors RSI extreme reversal (from <10 or >90)
+    if 'ALL_CONNORS_RSI' not in trig and 'connors_rsi' in row.index and pd.notna(row.get('connors_rsi')):
+        if prev['connors_rsi']<10 and row['connors_rsi']>=10 and row['close']>row['open']: add('ALL_CONNORS_RSI','long',row['close']); trig['ALL_CONNORS_RSI']=True
+        elif prev['connors_rsi']>90 and row['connors_rsi']<=90 and row['close']<row['open']: add('ALL_CONNORS_RSI','short',row['close']); trig['ALL_CONNORS_RSI']=True
+
+    # ALL_MFI_REV: MFI crosses back from oversold/overbought
+    if 'ALL_MFI_REV' not in trig and 'mfi14' in row.index and pd.notna(row.get('mfi14')):
+        if prev['mfi14']<20 and row['mfi14']>=20 and row['close']>row['open']: add('ALL_MFI_REV','long',row['close']); trig['ALL_MFI_REV']=True
+        elif prev['mfi14']>80 and row['mfi14']<=80 and row['close']<row['open']: add('ALL_MFI_REV','short',row['close']); trig['ALL_MFI_REV']=True
+
+    # ALL_HA_REV: Heikin Ashi color change after 3+ same-color candles
+    if 'ALL_HA_REV' not in trig and 'ha_body' in row.index and ci >= 4:
+        ha_bodies = [candles.iloc[ci-j]['ha_body'] for j in range(4)]  # [current, -1, -2, -3]
+        if all(pd.notna(b) for b in ha_bodies):
+            # 3 prev bearish, current bullish
+            if ha_bodies[1]<0 and ha_bodies[2]<0 and ha_bodies[3]<0 and ha_bodies[0]>0:
+                add('ALL_HA_REV','long',row['close']); trig['ALL_HA_REV']=True
+            # 3 prev bullish, current bearish
+            elif ha_bodies[1]>0 and ha_bodies[2]>0 and ha_bodies[3]>0 and ha_bodies[0]<0:
+                add('ALL_HA_REV','short',row['close']); trig['ALL_HA_REV']=True
+
+    # ALL_KAMA_CROSS: KAMA(10) crosses EMA(21)
+    if 'ALL_KAMA_CROSS' not in trig and 'kama10' in row.index and pd.notna(row.get('kama10')) and pd.notna(row.get('ema21')):
+        if prev['kama10']<prev['ema21'] and row['kama10']>row['ema21']: add('ALL_KAMA_CROSS','long',row['close']); trig['ALL_KAMA_CROSS']=True
+        elif prev['kama10']>prev['ema21'] and row['kama10']<row['ema21']: add('ALL_KAMA_CROSS','short',row['close']); trig['ALL_KAMA_CROSS']=True
+
+    # ALL_CHOP_BRK: Choppiness < 38.2 (trending) + EMA direction
+    if 'ALL_CHOP_BRK' not in trig and 'chop14' in row.index and pd.notna(row.get('chop14')) and pd.notna(row.get('ema20')):
+        if prev['chop14']>=38.2 and row['chop14']<38.2:
+            if row['close']>row['ema20']: add('ALL_CHOP_BRK','long',row['close']); trig['ALL_CHOP_BRK']=True
+            elif row['close']<row['ema20']: add('ALL_CHOP_BRK','short',row['close']); trig['ALL_CHOP_BRK']=True
+
+    # ALL_TTM_SQUEEZE: BB was inside KC (squeeze), now released + momentum direction
+    if 'ALL_TTM_SQUEEZE' not in trig and 'kb_squeeze' in row.index and 'ttm_mom' in row.index and pd.notna(row.get('ttm_mom')):
+        if prev.get('kb_squeeze',0)==1 and row['kb_squeeze']==0:
+            if row['ttm_mom']>0 and row['ttm_mom']>prev.get('ttm_mom',0): add('ALL_TTM_SQUEEZE','long',row['close']); trig['ALL_TTM_SQUEEZE']=True
+            elif row['ttm_mom']<0 and row['ttm_mom']<prev.get('ttm_mom',0): add('ALL_TTM_SQUEEZE','short',row['close']); trig['ALL_TTM_SQUEEZE']=True
+
+    # ALL_OBV_DIV: OBV divergence (price new low + OBV higher = bullish, etc.)
+    if 'ALL_OBV_DIV' not in trig and ci >= 20 and 'obv' in row.index and pd.notna(row.get('obv')):
+        l20 = candles.iloc[ci-19:ci+1]
+        if row['low']<l20.iloc[:-1]['low'].min() and row['obv']>l20.iloc[:-1]['obv'].min() and row['close']>row['open']:
+            add('ALL_OBV_DIV','long',row['close']); trig['ALL_OBV_DIV']=True
+        elif row['high']>l20.iloc[:-1]['high'].max() and row['obv']<l20.iloc[:-1]['obv'].max() and row['close']<row['open']:
+            add('ALL_OBV_DIV','short',row['close']); trig['ALL_OBV_DIV']=True
+
+    # ALL_VORTEX: Vortex VI+ crosses VI-
+    if 'ALL_VORTEX' not in trig and 'vi_plus' in row.index and pd.notna(row.get('vi_plus')):
+        if prev['vi_plus']<prev['vi_minus'] and row['vi_plus']>row['vi_minus']: add('ALL_VORTEX','long',row['close']); trig['ALL_VORTEX']=True
+        elif prev['vi_plus']>prev['vi_minus'] and row['vi_plus']<row['vi_minus']: add('ALL_VORTEX','short',row['close']); trig['ALL_VORTEX']=True
+
+    # ALL_MASS_REV: Mass Index > 27 then drops below 26.5 (reversal bulge)
+    if 'ALL_MASS_REV' not in trig and 'mass_idx' in row.index and pd.notna(row.get('mass_idx')):
+        if prev['mass_idx']>26.5 and row['mass_idx']<=26.5 and ci >= 5:
+            # Check if it went above 27 recently
+            recent = [candles.iloc[ci-j]['mass_idx'] for j in range(1,6) if pd.notna(candles.iloc[ci-j].get('mass_idx'))]
+            if any(m > 27 for m in recent):
+                if row['close']>row['open']: add('ALL_MASS_REV','long',row['close']); trig['ALL_MASS_REV']=True
+                elif row['close']<row['open']: add('ALL_MASS_REV','short',row['close']); trig['ALL_MASS_REV']=True
+
+    # ALL_RVI: Relative Vigor Index crosses signal
+    if 'ALL_RVI' not in trig and 'rvi' in row.index and pd.notna(row.get('rvi')) and pd.notna(row.get('rvi_sig')):
+        if prev['rvi']<prev['rvi_sig'] and row['rvi']>row['rvi_sig']: add('ALL_RVI','long',row['close']); trig['ALL_RVI']=True
+        elif prev['rvi']>prev['rvi_sig'] and row['rvi']<row['rvi_sig']: add('ALL_RVI','short',row['close']); trig['ALL_RVI']=True
+
+    # ALL_KST: Know Sure Thing crosses signal
+    if 'ALL_KST' not in trig and 'kst' in row.index and pd.notna(row.get('kst')) and pd.notna(row.get('kst_sig')):
+        if prev['kst']<prev['kst_sig'] and row['kst']>row['kst_sig']: add('ALL_KST','long',row['close']); trig['ALL_KST']=True
+        elif prev['kst']>prev['kst_sig'] and row['kst']<row['kst_sig']: add('ALL_KST','short',row['close']); trig['ALL_KST']=True
+
+    # ALL_3INSIDE: Three inside up (bear, small bull inside, big bull) / down
+    if 'ALL_3INSIDE' not in trig and ci >= 3:
+        b1 = candles.iloc[ci-2]; b2 = candles.iloc[ci-1]; b3 = row
+        b1b = b1['close']-b1['open']; b2b = b2['close']-b2['open']; b3b = b3['close']-b3['open']
+        # Three inside up: big bear, small bull inside, big bull close above b1 open
+        if (b1b < -0.3*atr and b2b > 0 and b2['high'] < b1['high'] and b2['low'] > b1['low']
+            and b3b > 0.3*atr and b3['close'] > b1['open']):
+            add('ALL_3INSIDE','long',row['close']); trig['ALL_3INSIDE']=True
+        # Three inside down: big bull, small bear inside, big bear close below b1 open
+        elif (b1b > 0.3*atr and b2b < 0 and b2['high'] < b1['high'] and b2['low'] > b1['low']
+              and b3b < -0.3*atr and b3['close'] < b1['open']):
+            add('ALL_3INSIDE','short',row['close']); trig['ALL_3INSIDE']=True
+
+    # ALL_TWEEZER: Tweezer top (same high) / bottom (same low)
+    if 'ALL_TWEEZER' not in trig and ci >= 2:
+        tolerance = 0.05 * atr
+        # Tweezer bottom: prev bear, current bull, same low (within tolerance)
+        if (prev['close'] < prev['open'] and row['close'] > row['open']
+            and abs(prev['low'] - row['low']) < tolerance and abs(row['body']) >= 0.2*atr):
+            add('ALL_TWEEZER','long',row['close']); trig['ALL_TWEEZER']=True
+        # Tweezer top: prev bull, current bear, same high
+        elif (prev['close'] > prev['open'] and row['close'] < row['open']
+              and abs(prev['high'] - row['high']) < tolerance and abs(row['body']) >= 0.2*atr):
+            add('ALL_TWEEZER','short',row['close']); trig['ALL_TWEEZER']=True
+
+    # ALL_VCP: Volatility Contraction Pattern (4 bars decreasing range, then breakout)
+    if 'ALL_VCP' not in trig and ci >= 5 and 'candle_range' in row.index:
+        ranges = [candles.iloc[ci-j]['candle_range'] for j in range(1,5)]  # prev 4 bars
+        if all(pd.notna(r) for r in ranges) and all(ranges[i] >= ranges[i+1] for i in range(3)):
+            # 4 bars contracting, current bar breaks out
+            if row['close'] > max(candles.iloc[ci-j]['high'] for j in range(1,5)) and row['close'] > row['open']:
+                add('ALL_VCP','long',row['close']); trig['ALL_VCP']=True
+            elif row['close'] < min(candles.iloc[ci-j]['low'] for j in range(1,5)) and row['close'] < row['open']:
+                add('ALL_VCP','short',row['close']); trig['ALL_VCP']=True
