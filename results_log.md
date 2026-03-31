@@ -105,7 +105,16 @@ Live 5ers: XAUUSD seul (LIVE_INSTRUMENTS dans config).
 
 **9,919 trades | WR 72% | PF 1.57 | MaxDD -1.83% | $100k -> $219k (+119%) | 12/13 mois**
 
-Live FTMO: aucun instrument actif pour le moment.
+Live FTMO: XAUUSD actif.
+
+### Fix conflit filter live: deals fermes sur la bougie courante
+Bug: en BT, un trade sorti au candle ci=N est encore considere actif a ci=N (condition `>=`).
+En live, MT5 positions_get() ne voit que les positions ouvertes, pas celles fermees par SL/TP
+pendant la bougie courante. Un nouveau trade en sens oppose passait alors qu'il aurait du etre bloque.
+Exemple 2026-03-31: 3 longs fermes au SL a ci=1996, ALL_PIVOT_BRK et ALL_STOCH_OB short ouvertes
+au meme candle en live (BT les skip). Cout: -$43 sur ALL_STOCH_OB.
+Fix: history_deals_get() sur la bougie courante pour inclure les directions des deals d'entree
+dans open_dirs, meme si la position est deja fermee.
 
 ---
 

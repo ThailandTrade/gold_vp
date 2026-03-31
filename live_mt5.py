@@ -429,16 +429,20 @@ def main():
                     ss['_triggered_open'] = {}
                     ss['_triggered_close'] = {}
 
-                # Conflict check
+                # Conflict check: positions ouvertes + fermees sur cette bougie
+                # (identique au BT: un trade sorti au meme candle bloque encore)
                 our_pos = mt5_our_positions(sym)
                 open_dirs = set('long' if p.type == 0 else 'short' for p in our_pos)
-
-                # Open strats
-                for sig in detect_open_strats(candles, ss, atr, now_utc, today, portfolio):
-                    if sig['dir'] == 'long' and 'short' in open_dirs: continue
-                    if sig['dir'] == 'short' and 'long' in open_dirs: continue
-                    open_position(state, sym, sig, atr, risk_pct)
-                    open_dirs.add(sig['dir'])
+                # Ajouter les directions des deals fermes sur la bougie courante
+                try:
+                    candle_start = candle_time.replace(tzinfo=timezone.utc) if candle_time.tzinfo is None else candle_time
+                    deals = mt5.history_deals_get(candle_start, candle_start + timedelta(minutes=5)) or []
+                    for d in deals:
+                        if d.symbol != sym: continue
+                        if d.magic not in ALL_MAGIC_SET: continue
+                        if d.entry == 0:  # DEAL_ENTRY_IN
+                            open_dirs.add('long' if d.type == 0 else 'short')
+                except: pass
 
                 is_new = current_ts != last_ts.get(sym, 0)
                 if not is_new: continue
@@ -456,9 +460,10 @@ def main():
 
                 last_ts[sym] = current_ts
 
-                # Close strats
+                # Close strats (open_dirs inclut deja les deals fermes sur cette bougie)
                 our_pos = mt5_our_positions(sym)
-                open_dirs = set('long' if p.type == 0 else 'short' for p in our_pos)
+                for p in our_pos:
+                    open_dirs.add('long' if p.type == 0 else 'short')
                 for sig in sorted(detect_close_strats(candles, ss, atr, candle_time, today, portfolio), key=lambda s: s['strat']):
                     if sig['dir'] == 'long' and 'short' in open_dirs: continue
                     if sig['dir'] == 'short' and 'long' in open_dirs: continue
