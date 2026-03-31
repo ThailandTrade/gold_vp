@@ -51,6 +51,10 @@ ALL_STRATS = [
     'ALL_HA_REV','ALL_KAMA_CROSS','ALL_CHOP_BRK','ALL_TTM_SQUEEZE',
     'ALL_OBV_DIV','ALL_VORTEX','ALL_MASS_REV','ALL_RVI',
     'ALL_KST','ALL_3INSIDE','ALL_TWEEZER','ALL_VCP',
+    # New strats v9
+    'ALL_WAE','ALL_TD_EXHAUST','ALL_SWING_FAIL','ALL_DOUBLE_INSIDE',
+    'ALL_ATR_COMPRESS','ALL_ZSCORE_REV','ALL_ELDER_IMPULSE','ALL_DUAL_MOM',
+    'ALL_CAMARILLA_MR','LON_FIX_FADE','LON_ORB_ATR','NY_VWAP_RECLAIM',
 ]
 
 # Index unique par strat pour magic numbers (ne jamais changer l'ordre, ajouter en fin)
@@ -189,6 +193,18 @@ STRAT_NAMES = {
     'ALL_3INSIDE':'Three inside up/down',
     'ALL_TWEEZER':'Tweezer top/bottom',
     'ALL_VCP':'Volatility Contraction Pattern breakout',
+    'ALL_WAE':'Waddah Attar Explosion',
+    'ALL_TD_EXHAUST':'TD Sequential 9-count exhaustion',
+    'ALL_SWING_FAIL':'Swing failure pattern (failed breakout)',
+    'ALL_DOUBLE_INSIDE':'Double inside bar breakout',
+    'ALL_ATR_COMPRESS':'ATR compression breakout',
+    'ALL_ZSCORE_REV':'Z-score mean reversion',
+    'ALL_ELDER_IMPULSE':'Elder Impulse regime transition',
+    'ALL_DUAL_MOM':'Dual momentum exhaustion ROC(5) vs ROC(20)',
+    'ALL_CAMARILLA_MR':'Camarilla S3/R3 pivot mean reversion',
+    'LON_FIX_FADE':'London gold fix 10:30 fade',
+    'LON_ORB_ATR':'London opening range ATR breakout',
+    'NY_VWAP_RECLAIM':'NY session VWAP reclaim',
 }
 
 STRAT_SESSION = {
@@ -236,6 +252,9 @@ STRAT_SESSION = {
     'ALL_HA_REV':'All','ALL_KAMA_CROSS':'All','ALL_CHOP_BRK':'All','ALL_TTM_SQUEEZE':'All',
     'ALL_OBV_DIV':'All','ALL_VORTEX':'All','ALL_MASS_REV':'All','ALL_RVI':'All',
     'ALL_KST':'All','ALL_3INSIDE':'All','ALL_TWEEZER':'All','ALL_VCP':'All',
+    'ALL_WAE':'All','ALL_TD_EXHAUST':'All','ALL_SWING_FAIL':'All','ALL_DOUBLE_INSIDE':'All',
+    'ALL_ATR_COMPRESS':'All','ALL_ZSCORE_REV':'All','ALL_ELDER_IMPULSE':'All','ALL_DUAL_MOM':'All',
+    'ALL_CAMARILLA_MR':'All','LON_FIX_FADE':'London','LON_ORB_ATR':'London','NY_VWAP_RECLAIM':'New York',
 }
 
 def sim_exit(cdf, pos, entry, d, atr, check_entry_candle=False):
@@ -519,7 +538,7 @@ def compute_indicators(candles):
             n = len(x); xs = np.arange(n)
             return (n * np.dot(xs, x) - xs.sum() * x.sum()) / (n * (xs**2).sum() - xs.sum()**2 + 1e-10)
         c['lr_slope'] = c['close'].rolling(20).apply(_lr_slope, raw=True)
-    # ── NEW V8 INDICATORS ──
+    # ── NEW V8+V9 INDICATORS ──
     vol_col = 'tick_volume' if 'tick_volume' in c.columns else 'volume' if 'volume' in c.columns else None
     # VWMA (Volume Weighted Moving Average)
     if 'vwma10' not in c.columns and vol_col:
@@ -633,6 +652,57 @@ def compute_indicators(candles):
         r4 = c['close'].pct_change(30).rolling(15).mean()
         c['kst'] = r1 + r2*2 + r3*3 + r4*4
         c['kst_sig'] = c['kst'].rolling(9).mean()
+    # ── V9 INDICATORS ──
+    # WAE (Waddah Attar Explosion)
+    if 'wae_trend' not in c.columns and 'bb_up' in c.columns:
+        macd_w = c['close'].ewm(span=20, adjust=False).mean() - c['close'].ewm(span=40, adjust=False).mean()
+        c['wae_trend'] = (macd_w - macd_w.shift(1)) * 150
+        c['wae_explo'] = c['bb_up'] - c['bb_lo']
+        c['wae_dead'] = c.get('atr14', c['high']-c['low']).rolling(14).mean() * 0.5 if 'atr14' in c.columns else (c['high']-c['low']).rolling(14).mean() * 0.5
+    # Z-score (50-period)
+    if 'zscore50' not in c.columns:
+        sma50 = c['close'].rolling(50).mean()
+        std50 = c['close'].rolling(50).std()
+        c['zscore50'] = (c['close'] - sma50) / (std50 + 1e-10)
+    # Elder Impulse (EMA13 direction + MACD histogram direction)
+    if 'elder_impulse' not in c.columns and 'macd_hist' in c.columns:
+        ema13_dir = c['ema13'] - c['ema13'].shift(1) if 'ema13' in c.columns else pd.Series(0, index=c.index)
+        hist_dir = c['macd_hist'] - c['macd_hist'].shift(1)
+        # 1=green (both up), -1=red (both down), 0=blue (mixed)
+        c['elder_impulse'] = np.where((ema13_dir > 0) & (hist_dir > 0), 1,
+                             np.where((ema13_dir < 0) & (hist_dir < 0), -1, 0))
+    # ROC(5) for dual momentum
+    if 'roc5' not in c.columns:
+        c['roc5'] = (c['close'] / c['close'].shift(5) - 1) * 100
+    if 'roc20' not in c.columns:
+        c['roc20'] = (c['close'] / c['close'].shift(20) - 1) * 100
+    # ATR compression ratio
+    if 'atr_ratio' not in c.columns and 'atr14' in c.columns:
+        c['atr_sma50'] = c['atr14'].rolling(50).mean()
+        c['atr_ratio'] = c['atr14'] / (c['atr_sma50'] + 1e-10)
+    # Camarilla pivots (from prev day)
+    if 'cam_s3' not in c.columns and 'date' in c.columns:
+        dates = c['date'].unique()
+        c['cam_s3'] = np.nan; c['cam_r3'] = np.nan; c['cam_s4'] = np.nan; c['cam_r4'] = np.nan
+        for i in range(1, len(dates)):
+            prev_dc = c[c['date']==dates[i-1]]
+            if len(prev_dc) == 0: continue
+            ph = prev_dc['high'].max(); pl = prev_dc['low'].min(); pc = prev_dc.iloc[-1]['close']
+            pr = ph - pl
+            today_mask = c['date']==dates[i]
+            c.loc[today_mask, 'cam_s3'] = pc - pr * 1.1 / 4
+            c.loc[today_mask, 'cam_r3'] = pc + pr * 1.1 / 4
+            c.loc[today_mask, 'cam_s4'] = pc - pr * 1.1 / 2
+            c.loc[today_mask, 'cam_r4'] = pc + pr * 1.1 / 2
+    # Session VWAP for NY (rolling from 14:30 UTC)
+    if 'ny_vwap' not in c.columns:
+        c['ny_vwap'] = c['close'].rolling(60).mean()  # proxy like existing vwap
+    # Swing high/low (20-bar)
+    if 'swing_high20' not in c.columns:
+        c['swing_high20'] = c['high'].rolling(20).max()
+        c['swing_low20'] = c['low'].rolling(20).min()
+    # London ORB (first 6 candles 07:00-07:30 — stored per day)
+    # Computed dynamically in detect_all, not here
     return c
 
 def detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_day_data, add, prev2_day_data=None):
@@ -1498,3 +1568,120 @@ def detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_
                 add('ALL_VCP','long',row['close']); trig['ALL_VCP']=True
             elif row['close'] < min(candles.iloc[ci-j]['low'] for j in range(1,5)) and row['close'] < row['open']:
                 add('ALL_VCP','short',row['close']); trig['ALL_VCP']=True
+
+    # ── NEW STRATS V9 ──
+
+    # ALL_WAE: Waddah Attar Explosion (trend momentum > explosion line > dead zone)
+    if 'ALL_WAE' not in trig and 'wae_trend' in row.index and pd.notna(row.get('wae_trend')):
+        wt = row['wae_trend']; we = row['wae_explo']; wd = row['wae_dead']
+        if pd.notna(we) and pd.notna(wd):
+            if wt > 0 and abs(wt) > we and abs(wt) > wd: add('ALL_WAE','long',row['close']); trig['ALL_WAE']=True
+            elif wt < 0 and abs(wt) > we and abs(wt) > wd: add('ALL_WAE','short',row['close']); trig['ALL_WAE']=True
+
+    # ALL_TD_EXHAUST: TD Sequential 9-count (close vs close[4])
+    if 'ALL_TD_EXHAUST' not in trig and ci >= 13 and 'rsi14' in row.index:
+        # Count consecutive closes above/below close[4]
+        up_count = 0; dn_count = 0
+        for j in range(9):
+            idx = ci - j
+            if idx < 4: break
+            if candles.iloc[idx]['close'] > candles.iloc[idx-4]['close']: up_count += 1
+            else: break
+        if up_count < 9:
+            up_count = 0
+            for j in range(9):
+                idx = ci - j
+                if idx < 4: break
+                if candles.iloc[idx]['close'] < candles.iloc[idx-4]['close']: dn_count += 1
+                else: break
+        if up_count >= 9 and row['rsi14'] > 70:
+            add('ALL_TD_EXHAUST','short',row['close']); trig['ALL_TD_EXHAUST']=True
+        elif dn_count >= 9 and row['rsi14'] < 30:
+            add('ALL_TD_EXHAUST','long',row['close']); trig['ALL_TD_EXHAUST']=True
+
+    # ALL_SWING_FAIL: Failed breakout of 20-bar swing high/low
+    if 'ALL_SWING_FAIL' not in trig and 'swing_high20' in row.index and pd.notna(row.get('swing_high20')) and ci >= 2:
+        prev_sh = prev.get('swing_high20', 0); prev_sl = prev.get('swing_low20', 0)
+        # Price broke above swing high but closed back below = failed breakout
+        if row['high'] > prev_sh and row['close'] < prev_sh and (row['high'] - prev_sh) > 0.2*atr and row['close'] < row['open']:
+            add('ALL_SWING_FAIL','short',row['close']); trig['ALL_SWING_FAIL']=True
+        # Price broke below swing low but closed back above = failed breakdown
+        elif row['low'] < prev_sl and row['close'] > prev_sl and (prev_sl - row['low']) > 0.2*atr and row['close'] > row['open']:
+            add('ALL_SWING_FAIL','long',row['close']); trig['ALL_SWING_FAIL']=True
+
+    # ALL_DOUBLE_INSIDE: Two consecutive inside bars then breakout
+    if 'ALL_DOUBLE_INSIDE' not in trig and ci >= 3:
+        p1 = candles.iloc[ci-3]; p2 = candles.iloc[ci-2]; p3 = candles.iloc[ci-1]
+        # p2 inside p1, p3 inside p2 (double compression)
+        if (p2['high'] < p1['high'] and p2['low'] > p1['low'] and
+            p3['high'] < p2['high'] and p3['low'] > p2['low']):
+            if row['close'] > p1['high'] and abs(row['close']-row['open']) >= 0.2*atr:
+                add('ALL_DOUBLE_INSIDE','long',row['close']); trig['ALL_DOUBLE_INSIDE']=True
+            elif row['close'] < p1['low'] and abs(row['close']-row['open']) >= 0.2*atr:
+                add('ALL_DOUBLE_INSIDE','short',row['close']); trig['ALL_DOUBLE_INSIDE']=True
+
+    # ALL_ATR_COMPRESS: ATR < 0.5x its 50-bar SMA, then Donchian 20 breakout
+    if 'ALL_ATR_COMPRESS' not in trig and 'atr_ratio' in row.index and pd.notna(row.get('atr_ratio')):
+        if prev.get('atr_ratio', 1) < 0.5:
+            if 'dc10_h' in row.index and pd.notna(prev.get('dc10_h')):
+                if row['close'] > prev['dc10_h']: add('ALL_ATR_COMPRESS','long',row['close']); trig['ALL_ATR_COMPRESS']=True
+                elif row['close'] < prev['dc10_l']: add('ALL_ATR_COMPRESS','short',row['close']); trig['ALL_ATR_COMPRESS']=True
+
+    # ALL_ZSCORE_REV: Z-score crosses back from +/-2 (mean reversion)
+    if 'ALL_ZSCORE_REV' not in trig and 'zscore50' in row.index and pd.notna(row.get('zscore50')):
+        if prev['zscore50'] < -2.0 and row['zscore50'] >= -2.0 and row['close'] > row['open']:
+            add('ALL_ZSCORE_REV','long',row['close']); trig['ALL_ZSCORE_REV']=True
+        elif prev['zscore50'] > 2.0 and row['zscore50'] <= 2.0 and row['close'] < row['open']:
+            add('ALL_ZSCORE_REV','short',row['close']); trig['ALL_ZSCORE_REV']=True
+
+    # ALL_ELDER_IMPULSE: Transition from red (-1) to green (+1) or vice versa
+    if 'ALL_ELDER_IMPULSE' not in trig and 'elder_impulse' in row.index:
+        pi = prev.get('elder_impulse', 0); ri = row['elder_impulse']
+        if pd.notna(pi) and pd.notna(ri):
+            if pi == -1 and ri == 1 and abs(row['close']-row['open']) >= 0.3*atr:
+                add('ALL_ELDER_IMPULSE','long',row['close']); trig['ALL_ELDER_IMPULSE']=True
+            elif pi == 1 and ri == -1 and abs(row['close']-row['open']) >= 0.3*atr:
+                add('ALL_ELDER_IMPULSE','short',row['close']); trig['ALL_ELDER_IMPULSE']=True
+
+    # ALL_DUAL_MOM: ROC(5) crosses zero while ROC(20) is extended opposite
+    if 'ALL_DUAL_MOM' not in trig and 'roc5' in row.index and pd.notna(row.get('roc5')) and pd.notna(row.get('roc20')):
+        if prev['roc5'] < 0 and row['roc5'] >= 0 and row['roc20'] < -1.0:
+            add('ALL_DUAL_MOM','long',row['close']); trig['ALL_DUAL_MOM']=True
+        elif prev['roc5'] > 0 and row['roc5'] <= 0 and row['roc20'] > 1.0:
+            add('ALL_DUAL_MOM','short',row['close']); trig['ALL_DUAL_MOM']=True
+
+    # ALL_CAMARILLA_MR: Price touches Camarilla S3 and bounces / R3 and reverses
+    if 'ALL_CAMARILLA_MR' not in trig and 'cam_s3' in row.index and pd.notna(row.get('cam_s3')):
+        if prev['low'] <= row['cam_s3'] and row['close'] > row['cam_s3'] and row['close'] > row['open']:
+            add('ALL_CAMARILLA_MR','long',row['close']); trig['ALL_CAMARILLA_MR']=True
+        elif prev['high'] >= row['cam_r3'] and row['close'] < row['cam_r3'] and row['close'] < row['open']:
+            add('ALL_CAMARILLA_MR','short',row['close']); trig['ALL_CAMARILLA_MR']=True
+
+    # LON_FIX_FADE: London gold fix at 10:30 UTC — fade the move from 10:00 to 10:30
+    if 10.5 <= hour < 10.6 and 'LON_FIX_FADE' not in trig:
+        fix_candles = tv[(tv['ts_dt'] >= pd.Timestamp(today.year,today.month,today.day,10,0,tz='UTC')) &
+                         (tv['ts_dt'] <= ct)]
+        if len(fix_candles) >= 5:
+            fix_move = (fix_candles.iloc[-1]['close'] - fix_candles.iloc[0]['open']) / atr
+            if fix_move > 0.5: add('LON_FIX_FADE','short',row['close']); trig['LON_FIX_FADE']=True
+            elif fix_move < -0.5: add('LON_FIX_FADE','long',row['close']); trig['LON_FIX_FADE']=True
+
+    # LON_ORB_ATR: London opening range (07:00-07:30) breakout with ATR buffer
+    if 7.5 <= hour < 14.5 and 'LON_ORB_ATR' not in trig:
+        lon_open = pd.Timestamp(today.year,today.month,today.day,7,0,tz='UTC')
+        lon_orb_end = pd.Timestamp(today.year,today.month,today.day,7,30,tz='UTC')
+        orb = tv[(tv['ts_dt'] >= lon_open) & (tv['ts_dt'] < lon_orb_end)]
+        if len(orb) >= 5:
+            orb_h = orb['high'].max(); orb_l = orb['low'].min()
+            if row['close'] > orb_h + 0.3*atr and row['close'] > row['open']:
+                add('LON_ORB_ATR','long',row['close']); trig['LON_ORB_ATR']=True
+            elif row['close'] < orb_l - 0.3*atr and row['close'] < row['open']:
+                add('LON_ORB_ATR','short',row['close']); trig['LON_ORB_ATR']=True
+
+    # NY_VWAP_RECLAIM: Price crosses through VWAP with conviction during NY
+    if 14.5 <= hour < 21.0 and 'NY_VWAP_RECLAIM' not in trig and 'ny_vwap' in row.index and pd.notna(row.get('ny_vwap')):
+        vwap = row['ny_vwap']
+        if prev['close'] < vwap and row['close'] > vwap and abs(row['close']-row['open']) >= 0.3*atr:
+            add('NY_VWAP_RECLAIM','long',row['close']); trig['NY_VWAP_RECLAIM']=True
+        elif prev['close'] > vwap and row['close'] < vwap and abs(row['close']-row['open']) >= 0.3*atr:
+            add('NY_VWAP_RECLAIM','short',row['close']); trig['NY_VWAP_RECLAIM']=True
