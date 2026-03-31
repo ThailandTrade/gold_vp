@@ -17,8 +17,8 @@ STRAT_EXITS[('5ers', 'XAUUSD')] = {
     'ALL_STOCH_OB': ('TRAIL', 3.00, 0.50, 0.50),  # PF=1.66 WR=76%
     'D8': ('TPSL', 1.00, 2.00, 0),  # PF=1.79 WR=50%
     'IDX_VWAP_BOUNCE': ('TRAIL', 1.50, 0.50, 0.50),  # PF=2.12 WR=65%
-    'LON_KZ': ('TPSL', 3.00, 0.75, 0),  # PF=1.83 WR=86%
-    'LON_TOKEND': ('TRAIL', 3.00, 0.50, 0.30),  # PF=1.62 WR=71%
+    'LON_KZ': ('TPSL', 3.00, 0.75, 0),  # PF=1.84 WR=86%
+    'LON_TOKEND': ('TRAIL', 3.00, 0.50, 0.30),  # PF=1.66 WR=72%
     'NY_GAP': ('TRAIL', 1.50, 0.50, 0.50),  # PF=1.39 WR=51%
     'PO3_SWEEP': ('TRAIL', 2.00, 0.75, 0.75),  # PF=1.84 WR=73%
     'TOK_FISHER': ('TRAIL', 2.00, 1.00, 1.00),  # PF=1.45 WR=58%
