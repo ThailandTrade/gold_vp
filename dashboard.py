@@ -35,13 +35,13 @@ with st.sidebar:
 
 cfg = importlib.import_module(ACCOUNTS[account]['module'])
 BROKER = cfg.BROKER
-INSTRUMENTS = cfg.INSTRUMENTS
+INSTRUMENTS = getattr(cfg, 'ALL_INSTRUMENTS', cfg.INSTRUMENTS)
 
 # ── MAGIC NUMBERS (from strats.py — garanti unique) ──
 def _magic(symbol, strat):
     return make_magic(account, symbol, strat)
 
-# Build reverse magic map for all instruments
+# Build reverse magic map for ALL instruments (pas seulement live)
 MAGIC_REVERSE = {}  # magic -> (symbol, strat)
 for sym, icfg in INSTRUMENTS.items():
     for sn in icfg['portfolio']:
