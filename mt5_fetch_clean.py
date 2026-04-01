@@ -126,6 +126,8 @@ def fetch_and_store(engine, pair, tf, user_to_ms):
     )
     meta.create_all(engine, checkfirst=True)
 
+    tf_ms = TF_MS[tf]
+
     # Dernier ts en DB
     last_ts = None
     with engine.connect() as c:
@@ -142,8 +144,6 @@ def fetch_and_store(engine, pair, tf, user_to_ms):
     start_ms = int(start_utc.timestamp() * 1000)
     offset = get_server_offset_hours(start_ms)
     start_srv = (start_utc + timedelta(hours=offset)).replace(tzinfo=None)
-
-    tf_ms = TF_MS[tf]
 
     # end_srv = loin dans le futur (on laisse MT5 retourner tout ce qu'il a)
     if user_to_ms:
