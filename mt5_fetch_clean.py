@@ -97,7 +97,7 @@ def mt5_now_server_ms():
     return utc_ms_to_server_ms(int(time.time() * 1000))
 
 # ── FETCH & STORE ──
-def fetch_and_store(engine, pair, tf, user_to_ms, now_server_ms_fixed):
+def fetch_and_store(engine, pair, tf, user_to_ms):
     base, quote = pair[:3], pair[3:]
     sym = None
     for cand in [pair, pair+".a", pair+".i", pair+".pro", pair+".ecn"]:
@@ -132,9 +132,10 @@ def fetch_and_store(engine, pair, tf, user_to_ms, now_server_ms_fixed):
         row = c.execute(select(table.c.ts).order_by(desc(table.c.ts)).limit(1)).fetchone()
         if row: last_ts = int(row.ts)
 
-    # Start
+    # Start: 2 bougies avant last_ts pour que le batch ait toujours >1 bougie
+    # (la derniere sera droppee car potentiellement en cours)
     if last_ts:
-        start_utc = datetime.fromtimestamp((last_ts + 1) / 1000, tz=UTC)
+        start_utc = datetime.fromtimestamp((last_ts - 2 * tf_ms + 1) / 1000, tz=UTC)
     else:
         start_utc = datetime.now(UTC) - timedelta(days=365)
 
@@ -143,14 +144,14 @@ def fetch_and_store(engine, pair, tf, user_to_ms, now_server_ms_fixed):
     start_srv = (start_utc + timedelta(hours=offset)).replace(tzinfo=None)
 
     tf_ms = TF_MS[tf]
-    cap_now = (now_server_ms_fixed // tf_ms) * tf_ms - tf_ms
+
+    # end_srv = loin dans le futur (on laisse MT5 retourner tout ce qu'il a)
     if user_to_ms:
         cap_to = (utc_ms_to_server_ms(user_to_ms) // tf_ms) * tf_ms - tf_ms
-        cap = min(cap_now, cap_to)
+        end_srv = datetime.fromtimestamp(cap_to / 1000).replace(tzinfo=None) + timedelta(seconds=1)
     else:
-        cap = cap_now
+        end_srv = datetime.now() + timedelta(hours=24)
 
-    end_srv = datetime.fromtimestamp(cap / 1000).replace(tzinfo=None) + timedelta(seconds=1)
     if start_srv >= end_srv:
         print(f"[INFO] {pair} {tf}: no new bars."); return
 
@@ -166,11 +167,16 @@ def fetch_and_store(engine, pair, tf, user_to_ms, now_server_ms_fixed):
             if rates is None or len(rates) == 0:
                 cur = end; continue
 
+            # La derniere bougie retournee par MT5 est potentiellement en cours
+            # On la drop systematiquement — elle sera incluse fermee au prochain cycle
+            if len(rates) > 1:
+                rates = rates[:-1]
+            else:
+                cur = end; continue
+
             rows = []
             for r in rates:
                 bar_srv = int(r["time"]) * 1000
-                if bar_srv > cap: continue
-
                 ts_utc = server_ms_to_utc_ms(bar_srv)
                 if user_to_ms and ts_utc > user_to_ms: continue
                 if last_ts and ts_utc <= last_ts: continue
@@ -237,12 +243,10 @@ def main():
 
     try:
         while True:
-            now_srv = mt5_now_server_ms()
-            offset = get_server_offset_hours(int(time.time() * 1000))
-            print(f"[LOOP] server={iso_utc(now_srv)} (offset=+{offset}h)")
+            print(f"[LOOP] {datetime.now(UTC).isoformat(timespec='seconds')}")
             for p in pairs:
                 for tf in tfs:
-                    fetch_and_store(engine, p, tf, user_to_ms, now_srv)
+                    fetch_and_store(engine, p, tf, user_to_ms)
             time.sleep(1)
     except KeyboardInterrupt:
         print("[STOP]")
