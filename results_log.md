@@ -130,6 +130,14 @@ US100.cash et US30.cash retires (pas assez rentables).
 
 Live FTMO: XAUUSD actif.
 
+### Fix live: toute reference temporelle basee sur ts_dt UTC des candles DB
+Bug 2026-04-01: TOK_FISHER DIR MISMATCH (BT=short, live=long).
+Cause: le live utilisait `now_utc` (heure systeme) pour `hour` dans detect_open_strats,
+et `candle_time` (potentiellement decale) pour detect_close_strats.
+Le fisher cross UP a 23:55 (veille) a trigger avant le day reset.
+Fix: `candle_time_utc = candles.iloc[-1]['ts_dt']` partout.
+Plus de `datetime.now()` ni d'heure broker. Seule source = DB UTC.
+
 ### Fix conflit filter live: deals fermes sur la bougie courante
 Bug: en BT, un trade sorti au candle ci=N est encore considere actif a ci=N (condition `>=`).
 En live, MT5 positions_get() ne voit que les positions ouvertes, pas celles fermees par SL/TP

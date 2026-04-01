@@ -215,11 +215,11 @@ def reset_state():
 
 # ── SIGNAL DETECTION ─────────────────────────────────
 
-def detect_open_strats(candles, sym_state, atr, now_utc, today, portfolio):
+def detect_open_strats(candles, sym_state, atr, candle_time_utc, today, portfolio):
     if len(candles) < 2: return []
     signals = []
     trig = sym_state.setdefault('_triggered_open', {})
-    hour = now_utc.hour + now_utc.minute / 60.0
+    hour = candle_time_utc.hour + candle_time_utc.minute / 60.0  # UTC from candle ts_dt
     r = candles.iloc[-2]; ci = len(candles) - 2
     ds = pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')
     te = pd.Timestamp(today.year,today.month,today.day,6,0,tz='UTC')
@@ -235,16 +235,16 @@ def detect_open_strats(candles, sym_state, atr, now_utc, today, portfolio):
     detect_all(candles, ci, r, r['ts_dt'], today, hour, atr, trig, tv, tok, lon, prev_day_data, add_sig, prev2_day_data=prev2_day_data)
     return signals
 
-def detect_close_strats(candles, sym_state, atr, candle_time, today, portfolio):
+def detect_close_strats(candles, sym_state, atr, candle_time_utc, today, portfolio):
     signals = []
     trig = sym_state.setdefault('_triggered_close', {})
-    hour = candle_time.hour + candle_time.minute / 60.0
+    hour = candle_time_utc.hour + candle_time_utc.minute / 60.0  # UTC from candle ts_dt
     r = candles.iloc[-1]
     ds = pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')
     te = pd.Timestamp(today.year,today.month,today.day,6,0,tz='UTC')
     ls = pd.Timestamp(today.year,today.month,today.day,8,0,tz='UTC')
     ns = pd.Timestamp(today.year,today.month,today.day,14,30,tz='UTC')
-    tv = candles[(candles['ts_dt']>=ds)&(candles['ts_dt']<=candle_time)]
+    tv = candles[(candles['ts_dt']>=ds)&(candles['ts_dt']<=candle_time_utc)]
     tok = tv[tv['ts_dt']<te]; lon = tv[(tv['ts_dt']>=ls)&(tv['ts_dt']<ns)]
     prev_day_data = sym_state.get('_prev_day_data')
     prev2_day_data = sym_state.get('_prev2_day_data')
@@ -351,12 +351,17 @@ def main():
             sym, len(icfg['portfolio']), icfg['risk_pct']*100, ', '.join(icfg['portfolio'])))
 
     # Rebuild triggers from MT5 positions
+    # Get current date from DB candles (UTC), not system clock
+    _conn_tmp = get_conn_autocommit()
+    _last_candle = get_recent_candles(_conn_tmp, syms[0] if syms else 'XAUUSD', 1)
+    _conn_tmp.close()
+    _db_today = _last_candle.iloc[-1]['ts_dt'].date() if len(_last_candle) > 0 else datetime.now(timezone.utc).date()
     for p in mt5_our_positions():
         sym_sn = ALL_MAGICS.get(p.magic)
         if not sym_sn: continue
         sym, sn = sym_sn
         pos_date = datetime.fromtimestamp(p.time, tz=timezone.utc).date()
-        if pos_date == datetime.now(timezone.utc).date():
+        if pos_date == _db_today:
             ss = state['per_symbol'].get(sym, {})
             if sn in OPEN_STRATS: ss.setdefault('_triggered_open', {})[sn] = True
             else: ss.setdefault('_triggered_close', {})[sn] = True
@@ -386,8 +391,6 @@ def main():
             if not mt5.terminal_info():
                 log.warning("MT5 reconnexion..."); mt5_init()
 
-            now_utc = datetime.now(timezone.utc)
-
             for sym in syms:
                 icfg = INSTRUMENTS[sym]
                 portfolio = icfg['portfolio']
@@ -401,8 +404,9 @@ def main():
                 candles = compute_indicators(candles)
 
                 current_ts = int(candles.iloc[-1]['ts'])
-                candle_time = candles.iloc[-1]['ts_dt'].to_pydatetime()
-                today = candle_time.date()
+                # REGLE: seule source de temps = ts_dt UTC des candles en DB
+                candle_time_utc = candles.iloc[-1]['ts_dt'].to_pydatetime()
+                today = candle_time_utc.date()
 
                 # ATR
                 atr = get_yesterday_atr(candles, today)
@@ -435,8 +439,8 @@ def main():
                 open_dirs = set('long' if p.type == 0 else 'short' for p in our_pos)
                 # Ajouter les directions des deals fermes sur la bougie courante
                 try:
-                    candle_start = candle_time.replace(tzinfo=timezone.utc) if candle_time.tzinfo is None else candle_time
-                    deals = mt5.history_deals_get(candle_start, candle_start + timedelta(minutes=5)) or []
+                    candle_start_utc = candle_time_utc if candle_time_utc.tzinfo else candle_time_utc.replace(tzinfo=timezone.utc)
+                    deals = mt5.history_deals_get(candle_start_utc, candle_start_utc + timedelta(minutes=5)) or []
                     for d in deals:
                         if d.symbol != sym: continue
                         if d.magic not in ALL_MAGIC_SET: continue
@@ -450,7 +454,7 @@ def main():
                 # Heartbeat
                 bal = mt5_balance()
                 log.info("~ {} {} C={:.2f} ATR={:.2f} {}pos ${:,.0f}".format(
-                    sym, candle_time.strftime("%H:%M"), candles.iloc[-1]['close'],
+                    sym, candle_time_utc.strftime("%H:%M"), candles.iloc[-1]['close'],
                     atr, len(our_pos), bal))
 
                 # Trailing
@@ -464,7 +468,7 @@ def main():
                 our_pos = mt5_our_positions(sym)
                 for p in our_pos:
                     open_dirs.add('long' if p.type == 0 else 'short')
-                for sig in sorted(detect_close_strats(candles, ss, atr, candle_time, today, portfolio), key=lambda s: s['strat']):
+                for sig in sorted(detect_close_strats(candles, ss, atr, candle_time_utc, today, portfolio), key=lambda s: s['strat']):
                     if sig['dir'] == 'long' and 'short' in open_dirs: continue
                     if sig['dir'] == 'short' and 'long' in open_dirs: continue
                     open_position(state, sym, sig, atr, risk_pct)
