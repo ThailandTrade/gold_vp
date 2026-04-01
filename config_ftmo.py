@@ -1,5 +1,5 @@
 """
-Config FTMO — Prop firm — Multi-instrument (re-optimise 2026-03-30 close-only, marge>=8%)
+Config FTMO — Prop firm — Multi-instrument (re-optimise 2026-04-01 close-only, marge>=8%, pkl aligne)
 Max DD FTMO: 10%
 REGLE: PAS de strats open (timing impossible a reproduire exactement en live)
 REGLE: Marge WR >= 8% obligatoire (WR_reel - WR_breakeven)
@@ -11,87 +11,60 @@ ALL_INSTRUMENTS = {
     'XAUUSD': {
         'risk_pct': 0.0005,
         'portfolio': [
-            'PO3_SWEEP',        # Sharpe 17 — score 0.98
-            'ALL_MSTAR',
-            'ALL_DC10',
-            'IDX_PREV_HL',
-            'IDX_VWAP_BOUNCE',
-            'ALL_FVG_BULL',
-            'D8',
-            'ALL_MACD_RSI',
-            'IDX_ORB30',
-            'ALL_KB_SQUEEZE',
-            'ALL_STOCH_OB',
-            'IDX_TREND_DAY',
+            'PO3_SWEEP',        # Calmar 11 — score 0.92
             'ALL_BB_TIGHT',
-            'ALL_ELDER_BULL',
-            'ALL_HMA_CROSS',
+            'IDX_VWAP_BOUNCE',
+            'ALL_WILLR_14',
+            'ALL_MSTAR',
+            'D8',
+            'ALL_STOCH_OB',
+            'ALL_MACD_RSI',
+            'ALL_DC10',
             'TOK_STOCH',
-            'ALL_DC10_EMA',
+            'IDX_ORB30',
         ],
-        # Sharpe 17: PF 1.46 | WR 72% | DD -1.5% | Rend +23% | 13/13
+        # Calmar 11: PF 1.46 | WR 70% | DD -0.6% | Rend +15% | 12/12
     },
     'GER40.cash': {
         'risk_pct': 0.0005,
         'portfolio': [
-            'TOK_FISHER',       # PF 17 — score 2.01
+            'TOK_FISHER',       # PF 11 — score 2.17
             'ALL_FVG_BULL',
-            'ALL_ELDER_BULL',
-            'ALL_RSI_50',
             'ALL_MACD_HIST',
-            'ALL_MTF_BRK',
-            'ALL_FISHER_9',
-            'ALL_ADX_FAST',
-            'ALL_RSI_DIV',
-            'ALL_BB_SQUEEZE',
-            'ALL_DC50',
             'ALL_DPO_14',
-            'TOK_BIG',
-            'ALL_DC10',
-            'ALL_DC10_EMA',
-            'TOK_TRIX',
-            'ALL_WILLR_14',
+            'ALL_FISHER_9',
+            'ALL_RSI_DIV',
+            'ALL_ELDER_BULL',
+            'TOK_WILLR',
+            'ALL_RSI_50',
+            'ALL_MTF_BRK',
+            'ALL_FIB_618',
         ],
-        # PF 17: PF 1.75 | WR 72% | DD -1.3% | Rend +40% | 12/13
+        # PF 11: PF 1.90 | WR 73% | DD -1.0% | Rend +31% | 12/12
     },
     'UK100.cash': {
         'risk_pct': 0.0005,
         'portfolio': [
-            'ALL_CONSEC_REV',   # Calmar 3 — score 0.31
+            'ALL_CONSEC_REV',   # Calmar 3 — score 0.41
             'NY_HMA_CROSS',
-            'IDX_CONSEC_REV',
+            'IDX_TREND_DAY',
         ],
-        # Calmar 3: PF 1.48 | WR 75% | DD -0.6% | Rend +5% | 12/13
-    },
-    'US100.cash': {
-        'risk_pct': 0.0005,
-        'portfolio': [
-            'D8',               # Calmar 3 — score 0.20
-            'TOK_NR4',
-            'ALL_ADX_RSI50',
-        ],
-        # Calmar 3: PF 1.48 | WR 73% | DD -0.6% | Rend +4% | 11/13
+        # Calmar 3: PF 1.49 | WR 74% | DD -0.3% | Rend +5% | 12/12
     },
     'US500.cash': {
         'risk_pct': 0.0005,
         'portfolio': [
-            'ALL_RSI_EXTREME',  # Sharpe 6 — score 0.80
+            'ALL_RSI_EXTREME',  # Calmar 9 — score 0.98
+            'ALL_FISHER_9',
+            'ALL_CONSEC_REV',
             'IDX_CONSEC_REV',
-            'ALL_SUPERTREND',
-            'ALL_FIB_618',
-            'TOK_FISHER',
             'ALL_KB_SQUEEZE',
+            'ALL_PSAR_EMA',
+            'ALL_SUPERTREND',
+            'TOK_FISHER',
+            'ALL_LR_BREAK',
         ],
-        # Sharpe 6: PF 1.53 | WR 69% | DD -0.5% | Rend +12% | 13/13
-    },
-    'US30.cash': {
-        'risk_pct': 0.0005,
-        'portfolio': [
-            'IDX_PREV_HL',      # Calmar 3 — score 0.23
-            'ALL_FIB_618',
-            'IDX_3SOLDIERS',
-        ],
-        # Calmar 3: PF 1.45 | WR 71% | DD -0.6% | Rend +5% | 10/13
+        # Calmar 9: PF 1.49 | WR 65% | DD -0.9% | Rend +19% | 12/12
     },
 }
 
