@@ -166,6 +166,12 @@ def fetch_and_store(engine, pair, tf, user_to_ms, now_server_ms_fixed):
             if rates is None or len(rates) == 0:
                 cur = end; continue
 
+            # Drop la derniere bougie (potentiellement en cours / non fermee)
+            if len(rates) > 1:
+                rates = rates[:-1]
+            else:
+                cur = end; continue
+
             rows = []
             for r in rates:
                 bar_srv = int(r["time"]) * 1000
