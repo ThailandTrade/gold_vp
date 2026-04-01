@@ -2,985 +2,853 @@
   "Calmar": {
     "2": {
       "combo": [
-        "ALL_RSI_EXTREME",
-        "ALL_FISHER_9"
+        "ALL_KB_SQUEEZE",
+        "ALL_CONSEC_REV"
       ],
-      "n": 569,
-      "pf": 1.443771649521125,
-      "wr": 62.56590509666081,
-      "mdd": -0.4822281573040153,
-      "ret": 4.837509886744592,
-      "sharpe": 3.3765213168008694,
+      "n": 483,
+      "pf": 1.5046293150739363,
+      "wr": 65.21739130434783,
+      "mdd": -0.6011936487130417,
+      "ret": 4.345410636267959,
+      "sharpe": 3.0499375126424217,
       "pm": 11,
-      "tm": 12
+      "tm": 13
     },
     "3": {
       "combo": [
-        "ALL_RSI_EXTREME",
-        "ALL_FISHER_9",
-        "ALL_CONSEC_REV"
+        "ALL_KB_SQUEEZE",
+        "ALL_CONSEC_REV",
+        "ALL_MACD_FAST_SIG"
       ],
-      "n": 819,
-      "pf": 1.5080317025436585,
-      "wr": 64.1025641025641,
-      "mdd": -0.4786193216761116,
-      "ret": 7.758198836142968,
-      "sharpe": 4.384954823094262,
+      "n": 781,
+      "pf": 1.4700450620330234,
+      "wr": 64.02048655569781,
+      "mdd": -0.4837362184780778,
+      "ret": 6.841011287123605,
+      "sharpe": 3.9266508029920506,
       "pm": 12,
-      "tm": 12
+      "tm": 13
     },
     "4": {
       "combo": [
-        "ALL_RSI_EXTREME",
-        "ALL_FISHER_9",
+        "ALL_KB_SQUEEZE",
         "ALL_CONSEC_REV",
+        "ALL_MACD_FAST_SIG",
         "IDX_CONSEC_REV"
       ],
-      "n": 1072,
-      "pf": 1.5225119117522738,
-      "wr": 64.8320895522388,
-      "mdd": -0.5434129034408935,
-      "ret": 10.363180923073262,
-      "sharpe": 4.481554849219459,
-      "pm": 12,
-      "tm": 12
+      "n": 1031,
+      "pf": 1.4979867081619853,
+      "wr": 66.05237633365665,
+      "mdd": -0.49492616156043184,
+      "ret": 9.128707889952318,
+      "sharpe": 4.2456953945200455,
+      "pm": 11,
+      "tm": 13
     },
     "5": {
       "combo": [
-        "ALL_RSI_EXTREME",
-        "ALL_FISHER_9",
+        "ALL_KB_SQUEEZE",
         "ALL_CONSEC_REV",
+        "ALL_MACD_FAST_SIG",
         "IDX_CONSEC_REV",
-        "ALL_KB_SQUEEZE"
+        "ALL_SUPERTREND"
       ],
-      "n": 1264,
-      "pf": 1.4956818051124718,
-      "wr": 64.31962025316456,
-      "mdd": -0.5682464059254799,
-      "ret": 11.862976575070672,
-      "sharpe": 4.758781184654683,
-      "pm": 12,
-      "tm": 12
+      "n": 1220,
+      "pf": 1.5304607963164156,
+      "wr": 66.9672131147541,
+      "mdd": -0.42417292003622586,
+      "ret": 11.288478204996194,
+      "sharpe": 4.79670328582256,
+      "pm": 13,
+      "tm": 13
     },
     "6": {
       "combo": [
-        "ALL_RSI_EXTREME",
-        "ALL_FISHER_9",
-        "ALL_CONSEC_REV",
-        "IDX_CONSEC_REV",
         "ALL_KB_SQUEEZE",
+        "ALL_CONSEC_REV",
+        "ALL_MACD_FAST_SIG",
+        "IDX_CONSEC_REV",
+        "ALL_SUPERTREND",
         "ALL_PSAR_EMA"
       ],
-      "n": 1419,
-      "pf": 1.5222971933274185,
-      "wr": 65.18675123326287,
-      "mdd": -0.6212274912971091,
-      "ret": 13.763151745897412,
-      "sharpe": 5.231049044976609,
-      "pm": 12,
-      "tm": 12
+      "n": 1470,
+      "pf": 1.5354873888159146,
+      "wr": 67.4829931972789,
+      "mdd": -0.5713052457355502,
+      "ret": 13.634360319523067,
+      "sharpe": 4.864861110679333,
+      "pm": 13,
+      "tm": 13
     },
     "7": {
       "combo": [
-        "ALL_RSI_EXTREME",
-        "ALL_FISHER_9",
-        "ALL_CONSEC_REV",
-        "IDX_CONSEC_REV",
         "ALL_KB_SQUEEZE",
+        "ALL_CONSEC_REV",
+        "ALL_MACD_FAST_SIG",
+        "IDX_CONSEC_REV",
+        "ALL_SUPERTREND",
         "ALL_PSAR_EMA",
-        "ALL_SUPERTREND"
+        "TOK_FISHER"
       ],
-      "n": 1663,
-      "pf": 1.5171741083073171,
-      "wr": 65.72459410703549,
-      "mdd": -0.7556006778814206,
-      "ret": 15.846559890955497,
-      "sharpe": 5.127152195597749,
-      "pm": 12,
-      "tm": 12
+      "n": 1653,
+      "pf": 1.5044691953329852,
+      "wr": 67.5741076830006,
+      "mdd": -0.5640652753000382,
+      "ret": 14.445972583011724,
+      "sharpe": 4.751498330392973,
+      "pm": 13,
+      "tm": 13
     },
     "8": {
       "combo": [
-        "ALL_RSI_EXTREME",
-        "ALL_FISHER_9",
-        "ALL_CONSEC_REV",
-        "IDX_CONSEC_REV",
         "ALL_KB_SQUEEZE",
-        "ALL_PSAR_EMA",
-        "ALL_SUPERTREND",
-        "TOK_FISHER"
-      ],
-      "n": 1891,
-      "pf": 1.5012080792444669,
-      "wr": 66.2083553675304,
-      "mdd": -0.7968967237547784,
-      "ret": 17.229711934657256,
-      "sharpe": 5.025725280861674,
-      "pm": 12,
-      "tm": 12
-    },
-    "9": {
-      "combo": [
-        "ALL_RSI_EXTREME",
-        "ALL_FISHER_9",
         "ALL_CONSEC_REV",
+        "ALL_MACD_FAST_SIG",
         "IDX_CONSEC_REV",
-        "ALL_KB_SQUEEZE",
-        "ALL_PSAR_EMA",
         "ALL_SUPERTREND",
+        "ALL_PSAR_EMA",
         "TOK_FISHER",
         "ALL_LR_BREAK"
       ],
-      "n": 2089,
-      "pf": 1.485819654325597,
-      "wr": 65.05505026328386,
-      "mdd": -0.8951001905718906,
-      "ret": 19.253049710526582,
-      "sharpe": 4.876098865327967,
-      "pm": 12,
-      "tm": 12
+      "n": 1837,
+      "pf": 1.464670437888141,
+      "wr": 65.8138268916712,
+      "mdd": -0.7116801131706273,
+      "ret": 15.675038043816386,
+      "sharpe": 4.467800713795102,
+      "pm": 13,
+      "tm": 13
     },
-    "10": {
+    "9": {
       "combo": [
-        "ALL_RSI_EXTREME",
-        "ALL_FISHER_9",
-        "ALL_CONSEC_REV",
-        "IDX_CONSEC_REV",
         "ALL_KB_SQUEEZE",
-        "ALL_PSAR_EMA",
+        "ALL_CONSEC_REV",
+        "ALL_MACD_FAST_SIG",
+        "IDX_CONSEC_REV",
         "ALL_SUPERTREND",
+        "ALL_PSAR_EMA",
         "TOK_FISHER",
         "ALL_LR_BREAK",
-        "IDX_RSI_REV"
+        "ALL_ELDER_BULL"
       ],
-      "n": 2303,
-      "pf": 1.5031561443050179,
-      "wr": 65.87060356057316,
-      "mdd": -1.1987588185289386,
-      "ret": 21.77918240068281,
-      "sharpe": 5.224010717960424,
+      "n": 2016,
+      "pf": 1.4898469018731735,
+      "wr": 67.26190476190477,
+      "mdd": -0.6970028516070503,
+      "ret": 17.47705503309111,
+      "sharpe": 4.916553737970935,
       "pm": 12,
-      "tm": 12
+      "tm": 13
     }
   },
   "PF": {
     "2": {
       "combo": [
-        "ALL_RSI_EXTREME",
+        "ALL_KB_SQUEEZE",
         "ALL_SUPERTREND"
       ],
-      "n": 485,
-      "pf": 1.5800087860475525,
-      "wr": 71.34020618556701,
-      "mdd": -0.5745265820492182,
-      "ret": 4.1253643966098466,
-      "sharpe": 3.978545790521558,
-      "pm": 10,
+      "n": 484,
+      "pf": 1.508010562996492,
+      "wr": 67.35537190082644,
+      "mdd": -0.5703140138451495,
+      "ret": 4.096438307853794,
+      "sharpe": 3.0344274002478793,
+      "pm": 11,
       "tm": 12
     },
     "3": {
       "combo": [
-        "ALL_RSI_EXTREME",
+        "ALL_KB_SQUEEZE",
         "ALL_SUPERTREND",
         "IDX_CONSEC_REV"
       ],
-      "n": 721,
-      "pf": 1.6068440431250053,
-      "wr": 70.04160887656033,
-      "mdd": -0.4374627385889098,
-      "ret": 6.792989339306121,
-      "sharpe": 4.923910447529182,
-      "pm": 11,
-      "tm": 12
+      "n": 712,
+      "pf": 1.5618766066031813,
+      "wr": 68.96067415730337,
+      "mdd": -0.4177383060578427,
+      "ret": 6.411352761222326,
+      "sharpe": 4.051427317280057,
+      "pm": 13,
+      "tm": 13
     },
     "4": {
       "combo": [
-        "ALL_RSI_EXTREME",
+        "ALL_KB_SQUEEZE",
         "ALL_SUPERTREND",
         "IDX_CONSEC_REV",
         "ALL_CONSEC_REV"
       ],
-      "n": 964,
-      "pf": 1.6198254387299833,
-      "wr": 69.29460580912863,
-      "mdd": -0.5985454015712967,
-      "ret": 9.641154586563585,
-      "sharpe": 4.87361496384638,
-      "pm": 11,
-      "tm": 12
+      "n": 945,
+      "pf": 1.5873714818293674,
+      "wr": 68.57142857142857,
+      "mdd": -0.43297518192821877,
+      "ret": 9.13621929052216,
+      "sharpe": 4.39801514395284,
+      "pm": 13,
+      "tm": 13
     },
     "5": {
       "combo": [
-        "ALL_RSI_EXTREME",
+        "ALL_KB_SQUEEZE",
         "ALL_SUPERTREND",
         "IDX_CONSEC_REV",
         "ALL_CONSEC_REV",
-        "IDX_RSI_REV"
+        "ALL_PSAR_EMA"
       ],
-      "n": 1187,
-      "pf": 1.6150083294791875,
-      "wr": 69.92417860151643,
-      "mdd": -0.9879694867789317,
-      "ret": 11.709901715783591,
-      "sharpe": 4.9934276764824705,
-      "pm": 11,
-      "tm": 12
+      "n": 1199,
+      "pf": 1.581766501181178,
+      "wr": 68.89074228523769,
+      "mdd": -0.5531930813532128,
+      "ret": 11.459490154687796,
+      "sharpe": 4.513757677637224,
+      "pm": 13,
+      "tm": 13
     },
     "6": {
       "combo": [
-        "ALL_RSI_EXTREME",
+        "ALL_KB_SQUEEZE",
         "ALL_SUPERTREND",
         "IDX_CONSEC_REV",
         "ALL_CONSEC_REV",
-        "IDX_RSI_REV",
-        "ALL_KB_SQUEEZE"
+        "ALL_PSAR_EMA",
+        "ALL_ELDER_BULL"
       ],
-      "n": 1379,
-      "pf": 1.6030563010301313,
-      "wr": 69.108049311095,
-      "mdd": -1.411977956555539,
-      "ret": 13.859959316155349,
-      "sharpe": 5.440606274062679,
-      "pm": 10,
-      "tm": 12
+      "n": 1449,
+      "pf": 1.5708099303188454,
+      "wr": 70.1863354037267,
+      "mdd": -0.7045795719347554,
+      "ret": 13.10105181725805,
+      "sharpe": 4.799940472193002,
+      "pm": 13,
+      "tm": 13
     },
     "7": {
       "combo": [
-        "ALL_RSI_EXTREME",
+        "ALL_KB_SQUEEZE",
         "ALL_SUPERTREND",
         "IDX_CONSEC_REV",
         "ALL_CONSEC_REV",
-        "IDX_RSI_REV",
-        "ALL_KB_SQUEEZE",
-        "ALL_PSAR_EMA"
+        "ALL_PSAR_EMA",
+        "ALL_ELDER_BULL",
+        "TOK_FISHER"
       ],
-      "n": 1632,
-      "pf": 1.5891815617162892,
-      "wr": 69.11764705882352,
-      "mdd": -1.2278367309620941,
-      "ret": 16.141970554135856,
-      "sharpe": 5.366752089597171,
-      "pm": 10,
-      "tm": 12
+      "n": 1625,
+      "pf": 1.5419571460433672,
+      "wr": 69.84615384615384,
+      "mdd": -0.8988898134121308,
+      "ret": 14.108090662933101,
+      "sharpe": 4.89493169713059,
+      "pm": 12,
+      "tm": 13
     },
     "8": {
       "combo": [
-        "ALL_RSI_EXTREME",
+        "ALL_KB_SQUEEZE",
         "ALL_SUPERTREND",
         "IDX_CONSEC_REV",
         "ALL_CONSEC_REV",
-        "IDX_RSI_REV",
-        "ALL_KB_SQUEEZE",
         "ALL_PSAR_EMA",
-        "TOK_FISHER"
-      ],
-      "n": 1832,
-      "pf": 1.5574679796028852,
-      "wr": 68.99563318777294,
-      "mdd": -1.04193469321293,
-      "ret": 17.21232194322279,
-      "sharpe": 5.506953382928583,
-      "pm": 12,
-      "tm": 12
-    },
-    "9": {
-      "combo": [
-        "ALL_RSI_EXTREME",
-        "ALL_SUPERTREND",
-        "IDX_CONSEC_REV",
-        "ALL_CONSEC_REV",
-        "IDX_RSI_REV",
-        "ALL_KB_SQUEEZE",
-        "ALL_PSAR_EMA",
+        "ALL_ELDER_BULL",
         "TOK_FISHER",
         "ALL_LR_BREAK"
       ],
-      "n": 2040,
-      "pf": 1.533980588940419,
-      "wr": 67.5,
-      "mdd": -1.3940381174419896,
-      "ret": 19.413827743623813,
-      "sharpe": 5.4604890600471405,
-      "pm": 11,
-      "tm": 12
+      "n": 1795,
+      "pf": 1.532427688913936,
+      "wr": 68.18941504178272,
+      "mdd": -0.8086744707065585,
+      "ret": 16.310967251216468,
+      "sharpe": 5.056896586600175,
+      "pm": 12,
+      "tm": 13
     },
-    "10": {
+    "9": {
       "combo": [
-        "ALL_RSI_EXTREME",
+        "ALL_KB_SQUEEZE",
         "ALL_SUPERTREND",
         "IDX_CONSEC_REV",
         "ALL_CONSEC_REV",
-        "IDX_RSI_REV",
-        "ALL_KB_SQUEEZE",
         "ALL_PSAR_EMA",
+        "ALL_ELDER_BULL",
         "TOK_FISHER",
         "ALL_LR_BREAK",
-        "ALL_FISHER_9"
+        "ALL_MACD_FAST_SIG"
       ],
-      "n": 2303,
-      "pf": 1.5031561443050179,
-      "wr": 65.87060356057316,
-      "mdd": -1.1987588185289386,
-      "ret": 21.77918240068281,
-      "sharpe": 5.224010717960424,
+      "n": 2016,
+      "pf": 1.4898469018731735,
+      "wr": 67.26190476190477,
+      "mdd": -0.6970028516070503,
+      "ret": 17.47705503309111,
+      "sharpe": 4.916553737970935,
       "pm": 12,
-      "tm": 12
+      "tm": 13
     }
   },
   "MinDD": {
     "2": {
       "combo": [
-        "ALL_RSI_EXTREME",
+        "ALL_KB_SQUEEZE",
         "TOK_FISHER"
       ],
-      "n": 518,
-      "pf": 1.4634006151892909,
-      "wr": 71.42857142857143,
-      "mdd": -0.3643795041215478,
-      "ret": 3.49454043745705,
-      "sharpe": 3.4195677590429185,
-      "pm": 10,
-      "tm": 12
+      "n": 476,
+      "pf": 1.4257783266919184,
+      "wr": 67.22689075630252,
+      "mdd": -0.5439814578245827,
+      "ret": 3.3742971801964887,
+      "sharpe": 2.4756876532270065,
+      "pm": 9,
+      "tm": 13
     },
     "3": {
       "combo": [
-        "ALL_RSI_EXTREME",
+        "ALL_KB_SQUEEZE",
         "TOK_FISHER",
         "ALL_CONSEC_REV"
       ],
-      "n": 768,
-      "pf": 1.523200528997506,
-      "wr": 69.921875,
-      "mdd": -0.39165944865589847,
-      "ret": 6.242901367018552,
-      "sharpe": 4.531779595916911,
-      "pm": 11,
-      "tm": 12
+      "n": 721,
+      "pf": 1.4815847329895313,
+      "wr": 66.99029126213593,
+      "mdd": -0.4196299067950115,
+      "ret": 5.901470787779909,
+      "sharpe": 3.534843077581524,
+      "pm": 13,
+      "tm": 13
     },
     "4": {
       "combo": [
-        "ALL_RSI_EXTREME",
+        "ALL_KB_SQUEEZE",
         "TOK_FISHER",
         "ALL_CONSEC_REV",
-        "ALL_PSAR_EMA"
+        "ALL_SUPERTREND"
       ],
-      "n": 953,
-      "pf": 1.5312038280129663,
-      "wr": 69.5697796432319,
-      "mdd": -0.4884009531418569,
-      "ret": 7.996978975467092,
-      "sharpe": 5.026328881234728,
-      "pm": 12,
-      "tm": 12
+      "n": 938,
+      "pf": 1.5107954175493945,
+      "wr": 67.80383795309169,
+      "mdd": -0.529534387965504,
+      "ret": 7.999624521740291,
+      "sharpe": 4.215146972082167,
+      "pm": 13,
+      "tm": 13
     },
     "5": {
       "combo": [
-        "ALL_RSI_EXTREME",
+        "ALL_KB_SQUEEZE",
         "TOK_FISHER",
         "ALL_CONSEC_REV",
-        "ALL_PSAR_EMA",
-        "ALL_SUPERTREND"
+        "ALL_SUPERTREND",
+        "ALL_MACD_FAST_SIG"
       ],
-      "n": 1204,
-      "pf": 1.519905840768004,
-      "wr": 69.43521594684385,
-      "mdd": -0.6142348959089099,
-      "ret": 9.999235785978934,
-      "sharpe": 4.648432167737608,
-      "pm": 12,
-      "tm": 12
+      "n": 1191,
+      "pf": 1.4762917696980744,
+      "wr": 66.33081444164569,
+      "mdd": -0.43276784742811913,
+      "ret": 10.015746648479995,
+      "sharpe": 4.403438525361514,
+      "pm": 13,
+      "tm": 13
     },
     "6": {
       "combo": [
-        "ALL_RSI_EXTREME",
+        "ALL_KB_SQUEEZE",
         "TOK_FISHER",
         "ALL_CONSEC_REV",
-        "ALL_PSAR_EMA",
         "ALL_SUPERTREND",
-        "ALL_FISHER_9"
+        "ALL_MACD_FAST_SIG",
+        "IDX_CONSEC_REV"
       ],
-      "n": 1480,
-      "pf": 1.475963030294341,
-      "wr": 66.41891891891892,
-      "mdd": -0.7205664287148215,
-      "ret": 12.430459200309809,
-      "sharpe": 4.408012760184045,
-      "pm": 12,
-      "tm": 12
+      "n": 1407,
+      "pf": 1.4997353976338015,
+      "wr": 67.23525230987917,
+      "mdd": -0.5203456543891974,
+      "ret": 12.207497133236188,
+      "sharpe": 4.675690713125337,
+      "pm": 13,
+      "tm": 13
     },
     "7": {
       "combo": [
-        "ALL_RSI_EXTREME",
+        "ALL_KB_SQUEEZE",
         "TOK_FISHER",
         "ALL_CONSEC_REV",
-        "ALL_PSAR_EMA",
         "ALL_SUPERTREND",
-        "ALL_FISHER_9",
-        "ALL_KB_SQUEEZE"
+        "ALL_MACD_FAST_SIG",
+        "IDX_CONSEC_REV",
+        "ALL_PSAR_EMA"
       ],
-      "n": 1674,
-      "pf": 1.4784428014995885,
-      "wr": 66.00955794504182,
-      "mdd": -0.7716264645537196,
-      "ret": 14.458257804885449,
-      "sharpe": 4.736399980331255,
-      "pm": 12,
-      "tm": 12
+      "n": 1653,
+      "pf": 1.5044691953329852,
+      "wr": 67.5741076830006,
+      "mdd": -0.5640652753000382,
+      "ret": 14.445972583011724,
+      "sharpe": 4.751498330392973,
+      "pm": 13,
+      "tm": 13
     },
     "8": {
       "combo": [
-        "ALL_RSI_EXTREME",
+        "ALL_KB_SQUEEZE",
         "TOK_FISHER",
         "ALL_CONSEC_REV",
-        "ALL_PSAR_EMA",
         "ALL_SUPERTREND",
-        "ALL_FISHER_9",
-        "ALL_KB_SQUEEZE",
-        "IDX_CONSEC_REV"
+        "ALL_MACD_FAST_SIG",
+        "IDX_CONSEC_REV",
+        "ALL_PSAR_EMA",
+        "ALL_LR_BREAK"
       ],
-      "n": 1891,
-      "pf": 1.5012080792444669,
-      "wr": 66.2083553675304,
-      "mdd": -0.7968967237547784,
-      "ret": 17.229711934657256,
-      "sharpe": 5.025725280861674,
-      "pm": 12,
-      "tm": 12
+      "n": 1837,
+      "pf": 1.464670437888141,
+      "wr": 65.8138268916712,
+      "mdd": -0.7116801131706273,
+      "ret": 15.675038043816386,
+      "sharpe": 4.467800713795102,
+      "pm": 13,
+      "tm": 13
     },
     "9": {
       "combo": [
-        "ALL_RSI_EXTREME",
+        "ALL_KB_SQUEEZE",
         "TOK_FISHER",
         "ALL_CONSEC_REV",
-        "ALL_PSAR_EMA",
         "ALL_SUPERTREND",
-        "ALL_FISHER_9",
-        "ALL_KB_SQUEEZE",
+        "ALL_MACD_FAST_SIG",
         "IDX_CONSEC_REV",
-        "ALL_LR_BREAK"
-      ],
-      "n": 2089,
-      "pf": 1.485819654325597,
-      "wr": 65.05505026328386,
-      "mdd": -0.8951001905718906,
-      "ret": 19.253049710526582,
-      "sharpe": 4.876098865327967,
-      "pm": 12,
-      "tm": 12
-    },
-    "10": {
-      "combo": [
-        "ALL_RSI_EXTREME",
-        "TOK_FISHER",
-        "ALL_CONSEC_REV",
         "ALL_PSAR_EMA",
-        "ALL_SUPERTREND",
-        "ALL_FISHER_9",
-        "ALL_KB_SQUEEZE",
-        "IDX_CONSEC_REV",
         "ALL_LR_BREAK",
-        "IDX_RSI_REV"
+        "ALL_ELDER_BULL"
       ],
-      "n": 2303,
-      "pf": 1.5031561443050179,
-      "wr": 65.87060356057316,
-      "mdd": -1.1987588185289386,
-      "ret": 21.77918240068281,
-      "sharpe": 5.224010717960424,
+      "n": 2016,
+      "pf": 1.4898469018731735,
+      "wr": 67.26190476190477,
+      "mdd": -0.6970028516070503,
+      "ret": 17.47705503309111,
+      "sharpe": 4.916553737970935,
       "pm": 12,
-      "tm": 12
+      "tm": 13
     }
   },
   "Sharpe": {
     "2": {
       "combo": [
-        "ALL_RSI_EXTREME",
+        "ALL_KB_SQUEEZE",
         "ALL_CONSEC_REV"
       ],
-      "n": 526,
-      "pf": 1.567218059175407,
-      "wr": 69.58174904942965,
-      "mdd": -0.5165754166425217,
-      "ret": 4.66567842815032,
-      "sharpe": 4.104234389367785,
+      "n": 483,
+      "pf": 1.5046293150739363,
+      "wr": 65.21739130434783,
+      "mdd": -0.6011936487130417,
+      "ret": 4.345410636267959,
+      "sharpe": 3.0499375126424217,
       "pm": 11,
-      "tm": 12
+      "tm": 13
     },
     "3": {
       "combo": [
-        "ALL_RSI_EXTREME",
+        "ALL_KB_SQUEEZE",
         "ALL_CONSEC_REV",
         "ALL_SUPERTREND"
       ],
-      "n": 725,
-      "pf": 1.5901274911556786,
-      "wr": 69.6551724137931,
-      "mdd": -0.5724390756769304,
-      "ret": 6.726739760029944,
-      "sharpe": 4.8074010043428315,
-      "pm": 10,
-      "tm": 12
+      "n": 713,
+      "pf": 1.550983081520309,
+      "wr": 67.18092566619916,
+      "mdd": -0.5039169795385429,
+      "ret": 6.668691143868156,
+      "sharpe": 4.007822904284244,
+      "pm": 12,
+      "tm": 13
     },
     "4": {
       "combo": [
-        "ALL_RSI_EXTREME",
+        "ALL_KB_SQUEEZE",
         "ALL_CONSEC_REV",
         "ALL_SUPERTREND",
-        "TOK_FISHER"
+        "ALL_MACD_FAST_SIG"
       ],
-      "n": 953,
-      "pf": 1.536753937533261,
-      "wr": 69.67471143756558,
-      "mdd": -0.4884009531418569,
-      "ret": 8.055035848551153,
-      "sharpe": 5.064393857275196,
+      "n": 994,
+      "pf": 1.4975730985179785,
+      "wr": 65.59356136820925,
+      "mdd": -0.5175870604017869,
+      "ret": 8.883798896881533,
+      "sharpe": 4.512905580915285,
       "pm": 12,
-      "tm": 12
+      "tm": 13
     },
     "5": {
       "combo": [
-        "ALL_RSI_EXTREME",
+        "ALL_KB_SQUEEZE",
         "ALL_CONSEC_REV",
         "ALL_SUPERTREND",
-        "TOK_FISHER",
-        "ALL_KB_SQUEEZE"
+        "ALL_MACD_FAST_SIG",
+        "ALL_ELDER_BULL"
       ],
-      "n": 1152,
-      "pf": 1.5327015217734334,
-      "wr": 68.57638888888889,
-      "mdd": -0.7131085034189782,
-      "ret": 10.12951794836989,
-      "sharpe": 5.240641010315019,
-      "pm": 11,
-      "tm": 12
+      "n": 1237,
+      "pf": 1.4977714373928832,
+      "wr": 67.66370250606305,
+      "mdd": -0.7743865531268543,
+      "ret": 10.45720718396883,
+      "sharpe": 4.798014157419913,
+      "pm": 12,
+      "tm": 13
     },
     "6": {
       "combo": [
-        "ALL_RSI_EXTREME",
+        "ALL_KB_SQUEEZE",
         "ALL_CONSEC_REV",
         "ALL_SUPERTREND",
-        "TOK_FISHER",
-        "ALL_KB_SQUEEZE",
+        "ALL_MACD_FAST_SIG",
+        "ALL_ELDER_BULL",
         "IDX_CONSEC_REV"
       ],
-      "n": 1368,
-      "pf": 1.5582235849856851,
-      "wr": 68.42105263157895,
-      "mdd": -0.5606185049289925,
-      "ret": 12.834510594983367,
-      "sharpe": 5.406490390767567,
-      "pm": 12,
-      "tm": 12
+      "n": 1462,
+      "pf": 1.525327245809902,
+      "wr": 68.6046511627907,
+      "mdd": -0.5757981125857321,
+      "ret": 12.79614987730897,
+      "sharpe": 5.0508712044843325,
+      "pm": 13,
+      "tm": 13
     },
     "7": {
       "combo": [
-        "ALL_RSI_EXTREME",
+        "ALL_KB_SQUEEZE",
         "ALL_CONSEC_REV",
         "ALL_SUPERTREND",
-        "TOK_FISHER",
-        "ALL_KB_SQUEEZE",
+        "ALL_MACD_FAST_SIG",
+        "ALL_ELDER_BULL",
         "IDX_CONSEC_REV",
-        "IDX_RSI_REV"
+        "TOK_FISHER"
       ],
-      "n": 1586,
-      "pf": 1.569107913638886,
-      "wr": 69.04161412358134,
-      "mdd": -0.8381193918121808,
-      "ret": 15.083681819426406,
-      "sharpe": 5.629331324237954,
-      "pm": 10,
-      "tm": 12
+      "n": 1627,
+      "pf": 1.5158759671177682,
+      "wr": 68.71542716656423,
+      "mdd": -0.6019350898719381,
+      "ret": 13.993186601207896,
+      "sharpe": 5.1060826680105444,
+      "pm": 13,
+      "tm": 13
     },
     "8": {
       "combo": [
-        "ALL_RSI_EXTREME",
+        "ALL_KB_SQUEEZE",
         "ALL_CONSEC_REV",
         "ALL_SUPERTREND",
-        "TOK_FISHER",
-        "ALL_KB_SQUEEZE",
+        "ALL_MACD_FAST_SIG",
+        "ALL_ELDER_BULL",
         "IDX_CONSEC_REV",
-        "IDX_RSI_REV",
-        "ALL_LR_BREAK"
+        "TOK_FISHER",
+        "ALL_PSAR_EMA"
       ],
-      "n": 1794,
-      "pf": 1.5429858674268535,
-      "wr": 67.3913043478261,
-      "mdd": -1.2005719468170937,
-      "ret": 17.306483456339645,
-      "sharpe": 5.569285118782468,
-      "pm": 10,
-      "tm": 12
+      "n": 1870,
+      "pf": 1.5198115170831015,
+      "wr": 68.82352941176471,
+      "mdd": -0.7414522670402343,
+      "ret": 16.286474101357307,
+      "sharpe": 5.123176271233275,
+      "pm": 13,
+      "tm": 13
     },
     "9": {
       "combo": [
-        "ALL_RSI_EXTREME",
+        "ALL_KB_SQUEEZE",
         "ALL_CONSEC_REV",
         "ALL_SUPERTREND",
-        "TOK_FISHER",
-        "ALL_KB_SQUEEZE",
+        "ALL_MACD_FAST_SIG",
+        "ALL_ELDER_BULL",
         "IDX_CONSEC_REV",
-        "IDX_RSI_REV",
-        "ALL_LR_BREAK",
-        "ALL_PSAR_EMA"
-      ],
-      "n": 2040,
-      "pf": 1.533980588940419,
-      "wr": 67.5,
-      "mdd": -1.3940381174419896,
-      "ret": 19.413827743623813,
-      "sharpe": 5.4604890600471405,
-      "pm": 11,
-      "tm": 12
-    },
-    "10": {
-      "combo": [
-        "ALL_RSI_EXTREME",
-        "ALL_CONSEC_REV",
-        "ALL_SUPERTREND",
         "TOK_FISHER",
-        "ALL_KB_SQUEEZE",
-        "IDX_CONSEC_REV",
-        "IDX_RSI_REV",
-        "ALL_LR_BREAK",
         "ALL_PSAR_EMA",
-        "ALL_FISHER_9"
+        "ALL_LR_BREAK"
       ],
-      "n": 2303,
-      "pf": 1.5031561443050179,
-      "wr": 65.87060356057316,
-      "mdd": -1.1987588185289386,
-      "ret": 21.77918240068281,
-      "sharpe": 5.224010717960424,
+      "n": 2016,
+      "pf": 1.4898469018731735,
+      "wr": 67.26190476190477,
+      "mdd": -0.6970028516070503,
+      "ret": 17.47705503309111,
+      "sharpe": 4.916553737970935,
       "pm": 12,
-      "tm": 12
+      "tm": 13
     }
   },
   "PF*WR": {
     "2": {
       "combo": [
-        "ALL_RSI_EXTREME",
+        "ALL_KB_SQUEEZE",
         "ALL_SUPERTREND"
       ],
-      "n": 485,
-      "pf": 1.5800087860475525,
-      "wr": 71.34020618556701,
-      "mdd": -0.5745265820492182,
-      "ret": 4.1253643966098466,
-      "sharpe": 3.978545790521558,
-      "pm": 10,
+      "n": 484,
+      "pf": 1.508010562996492,
+      "wr": 67.35537190082644,
+      "mdd": -0.5703140138451495,
+      "ret": 4.096438307853794,
+      "sharpe": 3.0344274002478793,
+      "pm": 11,
       "tm": 12
     },
     "3": {
       "combo": [
-        "ALL_RSI_EXTREME",
+        "ALL_KB_SQUEEZE",
         "ALL_SUPERTREND",
-        "IDX_RSI_REV"
+        "IDX_CONSEC_REV"
       ],
-      "n": 708,
-      "pf": 1.5989209238656426,
-      "wr": 71.89265536723164,
-      "mdd": -0.9914019529256135,
-      "ret": 6.194741049876451,
-      "sharpe": 3.9380758515776857,
-      "pm": 10,
-      "tm": 12
+      "n": 712,
+      "pf": 1.5618766066031813,
+      "wr": 68.96067415730337,
+      "mdd": -0.4177383060578427,
+      "ret": 6.411352761222326,
+      "sharpe": 4.051427317280057,
+      "pm": 13,
+      "tm": 13
     },
     "4": {
       "combo": [
-        "ALL_RSI_EXTREME",
+        "ALL_KB_SQUEEZE",
         "ALL_SUPERTREND",
-        "IDX_RSI_REV",
-        "IDX_CONSEC_REV"
+        "IDX_CONSEC_REV",
+        "ALL_ELDER_BULL"
       ],
-      "n": 944,
-      "pf": 1.6045970073323812,
-      "wr": 70.65677966101694,
-      "mdd": -0.8882582682101468,
-      "ret": 8.808308772286692,
-      "sharpe": 4.7847768510484165,
-      "pm": 10,
-      "tm": 12
+      "n": 974,
+      "pf": 1.545152360609818,
+      "wr": 70.73921971252567,
+      "mdd": -0.6104641398462178,
+      "ret": 8.07441648941065,
+      "sharpe": 4.369793599918749,
+      "pm": 13,
+      "tm": 13
     },
     "5": {
       "combo": [
-        "ALL_RSI_EXTREME",
+        "ALL_KB_SQUEEZE",
         "ALL_SUPERTREND",
-        "IDX_RSI_REV",
         "IDX_CONSEC_REV",
+        "ALL_ELDER_BULL",
         "ALL_CONSEC_REV"
       ],
-      "n": 1187,
-      "pf": 1.6150083294791875,
-      "wr": 69.92417860151643,
-      "mdd": -0.9879694867789317,
-      "ret": 11.709901715783591,
-      "sharpe": 4.9934276764824705,
-      "pm": 11,
-      "tm": 12
+      "n": 1201,
+      "pf": 1.569152574588315,
+      "wr": 70.19150707743546,
+      "mdd": -0.5432308531767094,
+      "ret": 10.72911737875265,
+      "sharpe": 4.740161599249357,
+      "pm": 13,
+      "tm": 13
     },
     "6": {
       "combo": [
-        "ALL_RSI_EXTREME",
+        "ALL_KB_SQUEEZE",
         "ALL_SUPERTREND",
-        "IDX_RSI_REV",
         "IDX_CONSEC_REV",
+        "ALL_ELDER_BULL",
         "ALL_CONSEC_REV",
         "ALL_PSAR_EMA"
       ],
-      "n": 1442,
-      "pf": 1.5943193114558927,
-      "wr": 69.76421636615811,
-      "mdd": -0.9375150641057622,
-      "ret": 13.919840906156692,
-      "sharpe": 4.966018420836998,
-      "pm": 11,
-      "tm": 12
+      "n": 1449,
+      "pf": 1.5708099303188454,
+      "wr": 70.1863354037267,
+      "mdd": -0.7045795719347554,
+      "ret": 13.10105181725805,
+      "sharpe": 4.799940472193002,
+      "pm": 13,
+      "tm": 13
     },
     "7": {
       "combo": [
-        "ALL_RSI_EXTREME",
+        "ALL_KB_SQUEEZE",
         "ALL_SUPERTREND",
-        "IDX_RSI_REV",
         "IDX_CONSEC_REV",
+        "ALL_ELDER_BULL",
         "ALL_CONSEC_REV",
         "ALL_PSAR_EMA",
-        "ALL_KB_SQUEEZE"
+        "TOK_FISHER"
       ],
-      "n": 1632,
-      "pf": 1.5891815617162892,
-      "wr": 69.11764705882352,
-      "mdd": -1.2278367309620941,
-      "ret": 16.141970554135856,
-      "sharpe": 5.366752089597171,
-      "pm": 10,
-      "tm": 12
+      "n": 1625,
+      "pf": 1.5419571460433672,
+      "wr": 69.84615384615384,
+      "mdd": -0.8988898134121308,
+      "ret": 14.108090662933101,
+      "sharpe": 4.89493169713059,
+      "pm": 12,
+      "tm": 13
     },
     "8": {
       "combo": [
-        "ALL_RSI_EXTREME",
+        "ALL_KB_SQUEEZE",
         "ALL_SUPERTREND",
-        "IDX_RSI_REV",
         "IDX_CONSEC_REV",
+        "ALL_ELDER_BULL",
         "ALL_CONSEC_REV",
         "ALL_PSAR_EMA",
-        "ALL_KB_SQUEEZE",
-        "TOK_FISHER"
+        "TOK_FISHER",
+        "ALL_MACD_FAST_SIG"
       ],
-      "n": 1832,
-      "pf": 1.5574679796028852,
-      "wr": 68.99563318777294,
-      "mdd": -1.04193469321293,
-      "ret": 17.21232194322279,
-      "sharpe": 5.506953382928583,
-      "pm": 12,
-      "tm": 12
+      "n": 1870,
+      "pf": 1.5198115170831015,
+      "wr": 68.82352941176471,
+      "mdd": -0.7414522670402343,
+      "ret": 16.286474101357307,
+      "sharpe": 5.123176271233275,
+      "pm": 13,
+      "tm": 13
     },
     "9": {
       "combo": [
-        "ALL_RSI_EXTREME",
+        "ALL_KB_SQUEEZE",
         "ALL_SUPERTREND",
-        "IDX_RSI_REV",
         "IDX_CONSEC_REV",
+        "ALL_ELDER_BULL",
         "ALL_CONSEC_REV",
         "ALL_PSAR_EMA",
-        "ALL_KB_SQUEEZE",
         "TOK_FISHER",
+        "ALL_MACD_FAST_SIG",
         "ALL_LR_BREAK"
       ],
-      "n": 2040,
-      "pf": 1.533980588940419,
-      "wr": 67.5,
-      "mdd": -1.3940381174419896,
-      "ret": 19.413827743623813,
-      "sharpe": 5.4604890600471405,
-      "pm": 11,
-      "tm": 12
-    },
-    "10": {
-      "combo": [
-        "ALL_RSI_EXTREME",
-        "ALL_SUPERTREND",
-        "IDX_RSI_REV",
-        "IDX_CONSEC_REV",
-        "ALL_CONSEC_REV",
-        "ALL_PSAR_EMA",
-        "ALL_KB_SQUEEZE",
-        "TOK_FISHER",
-        "ALL_LR_BREAK",
-        "ALL_FISHER_9"
-      ],
-      "n": 2303,
-      "pf": 1.5031561443050179,
-      "wr": 65.87060356057316,
-      "mdd": -1.1987588185289386,
-      "ret": 21.77918240068281,
-      "sharpe": 5.224010717960424,
+      "n": 2016,
+      "pf": 1.4898469018731735,
+      "wr": 67.26190476190477,
+      "mdd": -0.6970028516070503,
+      "ret": 17.47705503309111,
+      "sharpe": 4.916553737970935,
       "pm": 12,
-      "tm": 12
+      "tm": 13
     }
   },
   "Diverse": {
     "2": {
       "combo": [
-        "ALL_RSI_EXTREME",
-        "ALL_LR_BREAK"
-      ],
-      "n": 555,
-      "pf": 1.5009694319545674,
-      "wr": 65.58558558558558,
-      "mdd": -0.772691506099732,
-      "ret": 4.926744305954984,
-      "sharpe": 3.232735015499961,
-      "pm": 9,
-      "tm": 12
-    },
-    "3": {
-      "combo": [
-        "ALL_RSI_EXTREME",
-        "ALL_LR_BREAK",
-        "ALL_KB_SQUEEZE"
-      ],
-      "n": 777,
-      "pf": 1.4795327836781447,
-      "wr": 64.86486486486487,
-      "mdd": -1.250260372734797,
-      "ret": 6.811984270624569,
-      "sharpe": 3.522560484966288,
-      "pm": 9,
-      "tm": 12
-    },
-    "4": {
-      "combo": [
-        "ALL_RSI_EXTREME",
-        "ALL_LR_BREAK",
         "ALL_KB_SQUEEZE",
         "ALL_CONSEC_REV"
       ],
-      "n": 997,
-      "pf": 1.4849909862566801,
-      "wr": 64.9949849548646,
-      "mdd": -1.1576092020555926,
-      "ret": 8.903162368725505,
-      "sharpe": 4.374651189114813,
-      "pm": 10,
-      "tm": 12
+      "n": 483,
+      "pf": 1.5046293150739363,
+      "wr": 65.21739130434783,
+      "mdd": -0.6011936487130417,
+      "ret": 4.345410636267959,
+      "sharpe": 3.0499375126424217,
+      "pm": 11,
+      "tm": 13
+    },
+    "3": {
+      "combo": [
+        "ALL_KB_SQUEEZE",
+        "ALL_CONSEC_REV",
+        "ALL_MACD_FAST_SIG"
+      ],
+      "n": 781,
+      "pf": 1.4700450620330234,
+      "wr": 64.02048655569781,
+      "mdd": -0.4837362184780778,
+      "ret": 6.841011287123605,
+      "sharpe": 3.9266508029920506,
+      "pm": 12,
+      "tm": 13
+    },
+    "4": {
+      "combo": [
+        "ALL_KB_SQUEEZE",
+        "ALL_CONSEC_REV",
+        "ALL_MACD_FAST_SIG",
+        "ALL_SUPERTREND"
+      ],
+      "n": 994,
+      "pf": 1.4975730985179785,
+      "wr": 65.59356136820925,
+      "mdd": -0.5175870604017869,
+      "ret": 8.883798896881533,
+      "sharpe": 4.512905580915285,
+      "pm": 12,
+      "tm": 13
     },
     "5": {
       "combo": [
-        "ALL_RSI_EXTREME",
-        "ALL_LR_BREAK",
         "ALL_KB_SQUEEZE",
         "ALL_CONSEC_REV",
-        "TOK_FISHER"
+        "ALL_MACD_FAST_SIG",
+        "ALL_SUPERTREND",
+        "ALL_LR_BREAK"
       ],
-      "n": 1182,
-      "pf": 1.4918447023536414,
-      "wr": 66.24365482233503,
-      "mdd": -0.6626866664487983,
-      "ret": 10.353073240781786,
-      "sharpe": 4.639247171462828,
-      "pm": 11,
-      "tm": 12
+      "n": 1211,
+      "pf": 1.4447223702978125,
+      "wr": 63.501238645747314,
+      "mdd": -0.9167322555113147,
+      "ret": 10.34281377560142,
+      "sharpe": 4.108503710972808,
+      "pm": 12,
+      "tm": 13
     },
     "6": {
       "combo": [
-        "ALL_RSI_EXTREME",
-        "ALL_LR_BREAK",
         "ALL_KB_SQUEEZE",
         "ALL_CONSEC_REV",
-        "TOK_FISHER",
-        "ALL_SUPERTREND"
+        "ALL_MACD_FAST_SIG",
+        "ALL_SUPERTREND",
+        "ALL_LR_BREAK",
+        "TOK_FISHER"
       ],
-      "n": 1372,
-      "pf": 1.5211010526414126,
-      "wr": 66.69096209912536,
-      "mdd": -0.9598732795729857,
-      "ret": 12.652816160339892,
-      "sharpe": 5.1015204054704135,
-      "pm": 11,
-      "tm": 12
+      "n": 1387,
+      "pf": 1.4425084434102806,
+      "wr": 64.45565969718817,
+      "mdd": -0.6625371171920287,
+      "ret": 11.520859556792944,
+      "sharpe": 4.085874305406618,
+      "pm": 13,
+      "tm": 13
     },
     "7": {
       "combo": [
-        "ALL_RSI_EXTREME",
-        "ALL_LR_BREAK",
         "ALL_KB_SQUEEZE",
         "ALL_CONSEC_REV",
-        "TOK_FISHER",
+        "ALL_MACD_FAST_SIG",
         "ALL_SUPERTREND",
-        "IDX_CONSEC_REV"
+        "ALL_LR_BREAK",
+        "TOK_FISHER",
+        "ALL_ELDER_BULL"
       ],
-      "n": 1577,
-      "pf": 1.5284392528545079,
-      "wr": 66.58211794546608,
-      "mdd": -0.8543188114483423,
-      "ret": 14.956492485597103,
-      "sharpe": 5.260836547106724,
-      "pm": 12,
-      "tm": 12
+      "n": 1568,
+      "pf": 1.4732278919511783,
+      "wr": 66.3265306122449,
+      "mdd": -0.6430161392873275,
+      "ret": 13.286476368503891,
+      "sharpe": 4.628259324326057,
+      "pm": 13,
+      "tm": 13
     },
     "8": {
       "combo": [
-        "ALL_RSI_EXTREME",
-        "ALL_LR_BREAK",
         "ALL_KB_SQUEEZE",
         "ALL_CONSEC_REV",
-        "TOK_FISHER",
+        "ALL_MACD_FAST_SIG",
         "ALL_SUPERTREND",
-        "IDX_CONSEC_REV",
-        "IDX_RSI_REV"
+        "ALL_LR_BREAK",
+        "TOK_FISHER",
+        "ALL_ELDER_BULL",
+        "IDX_CONSEC_REV"
       ],
-      "n": 1794,
-      "pf": 1.5429858674268535,
-      "wr": 67.3913043478261,
-      "mdd": -1.2005719468170937,
-      "ret": 17.306483456339645,
-      "sharpe": 5.569285118782468,
-      "pm": 10,
-      "tm": 12
+      "n": 1774,
+      "pf": 1.4826919212528262,
+      "wr": 66.96730552423901,
+      "mdd": -0.6186783698767595,
+      "ret": 15.162152604901522,
+      "sharpe": 4.838569613030057,
+      "pm": 12,
+      "tm": 13
     },
     "9": {
       "combo": [
-        "ALL_RSI_EXTREME",
-        "ALL_LR_BREAK",
         "ALL_KB_SQUEEZE",
         "ALL_CONSEC_REV",
-        "TOK_FISHER",
+        "ALL_MACD_FAST_SIG",
         "ALL_SUPERTREND",
-        "IDX_CONSEC_REV",
-        "IDX_RSI_REV",
-        "ALL_FISHER_9"
-      ],
-      "n": 2060,
-      "pf": 1.5091784177377736,
-      "wr": 65.63106796116504,
-      "mdd": -0.9979072721491891,
-      "ret": 19.72744835996641,
-      "sharpe": 5.248502439321043,
-      "pm": 12,
-      "tm": 12
-    },
-    "10": {
-      "combo": [
-        "ALL_RSI_EXTREME",
         "ALL_LR_BREAK",
-        "ALL_KB_SQUEEZE",
-        "ALL_CONSEC_REV",
         "TOK_FISHER",
-        "ALL_SUPERTREND",
+        "ALL_ELDER_BULL",
         "IDX_CONSEC_REV",
-        "IDX_RSI_REV",
-        "ALL_FISHER_9",
         "ALL_PSAR_EMA"
       ],
-      "n": 2303,
-      "pf": 1.5031561443050179,
-      "wr": 65.87060356057316,
-      "mdd": -1.1987588185289386,
-      "ret": 21.77918240068281,
-      "sharpe": 5.224010717960424,
+      "n": 2016,
+      "pf": 1.4898469018731735,
+      "wr": 67.26190476190477,
+      "mdd": -0.6970028516070503,
+      "ret": 17.47705503309111,
+      "sharpe": 4.916553737970935,
       "pm": 12,
-      "tm": 12
+      "tm": 13
     }
   }
 }
