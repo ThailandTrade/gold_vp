@@ -166,15 +166,12 @@ def fetch_and_store(engine, pair, tf, user_to_ms, now_server_ms_fixed):
             if rates is None or len(rates) == 0:
                 cur = end; continue
 
-            # Drop la derniere bougie (potentiellement en cours / non fermee)
-            if len(rates) > 1:
-                rates = rates[:-1]
-            else:
-                cur = end; continue
-
+            # Drop la bougie en cours (non fermee): son timestamp >= debut du candle courant
+            current_candle_srv = (now_server_ms_fixed // tf_ms) * tf_ms
             rows = []
             for r in rates:
                 bar_srv = int(r["time"]) * 1000
+                if bar_srv >= current_candle_srv: continue  # bougie en cours, skip
                 if bar_srv > cap: continue
 
                 ts_utc = server_ms_to_utc_ms(bar_srv)
