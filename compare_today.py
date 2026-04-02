@@ -200,10 +200,11 @@ for sym, icfg in INSTRUMENTS.items():
 
     # Build table
     tbl = PrettyTable()
-    tbl.field_names = ['Strat', 'Exit', 'BT Dir', 'BT Entry', 'BT Exit', 'BT pts', 'BT In', 'BT Out',
+    tbl.field_names = ['Sym', 'Strat', 'Exit', 'BT Dir', 'BT Entry', 'BT Exit', 'BT pts', 'BT In', 'BT Out',
                        'LV Dir', 'LV Entry', 'LV Exit', 'LV pts', 'LV In', 'LV Out',
                        'LV-BT', 'Verdict']
     tbl.align = 'r'
+    tbl.align['Sym'] = 'l'
     tbl.align['Strat'] = 'l'
     tbl.align['Verdict'] = 'l'
 
@@ -283,7 +284,7 @@ for sym, icfg in INSTRUMENTS.items():
         else:
             verdict = '?'
 
-        table_rows.append((lv_sort_key, [sn, exit_type, bt_dir, bt_entry, bt_exit, bt_pts, bt_in, bt_out,
+        table_rows.append((lv_sort_key, [sym, sn, exit_type, bt_dir, bt_entry, bt_exit, bt_pts, bt_in, bt_out,
                      lv_dir, lv_entry, lv_exit, lv_pts, lv_in, lv_out,
                      lv_bt_diff, verdict]))
 
