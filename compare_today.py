@@ -270,17 +270,17 @@ for sym, icfg in INSTRUMENTS.items():
                 verdict = 'DIR MISMATCH!'
             else:
                 entry_diff = abs(bt['entry'] - lv_e)
-                if entry_diff < 0.5: verdict = 'MATCH'
-                elif entry_diff < 2.0: verdict = 'CLOSE'
-                else: verdict = f'DIFF {entry_diff:.1f}pts'
+                if entry_diff < 0.5: verdict = ''
+                elif entry_diff < 2.0: verdict = ''
+                else: verdict = f'!! ENTRY DIFF {entry_diff:.1f}'
         elif bt and bt['skipped'] and (lv_t or lo_t):
-            verdict = 'BT=SKIP LV=PRIS!'
+            verdict = '!! BT=SKIP LV=PRIS'
         elif bt and not bt['skipped'] and not lv_t and not lo_t:
-            verdict = 'BT ONLY'
+            verdict = '!! BT ONLY'
         elif not bt and (lv_t or lo_t):
-            verdict = 'LV ONLY!'
+            verdict = '!! LV ONLY'
         elif bt and bt['skipped'] and not lv_t and not lo_t:
-            verdict = 'SKIP OK'
+            verdict = ''
         else:
             verdict = '?'
 
