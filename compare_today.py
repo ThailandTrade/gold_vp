@@ -202,7 +202,7 @@ for sym, icfg in INSTRUMENTS.items():
     tbl = PrettyTable()
     tbl.field_names = ['Strat', 'Exit', 'BT Dir', 'BT Entry', 'BT Exit', 'BT pts', 'BT In', 'BT Out',
                        'LV Dir', 'LV Entry', 'LV Exit', 'LV pts', 'LV In', 'LV Out',
-                       'd Entry', 'd Exit', 'Verdict']
+                       'LV-BT', 'Verdict']
     tbl.align = 'r'
     tbl.align['Strat'] = 'l'
     tbl.align['Verdict'] = 'l'
@@ -255,15 +255,11 @@ for sym, icfg in INSTRUMENTS.items():
         else:
             lv_dir = '-'; lv_entry = '-'; lv_exit = '-'; lv_pts = '-'; lv_in = '-'; lv_out = '-'
 
-        # Deltas (entry diff, exit diff)
-        d_entry = '-'; d_exit = '-'
-        if bt and not bt['skipped'] and (lv_t or lo_t):
-            lv_e = lv_t['entry'] if lv_t else lo_t['entry']
-            diff_e = lv_e - bt['entry']
-            d_entry = f"{diff_e:+.02f}"
-            if lv_t:
-                diff_x = lv_t['exit'] - bt['exit']
-                d_exit = f"{diff_x:+.2f}"
+        # Delta PnL: LV pts - BT pts (positif = live mieux que BT)
+        lv_bt_diff = '-'
+        if bt and not bt['skipped'] and lv_t:
+            lv_pnl = (lv_t['exit'] - lv_t['entry']) if lv_t['dir'] == 'long' else (lv_t['entry'] - lv_t['exit'])
+            lv_bt_diff = f"{lv_pnl - bt['pnl_pts']:+.2f}"
 
         # Verdict
         if bt and not bt['skipped'] and (lv_t or lo_t):
@@ -289,7 +285,7 @@ for sym, icfg in INSTRUMENTS.items():
 
         table_rows.append((lv_sort_key, [sn, exit_type, bt_dir, bt_entry, bt_exit, bt_pts, bt_in, bt_out,
                      lv_dir, lv_entry, lv_exit, lv_pts, lv_in, lv_out,
-                     d_entry, d_exit, verdict]))
+                     lv_bt_diff, verdict]))
 
     # Tri par heure d'entree live
     for _, row in sorted(table_rows, key=lambda x: x[0]):
