@@ -208,6 +208,7 @@ for sym, icfg in INSTRUMENTS.items():
     tbl.align['Verdict'] = 'l'
 
     bt_total_pts = 0; lv_total_pts = 0
+    table_rows = []
 
     for sn in all_sn:
         bts = bt_map.get(sn, [])
@@ -233,6 +234,7 @@ for sym, icfg in INSTRUMENTS.items():
             bt_dir = '-'; bt_entry = '-'; bt_exit = '-'; bt_pts = '-'; bt_time = '-'
 
         # LV columns + pts
+        lv_sort_key = '99:99'  # trades sans live en dernier
         if lv_t:
             lv_dir = lv_t['dir']; lv_entry = f"{lv_t['entry']:.2f}"; lv_exit = f"{lv_t['exit']:.2f}"
             lv_pnl_pts = (lv_t['exit'] - lv_t['entry']) if lv_t['dir'] == 'long' else (lv_t['entry'] - lv_t['exit'])
@@ -241,11 +243,13 @@ for sym, icfg in INSTRUMENTS.items():
             et = lv_t['entry_time'].strftime('%H:%M') if hasattr(lv_t['entry_time'], 'strftime') else str(lv_t['entry_time'])[11:16]
             xt = lv_t['exit_time'].strftime('%H:%M') if hasattr(lv_t['exit_time'], 'strftime') else str(lv_t['exit_time'])[11:16]
             lv_time = f"{et}->{xt}"
+            lv_sort_key = et
         elif lo_t:
             lv_dir = lo_t['dir']; lv_entry = f"{lo_t['entry']:.2f}"; lv_exit = 'OPEN'
             lv_pts = '...'
             et = lo_t['time'].strftime('%H:%M') if hasattr(lo_t['time'], 'strftime') else str(lo_t['time'])[11:16]
             lv_time = f"{et}->..."
+            lv_sort_key = et
         else:
             lv_dir = '-'; lv_entry = '-'; lv_exit = '-'; lv_pts = '-'; lv_time = '-'
 
@@ -254,7 +258,7 @@ for sym, icfg in INSTRUMENTS.items():
         if bt and not bt['skipped'] and (lv_t or lo_t):
             lv_e = lv_t['entry'] if lv_t else lo_t['entry']
             diff_e = lv_e - bt['entry']
-            d_entry = f"{diff_e:+.2f}"
+            d_entry = f"{diff_e:+.02f}"
             if lv_t:
                 diff_x = lv_t['exit'] - bt['exit']
                 d_exit = f"{diff_x:+.2f}"
@@ -281,9 +285,13 @@ for sym, icfg in INSTRUMENTS.items():
         else:
             verdict = '?'
 
-        tbl.add_row([sn, exit_type, bt_dir, bt_entry, bt_exit, bt_pts, bt_time,
+        table_rows.append((lv_sort_key, [sn, exit_type, bt_dir, bt_entry, bt_exit, bt_pts, bt_time,
                      lv_dir, lv_entry, lv_exit, lv_pts, lv_time,
-                     d_entry, d_exit, verdict])
+                     d_entry, d_exit, verdict]))
+
+    # Tri par heure d'entree live
+    for _, row in sorted(table_rows, key=lambda x: x[0]):
+        tbl.add_row(row)
 
     print(tbl)
     print(f"  TOTAL:  BT {bt_total_pts:+.2f} pts  |  LV {lv_total_pts:+.2f} pts")
