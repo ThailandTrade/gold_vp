@@ -437,15 +437,20 @@ def main():
                 # (identique au BT: un trade sorti au meme candle bloque encore)
                 our_pos = mt5_our_positions(sym)
                 open_dirs = set('long' if p.type == 0 else 'short' for p in our_pos)
-                # Ajouter les directions des deals fermes sur la bougie courante
+                # Ajouter les directions des deals ouverts OU fermes sur la bougie courante
+                # En BT, un trade sorti a candle N est encore actif a candle N (>=)
                 try:
                     candle_start_utc = candle_time_utc if candle_time_utc.tzinfo else candle_time_utc.replace(tzinfo=timezone.utc)
                     deals = mt5.history_deals_get(candle_start_utc, candle_start_utc + timedelta(minutes=5)) or []
                     for d in deals:
                         if d.symbol != sym: continue
                         if d.magic not in ALL_MAGIC_SET: continue
-                        if d.entry == 0:  # DEAL_ENTRY_IN
+                        if d.entry == 0:  # DEAL_ENTRY_IN: trade ouvert sur cette bougie
                             open_dirs.add('long' if d.type == 0 else 'short')
+                        elif d.entry == 1:  # DEAL_ENTRY_OUT: trade ferme (SL/TP) sur cette bougie
+                            # La direction de la position fermee est l'inverse du deal de sortie
+                            # SELL pour fermer un LONG, BUY pour fermer un SHORT
+                            open_dirs.add('short' if d.type == 0 else 'long')
                 except: pass
 
                 is_new = current_ts != last_ts.get(sym, 0)

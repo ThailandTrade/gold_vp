@@ -140,13 +140,17 @@ Le fisher cross UP a 23:55 (veille) a trigger avant le day reset.
 Fix: `candle_time_utc = candles.iloc[-1]['ts_dt']` partout.
 Plus de `datetime.now()` ni d'heure broker. Seule source = DB UTC.
 
-### Fix conflit filter live: deals fermes sur la bougie courante
+### Fix conflit filter live: deals ouverts ET fermes sur la bougie courante
 Bug: en BT, un trade sorti au candle ci=N est encore considere actif a ci=N (condition `>=`).
 En live, MT5 positions_get() ne voit que les positions ouvertes, pas celles fermees par SL/TP
 pendant la bougie courante. Un nouveau trade en sens oppose passait alors qu'il aurait du etre bloque.
 Exemple 2026-03-31: 3 longs fermes au SL a ci=1996, ALL_PIVOT_BRK et ALL_STOCH_OB short ouvertes
 au meme candle en live (BT les skip). Cout: -$43 sur ALL_STOCH_OB.
 Fix: history_deals_get() sur la bougie courante pour inclure les directions des deals d'entree
+ET de sortie (SL/TP). Un trade ferme par SL sur la bougie N doit encore bloquer un trade
+en sens oppose sur la meme bougie (identique au BT avec condition `>=`).
+Bug confirme 2026-04-02: ALL_PIVOT_BRK short pris en live apres SL de 2 longs sur meme bougie.
+BT les skip. Cout: -22 pts. Fix: DEAL_ENTRY_OUT ajoute dans open_dirs.
 dans open_dirs, meme si la position est deja fermee.
 
 ---
