@@ -200,8 +200,8 @@ for sym, icfg in INSTRUMENTS.items():
 
     # Build table
     tbl = PrettyTable()
-    tbl.field_names = ['Strat', 'Exit', 'BT Dir', 'BT Entry', 'BT Exit', 'BT pts', 'BT Time',
-                       'LV Dir', 'LV Entry', 'LV Exit', 'LV pts', 'LV Time',
+    tbl.field_names = ['Strat', 'Exit', 'BT Dir', 'BT Entry', 'BT Exit', 'BT pts', 'BT In', 'BT Out',
+                       'LV Dir', 'LV Entry', 'LV Exit', 'LV pts', 'LV In', 'LV Out',
                        'd Entry', 'd Exit', 'Verdict']
     tbl.align = 'r'
     tbl.align['Strat'] = 'l'
@@ -224,34 +224,36 @@ for sym, icfg in INSTRUMENTS.items():
         # BT columns
         if bt and bt['skipped']:
             bt_dir = 'SKIP'; bt_entry = f"{bt['entry']:.2f}"; bt_exit = '-'; bt_pts = '-'
-            bt_time = bt['entry_time'][11:16]
+            bt_in = bt['entry_time'][11:16]; bt_out = '-'
         elif bt:
             bt_dir = bt['dir']; bt_entry = f"{bt['entry']:.2f}"; bt_exit = f"{bt['exit']:.2f}"
-            bt_pts = f"{bt['pnl_pts']:+.2f}"
+            bt_pts = f"{bt['pnl_pts']:+.02f}"
             bt_total_pts += bt['pnl_pts']
-            bt_time = f"{bt['entry_time'][11:16]}->{bt['exit_time'][11:16]}"
+            bt_in = bt['entry_time'][11:16]; bt_out = bt['exit_time'][11:16]
         else:
-            bt_dir = '-'; bt_entry = '-'; bt_exit = '-'; bt_pts = '-'; bt_time = '-'
+            bt_dir = '-'; bt_entry = '-'; bt_exit = '-'; bt_pts = '-'; bt_in = '-'; bt_out = '-'
 
-        # LV columns + pts
+        # LV columns + pts (heures MT5 -3h pour aligner sur UTC candles)
         lv_sort_key = '99:99'  # trades sans live en dernier
         if lv_t:
             lv_dir = lv_t['dir']; lv_entry = f"{lv_t['entry']:.2f}"; lv_exit = f"{lv_t['exit']:.2f}"
             lv_pnl_pts = (lv_t['exit'] - lv_t['entry']) if lv_t['dir'] == 'long' else (lv_t['entry'] - lv_t['exit'])
-            lv_pts = f"{lv_pnl_pts:+.2f}"
+            lv_pts = f"{lv_pnl_pts:+.02f}"
             lv_total_pts += lv_pnl_pts
-            et = lv_t['entry_time'].strftime('%H:%M') if hasattr(lv_t['entry_time'], 'strftime') else str(lv_t['entry_time'])[11:16]
-            xt = lv_t['exit_time'].strftime('%H:%M') if hasattr(lv_t['exit_time'], 'strftime') else str(lv_t['exit_time'])[11:16]
-            lv_time = f"{et}->{xt}"
-            lv_sort_key = et
+            lv_entry_utc = lv_t['entry_time'] - timedelta(hours=3) if hasattr(lv_t['entry_time'], 'strftime') else lv_t['entry_time']
+            lv_exit_utc = lv_t['exit_time'] - timedelta(hours=3) if hasattr(lv_t['exit_time'], 'strftime') else lv_t['exit_time']
+            lv_in = lv_entry_utc.strftime('%H:%M') if hasattr(lv_entry_utc, 'strftime') else str(lv_entry_utc)[11:16]
+            lv_out = lv_exit_utc.strftime('%H:%M') if hasattr(lv_exit_utc, 'strftime') else str(lv_exit_utc)[11:16]
+            lv_sort_key = lv_in
         elif lo_t:
             lv_dir = lo_t['dir']; lv_entry = f"{lo_t['entry']:.2f}"; lv_exit = 'OPEN'
             lv_pts = '...'
-            et = lo_t['time'].strftime('%H:%M') if hasattr(lo_t['time'], 'strftime') else str(lo_t['time'])[11:16]
-            lv_time = f"{et}->..."
-            lv_sort_key = et
+            lv_entry_utc = lo_t['time'] - timedelta(hours=3) if hasattr(lo_t['time'], 'strftime') else lo_t['time']
+            lv_in = lv_entry_utc.strftime('%H:%M') if hasattr(lv_entry_utc, 'strftime') else str(lv_entry_utc)[11:16]
+            lv_out = '...'
+            lv_sort_key = lv_in
         else:
-            lv_dir = '-'; lv_entry = '-'; lv_exit = '-'; lv_pts = '-'; lv_time = '-'
+            lv_dir = '-'; lv_entry = '-'; lv_exit = '-'; lv_pts = '-'; lv_in = '-'; lv_out = '-'
 
         # Deltas (entry diff, exit diff)
         d_entry = '-'; d_exit = '-'
@@ -285,8 +287,8 @@ for sym, icfg in INSTRUMENTS.items():
         else:
             verdict = '?'
 
-        table_rows.append((lv_sort_key, [sn, exit_type, bt_dir, bt_entry, bt_exit, bt_pts, bt_time,
-                     lv_dir, lv_entry, lv_exit, lv_pts, lv_time,
+        table_rows.append((lv_sort_key, [sn, exit_type, bt_dir, bt_entry, bt_exit, bt_pts, bt_in, bt_out,
+                     lv_dir, lv_entry, lv_exit, lv_pts, lv_in, lv_out,
                      d_entry, d_exit, verdict]))
 
     # Tri par heure d'entree live
