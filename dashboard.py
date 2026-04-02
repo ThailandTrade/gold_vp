@@ -377,24 +377,15 @@ with st.sidebar:
             label = f"**{sym}** · {n_s} strats · —"
 
         with st.expander(label, expanded=False):
-            sym_exits = STRAT_EXITS.get((account, sym), {})
             for sn in portfolio:
-                exit_cfg = sym_exits.get(sn, DEFAULT_EXIT)
-                exit_str = f"{exit_cfg[0]} SL={exit_cfg[1]:.1f}"
-                if exit_cfg[0] == 'TPSL':
-                    exit_str += f" TP={exit_cfg[2]:.1f}"
-                else:
-                    exit_str += f" A={exit_cfg[2]:.1f} T={exit_cfg[3]:.1f}"
-
                 if has_trades:
                     st_df = df[(df['strat'] == sn) & (df['symbol'] == sym)]
                     if len(st_df) > 0:
-                        w = (st_df['pnl'] > 0).sum(); ns = len(st_df)
                         pnl_s = st_df['pnl'].sum()
                         color = '#26a69a' if pnl_s >= 0 else '#ef5350'
-                        st.markdown(f'<span style="color:{color}">{sn}</span> · {ns}t · ${pnl_s:+,.0f} · <small>{exit_str}</small>', unsafe_allow_html=True)
+                        st.markdown(f'<span style="color:{color}">{sn} ${pnl_s:+,.0f}</span>', unsafe_allow_html=True)
                         continue
-                st.markdown(f'{sn} · <small>{exit_str}</small>', unsafe_allow_html=True)
+                st.markdown(f'{sn}', unsafe_allow_html=True)
 
 # Auto-refresh
 from streamlit_autorefresh import st_autorefresh
