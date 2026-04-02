@@ -1,0 +1,7 @@
+type,pair
+FOREX,XAUUSD
+FOREX,GER40.cash
+FOREX,UK100.cash
+FOREX,US100.cash
+FOREX,US30.cash
+FOREX,US500.cash
