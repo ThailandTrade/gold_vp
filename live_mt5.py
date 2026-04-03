@@ -440,8 +440,9 @@ def main():
                 # Ajouter les directions des deals ouverts OU fermes sur la bougie courante
                 # En BT, un trade sorti a candle N est encore actif a candle N (>=)
                 try:
-                    candle_start_utc = candle_time_utc if candle_time_utc.tzinfo else candle_time_utc.replace(tzinfo=timezone.utc)
-                    deals = mt5.history_deals_get(candle_start_utc, candle_start_utc + timedelta(minutes=5)) or []
+                    # MT5 veut des datetime naifs (sans timezone)
+                    candle_start_naive = candle_time_utc.replace(tzinfo=None) if hasattr(candle_time_utc, 'tzinfo') and candle_time_utc.tzinfo else candle_time_utc
+                    deals = mt5.history_deals_get(candle_start_naive, candle_start_naive + timedelta(minutes=5)) or []
                     for d in deals:
                         if d.symbol != sym: continue
                         if d.magic not in ALL_MAGIC_SET: continue
