@@ -404,7 +404,6 @@ def main():
                 candles = compute_indicators(candles)
 
                 current_ts = int(candles.iloc[-1]['ts'])
-                log.info("DBG {} ts={} last={} new={}".format(sym, current_ts, last_ts.get(sym, 0), current_ts != last_ts.get(sym, 0)))
                 # REGLE: seule source de temps = ts_dt UTC des candles en DB
                 candle_time_utc = candles.iloc[-1]['ts_dt'].to_pydatetime()
                 today = candle_time_utc.date()
@@ -441,9 +440,8 @@ def main():
                 # Ajouter les directions des deals ouverts OU fermes sur la bougie courante
                 # En BT, un trade sorti a candle N est encore actif a candle N (>=)
                 try:
-                    # MT5 veut des datetime naifs (sans timezone)
-                    candle_start_naive = candle_time_utc.replace(tzinfo=None) if hasattr(candle_time_utc, 'tzinfo') and candle_time_utc.tzinfo else candle_time_utc
-                    deals = mt5.history_deals_get(candle_start_naive, candle_start_naive + timedelta(minutes=5)) or []
+                    candle_start_utc = candle_time_utc if candle_time_utc.tzinfo else candle_time_utc.replace(tzinfo=timezone.utc)
+                    deals = mt5.history_deals_get(candle_start_utc, candle_start_utc + timedelta(minutes=5)) or []
                     for d in deals:
                         if d.symbol != sym: continue
                         if d.magic not in ALL_MAGIC_SET: continue
@@ -453,8 +451,7 @@ def main():
                             # La direction de la position fermee est l'inverse du deal de sortie
                             # SELL pour fermer un LONG, BUY pour fermer un SHORT
                             open_dirs.add('short' if d.type == 0 else 'long')
-                except Exception as _deal_err:
-                    log.warning("deals_get error: {}".format(_deal_err))
+                except: pass
 
                 is_new = current_ts != last_ts.get(sym, 0)
                 if not is_new: continue
