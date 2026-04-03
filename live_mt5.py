@@ -404,6 +404,7 @@ def main():
                 candles = compute_indicators(candles)
 
                 current_ts = int(candles.iloc[-1]['ts'])
+                log.info("DBG {} ts={} last={} new={}".format(sym, current_ts, last_ts.get(sym, 0), current_ts != last_ts.get(sym, 0)))
                 # REGLE: seule source de temps = ts_dt UTC des candles en DB
                 candle_time_utc = candles.iloc[-1]['ts_dt'].to_pydatetime()
                 today = candle_time_utc.date()
@@ -452,7 +453,8 @@ def main():
                             # La direction de la position fermee est l'inverse du deal de sortie
                             # SELL pour fermer un LONG, BUY pour fermer un SHORT
                             open_dirs.add('short' if d.type == 0 else 'long')
-                except: pass
+                except Exception as _deal_err:
+                    log.warning("deals_get error: {}".format(_deal_err))
 
                 is_new = current_ts != last_ts.get(sym, 0)
                 if not is_new: continue
