@@ -1,5 +1,44 @@
 # Results Log — Evolution des resultats
 
+## 2026-04-04 — Test strategies sur cryptos
+
+### Cryptos chargees en DB (1 an de 5m, ~100k bougies chacune)
+BTCUSD, ETHUSD, SOLUSD, BNBUSD, XRPUSD, ADAUSD, DOGEUSD, LTCUSD, BCHUSD, DOTUSD, LNKUSD, XMRUSD, AVAUSD, ETCUSD, NEOUSD
+
+### optimize_all 5ers marge 8% — resultats par crypto
+| Crypto | Strats safe | Total | Status |
+|---|---|---|---|
+| BTCUSD | 7 | 103 | Done |
+| ETHUSD | 5 | 107 | Done |
+| SOLUSD | 4 | 87 | Done |
+| BNBUSD | 23 | 104 | Done |
+| XRPUSD | 7 | 88 | Done |
+| ADAUSD | 4 | 76 | Done |
+| DOGEUSD | 6 | 84 | Done |
+| LTCUSD | 10 | 97 | Done |
+| BCHUSD | 8 | 101 | Done |
+| DOTUSD | 11 | 95 | Done |
+| LNKUSD | ? | ? | En cours |
+| XMRUSD | ? | ? | En cours |
+| AVAUSD | ? | ? | En cours |
+| ETCUSD | ? | ? | En cours |
+| NEOUSD | ? | ? | En cours |
+
+### analyze_combos — top combo par crypto (7 premieres)
+| Crypto | Best | Nb | Trades | PF | WR | DD | Rend | M+ |
+|---|---|---|---|---|---|---|---|---|
+| **BNBUSD** | PF*WR 11 | 11 | 2911 | 1.55 | 78% | -0.9% | +19% | 13/13 |
+| BTCUSD | Calmar 5 | 5 | 1130 | 1.51 | 58% | -0.8% | +13% | 12/13 |
+| DOGEUSD | Diverse 4 | 4 | 1018 | 1.49 | 69% | -1.1% | +8% | 12/13 |
+| XRPUSD | Calmar 2 | 2 | 709 | 1.65 | 80% | -0.3% | +5% | 13/13 |
+| ETHUSD | Calmar 3 | 3 | 744 | 1.50 | 74% | -0.4% | +5% | 11/13 |
+| SOLUSD | Calmar 2 | 2 | 581 | 1.35 | 69% | -0.8% | +3% | 10/13 |
+| ADAUSD | Calmar 3 | 3 | 581 | 1.35 | 74% | -0.6% | +3% | 10/13 |
+
+BNB est la star (21 strats viables, PF 1.55, 13/13 mois). En attente des 8 cryptos restantes.
+
+---
+
 ## 2026-03-30 — Filtre marge WR, retrait open strats, fix magic/conflit
 
 ### REGLE: Filtre marge WR >= 8% obligatoire
