@@ -11,7 +11,7 @@ import numpy as np, pandas as pd, pickle, importlib
 from strat_exits import STRAT_EXITS, DEFAULT_EXIT
 
 parser = argparse.ArgumentParser(description='Backtest portfolio')
-parser.add_argument('account', nargs='?', default='icm', choices=['icm','ftmo','5ers'])
+parser.add_argument('account', nargs='?', default='icm', choices=['icm','ftmo','5ers','crypto'])
 parser.add_argument('-c', '--capital', type=float, default=None)
 parser.add_argument('-r', '--risk', type=float, default=None)
 parser.add_argument('--symbol', default=None, help='Single instrument (default: all)')
@@ -99,7 +99,9 @@ for sym, icfg in INSTRUMENTS.items():
     import re
     sym_san = re.sub(r"[^a-z0-9]+", "_", sym.lower()).strip("_")
     sym_dir = f'/{sym_san}' if sym != 'XAUUSD' else ''
-    pkl_file = f'data/{args.account}{sym_dir}/optim_data.pkl'
+    # Utiliser le broker du config pour le chemin pkl (crypto utilise pkl 5ers)
+    _pkl_account = args.account if args.account != 'crypto' else '5ers'
+    pkl_file = f'data/{_pkl_account}{sym_dir}/optim_data.pkl'
     try:
         with open(pkl_file, 'rb') as f:
             data = pickle.load(f)

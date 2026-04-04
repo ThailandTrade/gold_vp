@@ -35,7 +35,52 @@ BTCUSD, ETHUSD, SOLUSD, BNBUSD, XRPUSD, ADAUSD, DOGEUSD, LTCUSD, BCHUSD, DOTUSD,
 | SOLUSD | Calmar 2 | 2 | 581 | 1.35 | 69% | -0.8% | +3% | 10/13 |
 | ADAUSD | Calmar 3 | 3 | 581 | 1.35 | 74% | -0.6% | +3% | 10/13 |
 
-BNB est la star (21 strats viables, PF 1.55, 13/13 mois). En attente des 8 cryptos restantes.
+### optimize_all — resultats complets 15 cryptos
+| Crypto | Strats safe | Total |
+|---|---|---|
+| BNBUSD | 23 | 104 |
+| DOTUSD | 11 | 95 |
+| LTCUSD | 10 | 97 |
+| NEOUSD | 9 | 91 |
+| BCHUSD | 8 | 101 |
+| XMRUSD | 8 | 85 |
+| BTCUSD | 7 | 103 |
+| XRPUSD | 7 | 88 |
+| AVAUSD | 7 | 96 |
+| ETCUSD | 7 | 86 |
+| DOGEUSD | 6 | 84 |
+| ETHUSD | 5 | 107 |
+| LNKUSD | 5 | 83 |
+| SOLUSD | 4 | 87 |
+| ADAUSD | 4 | 76 |
+
+### analyze_combos — top combo par crypto (classees par Rend/DD)
+| Crypto | Safe | Nb | Trades | PF | WR | DD | Rend | M+ | Rend/DD |
+|---|---|---|---|---|---|---|---|---|---|
+| AVAUSD | 7 | 6 | 1357 | 1.59 | 71% | -0.5% | +12% | 13/13 | 24.0 |
+| BNBUSD | 23 | 11 | 2911 | 1.55 | 78% | -0.9% | +19% | 13/13 | 21.1 |
+| NEOUSD | 9 | 6 | 1257 | 1.71 | 74% | -0.6% | +12% | 12/13 | 20.0 |
+| BCHUSD | 8 | 6 | 1793 | 1.61 | 71% | -1.0% | +17% | 13/13 | 17.0 |
+| XMRUSD | 8 | 5 | 1368 | 1.61 | 73% | -0.7% | +12% | 12/13 | 17.1 |
+| XRPUSD | 7 | 2 | 709 | 1.65 | 80% | -0.3% | +5% | 13/13 | 16.7 |
+| DOTUSD | 11 | 8 | 2446 | 1.40 | 73% | -0.9% | +15% | 11/13 | 16.7 |
+| BTCUSD | 7 | 5 | 1130 | 1.51 | 58% | -0.8% | +13% | 12/13 | 16.3 |
+| LTCUSD | 10 | 8 | 2615 | 1.60 | 75% | -1.4% | +21% | 12/13 | 15.0 |
+| ETHUSD | 5 | 3 | 744 | 1.50 | 74% | -0.4% | +5% | 11/13 | 12.5 |
+| ETCUSD | 7 | 4 | 922 | 1.55 | 77% | -0.5% | +6% | 12/13 | 12.0 |
+| DOGEUSD | 6 | 4 | 1018 | 1.49 | 69% | -1.1% | +8% | 12/13 | 7.3 |
+
+LNK, SOL, ADA exclus (trop faibles).
+
+### Backtest agrege 12 cryptos — tests de risk
+| Risk | Rend | DD | PF | Capital final |
+|---|---|---|---|---|
+| 0.05% | +287% | -1.4% | 1.53 | $386k |
+| 0.1% | +1,382% | -2.8% | 1.51 | $1.5M |
+| 0.2% | +21,182% | -5.6% | 1.46 | $21M |
+| 0.5% | insense | -13.5% | 1.40 | insense |
+
+Decision: risk 0.2% pour config_crypto.py.
 
 ---
 
