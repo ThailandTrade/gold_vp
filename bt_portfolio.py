@@ -99,9 +99,7 @@ for sym, icfg in INSTRUMENTS.items():
     import re
     sym_san = re.sub(r"[^a-z0-9]+", "_", sym.lower()).strip("_")
     sym_dir = f'/{sym_san}' if sym != 'XAUUSD' else ''
-    # Utiliser le broker du config pour le chemin pkl (crypto utilise pkl 5ers)
-    _pkl_account = args.account if args.account != 'crypto' else '5ers'
-    pkl_file = f'data/{_pkl_account}{sym_dir}/optim_data.pkl'
+    pkl_file = f'data/{args.account}{sym_dir}/optim_data.pkl'
     try:
         with open(pkl_file, 'rb') as f:
             data = pickle.load(f)

@@ -82,6 +82,46 @@ LNK, SOL, ADA exclus (trop faibles).
 
 Decision: risk 0.2% pour config_crypto.py.
 
+### Architecture MT5 vs Hyperliquid
+
+Separation claire entre les 2 plateformes d'execution:
+
+**Commun (agnostique plateforme):**
+- strats.py — detection signaux + indicateurs
+- strat_exits.py — configs exit par (broker, instrument)
+- optimize_all.py — optimisation (genere pkl)
+- analyze_combos.py — recherche de combos
+- bt_portfolio.py — backtest agrege
+
+**MT5 (propfirm + perso):**
+- config_5ers.py, config_ftmo.py, config_icm.py
+- live_mt5.py — execution MT5
+- compare_today.py — compare BT vs MT5
+- dashboard.py — dashboard MT5
+- mt5_fetch_clean.py — fetch MT5 -> PostgreSQL
+- data/5ers/, data/ftmo/ — pkl MT5
+
+**Hyperliquid (crypto):**
+- config_crypto.py — 12 cryptos, 0.2% risk
+- live_hyperliquid.py — execution Hyperliquid (a creer)
+- compare_today_hl.py — compare BT vs Hyperliquid (a creer)
+- dashboard_hl.py — dashboard Hyperliquid (a creer)
+- hl_fetch.py — fetch Hyperliquid API -> PostgreSQL (a creer)
+- data/crypto/ — pkl crypto
+
+**Donnees:**
+- Les candles crypto sont en DB PostgreSQL (fetchees via MT5 pour le moment)
+- Les pkl crypto sont dans data/crypto/ (generes par optimize_all.py 5ers --symbol)
+- Quand Hyperliquid sera connecte, les candles viendront de hl_fetch.py
+  et les pkl devront etre regeneres (prix/spreads differents)
+
+**Prochaines etapes:**
+1. Creer data/crypto/ et deplacer les pkl
+2. Creer hl_fetch.py (API Hyperliquid -> PostgreSQL)
+3. Creer live_hyperliquid.py (execution)
+4. Tester en paper trading
+5. Lancer en live
+
 ---
 
 ## 2026-03-30 — Filtre marge WR, retrait open strats, fix magic/conflit

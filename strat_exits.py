@@ -1,4 +1,4 @@
-# Exit configs par (broker, instrument, strat) - regenere depuis pkl 2026-04-01.
+# Exit configs par (broker, instrument, strat) - regenere 2026-04-04.
 # TRAIL: (TRAIL, sl, act, trail)
 # TPSL:  (TPSL, sl, tp, 0)
 
@@ -174,5 +174,149 @@ STRAT_EXITS[('ftmo', 'US500.cash')] = {
     'IDX_CONSEC_REV': ('TRAIL', 1.50, 0.30, 0.30),  # PF=1.45 WR=71%
     'LON_PREV': ('TRAIL', 3.00, 0.50, 0.50),  # PF=1.55 WR=77%
     'TOK_FISHER': ('TRAIL', 2.00, 0.50, 0.50),  # PF=1.51 WR=71%
+}
+
+STRAT_EXITS[('crypto', 'BNBUSD')] = {
+    'ALL_CMO_14': ('TRAIL', 3.00, 0.30, 0.30),  # PF=1.96 WR=82%
+    'ALL_CMO_9': ('TPSL', 2.50, 0.50, 0),  # PF=1.86 WR=87%
+    'ALL_ELDER_BULL': ('TRAIL', 3.00, 0.50, 0.30),  # PF=1.61 WR=77%
+    'ALL_EMA_513': ('TRAIL', 3.00, 0.30, 0.30),  # PF=1.55 WR=80%
+    'ALL_EMA_821': ('TRAIL', 3.00, 0.30, 0.30),  # PF=1.60 WR=78%
+    'ALL_EMA_921': ('TRAIL', 3.00, 0.30, 0.30),  # PF=1.65 WR=79%
+    'ALL_HMA_CROSS': ('TRAIL', 3.00, 0.30, 0.30),  # PF=1.65 WR=81%
+    'ALL_MACD_ADX': ('TRAIL', 3.00, 0.75, 0.75),  # PF=1.85 WR=76%
+    'ALL_MACD_FAST_ZERO': ('TRAIL', 3.00, 0.30, 0.30),  # PF=1.55 WR=80%
+    'ALL_MACD_STD_SIG': ('TRAIL', 3.00, 0.30, 0.30),  # PF=1.56 WR=80%
+    'ALL_PSAR_EMA': ('TRAIL', 3.00, 1.00, 0.50),  # PF=1.46 WR=71%
+    'ALL_RSI_EXTREME': ('TRAIL', 3.00, 0.50, 0.30),  # PF=1.73 WR=76%
+    'D8': ('TRAIL', 1.00, 0.75, 0.30),  # PF=2.74 WR=47%
+    'IDX_3SOLDIERS': ('TRAIL', 2.00, 0.30, 0.30),  # PF=1.69 WR=75%
+    'IDX_BB_REV': ('TRAIL', 3.00, 0.30, 0.30),  # PF=1.62 WR=82%
+    'IDX_PREV_HL': ('TRAIL', 2.00, 1.00, 1.00),  # PF=1.42 WR=53%
+    'IDX_RSI_REV': ('TRAIL', 3.00, 0.50, 0.30),  # PF=1.73 WR=76%
+    'LON_ASIAN_BRK': ('TRAIL', 2.00, 0.30, 0.30),  # PF=1.57 WR=72%
+    'LON_PREV': ('TRAIL', 0.50, 0.30, 0.30),  # PF=1.55 WR=34%
+    'NY_HMA_CROSS': ('TRAIL', 3.00, 0.75, 0.75),  # PF=1.63 WR=71%
+    'PO3_SWEEP': ('TRAIL', 0.50, 1.00, 1.00),  # PF=2.02 WR=35%
+    'TOK_2BAR': ('TRAIL', 3.00, 0.50, 0.50),  # PF=1.61 WR=77%
+    'TOK_PREVEXT': ('TRAIL', 1.50, 0.30, 0.50),  # PF=2.19 WR=53%
+}
+
+STRAT_EXITS[('crypto', 'LTCUSD')] = {
+    'ALL_CMO_14': ('TRAIL', 2.00, 0.30, 0.30),  # PF=1.51 WR=74%
+    'ALL_CMO_9': ('TRAIL', 2.00, 0.50, 0.50),  # PF=1.84 WR=71%
+    'ALL_CONSEC_REV': ('TRAIL', 3.00, 0.30, 0.30),  # PF=1.84 WR=82%
+    'ALL_DOJI_REV': ('TRAIL', 3.00, 0.50, 0.50),  # PF=1.74 WR=77%
+    'ALL_PIVOT_BOUNCE': ('TRAIL', 2.00, 0.30, 0.30),  # PF=1.46 WR=73%
+    'ALL_RSI_EXTREME': ('TRAIL', 2.00, 0.30, 0.30),  # PF=1.51 WR=73%
+    'ALL_STOCH_PIVOT': ('TRAIL', 2.00, 1.00, 1.00),  # PF=1.55 WR=62%
+    'IDX_CONSEC_REV': ('TRAIL', 3.00, 0.30, 0.30),  # PF=1.79 WR=83%
+    'IDX_RSI_REV': ('TRAIL', 2.00, 0.30, 0.30),  # PF=1.51 WR=73%
+    'TOK_PREVEXT': ('TRAIL', 1.00, 0.50, 0.50),  # PF=1.75 WR=44%
+}
+
+STRAT_EXITS[('crypto', 'BCHUSD')] = {
+    'ALL_CCI_100': ('TRAIL', 1.00, 0.30, 0.30),  # PF=1.47 WR=61%
+    'ALL_CMO_14': ('TRAIL', 3.00, 0.50, 0.30),  # PF=1.53 WR=78%
+    'IDX_GAP_CONT': ('TRAIL', 3.00, 0.75, 0.75),  # PF=1.62 WR=75%
+    'IDX_LATE_REV': ('TRAIL', 2.00, 0.75, 0.75),  # PF=1.55 WR=66%
+    'IDX_PREV_HL': ('TRAIL', 3.00, 0.50, 0.50),  # PF=1.62 WR=75%
+    'LON_ASIAN_BRK': ('TRAIL', 2.00, 0.30, 0.30),  # PF=1.50 WR=73%
+    'NY_DAYMOM': ('TRAIL', 3.00, 0.75, 0.75),  # PF=1.70 WR=71%
+    'TOK_FADE': ('TRAIL', 3.00, 0.30, 0.30),  # PF=1.56 WR=78%
+}
+
+STRAT_EXITS[('crypto', 'AVAUSD')] = {
+    'ALL_KB_SQUEEZE': ('TRAIL', 1.50, 0.30, 0.30),  # PF=1.39 WR=61%
+    'ALL_MACD_DIV': ('TRAIL', 2.00, 0.30, 0.30),  # PF=1.83 WR=79%
+    'ALL_RSI_DIV': ('TRAIL', 2.00, 0.30, 0.30),  # PF=1.53 WR=74%
+    'D8': ('TPSL', 1.00, 2.00, 0),  # PF=3.17 WR=56%
+    'IDX_PREV_HL': ('TRAIL', 3.00, 0.75, 0.50),  # PF=1.46 WR=69%
+    'PO3_SWEEP': ('TRAIL', 1.00, 0.30, 0.30),  # PF=2.35 WR=72%
+    'TOK_PREVEXT': ('TRAIL', 2.00, 0.50, 0.50),  # PF=2.84 WR=72%
+}
+
+STRAT_EXITS[('crypto', 'NEOUSD')] = {
+    'ALL_ELDER_BEAR': ('TRAIL', 1.00, 0.30, 0.30),  # PF=1.56 WR=59%
+    'ALL_ELDER_BULL': ('TRAIL', 3.00, 0.30, 0.30),  # PF=1.67 WR=80%
+    'ALL_HAMMER': ('TRAIL', 3.00, 0.30, 1.00),  # PF=1.62 WR=54%
+    'ALL_RSI_EXTREME': ('TRAIL', 3.00, 0.50, 0.30),  # PF=1.84 WR=79%
+    'D8': ('TRAIL', 3.00, 0.30, 0.30),  # PF=4.68 WR=92%
+    'IDX_RSI_REV': ('TRAIL', 3.00, 0.50, 0.30),  # PF=1.84 WR=79%
+    'IDX_TREND_DAY': ('TRAIL', 3.00, 0.50, 0.30),  # PF=1.61 WR=78%
+    'PO3_SWEEP': ('TPSL', 2.50, 0.75, 0),  # PF=4.04 WR=91%
+    'TOK_PREVEXT': ('TRAIL', 3.00, 0.50, 0.50),  # PF=1.80 WR=71%
+}
+
+STRAT_EXITS[('crypto', 'BTCUSD')] = {
+    'ALL_CCI_100': ('TRAIL', 1.50, 0.30, 0.30),  # PF=1.50 WR=67%
+    'ALL_MSTAR': ('TRAIL', 0.50, 1.00, 1.00),  # PF=1.78 WR=37%
+    'D8': ('TRAIL', 1.50, 0.75, 0.75),  # PF=1.61 WR=59%
+    'IDX_CONSEC_REV': ('TRAIL', 1.00, 0.30, 0.30),  # PF=1.47 WR=56%
+    'PO3_SWEEP': ('TRAIL', 3.00, 0.50, 0.50),  # PF=2.65 WR=84%
+    'TOK_FADE': ('TRAIL', 3.00, 0.50, 0.50),  # PF=1.64 WR=81%
+    'TOK_PREVEXT': ('TRAIL', 0.50, 0.30, 0.50),  # PF=4.58 WR=31%
+}
+
+STRAT_EXITS[('crypto', 'XMRUSD')] = {
+    'ALL_DOJI_REV': ('TRAIL', 2.00, 1.00, 0.75),  # PF=1.49 WR=62%
+    'ALL_INSIDE_BRK': ('TRAIL', 3.00, 1.00, 1.00),  # PF=1.49 WR=69%
+    'ALL_MACD_HIST': ('TRAIL', 2.00, 0.50, 0.50),  # PF=1.56 WR=75%
+    'IDX_CONSEC_REV': ('TRAIL', 1.50, 0.30, 0.30),  # PF=1.47 WR=71%
+    'IDX_PREV_HL': ('TRAIL', 3.00, 0.30, 0.50),  # PF=1.53 WR=67%
+    'LON_KZ': ('TRAIL', 3.00, 0.30, 0.30),  # PF=1.90 WR=82%
+    'LON_STOCH': ('TRAIL', 2.00, 0.30, 0.30),  # PF=1.49 WR=73%
+    'TOK_2BAR': ('TRAIL', 3.00, 0.30, 0.30),  # PF=1.61 WR=80%
+}
+
+STRAT_EXITS[('crypto', 'DOTUSD')] = {
+    'ALL_ADX_FAST': ('TRAIL', 1.00, 0.30, 0.30),  # PF=1.48 WR=59%
+    'ALL_CCI_100': ('TRAIL', 3.00, 0.75, 0.30),  # PF=1.52 WR=73%
+    'ALL_MACD_HIST': ('TRAIL', 3.00, 0.50, 0.30),  # PF=1.62 WR=77%
+    'ALL_PSAR_EMA': ('TRAIL', 3.00, 0.50, 0.30),  # PF=1.66 WR=77%
+    'ALL_RSI_EXTREME': ('TRAIL', 3.00, 0.50, 0.30),  # PF=1.72 WR=79%
+    'ALL_SUPERTREND': ('TRAIL', 3.00, 0.50, 0.30),  # PF=1.54 WR=76%
+    'IDX_BB_REV': ('TRAIL', 2.00, 0.50, 0.50),  # PF=2.17 WR=73%
+    'IDX_CONSEC_REV': ('TRAIL', 1.50, 0.30, 0.30),  # PF=1.41 WR=64%
+    'IDX_RSI_REV': ('TRAIL', 3.00, 0.50, 0.30),  # PF=1.72 WR=79%
+    'LON_KZ': ('TRAIL', 3.00, 0.30, 0.30),  # PF=1.58 WR=80%
+    'TOK_PREVEXT': ('TRAIL', 3.00, 1.00, 0.75),  # PF=2.37 WR=75%
+}
+
+STRAT_EXITS[('crypto', 'DOGEUSD')] = {
+    'ALL_CCI_100': ('TRAIL', 1.50, 0.30, 0.30),  # PF=1.48 WR=70%
+    'ALL_DC50': ('TRAIL', 1.50, 0.50, 0.50),  # PF=1.40 WR=61%
+    'D8': ('TPSL', 1.00, 1.00, 0),  # PF=1.53 WR=56%
+    'IDX_BB_REV': ('TRAIL', 2.00, 0.30, 0.30),  # PF=1.60 WR=74%
+    'IDX_CONSEC_REV': ('TRAIL', 2.00, 0.30, 0.30),  # PF=1.78 WR=80%
+    'TOK_PREVEXT': ('TRAIL', 3.00, 0.50, 0.50),  # PF=1.91 WR=67%
+}
+
+STRAT_EXITS[('crypto', 'XRPUSD')] = {
+    'ALL_CCI_14_ZERO': ('TRAIL', 0.50, 0.30, 0.30),  # PF=1.41 WR=43%
+    'ALL_CMO_14': ('TRAIL', 2.00, 0.30, 0.30),  # PF=1.53 WR=76%
+    'ALL_HAMMER': ('TRAIL', 3.00, 0.30, 0.30),  # PF=1.69 WR=85%
+    'LON_TOKEND': ('TRAIL', 2.00, 1.00, 1.00),  # PF=1.53 WR=61%
+    'TOK_2BAR': ('TRAIL', 1.50, 0.30, 0.30),  # PF=1.46 WR=67%
+    'TOK_FADE': ('TRAIL', 3.00, 0.30, 0.30),  # PF=1.68 WR=84%
+    'TOK_PREVEXT': ('TRAIL', 3.00, 1.00, 1.00),  # PF=1.70 WR=69%
+}
+
+STRAT_EXITS[('crypto', 'ETHUSD')] = {
+    'ALL_STOCH_RSI': ('TRAIL', 2.00, 0.30, 0.30),  # PF=1.50 WR=75%
+    'D8': ('TRAIL', 1.50, 0.50, 0.50),  # PF=4.81 WR=74%
+    'IDX_TREND_DAY': ('TRAIL', 3.00, 0.50, 0.30),  # PF=1.68 WR=73%
+    'NY_LONMOM': ('TRAIL', 3.00, 0.75, 0.75),  # PF=1.42 WR=62%
+    'TOK_FADE': ('TRAIL', 3.00, 0.30, 0.30),  # PF=1.67 WR=84%
+}
+
+STRAT_EXITS[('crypto', 'ETCUSD')] = {
+    'ALL_DPO_14': ('TRAIL', 0.50, 0.30, 0.30),  # PF=1.56 WR=42%
+    'ALL_HAMMER': ('TRAIL', 3.00, 0.75, 0.75),  # PF=1.67 WR=77%
+    'ALL_MACD_STD_SIG': ('TRAIL', 0.50, 0.30, 0.30),  # PF=1.46 WR=36%
+    'ALL_STOCH_PIVOT': ('TRAIL', 2.00, 0.50, 0.30),  # PF=1.49 WR=73%
+    'D8': ('TPSL', 2.50, 0.25, 0),  # PF=7.74 WR=97%
+    'IDX_BB_REV': ('TRAIL', 3.00, 0.75, 0.50),  # PF=1.63 WR=77%
+    'TOK_PREVEXT': ('TRAIL', 3.00, 0.30, 0.50),  # PF=1.78 WR=64%
 }
 

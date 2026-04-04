@@ -3,7 +3,7 @@ Config Crypto — 12 cryptos (optimise 2026-04-04 close-only, marge>=8%)
 REGLE: PAS de strats open (timing impossible a reproduire exactement en live)
 REGLE: Marge WR >= 8% obligatoire (WR_reel - WR_breakeven)
 """
-BROKER = '5ers'  # pkl generes sous 5ers
+BROKER = 'crypto'  # pkl dans data/crypto/
 
 # Tous les instruments optimises (pour backtest)
 ALL_INSTRUMENTS = {

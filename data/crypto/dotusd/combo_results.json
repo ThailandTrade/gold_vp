@@ -1,0 +1,854 @@
+{
+  "Calmar": {
+    "2": {
+      "combo": [
+        "IDX_BB_REV",
+        "IDX_RSI_REV"
+      ],
+      "n": 690,
+      "pf": 1.6121306788317533,
+      "wr": 75.79710144927536,
+      "mdd": -0.36800286622916867,
+      "ret": 5.28031239746057,
+      "sharpe": 4.101344214990533,
+      "pm": 12,
+      "tm": 13
+    },
+    "3": {
+      "combo": [
+        "IDX_BB_REV",
+        "IDX_RSI_REV",
+        "ALL_ADX_FAST"
+      ],
+      "n": 954,
+      "pf": 1.4937000466074697,
+      "wr": 70.54507337526206,
+      "mdd": -0.5002909690678252,
+      "ret": 7.23657605255257,
+      "sharpe": 3.976116580336504,
+      "pm": 12,
+      "tm": 13
+    },
+    "4": {
+      "combo": [
+        "IDX_BB_REV",
+        "IDX_RSI_REV",
+        "ALL_ADX_FAST",
+        "ALL_CCI_100"
+      ],
+      "n": 1233,
+      "pf": 1.4885694408366517,
+      "wr": 72.26277372262774,
+      "mdd": -0.5829937614300578,
+      "ret": 8.808935577584984,
+      "sharpe": 4.120279811004047,
+      "pm": 11,
+      "tm": 13
+    },
+    "5": {
+      "combo": [
+        "IDX_BB_REV",
+        "IDX_RSI_REV",
+        "ALL_ADX_FAST",
+        "ALL_CCI_100",
+        "ALL_PSAR_EMA"
+      ],
+      "n": 1513,
+      "pf": 1.447335629895066,
+      "wr": 72.83542630535361,
+      "mdd": -0.5471128020395806,
+      "ret": 9.775906409895528,
+      "sharpe": 4.130479250415138,
+      "pm": 11,
+      "tm": 13
+    },
+    "6": {
+      "combo": [
+        "IDX_BB_REV",
+        "IDX_RSI_REV",
+        "ALL_ADX_FAST",
+        "ALL_CCI_100",
+        "ALL_PSAR_EMA",
+        "ALL_RSI_EXTREME"
+      ],
+      "n": 1821,
+      "pf": 1.4509914510776079,
+      "wr": 73.75068643602415,
+      "mdd": -0.7001874664230965,
+      "ret": 11.555366804339851,
+      "sharpe": 4.2079440743398235,
+      "pm": 11,
+      "tm": 13
+    },
+    "7": {
+      "combo": [
+        "IDX_BB_REV",
+        "IDX_RSI_REV",
+        "ALL_ADX_FAST",
+        "ALL_CCI_100",
+        "ALL_PSAR_EMA",
+        "ALL_RSI_EXTREME",
+        "ALL_SUPERTREND"
+      ],
+      "n": 2144,
+      "pf": 1.4331996600488208,
+      "wr": 74.11380597014924,
+      "mdd": -0.8882763603423451,
+      "ret": 13.039333846321066,
+      "sharpe": 4.09888820905137,
+      "pm": 11,
+      "tm": 13
+    },
+    "8": {
+      "combo": [
+        "IDX_BB_REV",
+        "IDX_RSI_REV",
+        "ALL_ADX_FAST",
+        "ALL_CCI_100",
+        "ALL_PSAR_EMA",
+        "ALL_RSI_EXTREME",
+        "ALL_SUPERTREND",
+        "IDX_CONSEC_REV"
+      ],
+      "n": 2446,
+      "pf": 1.3998662135045392,
+      "wr": 72.81275551921505,
+      "mdd": -0.9434657178925746,
+      "ret": 14.517330508440619,
+      "sharpe": 4.238415968563952,
+      "pm": 11,
+      "tm": 13
+    },
+    "9": {
+      "combo": [
+        "IDX_BB_REV",
+        "IDX_RSI_REV",
+        "ALL_ADX_FAST",
+        "ALL_CCI_100",
+        "ALL_PSAR_EMA",
+        "ALL_RSI_EXTREME",
+        "ALL_SUPERTREND",
+        "IDX_CONSEC_REV",
+        "ALL_MACD_HIST"
+      ],
+      "n": 2700,
+      "pf": 1.347393675928754,
+      "wr": 72.70370370370371,
+      "mdd": -1.0816207979901258,
+      "ret": 13.987023939726786,
+      "sharpe": 3.7065065831502,
+      "pm": 11,
+      "tm": 13
+    }
+  },
+  "PF": {
+    "2": {
+      "combo": [
+        "IDX_BB_REV",
+        "IDX_RSI_REV"
+      ],
+      "n": 690,
+      "pf": 1.6121306788317533,
+      "wr": 75.79710144927536,
+      "mdd": -0.36800286622916867,
+      "ret": 5.28031239746057,
+      "sharpe": 4.101344214990533,
+      "pm": 12,
+      "tm": 13
+    },
+    "3": {
+      "combo": [
+        "IDX_BB_REV",
+        "IDX_RSI_REV",
+        "ALL_RSI_EXTREME"
+      ],
+      "n": 1017,
+      "pf": 1.5709800432503411,
+      "wr": 76.69616519174042,
+      "mdd": -0.5566413102485682,
+      "ret": 7.053047980626187,
+      "sharpe": 3.8507772454325817,
+      "pm": 11,
+      "tm": 13
+    },
+    "4": {
+      "combo": [
+        "IDX_BB_REV",
+        "IDX_RSI_REV",
+        "ALL_RSI_EXTREME",
+        "ALL_PSAR_EMA"
+      ],
+      "n": 1274,
+      "pf": 1.5130873732870531,
+      "wr": 76.68759811616954,
+      "mdd": -0.6164317260369941,
+      "ret": 7.995420243566448,
+      "sharpe": 3.994711169148767,
+      "pm": 11,
+      "tm": 13
+    },
+    "5": {
+      "combo": [
+        "IDX_BB_REV",
+        "IDX_RSI_REV",
+        "ALL_RSI_EXTREME",
+        "ALL_PSAR_EMA",
+        "ALL_SUPERTREND"
+      ],
+      "n": 1608,
+      "pf": 1.4636042683845454,
+      "wr": 76.49253731343283,
+      "mdd": -0.7523035368116965,
+      "ret": 9.30294603130601,
+      "sharpe": 3.7360407524813692,
+      "pm": 11,
+      "tm": 13
+    },
+    "6": {
+      "combo": [
+        "IDX_BB_REV",
+        "IDX_RSI_REV",
+        "ALL_RSI_EXTREME",
+        "ALL_PSAR_EMA",
+        "ALL_SUPERTREND",
+        "ALL_CCI_100"
+      ],
+      "n": 1921,
+      "pf": 1.428133847416379,
+      "wr": 75.95002602811036,
+      "mdd": -0.7433060048093011,
+      "ret": 10.57913818121185,
+      "sharpe": 3.8635700546760385,
+      "pm": 11,
+      "tm": 13
+    },
+    "7": {
+      "combo": [
+        "IDX_BB_REV",
+        "IDX_RSI_REV",
+        "ALL_RSI_EXTREME",
+        "ALL_PSAR_EMA",
+        "ALL_SUPERTREND",
+        "ALL_CCI_100",
+        "ALL_ADX_FAST"
+      ],
+      "n": 2144,
+      "pf": 1.4331996600488208,
+      "wr": 74.11380597014924,
+      "mdd": -0.8882763603423451,
+      "ret": 13.039333846321066,
+      "sharpe": 4.09888820905137,
+      "pm": 11,
+      "tm": 13
+    },
+    "8": {
+      "combo": [
+        "IDX_BB_REV",
+        "IDX_RSI_REV",
+        "ALL_RSI_EXTREME",
+        "ALL_PSAR_EMA",
+        "ALL_SUPERTREND",
+        "ALL_CCI_100",
+        "ALL_ADX_FAST",
+        "IDX_CONSEC_REV"
+      ],
+      "n": 2446,
+      "pf": 1.3998662135045392,
+      "wr": 72.81275551921505,
+      "mdd": -0.9434657178925746,
+      "ret": 14.517330508440619,
+      "sharpe": 4.238415968563952,
+      "pm": 11,
+      "tm": 13
+    },
+    "9": {
+      "combo": [
+        "IDX_BB_REV",
+        "IDX_RSI_REV",
+        "ALL_RSI_EXTREME",
+        "ALL_PSAR_EMA",
+        "ALL_SUPERTREND",
+        "ALL_CCI_100",
+        "ALL_ADX_FAST",
+        "IDX_CONSEC_REV",
+        "ALL_MACD_HIST"
+      ],
+      "n": 2700,
+      "pf": 1.347393675928754,
+      "wr": 72.70370370370371,
+      "mdd": -1.0816207979901258,
+      "ret": 13.987023939726786,
+      "sharpe": 3.7065065831502,
+      "pm": 11,
+      "tm": 13
+    }
+  },
+  "MinDD": {
+    "2": {
+      "combo": [
+        "IDX_BB_REV",
+        "IDX_RSI_REV"
+      ],
+      "n": 690,
+      "pf": 1.6121306788317533,
+      "wr": 75.79710144927536,
+      "mdd": -0.36800286622916867,
+      "ret": 5.28031239746057,
+      "sharpe": 4.101344214990533,
+      "pm": 12,
+      "tm": 13
+    },
+    "3": {
+      "combo": [
+        "IDX_BB_REV",
+        "IDX_RSI_REV",
+        "ALL_SUPERTREND"
+      ],
+      "n": 966,
+      "pf": 1.5014360463866168,
+      "wr": 75.87991718426501,
+      "mdd": -0.43910551754294674,
+      "ret": 6.078315484617371,
+      "sharpe": 4.009505907390426,
+      "pm": 12,
+      "tm": 13
+    },
+    "4": {
+      "combo": [
+        "IDX_BB_REV",
+        "IDX_RSI_REV",
+        "ALL_SUPERTREND",
+        "ALL_CCI_100"
+      ],
+      "n": 1287,
+      "pf": 1.4309789634340802,
+      "wr": 75.13597513597513,
+      "mdd": -0.4854457387561798,
+      "ret": 7.229283792306799,
+      "sharpe": 3.8574587093458654,
+      "pm": 11,
+      "tm": 13
+    },
+    "5": {
+      "combo": [
+        "IDX_BB_REV",
+        "IDX_RSI_REV",
+        "ALL_SUPERTREND",
+        "ALL_CCI_100",
+        "ALL_ADX_FAST"
+      ],
+      "n": 1513,
+      "pf": 1.4402673643729178,
+      "wr": 72.70323859881032,
+      "mdd": -0.5471128020395386,
+      "ret": 9.665876183402812,
+      "sharpe": 4.073868252549538,
+      "pm": 11,
+      "tm": 13
+    },
+    "6": {
+      "combo": [
+        "IDX_BB_REV",
+        "IDX_RSI_REV",
+        "ALL_SUPERTREND",
+        "ALL_CCI_100",
+        "ALL_ADX_FAST",
+        "ALL_RSI_EXTREME"
+      ],
+      "n": 1821,
+      "pf": 1.44487689805511,
+      "wr": 73.64085667215815,
+      "mdd": -0.7001874664230073,
+      "ret": 11.443547536833051,
+      "sharpe": 4.1603183032518105,
+      "pm": 11,
+      "tm": 13
+    },
+    "7": {
+      "combo": [
+        "IDX_BB_REV",
+        "IDX_RSI_REV",
+        "ALL_SUPERTREND",
+        "ALL_CCI_100",
+        "ALL_ADX_FAST",
+        "ALL_RSI_EXTREME",
+        "ALL_PSAR_EMA"
+      ],
+      "n": 2144,
+      "pf": 1.4331996600488208,
+      "wr": 74.11380597014924,
+      "mdd": -0.8882763603423451,
+      "ret": 13.039333846321066,
+      "sharpe": 4.09888820905137,
+      "pm": 11,
+      "tm": 13
+    },
+    "8": {
+      "combo": [
+        "IDX_BB_REV",
+        "IDX_RSI_REV",
+        "ALL_SUPERTREND",
+        "ALL_CCI_100",
+        "ALL_ADX_FAST",
+        "ALL_RSI_EXTREME",
+        "ALL_PSAR_EMA",
+        "IDX_CONSEC_REV"
+      ],
+      "n": 2446,
+      "pf": 1.3998662135045392,
+      "wr": 72.81275551921505,
+      "mdd": -0.9434657178925746,
+      "ret": 14.517330508440619,
+      "sharpe": 4.238415968563952,
+      "pm": 11,
+      "tm": 13
+    },
+    "9": {
+      "combo": [
+        "IDX_BB_REV",
+        "IDX_RSI_REV",
+        "ALL_SUPERTREND",
+        "ALL_CCI_100",
+        "ALL_ADX_FAST",
+        "ALL_RSI_EXTREME",
+        "ALL_PSAR_EMA",
+        "IDX_CONSEC_REV",
+        "ALL_MACD_HIST"
+      ],
+      "n": 2700,
+      "pf": 1.347393675928754,
+      "wr": 72.70370370370371,
+      "mdd": -1.0816207979901258,
+      "ret": 13.987023939726786,
+      "sharpe": 3.7065065831502,
+      "pm": 11,
+      "tm": 13
+    }
+  },
+  "Sharpe": {
+    "2": {
+      "combo": [
+        "IDX_BB_REV",
+        "IDX_RSI_REV"
+      ],
+      "n": 690,
+      "pf": 1.6121306788317533,
+      "wr": 75.79710144927536,
+      "mdd": -0.36800286622916867,
+      "ret": 5.28031239746057,
+      "sharpe": 4.101344214990533,
+      "pm": 12,
+      "tm": 13
+    },
+    "3": {
+      "combo": [
+        "IDX_BB_REV",
+        "IDX_RSI_REV",
+        "ALL_PSAR_EMA"
+      ],
+      "n": 965,
+      "pf": 1.5210879455294917,
+      "wr": 76.16580310880829,
+      "mdd": -0.43910551754295557,
+      "ret": 6.237872733508688,
+      "sharpe": 4.132516037952673,
+      "pm": 12,
+      "tm": 13
+    },
+    "4": {
+      "combo": [
+        "IDX_BB_REV",
+        "IDX_RSI_REV",
+        "ALL_PSAR_EMA",
+        "ALL_RSI_EXTREME"
+      ],
+      "n": 1274,
+      "pf": 1.5130873732870531,
+      "wr": 76.68759811616954,
+      "mdd": -0.6164317260369941,
+      "ret": 7.995420243566448,
+      "sharpe": 3.994711169148767,
+      "pm": 11,
+      "tm": 13
+    },
+    "5": {
+      "combo": [
+        "IDX_BB_REV",
+        "IDX_RSI_REV",
+        "ALL_PSAR_EMA",
+        "ALL_RSI_EXTREME",
+        "ALL_CCI_100"
+      ],
+      "n": 1595,
+      "pf": 1.4515533045753939,
+      "wr": 75.92476489028213,
+      "mdd": -0.6883071544449928,
+      "ret": 9.166950835116848,
+      "sharpe": 4.013062851269191,
+      "pm": 11,
+      "tm": 13
+    },
+    "6": {
+      "combo": [
+        "IDX_BB_REV",
+        "IDX_RSI_REV",
+        "ALL_PSAR_EMA",
+        "ALL_RSI_EXTREME",
+        "ALL_CCI_100",
+        "ALL_ADX_FAST"
+      ],
+      "n": 1821,
+      "pf": 1.4509914510776079,
+      "wr": 73.75068643602415,
+      "mdd": -0.7001874664230965,
+      "ret": 11.555366804339851,
+      "sharpe": 4.2079440743398235,
+      "pm": 11,
+      "tm": 13
+    },
+    "7": {
+      "combo": [
+        "IDX_BB_REV",
+        "IDX_RSI_REV",
+        "ALL_PSAR_EMA",
+        "ALL_RSI_EXTREME",
+        "ALL_CCI_100",
+        "ALL_ADX_FAST",
+        "IDX_CONSEC_REV"
+      ],
+      "n": 2125,
+      "pf": 1.4107309757933915,
+      "wr": 72.32941176470588,
+      "mdd": -0.9192311350411992,
+      "ret": 13.032922218887455,
+      "sharpe": 4.311589124675397,
+      "pm": 11,
+      "tm": 13
+    },
+    "8": {
+      "combo": [
+        "IDX_BB_REV",
+        "IDX_RSI_REV",
+        "ALL_PSAR_EMA",
+        "ALL_RSI_EXTREME",
+        "ALL_CCI_100",
+        "ALL_ADX_FAST",
+        "IDX_CONSEC_REV",
+        "ALL_SUPERTREND"
+      ],
+      "n": 2446,
+      "pf": 1.3998662135045392,
+      "wr": 72.81275551921505,
+      "mdd": -0.9434657178925746,
+      "ret": 14.517330508440619,
+      "sharpe": 4.238415968563952,
+      "pm": 11,
+      "tm": 13
+    },
+    "9": {
+      "combo": [
+        "IDX_BB_REV",
+        "IDX_RSI_REV",
+        "ALL_PSAR_EMA",
+        "ALL_RSI_EXTREME",
+        "ALL_CCI_100",
+        "ALL_ADX_FAST",
+        "IDX_CONSEC_REV",
+        "ALL_SUPERTREND",
+        "ALL_MACD_HIST"
+      ],
+      "n": 2700,
+      "pf": 1.347393675928754,
+      "wr": 72.70370370370371,
+      "mdd": -1.0816207979901258,
+      "ret": 13.987023939726786,
+      "sharpe": 3.7065065831502,
+      "pm": 11,
+      "tm": 13
+    }
+  },
+  "PF*WR": {
+    "2": {
+      "combo": [
+        "IDX_BB_REV",
+        "IDX_RSI_REV"
+      ],
+      "n": 690,
+      "pf": 1.6121306788317533,
+      "wr": 75.79710144927536,
+      "mdd": -0.36800286622916867,
+      "ret": 5.28031239746057,
+      "sharpe": 4.101344214990533,
+      "pm": 12,
+      "tm": 13
+    },
+    "3": {
+      "combo": [
+        "IDX_BB_REV",
+        "IDX_RSI_REV",
+        "ALL_RSI_EXTREME"
+      ],
+      "n": 1017,
+      "pf": 1.5709800432503411,
+      "wr": 76.69616519174042,
+      "mdd": -0.5566413102485682,
+      "ret": 7.053047980626187,
+      "sharpe": 3.8507772454325817,
+      "pm": 11,
+      "tm": 13
+    },
+    "4": {
+      "combo": [
+        "IDX_BB_REV",
+        "IDX_RSI_REV",
+        "ALL_RSI_EXTREME",
+        "ALL_PSAR_EMA"
+      ],
+      "n": 1274,
+      "pf": 1.5130873732870531,
+      "wr": 76.68759811616954,
+      "mdd": -0.6164317260369941,
+      "ret": 7.995420243566448,
+      "sharpe": 3.994711169148767,
+      "pm": 11,
+      "tm": 13
+    },
+    "5": {
+      "combo": [
+        "IDX_BB_REV",
+        "IDX_RSI_REV",
+        "ALL_RSI_EXTREME",
+        "ALL_PSAR_EMA",
+        "ALL_SUPERTREND"
+      ],
+      "n": 1608,
+      "pf": 1.4636042683845454,
+      "wr": 76.49253731343283,
+      "mdd": -0.7523035368116965,
+      "ret": 9.30294603130601,
+      "sharpe": 3.7360407524813692,
+      "pm": 11,
+      "tm": 13
+    },
+    "6": {
+      "combo": [
+        "IDX_BB_REV",
+        "IDX_RSI_REV",
+        "ALL_RSI_EXTREME",
+        "ALL_PSAR_EMA",
+        "ALL_SUPERTREND",
+        "ALL_CCI_100"
+      ],
+      "n": 1921,
+      "pf": 1.428133847416379,
+      "wr": 75.95002602811036,
+      "mdd": -0.7433060048093011,
+      "ret": 10.57913818121185,
+      "sharpe": 3.8635700546760385,
+      "pm": 11,
+      "tm": 13
+    },
+    "7": {
+      "combo": [
+        "IDX_BB_REV",
+        "IDX_RSI_REV",
+        "ALL_RSI_EXTREME",
+        "ALL_PSAR_EMA",
+        "ALL_SUPERTREND",
+        "ALL_CCI_100",
+        "ALL_ADX_FAST"
+      ],
+      "n": 2144,
+      "pf": 1.4331996600488208,
+      "wr": 74.11380597014924,
+      "mdd": -0.8882763603423451,
+      "ret": 13.039333846321066,
+      "sharpe": 4.09888820905137,
+      "pm": 11,
+      "tm": 13
+    },
+    "8": {
+      "combo": [
+        "IDX_BB_REV",
+        "IDX_RSI_REV",
+        "ALL_RSI_EXTREME",
+        "ALL_PSAR_EMA",
+        "ALL_SUPERTREND",
+        "ALL_CCI_100",
+        "ALL_ADX_FAST",
+        "IDX_CONSEC_REV"
+      ],
+      "n": 2446,
+      "pf": 1.3998662135045392,
+      "wr": 72.81275551921505,
+      "mdd": -0.9434657178925746,
+      "ret": 14.517330508440619,
+      "sharpe": 4.238415968563952,
+      "pm": 11,
+      "tm": 13
+    },
+    "9": {
+      "combo": [
+        "IDX_BB_REV",
+        "IDX_RSI_REV",
+        "ALL_RSI_EXTREME",
+        "ALL_PSAR_EMA",
+        "ALL_SUPERTREND",
+        "ALL_CCI_100",
+        "ALL_ADX_FAST",
+        "IDX_CONSEC_REV",
+        "ALL_MACD_HIST"
+      ],
+      "n": 2700,
+      "pf": 1.347393675928754,
+      "wr": 72.70370370370371,
+      "mdd": -1.0816207979901258,
+      "ret": 13.987023939726786,
+      "sharpe": 3.7065065831502,
+      "pm": 11,
+      "tm": 13
+    }
+  },
+  "Diverse": {
+    "2": {
+      "combo": [
+        "IDX_BB_REV",
+        "ALL_PSAR_EMA"
+      ],
+      "n": 659,
+      "pf": 1.5288394490254436,
+      "wr": 75.11380880121396,
+      "mdd": -0.4346156926990703,
+      "ret": 4.476667117315781,
+      "sharpe": 3.476768420115047,
+      "pm": 11,
+      "tm": 13
+    },
+    "3": {
+      "combo": [
+        "IDX_BB_REV",
+        "ALL_PSAR_EMA",
+        "IDX_RSI_REV"
+      ],
+      "n": 965,
+      "pf": 1.5210879455294917,
+      "wr": 76.16580310880829,
+      "mdd": -0.43910551754295557,
+      "ret": 6.237872733508688,
+      "sharpe": 4.132516037952673,
+      "pm": 12,
+      "tm": 13
+    },
+    "4": {
+      "combo": [
+        "IDX_BB_REV",
+        "ALL_PSAR_EMA",
+        "IDX_RSI_REV",
+        "ALL_ADX_FAST"
+      ],
+      "n": 1246,
+      "pf": 1.443245936717329,
+      "wr": 71.74959871589085,
+      "mdd": -0.6666840393464128,
+      "ret": 8.2132511059713,
+      "sharpe": 3.913092932015036,
+      "pm": 12,
+      "tm": 13
+    },
+    "5": {
+      "combo": [
+        "IDX_BB_REV",
+        "ALL_PSAR_EMA",
+        "IDX_RSI_REV",
+        "ALL_ADX_FAST",
+        "IDX_CONSEC_REV"
+      ],
+      "n": 1557,
+      "pf": 1.392133288473641,
+      "wr": 70.19910083493899,
+      "mdd": -0.7587546056175707,
+      "ret": 9.640472115175,
+      "sharpe": 4.088525239102262,
+      "pm": 12,
+      "tm": 13
+    },
+    "6": {
+      "combo": [
+        "IDX_BB_REV",
+        "ALL_PSAR_EMA",
+        "IDX_RSI_REV",
+        "ALL_ADX_FAST",
+        "IDX_CONSEC_REV",
+        "ALL_CCI_100"
+      ],
+      "n": 1818,
+      "pf": 1.4029255656752868,
+      "wr": 71.34213421342133,
+      "mdd": -0.7543273073434698,
+      "ret": 11.237630902824108,
+      "sharpe": 4.259536960488805,
+      "pm": 11,
+      "tm": 13
+    },
+    "7": {
+      "combo": [
+        "IDX_BB_REV",
+        "ALL_PSAR_EMA",
+        "IDX_RSI_REV",
+        "ALL_ADX_FAST",
+        "IDX_CONSEC_REV",
+        "ALL_CCI_100",
+        "ALL_SUPERTREND"
+      ],
+      "n": 2139,
+      "pf": 1.3921117598416435,
+      "wr": 72.04301075268818,
+      "mdd": -0.777725150807209,
+      "ret": 12.698572795084315,
+      "sharpe": 4.144030092765413,
+      "pm": 11,
+      "tm": 13
+    },
+    "8": {
+      "combo": [
+        "IDX_BB_REV",
+        "ALL_PSAR_EMA",
+        "IDX_RSI_REV",
+        "ALL_ADX_FAST",
+        "IDX_CONSEC_REV",
+        "ALL_CCI_100",
+        "ALL_SUPERTREND",
+        "ALL_MACD_HIST"
+      ],
+      "n": 2392,
+      "pf": 1.3374151900929157,
+      "wr": 72.03177257525084,
+      "mdd": -1.2680690584600753,
+      "ret": 12.2349877675968,
+      "sharpe": 3.5925272515414863,
+      "pm": 10,
+      "tm": 13
+    },
+    "9": {
+      "combo": [
+        "IDX_BB_REV",
+        "ALL_PSAR_EMA",
+        "IDX_RSI_REV",
+        "ALL_ADX_FAST",
+        "IDX_CONSEC_REV",
+        "ALL_CCI_100",
+        "ALL_SUPERTREND",
+        "ALL_MACD_HIST",
+        "ALL_RSI_EXTREME"
+      ],
+      "n": 2700,
+      "pf": 1.347393675928754,
+      "wr": 72.70370370370371,
+      "mdd": -1.0816207979901258,
+      "ret": 13.987023939726786,
+      "sharpe": 3.7065065831502,
+      "pm": 11,
+      "tm": 13
+    }
+  }
+}

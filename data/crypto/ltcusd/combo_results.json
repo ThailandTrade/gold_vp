@@ -1,0 +1,854 @@
+{
+  "Calmar": {
+    "2": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "ALL_DOJI_REV"
+      ],
+      "n": 701,
+      "pf": 1.678548576654016,
+      "wr": 80.17118402282453,
+      "mdd": -0.31052288048910454,
+      "ret": 4.8297234226758885,
+      "sharpe": 3.95060225126684,
+      "pm": 12,
+      "tm": 13
+    },
+    "3": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "ALL_DOJI_REV",
+        "ALL_RSI_EXTREME"
+      ],
+      "n": 1031,
+      "pf": 1.6021951594915411,
+      "wr": 78.07953443258971,
+      "mdd": -0.3950421946843551,
+      "ret": 7.030958860046274,
+      "sharpe": 4.384969092043325,
+      "pm": 12,
+      "tm": 13
+    },
+    "4": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "ALL_DOJI_REV",
+        "ALL_RSI_EXTREME",
+        "ALL_CMO_9"
+      ],
+      "n": 1369,
+      "pf": 1.5895887922876843,
+      "wr": 76.11395178962746,
+      "mdd": -0.5899671776111934,
+      "ret": 10.133516520076752,
+      "sharpe": 4.635063240456801,
+      "pm": 12,
+      "tm": 13
+    },
+    "5": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "ALL_DOJI_REV",
+        "ALL_RSI_EXTREME",
+        "ALL_CMO_9",
+        "ALL_CMO_14"
+      ],
+      "n": 1722,
+      "pf": 1.569965839770525,
+      "wr": 75.78397212543554,
+      "mdd": -0.7859692686235197,
+      "ret": 12.676205371470816,
+      "sharpe": 4.732596089196069,
+      "pm": 12,
+      "tm": 13
+    },
+    "6": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "ALL_DOJI_REV",
+        "ALL_RSI_EXTREME",
+        "ALL_CMO_9",
+        "ALL_CMO_14",
+        "ALL_STOCH_PIVOT"
+      ],
+      "n": 1960,
+      "pf": 1.5980279249924638,
+      "wr": 73.9795918367347,
+      "mdd": -1.016965621080194,
+      "ret": 16.51026457118112,
+      "sharpe": 5.23594692828138,
+      "pm": 12,
+      "tm": 13
+    },
+    "7": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "ALL_DOJI_REV",
+        "ALL_RSI_EXTREME",
+        "ALL_CMO_9",
+        "ALL_CMO_14",
+        "ALL_STOCH_PIVOT",
+        "IDX_RSI_REV"
+      ],
+      "n": 2290,
+      "pf": 1.574366295277791,
+      "wr": 73.84279475982532,
+      "mdd": -1.1169329880533496,
+      "ret": 18.79176134078983,
+      "sharpe": 5.047659645522948,
+      "pm": 12,
+      "tm": 13
+    },
+    "8": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "ALL_DOJI_REV",
+        "ALL_RSI_EXTREME",
+        "ALL_CMO_9",
+        "ALL_CMO_14",
+        "ALL_STOCH_PIVOT",
+        "IDX_RSI_REV",
+        "IDX_CONSEC_REV"
+      ],
+      "n": 2615,
+      "pf": 1.5977318404736616,
+      "wr": 75.10516252390057,
+      "mdd": -1.3552123666628444,
+      "ret": 21.476311266116653,
+      "sharpe": 5.348141258073145,
+      "pm": 12,
+      "tm": 13
+    },
+    "9": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "ALL_DOJI_REV",
+        "ALL_RSI_EXTREME",
+        "ALL_CMO_9",
+        "ALL_CMO_14",
+        "ALL_STOCH_PIVOT",
+        "IDX_RSI_REV",
+        "IDX_CONSEC_REV",
+        "ALL_PIVOT_BOUNCE"
+      ],
+      "n": 2784,
+      "pf": 1.6065091762817478,
+      "wr": 75.0,
+      "mdd": -1.6361264444897459,
+      "ret": 23.260098454962396,
+      "sharpe": 5.510909673532866,
+      "pm": 12,
+      "tm": 13
+    }
+  },
+  "PF": {
+    "2": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "IDX_CONSEC_REV"
+      ],
+      "n": 716,
+      "pf": 1.7271920284800863,
+      "wr": 82.82122905027933,
+      "mdd": -0.5360834116635701,
+      "ret": 4.577155539651183,
+      "sharpe": 3.563689884410702,
+      "pm": 11,
+      "tm": 13
+    },
+    "3": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "IDX_CONSEC_REV",
+        "ALL_DOJI_REV"
+      ],
+      "n": 1045,
+      "pf": 1.7124590147429823,
+      "wr": 81.24401913875599,
+      "mdd": -0.5583124915117227,
+      "ret": 7.230590566652463,
+      "sharpe": 4.2832723388738065,
+      "pm": 12,
+      "tm": 13
+    },
+    "4": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "IDX_CONSEC_REV",
+        "ALL_DOJI_REV",
+        "ALL_STOCH_PIVOT"
+      ],
+      "n": 1283,
+      "pf": 1.7198471771803652,
+      "wr": 77.47466874512861,
+      "mdd": -0.8515720807998624,
+      "ret": 10.929404619464941,
+      "sharpe": 5.038215658195352,
+      "pm": 11,
+      "tm": 13
+    },
+    "5": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "IDX_CONSEC_REV",
+        "ALL_DOJI_REV",
+        "ALL_STOCH_PIVOT",
+        "ALL_PIVOT_BOUNCE"
+      ],
+      "n": 1501,
+      "pf": 1.6901582965401358,
+      "wr": 76.5489673550966,
+      "mdd": -1.1343416159706803,
+      "ret": 12.773293100776106,
+      "sharpe": 5.201058301819854,
+      "pm": 12,
+      "tm": 13
+    },
+    "6": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "IDX_CONSEC_REV",
+        "ALL_DOJI_REV",
+        "ALL_STOCH_PIVOT",
+        "ALL_PIVOT_BOUNCE",
+        "ALL_CMO_9"
+      ],
+      "n": 1807,
+      "pf": 1.67700529991115,
+      "wr": 75.65024903154399,
+      "mdd": -1.3163607573536218,
+      "ret": 15.89927549582324,
+      "sharpe": 5.363809426303727,
+      "pm": 12,
+      "tm": 13
+    },
+    "7": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "IDX_CONSEC_REV",
+        "ALL_DOJI_REV",
+        "ALL_STOCH_PIVOT",
+        "ALL_PIVOT_BOUNCE",
+        "ALL_CMO_9",
+        "ALL_CMO_14"
+      ],
+      "n": 2143,
+      "pf": 1.6518344058503283,
+      "wr": 75.50163322445171,
+      "mdd": -1.4292753133979479,
+      "ret": 18.53478036162733,
+      "sharpe": 5.441938442597864,
+      "pm": 12,
+      "tm": 13
+    },
+    "8": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "IDX_CONSEC_REV",
+        "ALL_DOJI_REV",
+        "ALL_STOCH_PIVOT",
+        "ALL_PIVOT_BOUNCE",
+        "ALL_CMO_9",
+        "ALL_CMO_14",
+        "ALL_RSI_EXTREME"
+      ],
+      "n": 2461,
+      "pf": 1.632928045816259,
+      "wr": 75.2945956928078,
+      "mdd": -1.5242420156154033,
+      "ret": 21.028982474439953,
+      "sharpe": 5.678612726119684,
+      "pm": 12,
+      "tm": 13
+    },
+    "9": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "IDX_CONSEC_REV",
+        "ALL_DOJI_REV",
+        "ALL_STOCH_PIVOT",
+        "ALL_PIVOT_BOUNCE",
+        "ALL_CMO_9",
+        "ALL_CMO_14",
+        "ALL_RSI_EXTREME",
+        "IDX_RSI_REV"
+      ],
+      "n": 2784,
+      "pf": 1.6065091762817478,
+      "wr": 75.0,
+      "mdd": -1.6361264444897459,
+      "ret": 23.260098454962396,
+      "sharpe": 5.510909673532866,
+      "pm": 12,
+      "tm": 13
+    }
+  },
+  "MinDD": {
+    "2": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "ALL_DOJI_REV"
+      ],
+      "n": 701,
+      "pf": 1.678548576654016,
+      "wr": 80.17118402282453,
+      "mdd": -0.31052288048910454,
+      "ret": 4.8297234226758885,
+      "sharpe": 3.95060225126684,
+      "pm": 12,
+      "tm": 13
+    },
+    "3": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "ALL_DOJI_REV",
+        "ALL_RSI_EXTREME"
+      ],
+      "n": 1031,
+      "pf": 1.6021951594915411,
+      "wr": 78.07953443258971,
+      "mdd": -0.3950421946843551,
+      "ret": 7.030958860046274,
+      "sharpe": 4.384969092043325,
+      "pm": 12,
+      "tm": 13
+    },
+    "4": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "ALL_DOJI_REV",
+        "ALL_RSI_EXTREME",
+        "ALL_CMO_9"
+      ],
+      "n": 1369,
+      "pf": 1.5895887922876843,
+      "wr": 76.11395178962746,
+      "mdd": -0.5899671776111934,
+      "ret": 10.133516520076752,
+      "sharpe": 4.635063240456801,
+      "pm": 12,
+      "tm": 13
+    },
+    "5": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "ALL_DOJI_REV",
+        "ALL_RSI_EXTREME",
+        "ALL_CMO_9",
+        "ALL_CMO_14"
+      ],
+      "n": 1722,
+      "pf": 1.569965839770525,
+      "wr": 75.78397212543554,
+      "mdd": -0.7859692686235197,
+      "ret": 12.676205371470816,
+      "sharpe": 4.732596089196069,
+      "pm": 12,
+      "tm": 13
+    },
+    "6": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "ALL_DOJI_REV",
+        "ALL_RSI_EXTREME",
+        "ALL_CMO_9",
+        "ALL_CMO_14",
+        "IDX_RSI_REV"
+      ],
+      "n": 2054,
+      "pf": 1.5478202599895472,
+      "wr": 75.365141187926,
+      "mdd": -0.9296777078692422,
+      "ret": 14.918541824410553,
+      "sharpe": 4.54083189183937,
+      "pm": 11,
+      "tm": 13
+    },
+    "7": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "ALL_DOJI_REV",
+        "ALL_RSI_EXTREME",
+        "ALL_CMO_9",
+        "ALL_CMO_14",
+        "IDX_RSI_REV",
+        "IDX_CONSEC_REV"
+      ],
+      "n": 2390,
+      "pf": 1.5705318950869531,
+      "wr": 76.48535564853557,
+      "mdd": -1.1023474450743238,
+      "ret": 17.43700105060295,
+      "sharpe": 4.836471483033384,
+      "pm": 12,
+      "tm": 13
+    },
+    "8": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "ALL_DOJI_REV",
+        "ALL_RSI_EXTREME",
+        "ALL_CMO_9",
+        "ALL_CMO_14",
+        "IDX_RSI_REV",
+        "IDX_CONSEC_REV",
+        "ALL_STOCH_PIVOT"
+      ],
+      "n": 2615,
+      "pf": 1.5977318404736616,
+      "wr": 75.10516252390057,
+      "mdd": -1.3552123666628444,
+      "ret": 21.476311266116653,
+      "sharpe": 5.348141258073145,
+      "pm": 12,
+      "tm": 13
+    },
+    "9": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "ALL_DOJI_REV",
+        "ALL_RSI_EXTREME",
+        "ALL_CMO_9",
+        "ALL_CMO_14",
+        "IDX_RSI_REV",
+        "IDX_CONSEC_REV",
+        "ALL_STOCH_PIVOT",
+        "ALL_PIVOT_BOUNCE"
+      ],
+      "n": 2784,
+      "pf": 1.6065091762817478,
+      "wr": 75.0,
+      "mdd": -1.6361264444897459,
+      "ret": 23.260098454962396,
+      "sharpe": 5.510909673532866,
+      "pm": 12,
+      "tm": 13
+    }
+  },
+  "Sharpe": {
+    "2": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "ALL_PIVOT_BOUNCE"
+      ],
+      "n": 645,
+      "pf": 1.6148304026600555,
+      "wr": 77.82945736434108,
+      "mdd": -0.5640736872339382,
+      "ret": 4.471879186309321,
+      "sharpe": 4.1113341463817905,
+      "pm": 12,
+      "tm": 13
+    },
+    "3": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "ALL_PIVOT_BOUNCE",
+        "ALL_RSI_EXTREME"
+      ],
+      "n": 964,
+      "pf": 1.5701689534418544,
+      "wr": 76.45228215767634,
+      "mdd": -0.7013533216673599,
+      "ret": 6.6391178274009865,
+      "sharpe": 4.6655693973292705,
+      "pm": 11,
+      "tm": 13
+    },
+    "4": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "ALL_PIVOT_BOUNCE",
+        "ALL_RSI_EXTREME",
+        "ALL_CMO_9"
+      ],
+      "n": 1278,
+      "pf": 1.6049744460407451,
+      "wr": 75.27386541471049,
+      "mdd": -0.9276556006146264,
+      "ret": 9.978548530425325,
+      "sharpe": 5.02101569865824,
+      "pm": 12,
+      "tm": 13
+    },
+    "5": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "ALL_PIVOT_BOUNCE",
+        "ALL_RSI_EXTREME",
+        "ALL_CMO_9",
+        "IDX_CONSEC_REV"
+      ],
+      "n": 1605,
+      "pf": 1.6421938499188147,
+      "wr": 77.00934579439253,
+      "mdd": -1.1328780859682526,
+      "ret": 12.495667115687713,
+      "sharpe": 5.271263467887091,
+      "pm": 12,
+      "tm": 13
+    },
+    "6": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "ALL_PIVOT_BOUNCE",
+        "ALL_RSI_EXTREME",
+        "ALL_CMO_9",
+        "IDX_CONSEC_REV",
+        "ALL_STOCH_PIVOT"
+      ],
+      "n": 1820,
+      "pf": 1.6591427856439975,
+      "wr": 75.16483516483517,
+      "mdd": -1.291715214271861,
+      "ret": 15.91532793245827,
+      "sharpe": 5.4844475765682255,
+      "pm": 12,
+      "tm": 13
+    },
+    "7": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "ALL_PIVOT_BOUNCE",
+        "ALL_RSI_EXTREME",
+        "ALL_CMO_9",
+        "IDX_CONSEC_REV",
+        "ALL_STOCH_PIVOT",
+        "ALL_DOJI_REV"
+      ],
+      "n": 2125,
+      "pf": 1.6511336118799615,
+      "wr": 75.38823529411765,
+      "mdd": -1.4283392253024578,
+      "ret": 18.33925793703753,
+      "sharpe": 5.653132018636429,
+      "pm": 12,
+      "tm": 13
+    },
+    "8": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "ALL_PIVOT_BOUNCE",
+        "ALL_RSI_EXTREME",
+        "ALL_CMO_9",
+        "IDX_CONSEC_REV",
+        "ALL_STOCH_PIVOT",
+        "ALL_DOJI_REV",
+        "ALL_CMO_14"
+      ],
+      "n": 2461,
+      "pf": 1.632928045816259,
+      "wr": 75.2945956928078,
+      "mdd": -1.5242420156154033,
+      "ret": 21.028982474439953,
+      "sharpe": 5.678612726119684,
+      "pm": 12,
+      "tm": 13
+    },
+    "9": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "ALL_PIVOT_BOUNCE",
+        "ALL_RSI_EXTREME",
+        "ALL_CMO_9",
+        "IDX_CONSEC_REV",
+        "ALL_STOCH_PIVOT",
+        "ALL_DOJI_REV",
+        "ALL_CMO_14",
+        "IDX_RSI_REV"
+      ],
+      "n": 2784,
+      "pf": 1.6065091762817478,
+      "wr": 75.0,
+      "mdd": -1.6361264444897459,
+      "ret": 23.260098454962396,
+      "sharpe": 5.510909673532866,
+      "pm": 12,
+      "tm": 13
+    }
+  },
+  "PF*WR": {
+    "2": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "IDX_CONSEC_REV"
+      ],
+      "n": 716,
+      "pf": 1.7271920284800863,
+      "wr": 82.82122905027933,
+      "mdd": -0.5360834116635701,
+      "ret": 4.577155539651183,
+      "sharpe": 3.563689884410702,
+      "pm": 11,
+      "tm": 13
+    },
+    "3": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "IDX_CONSEC_REV",
+        "ALL_DOJI_REV"
+      ],
+      "n": 1045,
+      "pf": 1.7124590147429823,
+      "wr": 81.24401913875599,
+      "mdd": -0.5583124915117227,
+      "ret": 7.230590566652463,
+      "sharpe": 4.2832723388738065,
+      "pm": 12,
+      "tm": 13
+    },
+    "4": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "IDX_CONSEC_REV",
+        "ALL_DOJI_REV",
+        "ALL_STOCH_PIVOT"
+      ],
+      "n": 1283,
+      "pf": 1.7198471771803652,
+      "wr": 77.47466874512861,
+      "mdd": -0.8515720807998624,
+      "ret": 10.929404619464941,
+      "sharpe": 5.038215658195352,
+      "pm": 11,
+      "tm": 13
+    },
+    "5": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "IDX_CONSEC_REV",
+        "ALL_DOJI_REV",
+        "ALL_STOCH_PIVOT",
+        "ALL_PIVOT_BOUNCE"
+      ],
+      "n": 1501,
+      "pf": 1.6901582965401358,
+      "wr": 76.5489673550966,
+      "mdd": -1.1343416159706803,
+      "ret": 12.773293100776106,
+      "sharpe": 5.201058301819854,
+      "pm": 12,
+      "tm": 13
+    },
+    "6": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "IDX_CONSEC_REV",
+        "ALL_DOJI_REV",
+        "ALL_STOCH_PIVOT",
+        "ALL_PIVOT_BOUNCE",
+        "ALL_CMO_9"
+      ],
+      "n": 1807,
+      "pf": 1.67700529991115,
+      "wr": 75.65024903154399,
+      "mdd": -1.3163607573536218,
+      "ret": 15.89927549582324,
+      "sharpe": 5.363809426303727,
+      "pm": 12,
+      "tm": 13
+    },
+    "7": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "IDX_CONSEC_REV",
+        "ALL_DOJI_REV",
+        "ALL_STOCH_PIVOT",
+        "ALL_PIVOT_BOUNCE",
+        "ALL_CMO_9",
+        "ALL_CMO_14"
+      ],
+      "n": 2143,
+      "pf": 1.6518344058503283,
+      "wr": 75.50163322445171,
+      "mdd": -1.4292753133979479,
+      "ret": 18.53478036162733,
+      "sharpe": 5.441938442597864,
+      "pm": 12,
+      "tm": 13
+    },
+    "8": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "IDX_CONSEC_REV",
+        "ALL_DOJI_REV",
+        "ALL_STOCH_PIVOT",
+        "ALL_PIVOT_BOUNCE",
+        "ALL_CMO_9",
+        "ALL_CMO_14",
+        "ALL_RSI_EXTREME"
+      ],
+      "n": 2461,
+      "pf": 1.632928045816259,
+      "wr": 75.2945956928078,
+      "mdd": -1.5242420156154033,
+      "ret": 21.028982474439953,
+      "sharpe": 5.678612726119684,
+      "pm": 12,
+      "tm": 13
+    },
+    "9": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "IDX_CONSEC_REV",
+        "ALL_DOJI_REV",
+        "ALL_STOCH_PIVOT",
+        "ALL_PIVOT_BOUNCE",
+        "ALL_CMO_9",
+        "ALL_CMO_14",
+        "ALL_RSI_EXTREME",
+        "IDX_RSI_REV"
+      ],
+      "n": 2784,
+      "pf": 1.6065091762817478,
+      "wr": 75.0,
+      "mdd": -1.6361264444897459,
+      "ret": 23.260098454962396,
+      "sharpe": 5.510909673532866,
+      "pm": 12,
+      "tm": 13
+    }
+  },
+  "Diverse": {
+    "2": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "ALL_STOCH_PIVOT"
+      ],
+      "n": 616,
+      "pf": 1.6457275999732974,
+      "wr": 73.21428571428571,
+      "mdd": -0.6155150203105029,
+      "ret": 5.473004949888083,
+      "sharpe": 3.815443721545157,
+      "pm": 11,
+      "tm": 13
+    },
+    "3": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "ALL_STOCH_PIVOT",
+        "ALL_RSI_EXTREME"
+      ],
+      "n": 942,
+      "pf": 1.5988886269507099,
+      "wr": 73.46072186836517,
+      "mdd": -0.6385029336691941,
+      "ret": 7.76188577864856,
+      "sharpe": 4.31857353178998,
+      "pm": 12,
+      "tm": 13
+    },
+    "4": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "ALL_STOCH_PIVOT",
+        "ALL_RSI_EXTREME",
+        "ALL_DOJI_REV"
+      ],
+      "n": 1277,
+      "pf": 1.6371882152009163,
+      "wr": 74.86296006264683,
+      "mdd": -0.6882318105922126,
+      "ret": 10.726911935662748,
+      "sharpe": 4.98330598571049,
+      "pm": 12,
+      "tm": 13
+    },
+    "5": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "ALL_STOCH_PIVOT",
+        "ALL_RSI_EXTREME",
+        "ALL_DOJI_REV",
+        "ALL_CMO_14"
+      ],
+      "n": 1622,
+      "pf": 1.605302035262492,
+      "wr": 74.72256473489519,
+      "mdd": -0.8840713983202741,
+      "ret": 13.195841230188904,
+      "sharpe": 5.153250762367061,
+      "pm": 12,
+      "tm": 13
+    },
+    "6": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "ALL_STOCH_PIVOT",
+        "ALL_RSI_EXTREME",
+        "ALL_DOJI_REV",
+        "ALL_CMO_14",
+        "ALL_PIVOT_BOUNCE"
+      ],
+      "n": 1839,
+      "pf": 1.6001014409411314,
+      "wr": 74.44263186514411,
+      "mdd": -1.1538632234913666,
+      "ret": 14.997025116472345,
+      "sharpe": 5.270992232920683,
+      "pm": 12,
+      "tm": 13
+    },
+    "7": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "ALL_STOCH_PIVOT",
+        "ALL_RSI_EXTREME",
+        "ALL_DOJI_REV",
+        "ALL_CMO_14",
+        "ALL_PIVOT_BOUNCE",
+        "IDX_CONSEC_REV"
+      ],
+      "n": 2151,
+      "pf": 1.6320962377853039,
+      "wr": 75.87168758716875,
+      "mdd": -1.3919794573366837,
+      "ret": 17.631844343756384,
+      "sharpe": 5.607813431917668,
+      "pm": 12,
+      "tm": 13
+    },
+    "8": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "ALL_STOCH_PIVOT",
+        "ALL_RSI_EXTREME",
+        "ALL_DOJI_REV",
+        "ALL_CMO_14",
+        "ALL_PIVOT_BOUNCE",
+        "IDX_CONSEC_REV",
+        "IDX_RSI_REV"
+      ],
+      "n": 2474,
+      "pf": 1.6019549974056102,
+      "wr": 75.46483427647534,
+      "mdd": -1.5040141579235635,
+      "ret": 19.801253395152205,
+      "sharpe": 5.377665786037737,
+      "pm": 12,
+      "tm": 13
+    },
+    "9": {
+      "combo": [
+        "ALL_CONSEC_REV",
+        "ALL_STOCH_PIVOT",
+        "ALL_RSI_EXTREME",
+        "ALL_DOJI_REV",
+        "ALL_CMO_14",
+        "ALL_PIVOT_BOUNCE",
+        "IDX_CONSEC_REV",
+        "IDX_RSI_REV",
+        "ALL_CMO_9"
+      ],
+      "n": 2784,
+      "pf": 1.6065091762817478,
+      "wr": 75.0,
+      "mdd": -1.6361264444897459,
+      "ret": 23.260098454962396,
+      "sharpe": 5.510909673532866,
+      "pm": 12,
+      "tm": 13
+    }
+  }
+}
