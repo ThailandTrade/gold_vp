@@ -26,6 +26,10 @@ COIN_MAP = {
     'XRP': 'XRPUSD', 'ADA': 'ADAUSD', 'DOGE': 'DOGEUSD', 'LTC': 'LTCUSD',
     'BCH': 'BCHUSD', 'DOT': 'DOTUSD', 'LINK': 'LNKUSD', 'XMR': 'XMRUSD',
     'AVAX': 'AVAUSD', 'ETC': 'ETCUSD', 'NEO': 'NEOUSD',
+    # Top 20 volume additions
+    'HYPE': 'HYPEUSD', 'TAO': 'TAOUSD', 'ZEC': 'ZECUSD', 'NEAR': 'NEARUSD',
+    'ALGO': 'ALGOUSD', 'SUI': 'SUIUSD', 'FET': 'FETUSD',
+    'kPEPE': 'PEPEUSD', 'AAVE': 'AAVEUSD', 'UNI': 'UNIUSD',
 }
 
 DEFAULT_PAIRS = list(COIN_MAP.keys())
@@ -93,7 +97,7 @@ def fetch_and_store(engine, coin):
     if last_ts:
         start_ms = last_ts - 2 * TF_MS + 1
     else:
-        start_ms = int((datetime.now(UTC) - timedelta(days=365)).timestamp() * 1000)
+        start_ms = int((datetime.now(UTC) - timedelta(days=730)).timestamp() * 1000)
 
     # End: loin dans le futur (on laisse l'API retourner tout)
     end_ms = int((datetime.now(UTC) + timedelta(hours=24)).timestamp() * 1000)
@@ -151,6 +155,8 @@ def fetch_and_store(engine, coin):
             else:
                 cur_start = cur_end
 
+            time.sleep(0.2)  # rate limit: max 5 req/s
+
     if inserted > 0:
         print(f"[DONE] {coin} ({db_sym}): +{inserted} candles.")
     else:
@@ -159,6 +165,7 @@ def fetch_and_store(engine, coin):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--pairs", type=str, default=None, help="Coins comma-separated (BTC,ETH,SOL)")
+    ap.add_argument("--once", action="store_true", help="Single pass (backfill mode, no loop)")
     args = ap.parse_args()
 
     if args.pairs:
@@ -171,11 +178,17 @@ def main():
     print(f"[INIT] Hyperliquid fetch: {', '.join(pairs)} ({TF})")
 
     try:
-        while True:
-            print(f"[LOOP] {datetime.now(UTC).isoformat(timespec='seconds')}")
+        if args.once:
+            print(f"[BACKFILL] {datetime.now(UTC).isoformat(timespec='seconds')}")
             for coin in pairs:
                 fetch_and_store(engine, coin)
-            time.sleep(LOOP_SLEEP)
+            print("[DONE] Backfill complete.")
+        else:
+            while True:
+                print(f"[LOOP] {datetime.now(UTC).isoformat(timespec='seconds')}")
+                for coin in pairs:
+                    fetch_and_store(engine, coin)
+                time.sleep(LOOP_SLEEP)
     except KeyboardInterrupt:
         print("[STOP]")
 
