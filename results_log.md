@@ -102,6 +102,15 @@ sont evaluees (dimanche 22h UTC -> vendredi 22h UTC). Samedi + dimanche avant 22
 Raison: on veut profiter des flux institutionnels, pas du bruit de week-end.
 Les strats ne sont optimisees que sur les heures avec du vrai volume.
 
+### Impact filtre forex sur BTC (2 ans de donnees)
+| Config | Strats safe | Best combo | PF | DD | Rend |
+|---|---|---|---|---|---|
+| Sans filtre (24/7) | 1/99 | - | - | - | - |
+| **Avec filtre forex** | **4/107** | Greedy 4 | 1.68 | -7.5% | **+251%** |
+
+Le bruit du week-end diluait les signaux. Le filtre forex hours donne 4x plus de
+strats safe et des rendements exploitables. Optimize crypto relance sur les 25.
+
 ### Architecture MT5 vs Hyperliquid
 
 Separation claire entre les 2 plateformes d'execution:
