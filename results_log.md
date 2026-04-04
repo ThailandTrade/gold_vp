@@ -94,7 +94,13 @@ hl_fetch.py reecrit avec ccxt.binance (futures), meme logique: drop last candle,
 | TAO | 208k | 2024-04-11 -> 2026-04-04 | 723 |
 | HYPE | 89k | 2025-05-30 -> 2026-04-04 | 309 |
 
-25 symboles charges. optimize_all crypto en cours sur les 25.
+25 symboles charges.
+
+### optimize_crypto.py — filtre heures forex
+Copie de optimize_all.py avec filtre: seules les candles pendant les heures forex
+sont evaluees (dimanche 22h UTC -> vendredi 22h UTC). Samedi + dimanche avant 22h = skip.
+Raison: on veut profiter des flux institutionnels, pas du bruit de week-end.
+Les strats ne sont optimisees que sur les heures avec du vrai volume.
 
 ### Architecture MT5 vs Hyperliquid
 
