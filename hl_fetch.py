@@ -104,63 +104,66 @@ def fetch_and_store(engine, coin):
 
     inserted = 0
     cur_start = start_ms
+    batch_num = 0
 
-    with engine.begin() as conn:
-        while cur_start < end_ms:
-            cur_end = cur_start + TF_MS * MAX_CANDLES
-            if cur_end > end_ms: cur_end = end_ms
+    while cur_start < end_ms:
+        cur_end = cur_start + TF_MS * MAX_CANDLES
+        if cur_end > end_ms: cur_end = end_ms
 
-            candles = fetch_candles(coin, cur_start, cur_end)
-            if not candles:
-                cur_start = cur_end
-                continue
+        candles = fetch_candles(coin, cur_start, cur_end)
+        if not candles:
+            cur_start = cur_end
+            continue
 
-            # Drop la derniere bougie (potentiellement en cours)
-            if len(candles) > 1:
-                candles = candles[:-1]
-            else:
-                cur_start = cur_end
-                continue
+        # Drop la derniere bougie (potentiellement en cours)
+        if len(candles) > 1:
+            candles = candles[:-1]
+        else:
+            cur_start = cur_end
+            continue
 
-            rows = []
-            for c in candles:
-                ts_utc = int(c['t'])  # open millis, deja en UTC
-                if last_ts and ts_utc <= last_ts: continue
+        rows = []
+        for c in candles:
+            ts_utc = int(c['t'])  # open millis, deja en UTC
+            if last_ts and ts_utc <= last_ts: continue
 
-                o = Decimal(str(c['o']))
-                h = Decimal(str(c['h']))
-                l = Decimal(str(c['l']))
-                cl = Decimal(str(c['c']))
-                v = float(c['v'])
+            o = Decimal(str(c['o']))
+            h = Decimal(str(c['h']))
+            l = Decimal(str(c['l']))
+            cl = Decimal(str(c['c']))
+            v = float(c['v'])
 
-                rows.append({
-                    "ts": ts_utc,
-                    "ts_utc": datetime.fromtimestamp(ts_utc / 1000, tz=UTC).isoformat(timespec="seconds"),
-                    "open": o, "high": h, "low": l, "close": cl,
-                    "volume": v,
-                    "exchange": "hyperliquid",
-                    "symbol": db_sym,
-                    "base": coin, "quote": "USD",
-                    "timeframe": TF,
-                })
-                last_ts = ts_utc
+            rows.append({
+                "ts": ts_utc,
+                "ts_utc": datetime.fromtimestamp(ts_utc / 1000, tz=UTC).isoformat(timespec="seconds"),
+                "open": o, "high": h, "low": l, "close": cl,
+                "volume": v,
+                "exchange": "hyperliquid",
+                "symbol": db_sym,
+                "base": coin, "quote": "USD",
+                "timeframe": TF,
+            })
+            last_ts = ts_utc
 
-            if rows:
+        # Commit chaque batch immediatement
+        if rows:
+            with engine.begin() as conn:
                 res = conn.execute(pg_insert(table).values(rows).on_conflict_do_nothing(index_elements=["ts"]))
                 inserted += (res.rowcount or 0)
+            batch_num += 1
+            first_dt = datetime.fromtimestamp(rows[0]['ts'] / 1000, tz=UTC).strftime('%Y-%m-%d')
+            last_dt = datetime.fromtimestamp(rows[-1]['ts'] / 1000, tz=UTC).strftime('%Y-%m-%d')
+            print(f"  {coin} batch {batch_num}: +{len(rows)} ({first_dt} -> {last_dt}) total={inserted}", flush=True)
 
-            # Pagination: avancer au dernier timestamp + 1
-            if candles:
-                cur_start = int(candles[-1]['t']) + 1
-            else:
-                cur_start = cur_end
+        # Pagination: avancer au dernier timestamp + 1
+        if candles:
+            cur_start = int(candles[-1]['t']) + 1
+        else:
+            cur_start = cur_end
 
-            time.sleep(0.2)  # rate limit: max 5 req/s
+        time.sleep(0.2)  # rate limit: max 5 req/s
 
-    if inserted > 0:
-        print(f"[DONE] {coin} ({db_sym}): +{inserted} candles.")
-    else:
-        print(f"[INFO] {coin}: no new bars.")
+    print(f"[DONE] {coin} ({db_sym}): {inserted} candles total.")
 
 def main():
     ap = argparse.ArgumentParser()
