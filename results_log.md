@@ -82,6 +82,20 @@ LNK, SOL, ADA exclus (trop faibles).
 
 Decision: risk 0.2% pour config_crypto.py.
 
+### Migration CCXT Binance Futures (2026-04-04)
+L'API Hyperliquid est limitee a 5000 candles (~17 jours en 5m). Insuffisant pour backtest.
+Migration vers CCXT Binance Futures: historique complet 2+ ans, pas de limite.
+hl_fetch.py reecrit avec ccxt.binance (futures), meme logique: drop last candle, commit par batch.
+
+### Backfill 25 cryptos — 2 ans de 5m via Binance Futures
+| Crypto | Candles | Periode | Jours |
+|---|---|---|---|
+| BTC, ETH, SOL, BNB, XRP, ADA, DOGE, LTC, BCH, DOT, LINK, XMR, AVAX, ETC, NEO, ZEC, NEAR, ALGO, SUI, FET, AAVE, UNI, PEPE | 210k | 2024-04-04 -> 2026-04-04 | 730 |
+| TAO | 208k | 2024-04-11 -> 2026-04-04 | 723 |
+| HYPE | 89k | 2025-05-30 -> 2026-04-04 | 309 |
+
+25 symboles charges. optimize_all crypto en cours sur les 25.
+
 ### Architecture MT5 vs Hyperliquid
 
 Separation claire entre les 2 plateformes d'execution:
