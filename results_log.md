@@ -111,6 +111,21 @@ Les strats ne sont optimisees que sur les heures avec du vrai volume.
 Le bruit du week-end diluait les signaux. Le filtre forex hours donne 4x plus de
 strats safe et des rendements exploitables. Optimize crypto relance sur les 25.
 
+### Resultats optimize_crypto 25 cryptos (2 ans, forex hours)
+| Tier | Crypto | Strats safe |
+|---|---|---|
+| TOP | BNB | 12 |
+| TOP | NEO | 9 |
+| TOP | ZEC | 9 |
+| BON | ALGO | 6 |
+| BON | BCH | 5 |
+| BON | BTC, ETH, DOGE, DOT, AVAX, NEAR | 4 chacun |
+| MOY | ADA, LINK, ETC, AAVE, UNI, PEPE | 3 chacun |
+| FAIBLE | XRP, HYPE, TAO | 2 chacun |
+| FAIBLE | SOL, LTC, XMR, SUI, FET | 1 chacun |
+
+BNB, NEO, ZEC en haut. Prochaine etape: analyze_combos sur les 25, choix des combos.
+
 ### Architecture MT5 vs Hyperliquid
 
 Separation claire entre les 2 plateformes d'execution:
