@@ -2,6 +2,116 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-05 — Plan: 35 strategies crypto 15m dediees
+
+### Contexte
+Apres integration des fees HL dans `optimize_crypto.py`, le run sur 6 cryptos a montre que la majorite des strats XAUUSD/indices actuelles (65 strats dans `strats.py`) ne survivent pas aux fees sur crypto 15m. Raisons identifiees :
+- Sessions (Tokyo, London, NY) inutiles sur crypto 24/7
+- Patterns 5m (inside day, gaps, etc.) inadaptes au 15m
+- Stops serres (1-3 ATR sur 5m) → notional huge → fee drag massif
+- Edges trop faibles pour PF survivent aux frais 0.06% round-trip
+
+### Decision
+Creer **35 strategies crypto-specifiques** pour 15m, dans un **nouveau fichier** `strats_crypto.py` (zero impact sur `strats.py` MT5 5ers/ftmo/icm).
+
+### Recherche sources web
+- CoinGape, Quantified Strategies, PyQuantLab, FMZ Quant, TradingView public scripts
+- Reddit r/algotrading (via web snippets), Medium quant community
+- SMC/ICT, Wyckoff, Volume Profile references
+- Arxiv papers sur quant crypto (mentions)
+
+### Liste des 35 strategies
+
+**Trend-following / Momentum (10)** — stops et targets larges, naturellement fee-resistant
+1. CRYPTO_DONCHIAN_20 — Break Donchian 20-bar
+2. CRYPTO_DONCHIAN_50 — Break Donchian 50-bar (slower)
+3. CRYPTO_KELTNER_MOMO — Break Keltner upper/lower + ROC positif/negatif
+4. CRYPTO_SUPERTREND_FLIP — SuperTrend(10,3) flip + ADX>25
+5. CRYPTO_ICHIMOKU_CROSS — Price ferme au-dessus/sous Kumo + Tenkan×Kijun
+6. CRYPTO_HMA_TRIPLE — HMA9×HMA21 avec HMA50 meme direction
+7. CRYPTO_EMA_21_55_ADX — EMA cross + ADX>25
+8. CRYPTO_PSAR_EMA200 — PSAR flip dans le sens EMA200
+9. CRYPTO_HA_TREND — 3 bougies Heikin Ashi meme couleur sans meche opposite
+10. CRYPTO_MACD_ZERO — MACD cross zero-line + prix vs EMA200
+
+**Volatility expansion / Breakout (6)** — fee-friendly car moves explosifs
+11. CRYPTO_BBKC_SQUEEZE — BB inside KC 10+ bars, puis release + momentum (TTM)
+12. CRYPTO_ATR_SPIKE — Bougie range > 2× ATR20, suivre direction
+13. CRYPTO_ORB_UTC — Open Range 4 premieres bougies 00:00 UTC, break + retest
+14. CRYPTO_LONDON_OR — Open Range 08:00-09:00 UTC (sess London = flux institutionnels)
+15. CRYPTO_CONSO_VOL_BRK — Range 20+ bars, ATR declinant, break avec volume>2×
+16. CRYPTO_NR7 — Narrowest Range 7 bars, break high/low
+
+**Mean reversion selectives (5)** — entries extremes uniquement
+17. CRYPTO_RSI_DEEP_DIV — RSI<20 + divergence haussiere
+18. CRYPTO_STOCH_RSI_EXTREME — StochRSI<5 ou >95 + reversal bar
+19. CRYPTO_BB_OUTLIER — Prix > 2.5 std outside BB(20,2)
+20. CRYPTO_VWAP_RECLAIM — Clash + reclaim VWAP avec volume
+21. CRYPTO_AVWAP_BOUNCE — Bounce sur Anchored VWAP depuis dernier swing high/low
+
+**Smart Money Concepts / ICT (4)**
+22. CRYPTO_BOS_FVG — Break of Structure + entry dans Fair Value Gap
+23. CRYPTO_LIQ_SWEEP — Wick au-dessus/sous swing H/L puis close oppose
+24. CRYPTO_ORDER_BLOCK — Retest d'un OB (bougie avant impulsion)
+25. CRYPTO_OTE_618 — Entry zone Fib 0.62-0.79 d'un leg impulsif
+
+**Volume / Market Profile (4)**
+26. CRYPTO_HVN_REJECT — Reject sur High Volume Node (POC days)
+27. CRYPTO_LVN_BRK — Break rapide Low Volume Node + volume spike
+28. CRYPTO_POC_MIGRATION — Suivre migration POC jour par jour
+29. CRYPTO_VOL_SPIKE — Volume>3× moyenne + body>1.5 ATR
+
+**Chart patterns / Structure (3)**
+30. CRYPTO_DOUBLE_BOT_TOP — Double bottom/top avec volume decroissant
+31. CRYPTO_INV_HS — Inverse Head & Shoulders break neckline + retest
+32. CRYPTO_WYCKOFF_SPRING — Drop sous range puis reclaim rapide
+
+**Multi-timeframe (2)**
+33. CRYPTO_HTF_BIAS — Trend 4h + pullback EMA21 15m
+34. CRYPTO_WEEKLY_PIVOT — Reaction aux pivots R1/S1 weekly confirme 15m
+
+**Derivatives (1)**
+35. CRYPTO_FUNDING_EXTREME — Funding>+0.05% = short, <-0.05% = long (si data dispo)
+
+### Architecture d'implementation
+1. `strats_crypto.py` (nouveau) — contient `detect_all_crypto(row, prev, ...)` + indicateurs specifiques (Donchian, Keltner, SuperTrend, Ichimoku, HMA, Heikin Ashi, VWAP, volume profile approximatif)
+2. `optimize_crypto.py` — import `detect_all_crypto` au lieu de `strats.detect_all`
+3. `strats.py` — **INTACT** (MT5 pipelines preserves)
+4. Nouveaux noms prefixes **CRYPTO_** pour eviter collision avec strats existantes
+5. Pas de STRAT_ID collision : les strats CRYPTO_ seront ajoutees a STRAT_ID avec de nouveaux index
+
+### Look-ahead bias — REGLES ABSOLUES a respecter (cf LOOK_AHEAD_CHECKLIST.md)
+1. **Entry sur bougie fermee** : toutes les conditions utilisent `prev` (bougie i-1) ou row ferme
+2. **Entry price = close** de la bougie fermee
+3. **Pas d'open strats** (pas de signal sur row['open'])
+4. **Indicateurs forward-only** : ewm(), rolling() strict lookback, SuperTrend/PSAR boucle forward
+5. **ATR du jour = ATR de la veille** (daily_atr[prev_day])
+6. **1 trigger max par strat par jour** via `trig` dict reset quotidien
+7. **Pas de biais directionnel non teste** : chaque strat doit avoir LONG ET SHORT (ou clairement marquee directionnelle)
+8. **Audit signals** post-implementation : verifier BT vs live parity
+9. **VWAP / Volume Profile** : calcul cumulatif du debut de session, pas sur toute la journee en avance
+10. **HTF data (4h, weekly)** : utiliser uniquement le bar precedent ferme, pas le bar en cours
+
+### Scope & phases
+- Phase 1 : lire `strats.py`, identifier signature `detect_all()` + indicateurs existants
+- Phase 2 : creer `strats_crypto.py` avec indicateurs + 10 strats trend-following (commit)
+- Phase 3 : +6 strats volatility/breakout (commit)
+- Phase 4 : +5 strats mean reversion (commit)
+- Phase 5 : +4 SMC (commit)
+- Phase 6 : +4 volume, +3 patterns (commit)
+- Phase 7 : +2 HTF, +1 funding (commit)
+- Phase 8 : adapter `optimize_crypto.py` + run complete (commit)
+- Phase 9 : audit signals (verif pas de look-ahead)
+- Phase 10 : validation combos instrument par instrument
+
+### Zero impact MT5
+- `strats.py` jamais touche
+- `phase3_analyze.py` jamais touche
+- `optimize_all.py` jamais touche
+- `bt_portfolio.py` jamais touche
+- Aucune config 5ers/ftmo/icm modifiee
+- Pkls MT5 dans `data/5ers/**`, `data/ftmo/**`, `data/icm/**` intacts
+
 ## 2026-04-05 — PIVOT Crypto: abandon 5m, passage 15min
 
 ### Decision
