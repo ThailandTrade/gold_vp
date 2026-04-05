@@ -1693,3 +1693,21 @@ apres analyse des combos (analyze_combos.py 5ers --symbol jpn225 etc.)
 - **Skip**: NEAR, ALGO, PEPE, ZEC, LNK, SUI, FET, UNI, HYPE, TAO, SOL (perfs insuffisantes ou trop risque)
 - Config crypto actif: 13 cryptos (BNB, LTC, BCH, AVA, NEO, BTC, XMR, DOT, DOGE, XRP, ETH, ETC, ADA)
 - LIVE_INSTRUMENTS toujours vide — en attente activation Hyperliquid
+
+### Crypto combo re-validation complete (2026-04-05)
+- Motif: pkls re-optimises (25 mois, forex filter, margin >=8%) rendaient les anciens portfolios stales
+- **10 cryptos validees** (contre 13 anciennes stales):
+  - BNBUSD: PF 9 — ALL_CMO_9, LON_ASIAN_BRK, TOK_2BAR, LON_STOCH, ALL_HMA_CROSS, ALL_MACD_FAST_SIG, TOK_NR4, IDX_BB_REV, NY_HMA_CROSS — PF 1.54 WR 72% DD -3.9% Rend +253% 25/25
+  - BTCUSD: Calmar 3 — D8, ALL_AO_SAUCER, PO3_SWEEP — PF 1.73 WR 82% DD -1.4% Rend +27% 23/25
+  - ETHUSD: Calmar 3 — D8, ALL_ENGULF, IDX_ENGULF — PF 1.55 WR 75% DD -3.6% Rend +41% 21/25
+  - BCHUSD: Calmar 4 — ALL_CCI_100, LON_ASIAN_BRK, ALL_MOM_14, ALL_CMO_14_ZERO — PF 1.37 WR 58% DD -5.7% Rend +97% 18/25
+  - AVAUSD: Calmar 4 — D8, ALL_DOJI_REV, IDX_GAP_FILL, ALL_MACD_HIST — PF 1.28 WR 69% DD -4.4% Rend +36% 19/25
+  - NEOUSD: Calmar 5 — D8, ALL_HAMMER, ALL_RSI_DIV, LON_ASIAN_BRK, ALL_MACD_DIV — PF 1.41 WR 68% DD -3.3% Rend +74% 23/25
+  - DOGEUSD: Calmar 2 — ALL_AO_SAUCER, ALL_ELDER_BEAR — PF 1.45 WR 77% DD -2.2% Rend +27% 20/25
+  - DOTUSD: Calmar 3 — D8, ALL_MACD_HIST, ALL_STOCH_RSI — PF 1.39 WR 80% DD -2.2% Rend +22% 18/25
+  - ADAUSD: Calmar 2 — D8, ALL_RSI_DIV — PF 1.38 WR 80% DD -1.3% Rend +11% 19/25
+  - AAVEUSD: Calmar 2 — D8, IDX_NY_MOM — PF 1.61 WR 74% DD -1.2% Rend +18% 21/25
+- **Skip perfs insuffisantes**: NEAR, ALGO, XRP, PEPE, ZEC, LNK
+- **Skip data issues** (pkl apres filtre margin 8% vide ou open strats uniquement): LTC, XMR, ETC, FET, HYPE, SOL, SUI, TAO, UNI
+- Score composite utilise pour ranking: sharpe * sqrt(pf) * pm/tm
+- LIVE_INSTRUMENTS toujours vide - en attente pipeline live Hyperliquid
