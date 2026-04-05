@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-Crypto -> Postgres — Fetch OHLCV 5m candles via CCXT (Binance Futures).
+Crypto -> Postgres — Fetch OHLCV 15m candles via CCXT (Binance Futures).
 Backfill historique + boucle live.
+Tables: candles_hl_<symbol>_15m
 Usage:
   python hl_fetch.py --once                     # backfill 2 ans, single pass
   python hl_fetch.py                            # boucle continue (live)
@@ -17,8 +18,8 @@ from sqlalchemy import create_engine, MetaData, Table, Column, BigInteger, Strin
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 UTC = timezone.utc
-TF = "5m"
-TF_MS = 300_000  # 5 minutes
+TF = "15m"
+TF_MS = 900_000  # 15 minutes
 BATCH_LIMIT = 1000  # Binance max per request
 LOOP_SLEEP = 1
 BACKFILL_DAYS = 730  # 2 ans
@@ -79,7 +80,7 @@ def fetch_and_store(engine, exchange, coin):
         print(f"[WARN] {coin}: not in COIN_MAP"); return
     db_sym = info['db']
     ccxt_sym = info['ccxt']
-    table_name = f"candles_mt5_{sanitize_name(db_sym)}_5m"
+    table_name = f"candles_hl_{sanitize_name(db_sym)}_{TF}"
 
     meta = MetaData()
     table = Table(table_name, meta,

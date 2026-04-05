@@ -2,6 +2,31 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-05 — PIVOT Crypto: abandon 5m, passage 15min
+
+### Decision
+Apres avoir integre les frais Hyperliquid dans `bt_portfolio_crypto.py` (Taker 0.045% entry + Maker 0.015% exit = 0.060% round-trip sur notional), le backtest agrege crypto passe de **+5756% a -57.8%**. Les frais annulent totalement l'edge.
+
+### Analyse root cause
+Les strats 5min ont des stops tres serres (sl_atr 1-3 sur 5m = 0.2-0.7% du prix). Ratio notional/risk = 150-400x. Les frais (0.06% sur notional) representent une fraction enorme du gain brut par trade. Exemple BTC ALL_AO_SAUCER: gross $23/trade, fee $34/trade -> net **-$11**.
+
+Le bruit du 5m crypto + stops serres = structure non viable avec frais realistes.
+
+### Decision
+- **Abandon complet du 5m crypto** (aucun recovery possible avec stops larges seuls, trop de bruit sur crypto a cette echelle)
+- **Passage en 15min**
+- ATR 15m ≈ sqrt(3) * ATR 5m -> stops effectifs plus larges mecaniquement
+- Ratio gross/fee passe de ~1.4 a ~4.4 (a PF equivalent)
+- Vidage complet des tables crypto 5m en DB, re-fetch en 15m, re-optim complete
+
+### Impact zero MT5
+Modifications uniquement sur:
+- Tables `candles_mt5_<crypto>_5m` (drop, crypto uniquement)
+- `hl_fetch.py` (TF 5m -> 15m)
+- `optimize_crypto.py`, `bt_portfolio_crypto.py` (chemins data)
+- `data/crypto/**` (pkls regeneres)
+Les pipelines 5ers, FTMO, ICM restent **intacts**.
+
 ## 2026-04-05 — Crypto combo re-validation complete
 
 Motif: pkls re-optimises (25 mois, forex hours filter, margin WR>=8%) rendaient les anciens portfolios stales (ecrits lors d'une session precedente sur d'anciens pkls).

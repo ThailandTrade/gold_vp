@@ -9,8 +9,8 @@ import warnings; warnings.filterwarnings('ignore')
 import sys; sys.stdout.reconfigure(encoding='utf-8')
 import numpy as np, pandas as pd
 from dotenv import load_dotenv; load_dotenv()
-from phase1_poc_calculator import get_conn, compute_atr, get_trading_days
-from phase3_analyze import load_candles_5m
+from phase1_poc_calculator import get_conn
+from crypto_data import load_candles_hl, compute_atr_hl, get_trading_days_hl
 from strats import detect_all
 
 # ── SYMBOL ──
@@ -21,11 +21,11 @@ _a = _p.parse_args()
 SYMBOL = _a.symbol.lower()
 
 # ── DATA ──
-print(f"Loading data ({SYMBOL})...", flush=True)
+print(f"Loading data ({SYMBOL}) 15m HL...", flush=True)
 conn = get_conn()
-candles = load_candles_5m(conn, symbol=SYMBOL)
-daily_atr, global_atr = compute_atr(conn, symbol=SYMBOL)
-trading_days = get_trading_days(conn, symbol=SYMBOL)
+candles = load_candles_hl(conn, symbol=SYMBOL)
+daily_atr, global_atr = compute_atr_hl(conn, symbol=SYMBOL)
+trading_days = get_trading_days_hl(conn, symbol=SYMBOL)
 conn.close()
 def prev_day(day):
     for di, d in enumerate(trading_days):
