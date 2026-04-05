@@ -2,6 +2,55 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-05 — DECISION: abandon complet de la crypto algo
+
+### Contexte final
+Apres avoir:
+1. Fetche 2 ans de candles 15m crypto (25 coins via CCXT Binance Futures)
+2. Cree `strats_crypto.py` avec 35 strats dediees crypto (Donchian, Keltner, SuperTrend, Ichimoku, SMC, Wyckoff, etc.)
+3. Integre les fees HL au niveau trade dans `optimize_crypto.py` (taker 0.045% entry + maker 0.015% exit)
+4. Lance optim complete avec filtre margin 8% puis 5%
+
+### Resultats bruts (17/25 cryptos completes avant arret)
+
+| Crypto | Best PF | DD | Rend 25mo | M+ |
+|---|---|---|---|---|
+| **BTC** | **1.72** | -6.6% | **+46%** | 19/24 |
+| **AVA** | **1.47** | -7.5% | **+78%** | 20/25 |
+| HYPE | 1.39 | -8.3% | +67% | 10/11 |
+| AAVE | 1.28 | -9.8% | +51% | 18/25 |
+| LNK | 1.54 | -12.2% | +31% | 12/25 |
+| ALGO | 1.21 | -5.4% | +12% | 12/25 |
+| LTC | 1.23 | -6.1% | +17% | 14/25 |
+| ADA | 1.11 | -8.6% | +16% | 17/25 |
+| BCH, BNB, DOGE, DOT, ETC, ETH, FET | **AUCUN combo viable** | - | - | - |
+
+### Comparaison avec MT5 XAUUSD
+| Account | PF | DD | Rend 25mo |
+|---|---|---|---|
+| ICM Calmar 12 | 1.62 | -12.5% | **+3523%** |
+| FTMO Calmar 8 | 1.65 | -6% | **+743%** |
+| 5ers MinDD 5 | 1.62 | -2.5% | +83% |
+| **Crypto best (BTC)** | 1.72 | -6.6% | **+46%** (80x moins que ICM) |
+
+### Conclusion
+- **L'edge sur crypto n'est pas la** pour de l'algo directional retail
+- Raisons structurelles: marche 24/7 (pas de rythme institutionnel), fees relatives plus grosses, random walk plus pur, manip des market makers, pas de session opens exploitables
+- 7/17 cryptos testees n'ont **AUCUNE** combo viable apres fees meme avec filtre margin baisse a 5%
+- Le meilleur combo crypto (BTC PF 1.72 Rend +46%) est **80x moins rentable** que le pire portfolio MT5 (5ers Rend +83%)
+- Decision pragmatique: **abandonner complet crypto**, focus sur MT5 XAUUSD/indices ou l'edge est reel et reproductible
+
+### Cleanup prevu (a valider)
+- Garder `strats_crypto.py`, `optimize_crypto.py`, `bt_portfolio_crypto.py`, `hl_fetch.py`, `crypto_data.py`, `config_crypto.py` en depot (utile comme reference/apprentissage)
+- Ne pas supprimer les tables `candles_hl_*_15m` (peut servir si retour futur)
+- Pas de live crypto a creer (live_hyperliquid, dashboard_hl, compare_today_hl annules)
+- Focus total sur MT5: 5ers (live test en cours), FTMO (validated), ICM (live propre)
+
+### Apprentissages transferables pour MT5
+- Le framework fees-aware (integration fees au niveau trade) reste pertinent pour verifier MT5 XAUUSD avec spreads reels
+- La methode fee_per_unit dans optimize_crypto pourrait etre portee dans optimize_all pour audit
+- Les regles look-ahead stricts appliquees dans strats_crypto sont un bon rappel pour tout futur developpement
+
 ## 2026-04-05 — Plan: 35 strategies crypto 15m dediees
 
 ### Contexte
