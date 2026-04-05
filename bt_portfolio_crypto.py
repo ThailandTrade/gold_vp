@@ -1,11 +1,8 @@
 """
-Backtest complet crypto — multi-instrument AVEC FRAIS HYPERLIQUID.
-Derive de bt_portfolio.py, dedie crypto uniquement (zero impact 5ers/ftmo/icm).
-
-Frais Hyperliquid standard (pas de discount):
-  - Entry: Taker market 0.045%
-  - Exit : Maker limit (SL/TP) 0.015%
-  - Round-trip: 0.060% du notional par trade
+Backtest complet crypto — multi-instrument.
+Les frais HL (Taker 0.045% entry + Maker 0.015% exit = 0.060% round-trip)
+sont DEJA appliques au niveau trade dans optimize_crypto.py (pnl net dans pkl).
+Ce script lit simplement le pnl net, aucune application de fee ici.
 
 Usage:
   python bt_portfolio_crypto.py                    # tous instruments
@@ -14,13 +11,7 @@ Usage:
 """
 import warnings; warnings.filterwarnings('ignore')
 import sys, argparse; sys.stdout.reconfigure(encoding='utf-8')
-import numpy as np, pandas as pd, pickle, importlib, re
-from phase1_poc_calculator import get_conn
-from crypto_data import load_candles_hl
-
-# Frais Hyperliquid
-FEE_TAKER = 0.00045  # 0.045% entry (market order)
-FEE_MAKER = 0.00015  # 0.015% exit  (limit SL/TP)
+import pickle, importlib, re
 
 parser = argparse.ArgumentParser(description='Backtest crypto portfolio avec frais HL')
 parser.add_argument('-c', '--capital', type=float, default=None)
@@ -42,18 +33,7 @@ if args.symbol:
 
 CAPITAL = args.capital or 100000.0
 
-# ── Load candles for each symbol once ──
-print("Loading candles for fee computation...", flush=True)
-conn = get_conn()
-SYMBOL_CLOSES = {}  # sym -> np.array of close prices indexed by bar
-for sym in INSTRUMENTS.keys():
-    candles = load_candles_hl(conn, symbol=sym.lower())
-    SYMBOL_CLOSES[sym] = candles['close'].values.astype(np.float64)
-    print(f"  {sym}: {len(candles)} candles loaded (15m)")
-conn.close()
-
 def eval_combo(strat_arrays, portfolio, risk, sym):
-    closes = SYMBOL_CLOSES[sym]
     combined = []
     for sn in portfolio:
         if sn in strat_arrays: combined.extend(strat_arrays[sn])
@@ -73,25 +53,12 @@ def eval_combo(strat_arrays, portfolio, risk, sym):
     cap = CAPITAL; peak = cap; max_dd = 0; gp = 0; gl = 0; wins = 0
     months = {}; entry_caps = {}; strat_stats = {}
     month_detail = {}
-    tot_fees = 0.0
     for bar, evt, idx in events:
         if evt == 0: entry_caps[idx] = cap
         else:
             ei, xi, di, pnl_oz, sl_atr, atr, mo, _sn = accepted[idx]
-            size_usd_risk = entry_caps[idx] * risk  # USD risked
-            # size_units = size_usd_risk / (sl_atr * atr)
-            # notional_entry = size_units * entry_price
-            entry_price = closes[ei]
-            exit_price = closes[xi]
-            size_units = size_usd_risk / (sl_atr * atr)
-            notional_entry = size_units * entry_price
-            notional_exit = size_units * exit_price
-            fee_entry = FEE_TAKER * notional_entry
-            fee_exit = FEE_MAKER * notional_exit
-            fee = fee_entry + fee_exit
-            pnl_gross = pnl_oz * size_units
-            pnl = pnl_gross - fee
-            tot_fees += fee
+            # pnl_oz est deja NET (fees appliquees dans optimize_crypto)
+            pnl = pnl_oz * (entry_caps[idx] * risk) / (sl_atr * atr)
             cap += pnl
             if cap > peak: peak = cap
             dd = (cap - peak) / peak
@@ -114,13 +81,12 @@ def eval_combo(strat_arrays, portfolio, risk, sym):
     return {'n': n, 'pf': gp/(gl+0.01), 'wr': wins/n*100, 'mdd': max_dd*100,
             'ret': (cap-CAPITAL)/CAPITAL*100, 'capital': cap, 'pm': pm, 'tm': len(months),
             'months': months, 'strat_stats': strat_stats, 'month_detail': month_detail,
-            'accepted': accepted, 'tot_fees': tot_fees}
+            'accepted': accepted}
 
 # ── RUN ──
 W = 90
 print(f"\n{'='*W}")
-print(f"  BACKTEST {BROKER} avec frais HL — ${CAPITAL:,.0f}")
-print(f"  Taker entry {FEE_TAKER*100:.3f}% | Maker exit {FEE_MAKER*100:.3f}% | Round-trip {(FEE_TAKER+FEE_MAKER)*100:.3f}%")
+print(f"  BACKTEST {BROKER} (fees HL deja inclus dans pkl) — ${CAPITAL:,.0f}")
 print(f"{'='*W}")
 
 all_sym_trades = []
@@ -151,7 +117,7 @@ for sym, icfg in INSTRUMENTS.items():
     print(f"  {sym} — {len(portfolio)} strats @ {risk*100:.2f}%")
     print(f"{'-'*W}")
     print(f"  Trades: {r['n']:,d} | PF: {r['pf']:.2f} | WR: {r['wr']:.0f}% | DD: {r['mdd']:+.1f}% | Rend: {r['ret']:+,.0f}% | M+: {r['pm']}/{r['tm']}")
-    print(f"  Capital: ${r['capital']:,.0f}  |  Fees cumules: ${r['tot_fees']:,.0f}")
+    print(f"  Capital: ${r['capital']:,.0f}")
 
     print(f"\n  {'Strat':>22s} {'n':>5s} {'WR':>5s} {'PF':>6s} {'PnL':>10s}")
     for sn in portfolio:
@@ -183,23 +149,14 @@ if len(all_sym_trades) > 1:
     entry_caps = {}
     mo_stats = {}
     dd_per_month = {}
-    tot_fees_agg = 0.0
 
     for bar, evt, idx in events:
         if evt == 0:
             entry_caps[idx] = cap
         else:
             ei, xi, di, pnl_oz, sl_atr, atr, mo, sn, risk, sym = filtered[idx]
-            closes = SYMBOL_CLOSES[sym]
-            size_usd_risk = entry_caps[idx] * risk
-            size_units = size_usd_risk / (sl_atr * atr)
-            entry_price = closes[ei]
-            exit_price = closes[xi]
-            notional_entry = size_units * entry_price
-            notional_exit = size_units * exit_price
-            fee = FEE_TAKER * notional_entry + FEE_MAKER * notional_exit
-            pnl = pnl_oz * size_units - fee
-            tot_fees_agg += fee
+            # pnl_oz est deja NET (fees appliquees dans optimize_crypto)
+            pnl = pnl_oz * (entry_caps[idx] * risk) / (sl_atr * atr)
             cap += pnl
             if cap > peak: peak = cap
             dd = (cap - peak) / peak * 100
@@ -238,6 +195,5 @@ if len(all_sym_trades) > 1:
     print(f"  {'-'*85}")
     print(f"  Trades: {tot_n:,d} | WR: {tot_w/tot_n*100:.0f}% | PF: {tot_gp/(tot_gl+0.01):.2f} | Max DD: {max_dd:+.2f}% | Rend: {(cap-CAPITAL)/CAPITAL*100:+.1f}% | M+: {pm}/{len(sorted_months)}")
     print(f"  Capital: ${CAPITAL:,.0f} -> ${cap:,.0f} ({(cap-CAPITAL)/CAPITAL*100:+.1f}%)")
-    print(f"  Fees totaux: ${tot_fees_agg:,.0f}")
 
 print(f"\n{'='*W}")

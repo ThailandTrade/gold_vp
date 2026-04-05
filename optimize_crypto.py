@@ -439,15 +439,23 @@ TPSL_GRID = [(sl, tp) for sl in [0.5, 1.0, 1.5, 2.0, 2.5, 3.0] for tp in [0.25, 
 TRAIL_GRID = [(sl, act, trail) for sl in [0.5, 1.0, 1.5, 2.0, 3.0]
               for act in [0.3, 0.5, 0.75, 1.0] for trail in [0.3, 0.5, 0.75, 1.0]]
 
+# Hyperliquid fees (standard tier, aucun discount)
+#  Entry: Taker (market order au close bougie)  = 0.045%
+#  Exit : Maker (TP/SL limit posant l'ordre)    = 0.015%
+# Fee en "per-unit" = entry_price*FEE_TAKER + exit_price*FEE_MAKER (meme echelle que pnl_per_unit)
+FEE_TAKER = 0.00045
+FEE_MAKER = 0.00015
+def fee_per_unit(entry_price, exit_price):
+    return entry_price * FEE_TAKER + exit_price * FEE_MAKER
+
 def eval_config(signals, etype, p1, p2, p3):
-    """Evaluate one exit config on all signals for a strat."""
+    """Evaluate one exit config on all signals for a strat. Integre fees HL."""
     pnls = []
     for ci, di, entry, atr, date, sp in signals:
         is_open = False  # will be set per-strat later
-        d_str = 'long' if di == 1 else 'short'
         b, ex = sim_exit_np(ci, entry, di, atr, etype, p1, p2, p3, is_open)
         pnl = (ex - entry) if di == 1 else (entry - ex)
-        pnls.append(pnl - sp)
+        pnls.append(pnl - sp - fee_per_unit(entry, ex))
     n = len(pnls)
     if n < 10: return None
     gp = sum(p for p in pnls if p > 0); gl = abs(sum(p for p in pnls if p < 0)) + 0.001
@@ -475,7 +483,7 @@ for sn in sorted(SIG.keys()):
         results = []
         for ci, di, entry, atr, date, sp in sigs_adj:
             b, ex = sim_exit_np(ci, entry, di, atr, 0, sl, tp, 0, is_open)
-            pnl = ((ex - entry) if di == 1 else (entry - ex)) - sp
+            pnl = ((ex - entry) if di == 1 else (entry - ex)) - sp - fee_per_unit(entry, ex)
             results.append((pnl, date))
         n = len(results)
         if n < 10: continue
@@ -493,7 +501,7 @@ for sn in sorted(SIG.keys()):
         results = []
         for ci, di, entry, atr, date, sp in sigs_adj:
             b, ex = sim_exit_np(ci, entry, di, atr, 1, sl, act, trail, is_open)
-            pnl = ((ex - entry) if di == 1 else (entry - ex)) - sp
+            pnl = ((ex - entry) if di == 1 else (entry - ex)) - sp - fee_per_unit(entry, ex)
             results.append((pnl, date))
         n = len(results)
         if n < 10: continue
@@ -527,7 +535,7 @@ for sn, cfg in best_configs.items():
     pnls = []
     for ci, di, entry, atr, date, sp in SIG[sn]:
         b, ex = sim_exit_np(ci, entry, di, atr, etype, cfg['p1'], cfg['p2'], cfg['p3'], is_open)
-        pnl = ((ex - entry) if di == 1 else (entry - ex)) - sp
+        pnl = ((ex - entry) if di == 1 else (entry - ex)) - sp - fee_per_unit(entry, ex)
         pnls.append(pnl)
     wins = [p for p in pnls if p > 0]
     losses = [p for p in pnls if p <= 0]
@@ -556,7 +564,8 @@ for sn in best_configs:
     rows = []
     for ci, di, entry, atr, date, sp in SIG[sn]:
         b, ex = sim_exit_np(ci, entry, di, atr, etype, cfg['p1'], cfg['p2'], cfg['p3'], is_open)
-        pnl = ((ex - entry) if di == 1 else (entry - ex)) - sp
+        # pnl NET: gross - spread - fees HL (entry taker + exit maker)
+        pnl = ((ex - entry) if di == 1 else (entry - ex)) - sp - fee_per_unit(entry, ex)
         mo = f"{date.year}-{str(date.month).zfill(2)}"
         rows.append((ci, ci + b, di, pnl, cfg['p1'], atr, mo, sn))
     strat_arrays[sn] = rows
