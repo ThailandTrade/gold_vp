@@ -28,6 +28,12 @@ Motif: pkls re-optimises (25 mois, forex hours filter, margin WR>=8%) rendaient 
 Score composite utilise pour ranking: `sharpe * sqrt(pf) * pm/tm`.
 LIVE_INSTRUMENTS toujours vide — en attente pipeline live Hyperliquid.
 
+### strat_exits.py regenere (2026-04-05)
+- Anciennes entrees crypto (12 cryptos stales: BNB/LTC/BCH/AVA/NEO/BTC/XMR/DOT/DOGE/XRP/ETH/ETC) supprimees
+- Nouvelles entrees pour les 10 cryptos valides (BNB, BTC, ETH, BCH, AVA, NEO, DOGE, DOT, ADA, AAVE)
+- Tous les strats de chaque portfolio sont couverts, sync depuis best_configs des pkls actuels (25 mois)
+- Aucune modification des entrees 5ers / ftmo / icm — zero regression sur MT5
+
 ## 2026-04-04 — Test strategies sur cryptos
 
 ### Cryptos chargees en DB (1 an de 5m, ~100k bougies chacune)
