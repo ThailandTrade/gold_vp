@@ -66,10 +66,16 @@ ALL_INSTRUMENTS = {
     'DOTUSD': {
         'risk_pct': 0.002,
         'portfolio': [
-            'IDX_BB_REV','IDX_RSI_REV','ALL_ADX_FAST','ALL_CCI_100',
-            'ALL_PSAR_EMA','ALL_RSI_EXTREME','ALL_SUPERTREND','IDX_CONSEC_REV',
+            'D8','ALL_MACD_HIST','ALL_STOCH_RSI',
         ],
-        # Calmar 8: PF 1.40 | WR 73% | DD -0.9% | Rend +15% | 11/13
+        # Calmar 3: PF 1.39 | WR 80% | DD -2.2% | Rend +22% | 18/25
+    },
+    'ADAUSD': {
+        'risk_pct': 0.002,
+        'portfolio': [
+            'D8','ALL_RSI_DIV',
+        ],
+        # Calmar 2: PF 1.38 | WR 80% | DD -1.3% | Rend +11% | 19/25
     },
     'DOGEUSD': {
         'risk_pct': 0.002,
