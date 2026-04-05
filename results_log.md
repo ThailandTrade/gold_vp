@@ -1686,3 +1686,10 @@ apres analyse des combos (analyze_combos.py 5ers --symbol jpn225 etc.)
 - PF 1.82 | WR 79% | DD -2.0% @ 0.25% | +86% | 13/13 mois
 - TOK_NR4 et LON_DC10_MOM ajoutes a detect_all dans strats.py
 - Attention: pas de spread, resultats possiblement optimistes
+
+### Crypto combo validation (2026-04-05)
+- **ADAUSD** ajoute: `D8, ALL_RSI_DIV` — Calmar 2: PF 1.38 | WR 80% | DD -1.3% | Rend +11% | 19/25
+- **DOTUSD** remplace (vieux 8 strats 11/13 -> nouveau 3 strats 18/25): `D8, ALL_MACD_HIST, ALL_STOCH_RSI` — Calmar 3: PF 1.39 | WR 80% | DD -2.2% | Rend +22% | 18/25
+- **Skip**: NEAR, ALGO, PEPE, ZEC, LNK, SUI, FET, UNI, HYPE, TAO, SOL (perfs insuffisantes ou trop risque)
+- Config crypto actif: 13 cryptos (BNB, LTC, BCH, AVA, NEO, BTC, XMR, DOT, DOGE, XRP, ETH, ETC, ADA)
+- LIVE_INSTRUMENTS toujours vide — en attente activation Hyperliquid
