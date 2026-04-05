@@ -1,5 +1,33 @@
 # Results Log — Evolution des resultats
 
+**Regle**: entrees anti-chronologiques (plus recentes en haut).
+
+## 2026-04-05 — Crypto combo re-validation complete
+
+Motif: pkls re-optimises (25 mois, forex hours filter, margin WR>=8%) rendaient les anciens portfolios stales (ecrits lors d'une session precedente sur d'anciens pkls).
+
+**10 cryptos validees** (remplacent les 13 anciennes stales):
+
+| Crypto | Combo | Strats | PF | WR | DD | Rend | M+ |
+|---|---|---|---|---|---|---|---|
+| BNBUSD | PF 9 | ALL_CMO_9, LON_ASIAN_BRK, TOK_2BAR, LON_STOCH, ALL_HMA_CROSS, ALL_MACD_FAST_SIG, TOK_NR4, IDX_BB_REV, NY_HMA_CROSS | 1.54 | 72% | -3.9% | +253% | 25/25 |
+| BTCUSD | Calmar 3 | D8, ALL_AO_SAUCER, PO3_SWEEP | 1.73 | 82% | -1.4% | +27% | 23/25 |
+| ETHUSD | Calmar 3 | D8, ALL_ENGULF, IDX_ENGULF | 1.55 | 75% | -3.6% | +41% | 21/25 |
+| BCHUSD | Calmar 4 | ALL_CCI_100, LON_ASIAN_BRK, ALL_MOM_14, ALL_CMO_14_ZERO | 1.37 | 58% | -5.7% | +97% | 18/25 |
+| AVAUSD | Calmar 4 | D8, ALL_DOJI_REV, IDX_GAP_FILL, ALL_MACD_HIST | 1.28 | 69% | -4.4% | +36% | 19/25 |
+| NEOUSD | Calmar 5 | D8, ALL_HAMMER, ALL_RSI_DIV, LON_ASIAN_BRK, ALL_MACD_DIV | 1.41 | 68% | -3.3% | +74% | 23/25 |
+| DOGEUSD | Calmar 2 | ALL_AO_SAUCER, ALL_ELDER_BEAR | 1.45 | 77% | -2.2% | +27% | 20/25 |
+| DOTUSD | Calmar 3 | D8, ALL_MACD_HIST, ALL_STOCH_RSI | 1.39 | 80% | -2.2% | +22% | 18/25 |
+| ADAUSD | Calmar 2 | D8, ALL_RSI_DIV | 1.38 | 80% | -1.3% | +11% | 19/25 |
+| AAVEUSD | Calmar 2 | D8, IDX_NY_MOM | 1.61 | 74% | -1.2% | +18% | 21/25 |
+
+**Skip (15)**:
+- Perfs insuffisantes: NEAR, ALGO, XRP, PEPE, ZEC, LNK
+- Data issues (pkl post-filtre margin 8% vide ou open strats uniquement): LTC, XMR, ETC, FET, HYPE, SOL, SUI, TAO, UNI
+
+Score composite utilise pour ranking: `sharpe * sqrt(pf) * pm/tm`.
+LIVE_INSTRUMENTS toujours vide — en attente pipeline live Hyperliquid.
+
 ## 2026-04-04 — Test strategies sur cryptos
 
 ### Cryptos chargees en DB (1 an de 5m, ~100k bougies chacune)
@@ -1686,28 +1714,3 @@ apres analyse des combos (analyze_combos.py 5ers --symbol jpn225 etc.)
 - PF 1.82 | WR 79% | DD -2.0% @ 0.25% | +86% | 13/13 mois
 - TOK_NR4 et LON_DC10_MOM ajoutes a detect_all dans strats.py
 - Attention: pas de spread, resultats possiblement optimistes
-
-### Crypto combo validation (2026-04-05)
-- **ADAUSD** ajoute: `D8, ALL_RSI_DIV` — Calmar 2: PF 1.38 | WR 80% | DD -1.3% | Rend +11% | 19/25
-- **DOTUSD** remplace (vieux 8 strats 11/13 -> nouveau 3 strats 18/25): `D8, ALL_MACD_HIST, ALL_STOCH_RSI` — Calmar 3: PF 1.39 | WR 80% | DD -2.2% | Rend +22% | 18/25
-- **Skip**: NEAR, ALGO, PEPE, ZEC, LNK, SUI, FET, UNI, HYPE, TAO, SOL (perfs insuffisantes ou trop risque)
-- Config crypto actif: 13 cryptos (BNB, LTC, BCH, AVA, NEO, BTC, XMR, DOT, DOGE, XRP, ETH, ETC, ADA)
-- LIVE_INSTRUMENTS toujours vide — en attente activation Hyperliquid
-
-### Crypto combo re-validation complete (2026-04-05)
-- Motif: pkls re-optimises (25 mois, forex filter, margin >=8%) rendaient les anciens portfolios stales
-- **10 cryptos validees** (contre 13 anciennes stales):
-  - BNBUSD: PF 9 — ALL_CMO_9, LON_ASIAN_BRK, TOK_2BAR, LON_STOCH, ALL_HMA_CROSS, ALL_MACD_FAST_SIG, TOK_NR4, IDX_BB_REV, NY_HMA_CROSS — PF 1.54 WR 72% DD -3.9% Rend +253% 25/25
-  - BTCUSD: Calmar 3 — D8, ALL_AO_SAUCER, PO3_SWEEP — PF 1.73 WR 82% DD -1.4% Rend +27% 23/25
-  - ETHUSD: Calmar 3 — D8, ALL_ENGULF, IDX_ENGULF — PF 1.55 WR 75% DD -3.6% Rend +41% 21/25
-  - BCHUSD: Calmar 4 — ALL_CCI_100, LON_ASIAN_BRK, ALL_MOM_14, ALL_CMO_14_ZERO — PF 1.37 WR 58% DD -5.7% Rend +97% 18/25
-  - AVAUSD: Calmar 4 — D8, ALL_DOJI_REV, IDX_GAP_FILL, ALL_MACD_HIST — PF 1.28 WR 69% DD -4.4% Rend +36% 19/25
-  - NEOUSD: Calmar 5 — D8, ALL_HAMMER, ALL_RSI_DIV, LON_ASIAN_BRK, ALL_MACD_DIV — PF 1.41 WR 68% DD -3.3% Rend +74% 23/25
-  - DOGEUSD: Calmar 2 — ALL_AO_SAUCER, ALL_ELDER_BEAR — PF 1.45 WR 77% DD -2.2% Rend +27% 20/25
-  - DOTUSD: Calmar 3 — D8, ALL_MACD_HIST, ALL_STOCH_RSI — PF 1.39 WR 80% DD -2.2% Rend +22% 18/25
-  - ADAUSD: Calmar 2 — D8, ALL_RSI_DIV — PF 1.38 WR 80% DD -1.3% Rend +11% 19/25
-  - AAVEUSD: Calmar 2 — D8, IDX_NY_MOM — PF 1.61 WR 74% DD -1.2% Rend +18% 21/25
-- **Skip perfs insuffisantes**: NEAR, ALGO, XRP, PEPE, ZEC, LNK
-- **Skip data issues** (pkl apres filtre margin 8% vide ou open strats uniquement): LTC, XMR, ETC, FET, HYPE, SOL, SUI, TAO, UNI
-- Score composite utilise pour ranking: sharpe * sqrt(pf) * pm/tm
-- LIVE_INSTRUMENTS toujours vide - en attente pipeline live Hyperliquid
