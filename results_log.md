@@ -22,8 +22,21 @@ MT5 `order_send` retourne `result.price = 0.00` sur FTMO (quirk broker). `live_m
 ### Aussi fixe
 - `compare_today.py`: ATR calcule via `compute_atr()` (identique pipeline) au lieu d'un calcul inline divergent
 
+### Aussi fixe: compare_today.py filtre de date (broker UTC+3)
+- `din.time` de MT5 est en heure broker (UTC+3), pas UTC
+- Filtre par `(entry_broker - 3h).date() == today` pour eviter les trades de la veille
+- Corrige les faux DIR MISMATCH sur trades du dimanche soir
+
+### Resultats compare 5ers (apres fix)
+- 4/4 trades directions matchent ✓
+- TOK_FISHER: BT -22 / LV -23.57 (diff -1.57, spread)
+- ALL_PIVOT_BRK: BT +4.54 / LV +1.82 (diff -2.72, spread+slippage)
+- ALL_BB_TIGHT: BT +15.63 / LV +6.35 (diff -9.28, BT fallback dernier bar)
+- ALL_FVG_BULL: BT +20.46 / LV +11.10 (diff -9.36, idem)
+- Entry diffs 2.4-2.9 pts = spread + slippage (ouverture session)
+
 ### Action immediate
-- Redeployer `live_mt5.py` sur le VPS FTMO
+- Redeployer `live_mt5.py` sur le VPS FTMO (bug fill=0)
 
 ## 2026-04-05 — DECISION: abandon complet de la crypto algo
 
