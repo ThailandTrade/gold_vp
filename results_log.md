@@ -21,8 +21,15 @@ Scripts modifies:
 - `optimize_all.py` : a terme (sim_exit_np reste pour la perf grid search)
 
 ### Validation
-- Resultat de reference: bt_portfolio 5ers XAUUSD temps reel = PF 1.49, WR 71%, DD -0.8%, Rend +12%, 1619 trades, M+ 12/13
-- Apres refacto, le meme `python bt_portfolio.py 5ers --symbol XAUUSD` doit donner EXACTEMENT les memes chiffres
+- Resultat de reference: bt_portfolio 5ers XAUUSD = PF 1.49, WR 71%, DD -0.8%, Rend +12%, 1619 trades, M+ 12/13
+- Apres refacto: **EXACT MATCH** (1619 trades, PF 1.49, WR 71%, $111,931)
+- compare_today 5ers: 5/5 directions match, deltas reduits (BB_TIGHT -1.03 vs -9.28 avant)
+
+### Scripts alignes sur backtest_engine.py
+- `bt_portfolio.py` ✓ — import load_data, collect_trades, eval_portfolio
+- `compare_today.py` ✓ — import load_data, collect_trades (date_filter=today)
+- `live_mt5.py` ✓ — import load_data, prev_trading_day, OPEN_STRATS, _make_day_data
+- `optimize_all.py` — a terme (sim_exit_np reste pour perf grid search)
 
 ## 2026-04-06 — REFACTO: bt_portfolio sans pkl, tout en temps reel
 
