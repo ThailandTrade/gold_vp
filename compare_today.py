@@ -61,6 +61,10 @@ try:
         for pid, td in pos_deals.items():
             if not td['in'] or not td['out']: continue
             din = td['in']; dout = td['out']
+            # din.time est en heure broker (UTC+3) — convertir en UTC pour filtrer
+            entry_broker = datetime.fromtimestamp(din.time, tz=timezone.utc)
+            entry_utc = entry_broker - timedelta(hours=3)
+            if entry_utc.date() != today: continue
             sym_sn = MAGIC_REVERSE.get(din.magic)
             if not sym_sn: continue
             sym, sn = sym_sn
@@ -69,7 +73,7 @@ try:
                 'strat': sn, 'dir': d_dir,
                 'entry': din.price, 'exit': dout.price,
                 'pnl': td['pnl'],
-                'entry_time': datetime.fromtimestamp(din.time, tz=timezone.utc),
+                'entry_time': entry_broker,  # stocker heure broker, l'affichage soustrait 3h
                 'exit_time': datetime.fromtimestamp(dout.time, tz=timezone.utc),
             })
 
