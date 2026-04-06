@@ -81,7 +81,14 @@ Zero strats open dans les portfolios ✓
 Risk: 0.05% par instrument
 strat_exits regenere depuis pkls frais (sim_exit_np fallback fixe)
 LIVE_INSTRUMENTS = ['XAUUSD'] (seul actif en live)
-Validation bt_portfolio agrege en cours...
+
+### Validation bt_portfolio agrege (backtest_engine, temps reel)
+```
+Trades: 8,278 | WR: 72% | PF: 1.52 | Max DD: -1.32% | Rend: +82.4% | M+: 13/13
+Capital: $100,000 → $182,381
+```
+13/13 mois positifs. DD max -1.32% sur compte unique 6 instruments.
+Calcule 100% en temps reel depuis la DB via backtest_engine.py — zero pkl.
 
 ## 2026-04-06 — REFACTO: bt_portfolio sans pkl, tout en temps reel
 
