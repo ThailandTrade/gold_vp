@@ -2,6 +2,26 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-06 — REFACTO: bt_portfolio sans pkl, tout en temps reel
+
+### Probleme identifie par audit
+- `audit_bt_vs_compare.py` sur 5ers: **0% match** entre bt_portfolio (pkl) et compare_today (temps reel)
+- Cause: le pkl stocke des bar indices (`ei=70444`) lies a un snapshot de candles. La DB a change depuis (re-fetch, drop last candle) → indices OOB, trades decales
+- 3 sources de verite divergentes: pkl (bt_portfolio), detect_all temps reel (compare_today), live (live_mt5)
+
+### Decision
+Supprimer la dependance au pkl dans bt_portfolio.py. Le BT recalcule detect_all + sim_exit en temps reel depuis la DB, exactement comme compare_today et live_mt5.
+
+### Nouvelle architecture
+- `optimize_all.py` → genere toujours le pkl (cache pour grid search + analyze_combos)
+- `analyze_combos.py` → lit toujours le pkl (partie optimisation)
+- `strat_exits.py` → genere depuis pkl (configs exits)
+- **`bt_portfolio.py`** → **NOUVEAU: calcul temps reel depuis DB + strat_exits** (plus de pkl)
+- `compare_today.py` → temps reel depuis DB (deja fait)
+- `live_mt5.py` → temps reel depuis DB (deja fait)
+
+Resultat: BT = compare = live = **meme code, memes donnees**. Plus jamais de divergence pkl/DB.
+
 ## 2026-04-06 — BUG CRITIQUE live_mt5: fill price=0 casse le trailing
 
 ### Bug identifie
