@@ -29,7 +29,33 @@ Scripts modifies:
 - `bt_portfolio.py` ✓ — import load_data, collect_trades, eval_portfolio
 - `compare_today.py` ✓ — import load_data, collect_trades (date_filter=today)
 - `live_mt5.py` ✓ — import load_data, prev_trading_day, OPEN_STRATS, _make_day_data
-- `optimize_all.py` — a terme (sim_exit_np reste pour perf grid search)
+- `optimize_all.py` — sim_exit_np TRAIL fallback fixe (return max_bars, close)
+
+### Re-pipeline complet 5ers (2026-04-06)
+Optimize_all + analyze_combos + selection combos + config + strat_exits, tout sur candles actuelles DB.
+
+| Instrument | Combo | Nb | PF | WR | DD | Rend | M+ |
+|---|---|---|---|---|---|---|---|
+| XAUUSD | Sharpe 8 | 8 | 1.50 | 70% | -0.7% | +11% | 13/13 |
+| JPN225 | Calmar 3 | 3 | 1.59 | 79% | -0.6% | +5% | 11/13 |
+| DAX40 | Sharpe 9 | 9 | 1.70 | 74% | -0.7% | +19% | 13/13 |
+| NAS100 | Calmar 8 | 8 | 1.39 | 67% | -1.4% | +13% | 13/13 |
+| SP500 | Sharpe 6 | 6 | 1.49 | 66% | -0.8% | +13% | 12/13 |
+| UK100 | Calmar 3 | 3 | 1.51 | 83% | -0.3% | +4% | 12/13 |
+
+Portfolios:
+- XAUUSD: IDX_VWAP_BOUNCE, ALL_FVG_BULL, PO3_SWEEP, ALL_PIVOT_BRK, D8, IDX_PREV_HL, ALL_BB_TIGHT, IDX_ORB30
+- JPN225: ALL_NR4, ALL_STOCH_PIVOT, TOK_NR4
+- DAX40: ALL_MACD_HIST, ALL_CCI_20_ZERO, ALL_ELDER_BULL, IDX_TREND_DAY, ALL_FIB_618, ALL_RSI_DIV, TOK_FISHER, TOK_STOCH, IDX_ENGULF
+- NAS100: D8, ALL_STOCH_RSI, LON_STOCH, ALL_CCI_100, ALL_WILLR_7, ALL_RSI_50, ALL_DOJI_REV, ALL_ADX_RSI50
+- SP500: TOK_FISHER, IDX_CONSEC_REV, IDX_RSI_REV, ALL_ENGULF, ALL_HAMMER, ALL_RSI_EXTREME
+- UK100: ALL_MACD_HIST, IDX_LATE_REV, ALL_CONSEC_REV
+
+Zero strats open dans les portfolios ✓
+Risk: 0.05% par instrument
+strat_exits regenere depuis pkls frais (sim_exit_np fallback fixe)
+LIVE_INSTRUMENTS = ['XAUUSD'] (seul actif en live)
+Validation bt_portfolio agrege en cours...
 
 ## 2026-04-06 — REFACTO: bt_portfolio sans pkl, tout en temps reel
 
