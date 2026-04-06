@@ -6,10 +6,11 @@ import warnings; warnings.filterwarnings('ignore')
 import sys, argparse, importlib; sys.stdout.reconfigure(encoding='utf-8')
 import pandas as pd, numpy as np
 from dotenv import load_dotenv; load_dotenv()
-from phase1_poc_calculator import get_conn, compute_atr, get_trading_days
-from strats import detect_all, compute_indicators, sim_exit_custom, make_magic
+from phase1_poc_calculator import get_conn
+from strats import make_magic
 from strat_exits import STRAT_EXITS, DEFAULT_EXIT
-from datetime import datetime, timezone
+from backtest_engine import load_data, collect_trades, OPEN_STRATS
+from datetime import datetime, timezone, timedelta
 from prettytable import PrettyTable
 
 parser = argparse.ArgumentParser()
@@ -20,8 +21,7 @@ cfg = importlib.import_module(f'config_{args.account}')
 BROKER = cfg.BROKER
 INSTRUMENTS = cfg.INSTRUMENTS
 
-OPEN_STRATS = {'TOK_FADE','TOK_PREVEXT','LON_GAP','LON_BIGGAP','LON_KZ','LON_TOKEND','LON_PREV',
-               'NY_GAP','NY_LONEND','NY_LONMOM','NY_DAYMOM'}
+# OPEN_STRATS importe depuis backtest_engine (source unique)
 
 def _magic(symbol, strat):
     return make_magic(args.account, symbol, strat)
@@ -105,95 +105,36 @@ for sym, icfg in INSTRUMENTS.items():
     if not portfolio: continue
     sym_exits = STRAT_EXITS.get((args.account, sym), {})
 
-    # Load candles
-    import re
-    table = f"candles_mt5_{re.sub(r'[^a-z0-9]+', '_', sym.lower()).strip('_')}_5m"
-    cur = conn.cursor()
-    cur.execute(f"SELECT ts, open, high, low, close FROM {table} ORDER BY ts DESC LIMIT 2000")
-    rows = cur.fetchall(); cur.close()
-    if not rows: continue
-    df = pd.DataFrame(rows, columns=['ts','open','high','low','close']).sort_values('ts').reset_index(drop=True)
-    df['ts_dt'] = pd.to_datetime(df['ts'], unit='ms', utc=True)
-    for c in ['open','high','low','close']: df[c] = df[c].astype(float)
-    df['date'] = df['ts_dt'].dt.date
-    df = compute_indicators(df)
+    # Load data via backtest_engine (memes candles/ATR/indicateurs que bt_portfolio)
+    candles, daily_atr, global_atr, trading_days = load_data(conn, sym)
+    from backtest_engine import prev_trading_day
+    pd_ = prev_trading_day(today, trading_days)
+    atr = daily_atr.get(pd_, global_atr) if pd_ else global_atr
 
-    # ATR from compute_atr (identique au pipeline optimize/live)
-    daily_atr, global_atr = compute_atr(conn, symbol=sym.lower())
-    trading_days = get_trading_days(conn, symbol=sym.lower())
-    # ATR du jour precedent (prev trading day)
-    prev_td = None
-    for di_idx, d_val in enumerate(trading_days):
-        if d_val >= today:
-            prev_td = trading_days[di_idx-1] if di_idx > 0 else None
-            break
-    if prev_td is None and trading_days:
-        prev_td = trading_days[-1]
-    atr = daily_atr.get(prev_td, global_atr) if prev_td else global_atr
+    # Collect trades via backtest_engine (meme code que bt_portfolio)
+    raw_trades = collect_trades(candles, daily_atr, global_atr, trading_days,
+                                portfolio, sym_exits, date_filter=today)
 
-    # prev_day_data + prev2
-    yc = df[df['date'] < today].copy()
-    if len(yc) < 20: continue
-    last_day = yc['date'].iloc[-1]
-    dc = yc[yc['date'] == last_day]
-    prev_day_data = {'open':float(dc.iloc[0]['open']), 'close':float(dc.iloc[-1]['close']),
-                     'high':float(dc['high'].max()), 'low':float(dc['low'].min()),
-                     'range':float(dc['high'].max()-dc['low'].min())}
-    yc2 = yc[yc['date'] < last_day]
-    prev2_day_data = None
-    if len(yc2) > 0:
-        ld2 = yc2['date'].iloc[-1]; dc2 = yc2[yc2['date'] == ld2]
-        prev2_day_data = {'open':float(dc2.iloc[0]['open']), 'close':float(dc2.iloc[-1]['close']),
-                          'high':float(dc2['high'].max()), 'low':float(dc2['low'].min()),
-                          'range':float(dc2['high'].max()-dc2['low'].min())}
-
-    # Backtest signals for today
-    trig = {}; bt_signals = []
-    for ci in range(len(df)):
-        row = df.iloc[ci]; ct = row['ts_dt']; d = ct.date()
-        if d != today: continue
-        hour = ct.hour + ct.minute / 60.0
-        ds = pd.Timestamp(d.year,d.month,d.day,0,0,tz='UTC')
-        te = pd.Timestamp(d.year,d.month,d.day,6,0,tz='UTC')
-        ls = pd.Timestamp(d.year,d.month,d.day,8,0,tz='UTC')
-        ns = pd.Timestamp(d.year,d.month,d.day,14,30,tz='UTC')
-        tv = df[(df['ts_dt']>=ds)&(df['ts_dt']<=ct)]
-        tok = tv[tv['ts_dt']<te]; lon = tv[(tv['ts_dt']>=ls)&(tv['ts_dt']<ns)]
-        def add(sn, d_dir, e):
-            if sn in portfolio:
-                bt_signals.append((ci, sn, d_dir, e, str(ct)))
-        detect_all(df, ci, row, ct, d, hour, atr, trig, tv, tok, lon, prev_day_data, add, prev2_day_data)
-
-    # Simulate with conflict filter (tri alphabetique = identique a analyze_combos.py)
-    bt_signals.sort(key=lambda x: (x[0], x[1]))
+    # Convertir en format compare_today
     bt_trades = []
-    active_pos = []
-    for ci, sn, d_dir, entry, ct_str in bt_signals:
-        is_open = sn in OPEN_STRATS
-        exit_cfg = sym_exits.get(sn, DEFAULT_EXIT)
-        etype, p1, p2, p3 = exit_cfg[0], exit_cfg[1], exit_cfg[2], exit_cfg[3] if len(exit_cfg) > 3 else 0
-        b, ex = sim_exit_custom(df, ci, entry, d_dir, atr, etype, p1, p2, p3, check_entry_candle=is_open)
-        xi = ci + b
-        di = 1 if d_dir == 'long' else -1
-        active_pos = [(axi, ad) for axi, ad in active_pos if axi >= ci]
-        skipped = None
-        if any(ad != di for _, ad in active_pos):
-            skipped = 'conflit'
-        pnl = (ex - entry) if d_dir == 'long' else (entry - ex)
-        if not skipped:
-            active_pos.append((xi, di))
-        bt_trades.append({'strat':sn, 'dir':d_dir, 'entry':entry, 'exit':ex,
-                          'pnl_pts': pnl if not skipped else 0,
-                          'bars':b, 'entry_time':ct_str,
-                          'exit_time':str(df.iloc[min(xi,len(df)-1)]['ts_dt']),
-                          'skipped': skipped})
+    for ci, xi, di, pnl_oz, sl_atr, atr_t, mo, sn in raw_trades:
+        d_dir = 'long' if di == 1 else 'short'
+        entry = float(candles.iloc[ci]['close'])
+        ex = entry + pnl_oz if di == 1 else entry - pnl_oz
+        bt_trades.append({
+            'strat': sn, 'dir': d_dir, 'entry': entry, 'exit': ex,
+            'pnl_pts': pnl_oz, 'bars': xi - ci,
+            'entry_time': str(candles.iloc[ci]['ts_dt']),
+            'exit_time': str(candles.iloc[min(xi, len(candles)-1)]['ts_dt']),
+            'skipped': None,
+        })
 
     # Live data for this symbol
     lv = live_trades.get(sym, [])
     lo = live_open.get(sym, [])
 
-    bt_active = [t for t in bt_trades if not t['skipped']]
-    bt_skip = [t for t in bt_trades if t['skipped']]
+    bt_active = bt_trades  # tous les trades (conflict filter deja applique dans collect_trades)
+    bt_skip = []
 
     if not bt_active and not bt_skip and not lv and not lo: continue
 

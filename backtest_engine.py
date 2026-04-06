@@ -1,117 +1,219 @@
 """
-Moteur de backtest commun — utilise par simu_icmarkets.py et simu_ftmo.py.
+Moteur de backtest unifie — source unique de verite pour tout le pipeline.
+Importe par: bt_portfolio, compare_today, live_mt5, optimize_all.
+
+Garantit: memes candles, meme ATR, memes indicateurs, memes signaux,
+memes exits, meme conflict filter — partout.
 """
-import numpy as np, pandas as pd
-from strats import SL, ACT, TRAIL, sim_exit, sim_exit_custom, detect_all
+import numpy as np
+import pandas as pd
+from phase1_poc_calculator import get_conn, compute_atr, get_trading_days
+from phase3_analyze import load_candles_5m
+from strats import detect_all, compute_indicators, sim_exit_custom
 from strat_exits import STRAT_EXITS, DEFAULT_EXIT
 
-def run_backtest(candles, daily_atr, global_atr, trading_days, monthly_spread, portfolio, broker_name, capital=1000.0, risk=0.01, spread_override=None):
-    avg_sp = np.mean(list(monthly_spread.values())) if monthly_spread else 0.10
-    def prev_day(day):
-        for di, d in enumerate(trading_days):
-            if d >= day: return trading_days[di-1] if di > 0 else None
-        return None
-    def get_sp(day):
-        if spread_override is not None: return spread_override
-        return 2 * monthly_spread.get(str(day.year)+"-"+str(day.month).zfill(2), avg_sp)
 
-    S = {}
-    prev_d = None; trig = {}; day_atr = None; prev_day_data = None; prev2_day_data = None
-    for ci in range(len(candles)):
+# ══════════════════════════════════════════════════════════════
+#  CONSTANTES — definies UNE SEULE FOIS
+# ══════════════════════════════════════════════════════════════
+
+OPEN_STRATS = frozenset({
+    'TOK_FADE', 'TOK_PREVEXT', 'LON_GAP', 'LON_BIGGAP', 'LON_KZ',
+    'LON_TOKEND', 'LON_PREV', 'NY_GAP', 'NY_LONEND', 'NY_LONMOM', 'NY_DAYMOM',
+})
+
+
+# ══════════════════════════════════════════════════════════════
+#  LOAD DATA — candles + ATR + trading_days + indicateurs
+# ══════════════════════════════════════════════════════════════
+
+def load_data(conn, symbol):
+    """Charge candles FULL history + ATR + trading_days + indicateurs precalcules.
+    Retourne (candles_df, daily_atr_dict, global_atr_float, trading_days_list).
+    """
+    candles = load_candles_5m(conn, symbol=symbol.lower())
+    daily_atr, global_atr = compute_atr(conn, symbol=symbol.lower())
+    trading_days_list = get_trading_days(conn, symbol=symbol.lower())
+    candles = compute_indicators(candles)
+    return candles, daily_atr, global_atr, trading_days_list
+
+
+# ══════════════════════════════════════════════════════════════
+#  PREV DAY — jour de trading precedent
+# ══════════════════════════════════════════════════════════════
+
+def prev_trading_day(day, trading_days_list):
+    """Retourne le jour de trading precedent."""
+    for di, d in enumerate(trading_days_list):
+        if d >= day:
+            return trading_days_list[di - 1] if di > 0 else None
+    return trading_days_list[-1] if trading_days_list else None
+
+
+# ══════════════════════════════════════════════════════════════
+#  COLLECT TRADES — signaux + exits + conflict filter
+# ══════════════════════════════════════════════════════════════
+
+def collect_trades(candles, daily_atr, global_atr, trading_days_list, portfolio, sym_exits, date_filter=None):
+    """
+    Detecte tous les signaux + simule les exits en temps reel.
+    Meme code pour bt_portfolio, compare_today, et live.
+
+    Args:
+        candles: DataFrame avec indicateurs precalcules (from load_data)
+        daily_atr: dict date -> ATR (from compute_atr)
+        global_atr: float ATR global (fallback)
+        trading_days_list: list de dates
+        portfolio: list de noms de strats a detecter
+        sym_exits: dict strat -> (type, p1, p2, p3)
+        date_filter: si specifie, ne collecte que les signaux de ce jour (date object)
+
+    Returns:
+        list of (ci, xi, di, pnl_oz, sl_atr, atr, mo, sn) — meme format que strat_arrays
+    """
+    portfolio_set = set(portfolio)
+
+    # Phase 1: collecter les signaux bruts
+    signals = []
+    prev_d = None; trig = {}; day_atr = None
+    prev_day_data = None; prev2_day_data = None
+
+    for ci in range(200, len(candles)):
         row = candles.iloc[ci]; ct = row['ts_dt']; today = ct.date()
         hour = ct.hour + ct.minute / 60.0
+
+        # Gestion du changement de jour (toujours, meme si on filtre)
         if today != prev_d:
             if prev_d:
-                yc = candles[candles['date']==prev_d]
+                yc = candles[candles['date'] == prev_d]
                 if len(yc) > 0:
                     prev2_day_data = prev_day_data
-                    prev_day_data = {'open': float(yc.iloc[0]['open']), 'close': float(yc.iloc[-1]['close']),
-                                     'high': float(yc['high'].max()), 'low': float(yc['low'].min()),
-                                     'range': float(yc['high'].max()-yc['low'].min()),
-                                     'body': float(yc.iloc[-1]['close']-yc.iloc[0]['open'])}
+                    prev_day_data = _make_day_data(yc)
             prev_d = today; trig = {}
-            pd_ = prev_day(today); day_atr = daily_atr.get(pd_, global_atr) if pd_ else global_atr
+            pd_ = prev_trading_day(today, trading_days_list)
+            day_atr = daily_atr.get(pd_, global_atr) if pd_ else global_atr
+
+        # Si date_filter actif, skip les bars hors du jour demande
+        if date_filter is not None and today != date_filter:
+            continue
+
         atr = day_atr
-        if atr == 0 or atr is None: continue
-        ds = pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')
-        te = pd.Timestamp(today.year,today.month,today.day,6,0,tz='UTC')
-        ls = pd.Timestamp(today.year,today.month,today.day,8,0,tz='UTC')
-        ns = pd.Timestamp(today.year,today.month,today.day,14,30,tz='UTC')
-        tv = candles[(candles['ts_dt']>=ds)&(candles['ts_dt']<=ct)]
-        tok = tv[tv['ts_dt']<te]; lon = tv[(tv['ts_dt']>=ls)&(tv['ts_dt']<ns)]
-        OPEN_STRATS = ['TOK_FADE','TOK_PREVEXT','LON_GAP','LON_BIGGAP','LON_KZ','LON_TOKEND','LON_PREV','NY_GAP','NY_LONEND','NY_LONMOM','NY_DAYMOM']
-        def add(sn, d, e):
-            if sn not in portfolio: return
-            check_entry = sn in OPEN_STRATS
-            exit_cfg = STRAT_EXITS.get(sn, DEFAULT_EXIT)
-            etype, p1, p2, p3 = exit_cfg
-            b, ex = sim_exit_custom(candles, ci, e, d, atr, etype, p1, p2, p3, check_entry_candle=check_entry)
-            pnl = (ex-e) if d=='long' else (e-ex)
-            S.setdefault(sn,[]).append({'date':today,'dir':d,'sl_atr':p1,'pnl_oz':pnl-get_sp(today),'atr':atr,'ei':ci,'xi':ci+b})
-        detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_day_data, add, prev2_day_data)
+        if atr == 0 or atr is None:
+            continue
 
-    # Combine et filtre conflits
-    combined = []
-    for sn in portfolio:
-        for t in S.get(sn, []): combined.append({**t, 'strat': sn})
-    combined.sort(key=lambda x: (x['ei'], x['strat']))
-    al = []; acc = []
-    for t in combined:
-        al = [(xi, d) for xi, d in al if xi >= t['ei']]
-        if any(d != t['dir'] for _, d in al): continue
-        acc.append(t); al.append((t['xi'], t['dir']))
+        ds = pd.Timestamp(today.year, today.month, today.day, 0, 0, tz='UTC')
+        te = pd.Timestamp(today.year, today.month, today.day, 6, 0, tz='UTC')
+        ls = pd.Timestamp(today.year, today.month, today.day, 8, 0, tz='UTC')
+        ns = pd.Timestamp(today.year, today.month, today.day, 14, 30, tz='UTC')
+        tv = candles[(candles['ts_dt'] >= ds) & (candles['ts_dt'] <= ct)]
+        tok = tv[tv['ts_dt'] < te]
+        lon = tv[(tv['ts_dt'] >= ls) & (tv['ts_dt'] < ns)]
 
-    # Simulation capital
-    cap = capital; peak = cap; global_dd = 0; months = {}
-    for t in acc:
-        pnl = t['pnl_oz'] * (cap * risk) / (t['sl_atr'] * t['atr'])
-        cap += pnl
-        if cap > peak: peak = cap
-        dd = (cap - peak) / peak * 100
-        if dd < global_dd: global_dd = dd
-        mo = str(t['date'].year)+"-"+str(t['date'].month).zfill(2)
-        if mo not in months:
-            months[mo] = {'cap_start': cap-pnl, 'cap_end': cap, 'n': 0, 'wins': 0,
-                          'gp': 0, 'gl': 0, 'pnls': [], 'dd_worst': 0}
-        m = months[mo]; m['cap_end'] = cap; m['n'] += 1; m['pnls'].append(pnl)
-        if pnl > 0: m['wins'] += 1; m['gp'] += pnl
-        else: m['gl'] += abs(pnl)
-        if dd < m['dd_worst']: m['dd_worst'] = dd
-        if cap > peak: peak = cap
+        def add_sig(sn, d_dir, e):
+            if sn in portfolio_set:
+                signals.append((ci, sn, d_dir, e, atr, today))
 
-    # Affichage
-    print(f"\n{'='*110}")
-    print(f"  {broker_name} — {len(portfolio)} strats — ${capital:,.0f}, Risk {risk*100:.1f}%")
-    print(f"  Config: TRAIL SL={SL} ACT={ACT} TRAIL={TRAIL} (pas de timeout)")
-    print(f"  {len(acc)} trades, Capital final ${cap:,.2f}, DD global {global_dd:.1f}%")
-    print(f"{'='*110}")
+        detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon,
+                   prev_day_data, add_sig, prev2_day_data)
 
-    print(f"\n  Stats par strat:")
-    print(f"  {'Strat':14s} {'n':>5s} {'WR':>5s} {'PF':>6s} {'Avg':>8s}")
-    for sn in portfolio:
-        sn_trades = [t for t in acc if t['strat']==sn]
-        if not sn_trades: continue
-        sn_pnls = [t['pnl_oz'] for t in sn_trades]
-        gp = sum(p for p in sn_pnls if p>0); gl = abs(sum(p for p in sn_pnls if p<0))+0.001
-        wr = sum(1 for p in sn_pnls if p>0)/len(sn_pnls)*100
-        print(f"  {sn:14s} {len(sn_trades):5d} {wr:4.0f}% {gp/gl:6.2f} {np.mean(sn_pnls):+8.3f}")
+    # Phase 2: simuler exits + conflict filter
+    signals.sort(key=lambda x: (x[0], x[1]))
+    trades = []
+    active_pos = []
 
-    print(f"\n  {'Mois':8s} {'Trades':>7s} {'Wins':>5s} {'WR':>5s} {'PF':>6s} {'Capital':>14s} {'PnL $':>12s} {'PnL%':>8s} {'Max DD':>8s}")
-    print(f"  {'-'*95}")
-    for mo in sorted(months.keys()):
-        m = months[mo]
-        wr = m['wins']/m['n']*100 if m['n'] else 0
-        pf = m['gp']/(m['gl']+0.01)
-        pnl_total = sum(m['pnls'])
-        pnl_pct = pnl_total / m['cap_start'] * 100 if m['cap_start'] > 0 else 0
-        print(f"  {mo:8s} {m['n']:7d} {m['wins']:5d} {wr:4.0f}% {pf:6.2f} {m['cap_end']:14,.2f} {pnl_total:+12,.2f} {pnl_pct:+7.1f}% {m['dd_worst']:+7.1f}%")
+    for ci, sn, d_dir, entry, atr, today in signals:
+        is_open = sn in OPEN_STRATS
+        exit_cfg = sym_exits.get(sn, DEFAULT_EXIT)
+        etype = exit_cfg[0]; p1 = exit_cfg[1]; p2 = exit_cfg[2]
+        p3 = exit_cfg[3] if len(exit_cfg) > 3 else 0
 
-    pm = sum(1 for m in months.values() if sum(m['pnls']) > 0)
-    gp_all = sum(m['gp'] for m in months.values())
-    gl_all = sum(m['gl'] for m in months.values()) + 0.01
-    print(f"  {'-'*95}")
-    print(f"  Capital: ${capital:,.0f} -> ${cap:,.2f} ({(cap-capital)/capital*100:+.1f}%)")
-    print(f"  Trades: {len(acc)} | WR: {sum(m['wins'] for m in months.values())/len(acc)*100:.0f}% | PF: {gp_all/gl_all:.2f}")
-    print(f"  Max DD: {global_dd:.1f}%")
-    print(f"  Mois positifs: {pm}/{len(months)}")
-    print(f"{'='*110}")
+        b, ex = sim_exit_custom(candles, ci, entry, d_dir, atr,
+                                etype, p1, p2, p3, check_entry_candle=is_open)
+        xi = ci + b
+        di = 1 if d_dir == 'long' else -1
+        pnl_oz = (ex - entry) if d_dir == 'long' else (entry - ex)
+        mo = f"{today.year}-{str(today.month).zfill(2)}"
+
+        # Conflict filter: pas de trades opposes simultanes
+        active_pos = [(axi, ad) for axi, ad in active_pos if axi >= ci]
+        if any(ad != di for _, ad in active_pos):
+            continue
+        active_pos.append((xi, di))
+
+        trades.append((ci, xi, di, pnl_oz, p1, atr, mo, sn))
+
+    return trades
+
+
+def _make_day_data(yc):
+    """Cree le dict prev_day_data a partir des candles d'un jour."""
+    return {
+        'open': float(yc.iloc[0]['open']),
+        'close': float(yc.iloc[-1]['close']),
+        'high': float(yc['high'].max()),
+        'low': float(yc['low'].min()),
+        'range': float(yc['high'].max() - yc['low'].min()),
+        'body': float(yc.iloc[-1]['close'] - yc.iloc[0]['open']),
+    }
+
+
+# ══════════════════════════════════════════════════════════════
+#  EVAL PORTFOLIO — PF / WR / DD / Rend
+# ══════════════════════════════════════════════════════════════
+
+def eval_portfolio(trades, risk, capital=100000.0):
+    """
+    Evalue un portefeuille de trades (event-based simulation).
+
+    Args:
+        trades: list of (ci, xi, di, pnl_oz, sl_atr, atr, mo, sn)
+        risk: float (e.g. 0.0005 pour 0.05%)
+        capital: float capital initial
+
+    Returns:
+        dict with n, pf, wr, mdd, ret, capital, pm, tm, months, strat_stats, accepted
+        ou None si aucun trade
+    """
+    if not trades:
+        return None
+    n = len(trades)
+    events = [(ei, 0, idx) for idx, (ei, *_) in enumerate(trades)] + \
+             [(xi, 1, idx) for idx, (_, xi, *__) in enumerate(trades)]
+    events.sort()
+
+    cap = capital; peak = cap; max_dd = 0; gp = 0; gl = 0; wins = 0
+    months = {}; entry_caps = {}; strat_stats = {}
+    month_detail = {}
+
+    for bar, evt, idx in events:
+        if evt == 0:
+            entry_caps[idx] = cap
+        else:
+            ei, xi, di, pnl_oz, sl_atr, atr, mo, _sn = trades[idx]
+            pnl = pnl_oz * (entry_caps[idx] * risk) / (sl_atr * atr)
+            cap += pnl
+            if cap > peak: peak = cap
+            dd = (cap - peak) / peak
+            if dd < max_dd: max_dd = dd
+            if pnl > 0: gp += pnl; wins += 1
+            else: gl += abs(pnl)
+            months[mo] = months.get(mo, 0.0) + pnl
+            md = month_detail.setdefault(mo, {'n': 0, 'w': 0, 'gp': 0, 'gl': 0})
+            md['n'] += 1
+            if pnl > 0: md['w'] += 1; md['gp'] += pnl
+            else: md['gl'] += abs(pnl)
+            month_detail[mo]['cap'] = cap
+            month_detail[mo]['peak'] = peak
+            month_detail[mo]['dd'] = max_dd
+            ss = strat_stats.setdefault(_sn, {'n': 0, 'w': 0, 'gp': 0, 'gl': 0})
+            ss['n'] += 1
+            if pnl > 0: ss['w'] += 1; ss['gp'] += pnl
+            else: ss['gl'] += abs(pnl)
+
+    pm = sum(1 for v in months.values() if v > 0)
+    return {
+        'n': n, 'pf': gp / (gl + 0.01), 'wr': wins / n * 100, 'mdd': max_dd * 100,
+        'ret': (cap - capital) / capital * 100, 'capital': cap, 'pm': pm, 'tm': len(months),
+        'months': months, 'strat_stats': strat_stats, 'month_detail': month_detail,
+        'accepted': trades,
+    }

@@ -2,6 +2,28 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-06 — REFACTO: backtest_engine.py — moteur unique pour tout le pipeline
+
+### Probleme
+Audit complet du pipeline montre 7 divergences entre optimize_all, bt_portfolio, compare_today et live_mt5. Chaque script reimplemente sa propre boucle de signaux, ATR, exits, conflict filter. Resultat: impossible de garantir que le BT = compare = live.
+
+### Solution
+Creer `backtest_engine.py` — module central importe par TOUS les scripts. Fonctions partagees:
+- `OPEN_STRATS` : defini UNE SEULE fois
+- `load_data(conn, symbol)` : candles full + ATR (compute_atr) + trading_days + compute_indicators
+- `collect_trades(candles, daily_atr, global_atr, trading_days, portfolio, sym_exits)` : detect_all + sim_exit_custom + conflict filter
+- `eval_portfolio(trades, risk, capital)` : event-based PF/WR/DD/Rend
+
+Scripts modifies:
+- `bt_portfolio.py` : import backtest_engine
+- `compare_today.py` : import backtest_engine (filtre today)
+- `live_mt5.py` : import backtest_engine (signaux + ATR)
+- `optimize_all.py` : a terme (sim_exit_np reste pour la perf grid search)
+
+### Validation
+- Resultat de reference: bt_portfolio 5ers XAUUSD temps reel = PF 1.49, WR 71%, DD -0.8%, Rend +12%, 1619 trades, M+ 12/13
+- Apres refacto, le meme `python bt_portfolio.py 5ers --symbol XAUUSD` doit donner EXACTEMENT les memes chiffres
+
 ## 2026-04-06 — REFACTO: bt_portfolio sans pkl, tout en temps reel
 
 ### Probleme identifie par audit
