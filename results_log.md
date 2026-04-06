@@ -2,23 +2,49 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
-## 2026-04-06 — REFACTO: backtest_engine.py — moteur unique pour tout le pipeline
+## 2026-04-06 — DECISION ARCHITECTURALE: un seul moteur pour tout le pipeline
 
-### Probleme
-Audit complet du pipeline montre 7 divergences entre optimize_all, bt_portfolio, compare_today et live_mt5. Chaque script reimplemente sa propre boucle de signaux, ATR, exits, conflict filter. Resultat: impossible de garantir que le BT = compare = live.
+### Probleme fondamental
+Audit `audit_bt_vs_compare.py` sur 5ers : **0% match** entre bt_portfolio (pkl) et compare_today (temps reel). Raisons :
+1. Le pkl stockait des bar indices lies a un snapshot de candles → OOB des que la DB change
+2. **7 divergences** identifiees entre optimize_all, bt_portfolio, compare_today et live_mt5 :
+   - Candles: LIMIT 2000 (compare) vs LIMIT 1500 (live) vs full (optimize/bt)
+   - ATR: `get_yesterday_atr()` custom (live) vs `compute_atr()` (optimize/bt)
+   - Indicateurs: warmup different selon le nb de bars chargees
+   - Exit sim: `sim_exit_np` (optimize) vs `sim_exit_custom` (compare/bt), avec bug TRAIL fallback
+   - OPEN_STRATS: hardcode x4 (chaque script avait sa propre copie)
+   - prev_day_data: methodes differentes dans chaque script
+   - Conflict filter: implementations separees
 
-### Solution
-Creer `backtest_engine.py` — module central importe par TOUS les scripts. Fonctions partagees:
-- `OPEN_STRATS` : defini UNE SEULE fois
-- `load_data(conn, symbol)` : candles full + ATR (compute_atr) + trading_days + compute_indicators
-- `collect_trades(candles, daily_atr, global_atr, trading_days, portfolio, sym_exits)` : detect_all + sim_exit_custom + conflict filter
+Consequence: **impossible de garantir que BT = compare = live**. Chaque script avait son propre chemin de code.
+
+### Decision: UN SEUL MOTEUR — `backtest_engine.py`
+**Principe** : on ne peut pas garantir la coherence si on a plusieurs implementations de la meme logique. La seule solution est que TOUS les scripts importent les MEMES fonctions.
+
+`backtest_engine.py` centralise :
+- `OPEN_STRATS` : defini UNE SEULE fois (frozenset)
+- `load_data(conn, symbol)` : candles **FULL history** + ATR (`compute_atr`) + trading_days + `compute_indicators`
+- `collect_trades(candles, daily_atr, ..., portfolio, sym_exits, date_filter=None)` : `detect_all` + `sim_exit_custom` + conflict filter (tri alpha + no-opposite)
 - `eval_portfolio(trades, risk, capital)` : event-based PF/WR/DD/Rend
+- `prev_trading_day(day, trading_days)` : jour precedent
+- `_make_day_data(yc)` : prev_day_data standardise
 
-Scripts modifies:
-- `bt_portfolio.py` : import backtest_engine
-- `compare_today.py` : import backtest_engine (filtre today)
-- `live_mt5.py` : import backtest_engine (signaux + ATR)
-- `optimize_all.py` : a terme (sim_exit_np reste pour la perf grid search)
+### Resultat: meme code, memes donnees, partout
+| Script | Avant | Apres |
+|---|---|---|
+| bt_portfolio | pkl (snapshot stale) | `backtest_engine.collect_trades()` ✓ |
+| compare_today | inline LIMIT 2000 + ATR custom | `backtest_engine.collect_trades(date_filter=today)` ✓ |
+| live_mt5 | LIMIT 1500 + `get_yesterday_atr()` | `backtest_engine.load_data()` + `prev_trading_day()` ✓ |
+| optimize_all | sim_exit_np (fallback fixe) | _(conserve sim_exit_np pour perf grid search)_ |
+
+**Validation** : bt_portfolio 5ers XAUUSD avant/apres refacto = EXACT MATCH (1619 trades, PF 1.49).
+compare_today 5ers : 5/5 directions match, deltas reduits (BB_TIGHT -1.03 vs -9.28 avant).
+
+### Le pkl n'est plus une source de verite
+- optimize_all genere toujours un pkl (cache pour grid search + analyze_combos)
+- Mais bt_portfolio, compare_today et live **ne le lisent plus**
+- Tout est calcule en temps reel depuis la DB
+- Plus jamais de divergence candles/ATR/indices entre scripts
 
 ### Validation
 - Resultat de reference: bt_portfolio 5ers XAUUSD = PF 1.49, WR 71%, DD -0.8%, Rend +12%, 1619 trades, M+ 12/13
