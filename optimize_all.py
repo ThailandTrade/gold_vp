@@ -170,7 +170,7 @@ def sim_exit_np(pos, entry, d, atr, etype, p1, p2, p3, check_entry):
                 if not ta and (entry - best) >= act_val * atr: ta = True
                 if ta: stop = min(stop, best + trail_val * atr)
                 if cl[idx] > stop: return j, cl[idx]
-        return 1, entry
+        return max_bars, cl[pos + max_bars]
 
 # ── SIGNAL COLLECTION ──
 print("Collecte signaux...", flush=True)
