@@ -90,6 +90,24 @@ Capital: $100,000 → $182,381
 13/13 mois positifs. DD max -1.32% sur compte unique 6 instruments.
 Calcule 100% en temps reel depuis la DB via backtest_engine.py — zero pkl.
 
+### Re-pipeline complet FTMO (2026-04-06)
+6 instruments charges (XAUUSD, GER40, US500, US100, US30, UK100). UK100 skip (PF 1.47, 10/13).
+
+| Instrument | Combo | Nb | PF | WR | DD | Rend | M+ |
+|---|---|---|---|---|---|---|---|
+| XAUUSD | Sharpe 9 | 9 | 1.53 | 72% | -0.9% | +15% | 13/13 |
+| GER40.cash | Calmar 10 | 10 | 1.84 | 68% | -0.7% | +32% | 13/13 |
+| US500.cash | Calmar 4 | 4 | 1.61 | 70% | -0.6% | +10% | 12/13 |
+| US100.cash | Calmar 6 | 6 | 1.49 | 73% | -0.6% | +10% | 13/13 |
+| US30.cash | PF 3 | 3 | 1.51 | 72% | -0.5% | +5% | 13/13 |
+
+### Validation bt_portfolio FTMO agrege (backtest_engine, temps reel)
+```
+Trades: 6,961 | WR: 71% | PF: 1.64 | Max DD: -1.05% | Rend: +90.6% | M+: 13/13
+Capital: $100,000 → $190,629
+```
+13/13 mois positifs. DD max -1.05%. Calcule temps reel via backtest_engine.
+
 ## 2026-04-06 — REFACTO: bt_portfolio sans pkl, tout en temps reel
 
 ### Probleme identifie par audit
