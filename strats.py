@@ -264,6 +264,8 @@ def sim_exit_custom(cdf, pos, entry, d, atr, exit_type, p1, p2, p3, check_entry_
                 if not ta and (entry-best) >= act_val*atr: ta = True
                 if ta: stop = min(stop, best + trail_val*atr)
                 if b['close'] > stop: return j, b['close']
+        n = min(288, len(cdf)-pos-1)
+        if n > 0: return n, cdf.iloc[pos+n]['close']
         return 1, entry
 
 def compute_indicators(candles):

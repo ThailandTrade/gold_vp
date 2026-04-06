@@ -2,6 +2,29 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-06 — BUG CRITIQUE live_mt5: fill price=0 casse le trailing
+
+### Bug identifie
+MT5 `order_send` retourne `result.price = 0.00` sur FTMO (quirk broker). `live_mt5.py` utilisait ce prix pour initialiser `entry` et `best` du trailing a 0. Consequence:
+- `fav = best - entry = close - 0 = close` → trail s'active **immediatement**
+- SL deplace a `close - trail*atr` → beaucoup trop serre (~3 pts sous le prix)
+- Tous les trades sortent en perte dans les minutes suivantes
+
+### Impact
+- **Tous les trades FTMO du 2026-04-06** (8 trades XAUUSD) ont ete affectes
+- Pertes totales: -96 pts (au lieu de +26 pts sans le bug)
+- Bug present depuis la mise en live du trailing FTMO
+
+### Fix
+- `live_mt5.py` ligne 138: si `result.price == 0`, utiliser le prix du tick (`price` calcule avant l'envoi)
+- `strats.py` ligne 267: fallback TRAIL `return 1, entry` remplace par exit au close du dernier bar (meme logique que TPSL)
+
+### Aussi fixe
+- `compare_today.py`: ATR calcule via `compute_atr()` (identique pipeline) au lieu d'un calcul inline divergent
+
+### Action immediate
+- Redeployer `live_mt5.py` sur le VPS FTMO
+
 ## 2026-04-05 — DECISION: abandon complet de la crypto algo
 
 ### Contexte final

@@ -135,8 +135,9 @@ def mt5_send_order(symbol, strat, direction, sl, tp, lots):
         log.error("    order_send None: {}".format(mt5.last_error())); return None
     if result.retcode != mt5.TRADE_RETCODE_DONE:
         log.error("    ECHEC: {} {}".format(result.retcode, result.comment)); return None
-    log.info("    OK #{} fill={:.2f}".format(result.order, result.price))
-    return {'ticket': result.order, 'price': result.price, 'volume': result.volume}
+    fill_price = result.price if result.price > 0 else price  # MT5 quirk: certains brokers renvoient price=0
+    log.info("    OK #{} fill={:.2f}".format(result.order, fill_price))
+    return {'ticket': result.order, 'price': fill_price, 'volume': result.volume}
 
 def mt5_modify_sl(ticket, new_sl, symbol):
     sym = mt5.symbol_info(symbol)

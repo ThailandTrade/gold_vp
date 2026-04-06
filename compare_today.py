@@ -6,7 +6,7 @@ import warnings; warnings.filterwarnings('ignore')
 import sys, argparse, importlib; sys.stdout.reconfigure(encoding='utf-8')
 import pandas as pd, numpy as np
 from dotenv import load_dotenv; load_dotenv()
-from phase1_poc_calculator import get_conn
+from phase1_poc_calculator import get_conn, compute_atr, get_trading_days
 from strats import detect_all, compute_indicators, sim_exit_custom, make_magic
 from strat_exits import STRAT_EXITS, DEFAULT_EXIT
 from datetime import datetime, timezone
@@ -114,15 +114,22 @@ for sym, icfg in INSTRUMENTS.items():
     df['date'] = df['ts_dt'].dt.date
     df = compute_indicators(df)
 
-    # ATR yesterday
-    yc = df[df['date'] < today].copy()
-    if len(yc) < 20: continue
-    yc['pc'] = yc['close'].shift(1)
-    yc['tr'] = np.maximum(yc['high']-yc['low'], np.maximum(abs(yc['high']-yc['pc']), abs(yc['low']-yc['pc'])))
-    yc['atr'] = yc['tr'].ewm(span=14, adjust=False).mean()
-    atr = float(yc['atr'].iloc[-1])
+    # ATR from compute_atr (identique au pipeline optimize/live)
+    daily_atr, global_atr = compute_atr(conn, symbol=sym.lower())
+    trading_days = get_trading_days(conn, symbol=sym.lower())
+    # ATR du jour precedent (prev trading day)
+    prev_td = None
+    for di_idx, d_val in enumerate(trading_days):
+        if d_val >= today:
+            prev_td = trading_days[di_idx-1] if di_idx > 0 else None
+            break
+    if prev_td is None and trading_days:
+        prev_td = trading_days[-1]
+    atr = daily_atr.get(prev_td, global_atr) if prev_td else global_atr
 
     # prev_day_data + prev2
+    yc = df[df['date'] < today].copy()
+    if len(yc) < 20: continue
     last_day = yc['date'].iloc[-1]
     dc = yc[yc['date'] == last_day]
     prev_day_data = {'open':float(dc.iloc[0]['open']), 'close':float(dc.iloc[-1]['close']),
