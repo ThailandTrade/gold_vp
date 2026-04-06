@@ -1,4 +1,4 @@
-# Exit configs par (broker, instrument, strat) - regenere 2026-04-04.
+# Exit configs par (broker, instrument, strat) - regenere 2026-04-06 (pipeline unifie).
 # TRAIL: (TRAIL, sl, act, trail)
 # TPSL:  (TPSL, sl, tp, 0)
 
@@ -7,87 +7,91 @@ DEFAULT_EXIT = ('TRAIL', 3.0, 0.5, 0.5)
 STRAT_EXITS = {}
 
 STRAT_EXITS[('5ers', 'XAUUSD')] = {
-    'ALL_BB_TIGHT': ('TRAIL', 3.00, 0.75, 0.75),  # PF=1.61 WR=71%
-    'ALL_ELDER_BULL': ('TRAIL', 3.00, 0.50, 0.50),  # PF=1.63 WR=75%
-    'ALL_FIB_618': ('TRAIL', 3.00, 0.30, 0.30),  # PF=1.57 WR=79%
-    'ALL_FVG_BULL': ('TRAIL', 3.00, 1.00, 0.50),  # PF=1.63 WR=69%
-    'ALL_HMA_CROSS': ('TRAIL', 3.00, 0.30, 0.30),  # PF=1.54 WR=79%
-    'ALL_PIVOT_BOUNCE': ('TRAIL', 2.00, 0.30, 0.30),  # PF=1.41 WR=67%
-    'ALL_PIVOT_BRK': ('TRAIL', 3.00, 0.30, 0.30),  # PF=2.02 WR=83%
-    'ALL_STOCH_OB': ('TRAIL', 3.00, 0.50, 0.50),  # PF=1.66 WR=76%
-    'D8': ('TPSL', 1.00, 2.00, 0),  # PF=1.79 WR=50%
-    'IDX_VWAP_BOUNCE': ('TRAIL', 1.50, 0.50, 0.50),  # PF=2.12 WR=65%
-    'LON_KZ': ('TPSL', 3.00, 0.75, 0),  # PF=1.84 WR=86%
-    'LON_TOKEND': ('TRAIL', 3.00, 0.50, 0.30),  # PF=1.66 WR=72%
-    'NY_GAP': ('TRAIL', 1.50, 0.50, 0.50),  # PF=1.39 WR=51%
-    'PO3_SWEEP': ('TRAIL', 2.00, 0.75, 0.75),  # PF=1.84 WR=73%
-    'TOK_FISHER': ('TRAIL', 2.00, 1.00, 1.00),  # PF=1.45 WR=58%
-    'TOK_PREVEXT': ('TRAIL', 2.00, 0.75, 0.75),  # PF=1.68 WR=62%
-    'TOK_STOCH': ('TRAIL', 3.00, 0.50, 0.50),  # PF=1.58 WR=75%
+    'ALL_AROON_CROSS': ('TRAIL', 3.00, 0.75, 1.00),  # PF=1.46 WR=60%
+    'ALL_BB_TIGHT': ('TRAIL', 3.00, 0.75, 0.75),  # PF=1.73 WR=71%
+    'ALL_ELDER_BULL': ('TRAIL', 3.00, 0.50, 0.50),  # PF=1.51 WR=75%
+    'ALL_FIB_618': ('TRAIL', 3.00, 0.30, 0.30),  # PF=1.54 WR=78%
+    'ALL_FVG_BULL': ('TRAIL', 3.00, 1.00, 0.50),  # PF=1.60 WR=69%
+    'ALL_PIVOT_BRK': ('TPSL', 3.00, 0.75, 0.00),  # PF=1.82 WR=87%
+    'D8': ('TPSL', 1.00, 2.00, 0.00),  # PF=1.79 WR=50%
+    'IDX_ORB30': ('TRAIL', 3.00, 0.50, 1.00),  # PF=1.57 WR=58%
+    'IDX_PREV_HL': ('TRAIL', 3.00, 0.50, 0.50),  # PF=1.59 WR=73%
+    'IDX_VWAP_BOUNCE': ('TRAIL', 1.50, 0.50, 0.50),  # PF=2.11 WR=65%
+    'LON_KZ': ('TPSL', 3.00, 0.75, 0.00),  # PF=1.95 WR=87%
+    'LON_TOKEND': ('TRAIL', 3.00, 0.50, 0.30),  # PF=1.61 WR=73%
+    'NY_GAP': ('TRAIL', 1.50, 0.50, 0.50),  # PF=1.44 WR=52%
+    'PO3_SWEEP': ('TRAIL', 2.00, 0.75, 0.75),  # PF=1.83 WR=73%
+    'TOK_FISHER': ('TRAIL', 2.00, 1.00, 1.00),  # PF=1.38 WR=57%
+    'TOK_PREVEXT': ('TRAIL', 2.00, 0.75, 0.75),  # PF=1.92 WR=64%
+    'TOK_STOCH': ('TRAIL', 3.00, 0.50, 0.50),  # PF=1.53 WR=75%
+    'TOK_WILLR': ('TPSL', 1.50, 0.50, 0.00),  # PF=1.54 WR=77%
 }
 
 STRAT_EXITS[('5ers', 'JPN225')] = {
-    'ALL_FIB_618': ('TRAIL', 3.00, 0.30, 0.30),  # PF=1.94 WR=83%
-    'ALL_NR4': ('TRAIL', 3.00, 0.50, 0.30),  # PF=1.56 WR=77%
-    'ALL_WILLR_14': ('TRAIL', 2.00, 0.75, 0.30),  # PF=1.50 WR=61%
-    'D8': ('TRAIL', 3.00, 0.75, 1.00),  # PF=1.83 WR=63%
-    'IDX_NR4': ('TRAIL', 3.00, 0.50, 0.30),  # PF=1.56 WR=77%
-    'LON_DC10': ('TRAIL', 3.00, 1.00, 1.00),  # PF=1.53 WR=74%
-    'LON_DC10_MOM': ('TRAIL', 3.00, 1.00, 1.00),  # PF=1.53 WR=74%
-    'TOK_NR4': ('TRAIL', 3.00, 0.50, 0.50),  # PF=1.58 WR=79%
+    'ALL_NR4': ('TRAIL', 3.00, 0.50, 0.30),  # PF=1.71 WR=78%
+    'ALL_STOCH_PIVOT': ('TRAIL', 2.00, 0.30, 0.30),  # PF=1.71 WR=79%
+    'IDX_NR4': ('TRAIL', 3.00, 0.50, 0.30),  # PF=1.71 WR=78%
+    'LON_BIGGAP': ('TRAIL', 2.00, 0.75, 0.75),  # PF=1.45 WR=68%
+    'TOK_NR4': ('TRAIL', 3.00, 0.50, 0.50),  # PF=1.71 WR=79%
 }
 
 STRAT_EXITS[('5ers', 'DAX40')] = {
-    'ALL_CMO_9': ('TRAIL', 0.50, 0.30, 0.30),  # PF=1.44 WR=42%
-    'ALL_CONSEC_REV': ('TRAIL', 1.00, 0.30, 0.30),  # PF=1.57 WR=57%
-    'ALL_DC10': ('TRAIL', 3.00, 0.50, 0.30),  # PF=1.51 WR=74%
-    'ALL_DC10_EMA': ('TRAIL', 3.00, 0.50, 0.30),  # PF=1.50 WR=74%
-    'ALL_ELDER_BULL': ('TRAIL', 3.00, 0.75, 0.30),  # PF=1.90 WR=74%
-    'ALL_FIB_618': ('TRAIL', 3.00, 0.30, 0.30),  # PF=1.82 WR=77%
-    'ALL_FISHER_9': ('TRAIL', 3.00, 0.30, 0.30),  # PF=1.70 WR=75%
-    'ALL_FVG_BULL': ('TRAIL', 3.00, 0.30, 0.30),  # PF=1.94 WR=82%
-    'ALL_KB_SQUEEZE': ('TRAIL', 1.50, 0.30, 0.30),  # PF=1.63 WR=60%
-    'ALL_MACD_HIST': ('TRAIL', 1.50, 0.30, 0.30),  # PF=2.01 WR=68%
-    'ALL_MSTAR': ('TRAIL', 0.50, 0.30, 0.30),  # PF=1.50 WR=46%
-    'ALL_MTF_BRK': ('TRAIL', 3.00, 0.50, 0.30),  # PF=1.60 WR=75%
-    'ALL_RSI_EXTREME': ('TRAIL', 1.50, 0.50, 0.50),  # PF=1.44 WR=60%
-    'ALL_STOCH_OB': ('TRAIL', 0.50, 0.30, 0.30),  # PF=1.57 WR=42%
-    'IDX_PREV_HL': ('TRAIL', 3.00, 0.30, 0.30),  # PF=1.51 WR=68%
-    'IDX_RSI_REV': ('TRAIL', 1.50, 0.50, 0.50),  # PF=1.44 WR=60%
-    'IDX_TREND_DAY': ('TRAIL', 2.00, 0.30, 0.30),  # PF=1.52 WR=64%
-    'LON_STOCH': ('TRAIL', 3.00, 0.30, 0.30),  # PF=1.44 WR=67%
-    'TOK_FADE': ('TRAIL', 3.00, 0.50, 0.50),  # PF=1.63 WR=71%
-    'TOK_FISHER': ('TRAIL', 2.00, 0.30, 0.30),  # PF=1.91 WR=68%
-    'TOK_WILLR': ('TRAIL', 1.50, 0.30, 0.30),  # PF=1.50 WR=62%
+    'ALL_CCI_20_ZERO': ('TRAIL', 3.00, 0.30, 0.30),  # PF=1.66 WR=82%
+    'ALL_CONSEC_REV': ('TRAIL', 1.00, 0.30, 0.30),  # PF=1.58 WR=57%
+    'ALL_DOJI_REV': ('TRAIL', 1.50, 0.50, 0.30),  # PF=1.54 WR=64%
+    'ALL_ELDER_BULL': ('TRAIL', 3.00, 0.50, 0.30),  # PF=1.71 WR=76%
+    'ALL_ENGULF': ('TRAIL', 3.00, 0.30, 0.30),  # PF=1.68 WR=80%
+    'ALL_FIB_618': ('TRAIL', 3.00, 0.30, 0.30),  # PF=1.75 WR=77%
+    'ALL_FISHER_9': ('TRAIL', 3.00, 0.30, 0.30),  # PF=1.86 WR=75%
+    'ALL_KB_SQUEEZE': ('TRAIL', 1.50, 0.30, 0.30),  # PF=1.72 WR=60%
+    'ALL_MACD_HIST': ('TRAIL', 1.50, 0.30, 0.30),  # PF=2.05 WR=68%
+    'ALL_MSTAR': ('TRAIL', 0.50, 0.30, 0.30),  # PF=1.61 WR=47%
+    'ALL_RSI_DIV': ('TRAIL', 1.00, 0.30, 0.30),  # PF=1.58 WR=57%
+    'ALL_STOCH_OB': ('TRAIL', 0.50, 0.30, 0.30),  # PF=1.72 WR=43%
+    'ALL_WILLR_14': ('TRAIL', 1.50, 0.30, 0.30),  # PF=1.55 WR=62%
+    'ALL_WILLR_7': ('TRAIL', 3.00, 0.30, 0.30),  # PF=1.49 WR=75%
+    'IDX_BB_REV': ('TRAIL', 3.00, 0.50, 0.30),  # PF=1.49 WR=73%
+    'IDX_ENGULF': ('TRAIL', 3.00, 0.30, 0.30),  # PF=1.68 WR=80%
+    'IDX_PREV_HL': ('TRAIL', 3.00, 0.30, 0.30),  # PF=1.68 WR=68%
+    'IDX_TREND_DAY': ('TRAIL', 2.00, 0.30, 0.30),  # PF=1.58 WR=65%
+    'TOK_FADE': ('TRAIL', 3.00, 0.50, 0.50),  # PF=1.49 WR=71%
+    'TOK_FISHER': ('TRAIL', 3.00, 0.30, 0.30),  # PF=1.95 WR=75%
+    'TOK_STOCH': ('TRAIL', 3.00, 0.75, 0.30),  # PF=1.56 WR=74%
+    'TOK_WILLR': ('TRAIL', 1.50, 0.30, 0.30),  # PF=1.59 WR=62%
 }
 
 STRAT_EXITS[('5ers', 'NAS100')] = {
     'ALL_ADX_RSI50': ('TRAIL', 2.00, 0.30, 0.30),  # PF=1.56 WR=74%
-    'ALL_PSAR_EMA': ('TRAIL', 2.00, 1.00, 1.00),  # PF=1.61 WR=59%
+    'ALL_CCI_100': ('TRAIL', 1.00, 0.30, 0.30),  # PF=1.40 WR=60%
+    'ALL_DOJI_REV': ('TRAIL', 1.50, 0.30, 0.30),  # PF=1.47 WR=69%
     'ALL_RSI_50': ('TRAIL', 2.00, 0.30, 0.30),  # PF=1.56 WR=74%
-    'ALL_SUPERTREND': ('TRAIL', 2.00, 1.00, 1.00),  # PF=1.68 WR=60%
+    'ALL_STOCH_RSI': ('TRAIL', 1.00, 0.30, 0.30),  # PF=1.43 WR=62%
+    'ALL_WILLR_7': ('TRAIL', 1.50, 0.30, 0.30),  # PF=1.48 WR=69%
     'D8': ('TRAIL', 1.50, 0.50, 0.30),  # PF=2.02 WR=62%
-    'LON_STOCH': ('TRAIL', 2.00, 1.00, 1.00),  # PF=1.57 WR=63%
-    'TOK_NR4': ('TRAIL', 1.50, 0.50, 0.50),  # PF=1.46 WR=64%
+    'LON_STOCH': ('TRAIL', 2.00, 1.00, 1.00),  # PF=1.47 WR=62%
+    'TOK_PREVEXT': ('TPSL', 3.00, 1.50, 0.00),  # PF=1.75 WR=75%
 }
 
 STRAT_EXITS[('5ers', 'SP500')] = {
-    'ALL_LR_BREAK': ('TRAIL', 1.00, 0.30, 0.30),  # PF=1.46 WR=60%
-    'ALL_PSAR_EMA': ('TRAIL', 3.00, 1.00, 1.00),  # PF=1.47 WR=68%
-    'ALL_RSI_EXTREME': ('TRAIL', 1.50, 0.30, 0.30),  # PF=1.57 WR=71%
-    'ALL_SUPERTREND': ('TRAIL', 3.00, 1.00, 1.00),  # PF=1.44 WR=68%
-    'IDX_CONSEC_REV': ('TRAIL', 1.50, 0.50, 0.50),  # PF=1.65 WR=67%
-    'IDX_RSI_REV': ('TRAIL', 1.50, 0.30, 0.30),  # PF=1.57 WR=71%
-    'LON_PREV': ('TRAIL', 3.00, 0.30, 0.30),  # PF=1.55 WR=79%
+    'ALL_ENGULF': ('TRAIL', 1.50, 0.50, 0.30),  # PF=1.46 WR=66%
+    'ALL_HAMMER': ('TRAIL', 1.00, 0.30, 0.30),  # PF=1.56 WR=59%
+    'ALL_LR_BREAK': ('TRAIL', 1.00, 0.30, 0.30),  # PF=1.45 WR=60%
+    'ALL_MACD_FAST_SIG': ('TRAIL', 1.00, 0.30, 0.30),  # PF=1.75 WR=62%
+    'ALL_MACD_HIST': ('TRAIL', 2.00, 0.50, 0.50),  # PF=1.47 WR=72%
+    'ALL_RSI_EXTREME': ('TRAIL', 1.50, 0.30, 0.30),  # PF=1.53 WR=71%
+    'IDX_CONSEC_REV': ('TRAIL', 1.50, 0.50, 0.50),  # PF=1.78 WR=67%
+    'IDX_ENGULF': ('TRAIL', 1.50, 0.50, 0.30),  # PF=1.46 WR=66%
+    'IDX_RSI_REV': ('TRAIL', 1.50, 0.30, 0.30),  # PF=1.53 WR=71%
+    'TOK_FISHER': ('TRAIL', 1.00, 0.30, 0.30),  # PF=1.80 WR=61%
 }
 
 STRAT_EXITS[('5ers', 'UK100')] = {
-    'ALL_CONSEC_REV': ('TPSL', 3.00, 1.00, 0),  # PF=1.66 WR=81%
-    'ALL_ELDER_BULL': ('TRAIL', 3.00, 0.50, 0.50),  # PF=1.55 WR=79%
-    'IDX_LATE_REV': ('TRAIL', 2.00, 0.30, 0.30),  # PF=1.62 WR=76%
-    'LON_BIGGAP': ('TRAIL', 3.00, 0.30, 0.30),  # PF=1.41 WR=66%
-    'LON_GAP': ('TRAIL', 3.00, 0.30, 0.30),  # PF=1.44 WR=67%
-    'NY_HMA_CROSS': ('TRAIL', 2.00, 0.30, 0.30),  # PF=1.66 WR=71%
+    'ALL_CONSEC_REV': ('TRAIL', 3.00, 0.30, 0.30),  # PF=1.76 WR=81%
+    'ALL_MACD_DIV': ('TRAIL', 3.00, 1.00, 0.50),  # PF=1.74 WR=74%
+    'ALL_MACD_HIST': ('TPSL', 3.00, 0.50, 0.00),  # PF=2.03 WR=90%
+    'IDX_LATE_REV': ('TRAIL', 2.00, 0.30, 0.30),  # PF=1.52 WR=76%
+    'LON_GAP': ('TRAIL', 3.00, 0.50, 0.50),  # PF=1.43 WR=64%
+    'LON_PREV': ('TRAIL', 3.00, 0.50, 0.50),  # PF=1.39 WR=61%
 }
 
 STRAT_EXITS[('ftmo', 'XAUUSD')] = {
