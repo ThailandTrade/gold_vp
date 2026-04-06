@@ -17,8 +17,9 @@ from dotenv import load_dotenv
 load_dotenv()
 import MetaTrader5 as mt5
 from phase1_poc_calculator import get_conn
-from strats import STRAT_NAMES, STRAT_SESSION, detect_all, compute_indicators, make_magic
+from strats import STRAT_NAMES, STRAT_SESSION, detect_all, make_magic
 from strat_exits import STRAT_EXITS, DEFAULT_EXIT
+from backtest_engine import load_data, prev_trading_day, OPEN_STRATS, _make_day_data
 
 # ── CONFIG ────────────────────────────────────────────
 
@@ -37,8 +38,7 @@ CHECK_INTERVAL = 1
 os.makedirs(f'data/{_account}', exist_ok=True)
 STATE_FILE = f"data/{_account}/live_mt5.json"
 
-OPEN_STRATS = {'TOK_FADE','TOK_PREVEXT','LON_GAP','LON_BIGGAP','LON_KZ','LON_TOKEND','LON_PREV',
-               'NY_GAP','NY_LONEND','NY_LONMOM','NY_DAYMOM'}
+# OPEN_STRATS importe depuis backtest_engine (source unique)
 
 # ── MAGIC NUMBERS ────────────────────────────────────
 
@@ -400,34 +400,30 @@ def main():
 
                 if not portfolio: continue
 
-                candles = get_recent_candles(conn, sym, 1500)
+                # Load data via backtest_engine (memes candles/ATR/indicateurs que bt_portfolio)
+                candles, daily_atr, global_atr, trading_days = load_data(conn, sym)
                 if len(candles) == 0: continue
-                candles = compute_indicators(candles)
 
                 current_ts = int(candles.iloc[-1]['ts'])
                 # REGLE: seule source de temps = ts_dt UTC des candles en DB
                 candle_time_utc = candles.iloc[-1]['ts_dt'].to_pydatetime()
                 today = candle_time_utc.date()
 
-                # ATR
-                atr = get_yesterday_atr(candles, today)
+                # ATR via backtest_engine (meme que bt_portfolio)
+                pd_ = prev_trading_day(today, trading_days)
+                atr = daily_atr.get(pd_, global_atr) if pd_ else global_atr
                 if not atr or atr == 0: continue
 
                 # Day reset
                 if ss.get('_prev_day_date') != str(today):
                     yc = candles[candles['date'] < today]
                     if len(yc) > 0:
-                        ld = yc['date'].iloc[-1]; dc = yc[yc['date']==ld]
-                        ss['_prev_day_data'] = {'open':float(dc.iloc[0]['open']),'close':float(dc.iloc[-1]['close']),
-                                                'high':float(dc['high'].max()),'low':float(dc['low'].min()),
-                                                'range':float(dc['high'].max()-dc['low'].min())}
-                        # prev2 = avant-veille (pour D8 inside day)
+                        ld = yc['date'].iloc[-1]; dc = yc[yc['date'] == ld]
+                        ss['_prev_day_data'] = _make_day_data(dc)
                         yc2 = yc[yc['date'] < ld]
                         if len(yc2) > 0:
-                            ld2 = yc2['date'].iloc[-1]; dc2 = yc2[yc2['date']==ld2]
-                            ss['_prev2_day_data'] = {'open':float(dc2.iloc[0]['open']),'close':float(dc2.iloc[-1]['close']),
-                                                     'high':float(dc2['high'].max()),'low':float(dc2['low'].min()),
-                                                     'range':float(dc2['high'].max()-dc2['low'].min())}
+                            ld2 = yc2['date'].iloc[-1]; dc2 = yc2[yc2['date'] == ld2]
+                            ss['_prev2_day_data'] = _make_day_data(dc2)
                         else:
                             ss['_prev2_day_data'] = None
                     ss['_prev_day_date'] = str(today)
