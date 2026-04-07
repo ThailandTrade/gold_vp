@@ -33,7 +33,31 @@
 ### Note
 Les `choices` sont hardcodes dans 8 fichiers — a centraliser si on ajoute souvent des brokers.
 
-## 2026-04-07 — Dashboard temps reel VPS → Laptop via MQTT
+## 2026-04-07 — Dashboard temps reel VPS → Laptop via FastAPI + ngrok
+
+### Architecture (remplace MQTT, trop instable sur broker public)
+- `api_server.py` (laptop) : FastAPI, recoit les push des VPS, sert le dashboard
+- `vps_pusher.py` (chaque VPS) : POST l'etat MT5 chaque seconde vers l'API
+- `dashboard_live.py` (laptop) : Streamlit, lit depuis l'API locale
+- ngrok domaine fixe : `unprolongable-nonexternalized-elizabet.ngrok-free.dev`
+
+### Donnees pushees chaque seconde
+- Positions ouvertes (strat, dir, entry, current, SL, pnl live)
+- Balance / equity / margin
+- Trades fermes du jour
+- Dernieres bougies par instrument
+- Historique complet (au demarrage + refresh 5 min)
+
+### Usage
+```
+Laptop terminal 1: uvicorn api_server:app --host 0.0.0.0 --port 8001
+Laptop terminal 2: ngrok http --domain=unprolongable-nonexternalized-elizabet.ngrok-free.dev 8001
+Laptop terminal 3: streamlit run dashboard_live.py
+VPS FTMO:          python vps_pusher.py ftmo
+VPS 5ers:          python vps_pusher.py 5ers
+```
+
+## 2026-04-07 — MQTT abandonne (broker public instable)
 
 ### Architecture
 - `mqtt_publisher.py` (sur chaque VPS) : lit MT5 chaque seconde, publie sur MQTT
