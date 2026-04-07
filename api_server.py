@@ -231,8 +231,9 @@ function renderAccount(acc, data) {
     const tp=hist.reduce((s,t)=>s+(t.pnl||0),0);
     const w=hist.filter(t=>(t.pnl||0)>0).length;
     const wr=(w/hist.length*100).toFixed(0);
-    h+='<div class="section"><div class="section-title expander-btn" onclick="document.getElementById(\'hist-'+acc+'\').classList.toggle(\'open\')">Historique ('+hist.length+' trades)</div>';
-    h+='<div id="hist-'+acc+'" class="expander-body">';
+    const hid="hist-"+acc;
+    h+='<div class="section"><div class="section-title expander-btn" onclick="document.getElementById(&quot;'+hid+'&quot;).classList.toggle(&quot;open&quot;)">Historique ('+hist.length+' trades)</div>';
+    h+='<div id="'+hid+'" class="expander-body">';
     h+='<div class="hist-summary">'+hist.length+' trades &bull; WR '+wr+'% &bull; PnL $'+(tp>=0?'+':'')+fmt(tp,2)+'</div>';
     h+='<table><tr><th>Date</th><th>Sym</th><th>Strat</th><th>Dir</th><th>Entry</th><th>Exit</th><th>PnL</th></tr>';
     for(const t of hist.slice(-50).reverse()){
