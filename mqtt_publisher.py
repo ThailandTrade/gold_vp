@@ -7,8 +7,8 @@ Usage:
   python mqtt_publisher.py ftmo
 
 Publie sur topics:
-  vpswing/<account>/state    → positions, balance, pnl, ATR, candle
-  vpswing/<account>/trade    → quand un trade s'ouvre/ferme (event)
+  hydratrader/<account>/state    → positions, balance, pnl, ATR, candle
+  hydratrader/<account>/trade    → quand un trade s'ouvre/ferme (event)
 """
 import warnings; warnings.filterwarnings('ignore')
 import sys, argparse, json, time, importlib, os
@@ -33,7 +33,7 @@ MQTT_HOST = os.getenv('MQTT_HOST', 'broker.hivemq.com')
 MQTT_PORT = int(os.getenv('MQTT_PORT', '1883'))
 MQTT_USER = os.getenv('MQTT_USER', '')
 MQTT_PASS = os.getenv('MQTT_PASS', '')
-TOPIC_BASE = f"vpswing/{args.account}"
+TOPIC_BASE = f"hydratrader/{args.account}"
 INTERVAL = 1  # secondes
 
 # ── MT5 ──

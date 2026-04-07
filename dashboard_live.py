@@ -14,8 +14,8 @@ API_URL = os.getenv('DASHBOARD_API', 'http://localhost:8001')
 ACCOUNTS = ['5ers', 'ftmo']
 
 # ── PAGE ──
-st.set_page_config(page_title="VP Swing Live", layout="wide")
-st.title("VP Swing — Live Dashboard")
+st.set_page_config(page_title="HydraTrader Live", layout="wide")
+st.title("HydraTrader — Live Dashboard")
 
 # ── FETCH STATE ──
 try:

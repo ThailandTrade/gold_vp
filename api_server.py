@@ -13,7 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import threading, time
 from datetime import datetime, timezone
 
-app = FastAPI(title="VP Swing API")
+app = FastAPI(title="HydraTrader API")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 # ── STATE en memoire ──
@@ -72,7 +72,7 @@ async def dashboard():
 DASHBOARD_HTML = """<!DOCTYPE html>
 <html><head>
 <meta charset="utf-8">
-<title>VP Swing Live</title>
+<title>HydraTrader Live</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
@@ -144,7 +144,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 </head><body>
 
 <div class="header">
-  <h1>VP <span>Swing</span> &mdash; Live</h1>
+  <h1>Hydra<span>Trader</span> &mdash; Live</h1>
   <div class="status-bar" id="statusbar">Connexion...</div>
 </div>
 
@@ -152,7 +152,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <div class="grid" id="accounts"></div>
 </div>
 
-<div class="footer">VP Swing Trading System &mdash; refresh 1s</div>
+<div class="footer">HydraTrader Trading System &mdash; refresh 1s</div>
 
 <script>
 const API = '';
