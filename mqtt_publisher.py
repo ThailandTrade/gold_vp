@@ -78,13 +78,8 @@ def get_account():
         'profit': round(info.profit, 2),
     }
 
-def get_today_trades():
-    """Trades fermes aujourd'hui."""
-    today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
-    tomorrow = today.replace(hour=23, minute=59, second=59)
-    deals = mt5.history_deals_get(today, tomorrow) or []
-
-    # Group by position
+def _deals_to_trades(deals):
+    """Convertit une liste de deals MT5 en trades (in+out groupes)."""
     pos = {}
     for d in deals:
         if d.type > 1: continue  # skip balance, credit, etc
@@ -111,6 +106,20 @@ def get_today_trades():
             'time_close': datetime.fromtimestamp(dout.time, tz=timezone.utc).isoformat(),
         })
     return trades
+
+def get_today_trades():
+    """Trades fermes aujourd'hui."""
+    today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    tomorrow = today.replace(hour=23, minute=59, second=59)
+    deals = mt5.history_deals_get(today, tomorrow) or []
+    return _deals_to_trades(deals)
+
+def get_all_history():
+    """Tout l'historique disponible sur MT5."""
+    from_date = datetime(2020, 1, 1, tzinfo=timezone.utc)
+    to_date = datetime.now(timezone.utc)
+    deals = mt5.history_deals_get(from_date, to_date) or []
+    return _deals_to_trades(deals)
 
 def get_last_candle(symbol):
     """Derniere bougie fermee."""
@@ -142,6 +151,20 @@ mq = mqtt_connect()
 
 print(f"Publisher {BROKER} — interval {INTERVAL}s")
 print(f"Instruments: {list(INSTRUMENTS.keys())}")
+
+# Publish full history at startup
+print("Publishing full history...", end='', flush=True)
+history = get_all_history()
+# Split en chunks si trop gros (MQTT max ~256KB par message)
+CHUNK = 100
+for i in range(0, max(len(history), 1), CHUNK):
+    chunk = history[i:i+CHUNK]
+    mq.publish(f"{TOPIC_BASE}/history", json.dumps({
+        'chunk': i // CHUNK,
+        'total': len(history),
+        'trades': chunk,
+    }), qos=1)
+print(f" {len(history)} trades published in {max(1, (len(history)-1)//CHUNK+1)} chunks")
 
 prev_positions = set()  # pour detecter trades ouverts/fermes
 

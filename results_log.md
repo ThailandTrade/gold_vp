@@ -47,6 +47,7 @@ Les `choices` sont hardcodes dans 8 fichiers — a centraliser si on ajoute souv
 - Trades fermes du jour (avec pnl)
 - Dernieres bougies par instrument
 - Events trade ouvert/ferme (topic separe, QoS 1)
+- Historique complet MT5 (publie au demarrage en chunks de 100 trades, topic /history)
 
 ### Usage
 ```

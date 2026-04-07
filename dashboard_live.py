@@ -25,6 +25,8 @@ if 'states' not in st.session_state:
     st.session_state.states = {}
 if 'events' not in st.session_state:
     st.session_state.events = []
+if 'history' not in st.session_state:
+    st.session_state.history = {}  # account -> [trades]
 if 'mqtt_started' not in st.session_state:
     st.session_state.mqtt_started = False
 
@@ -41,6 +43,10 @@ def start_mqtt():
                 st.session_state.events.append(data)
                 if len(st.session_state.events) > 100:
                     st.session_state.events = st.session_state.events[-100:]
+            elif topic.endswith('/history'):
+                account = topic.split('/')[1]
+                chunk_trades = data.get('trades', [])
+                st.session_state.history.setdefault(account, []).extend(chunk_trades)
         except:
             pass
 
@@ -128,6 +134,22 @@ for i, account in enumerate(ACCOUNTS):
                            f"O={c.get('open', 0):.1f} H={c.get('high', 0):.1f} "
                            f"L={c.get('low', 0):.1f} C={c.get('close', 0):.1f} "
                            f"R={rng:.1f}")
+
+        # Historique complet
+        hist = st.session_state.history.get(account, [])
+        if hist:
+            with st.expander(f"Historique complet ({len(hist)} trades)"):
+                total_pnl = sum(t.get('pnl', 0) for t in hist)
+                wins = sum(1 for t in hist if t.get('pnl', 0) > 0)
+                wr = wins / len(hist) * 100 if hist else 0
+                st.text(f"Total: {len(hist)} trades | WR: {wr:.0f}% | PnL: ${total_pnl:+,.2f}")
+                for t in reversed(hist[-50:]):  # 50 derniers
+                    pnl_color = "🟢" if t.get('pnl', 0) >= 0 else "🔴"
+                    st.text(f"{pnl_color} {t.get('time_close', '')[:16]} "
+                           f"{t.get('symbol', '')} {t.get('comment', '')} "
+                           f"{t.get('dir', '').upper()} "
+                           f"{t.get('entry', 0):.2f}→{t.get('exit', 0):.2f} "
+                           f"PnL=${t.get('pnl', 0):+.2f}")
 
 # ── EVENTS LOG ──
 st.divider()
