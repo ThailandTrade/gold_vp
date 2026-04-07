@@ -121,9 +121,11 @@ for sym, icfg in INSTRUMENTS.items():
         d_dir = 'long' if di == 1 else 'short'
         entry = float(candles.iloc[ci]['close'])
         ex = entry + pnl_oz if di == 1 else entry - pnl_oz
+        risk_1r = sl_atr * atr_t  # 1R = distance du stop en points
         bt_trades.append({
             'strat': sn, 'dir': d_dir, 'entry': entry, 'exit': ex,
-            'pnl_pts': pnl_oz, 'bars': xi - ci,
+            'pnl_pts': pnl_oz, 'pnl_r': pnl_oz / risk_1r if risk_1r > 0 else 0,
+            'risk_1r': risk_1r, 'bars': xi - ci,
             'entry_time': str(candles.iloc[ci]['ts_dt']),
             'exit_time': str(candles.iloc[min(xi, len(candles)-1)]['ts_dt']),
             'skipped': None,
@@ -152,8 +154,8 @@ for sym, icfg in INSTRUMENTS.items():
 
     # Build table
     tbl = PrettyTable()
-    tbl.field_names = ['Sym', 'Strat', 'Exit', 'BT Dir', 'BT Entry', 'BT Exit', 'BT pts', 'BT In', 'BT Out',
-                       'LV Dir', 'LV Entry', 'LV Exit', 'LV pts', 'LV In', 'LV Out',
+    tbl.field_names = ['Sym', 'Strat', 'Exit', 'BT Dir', 'BT Entry', 'BT Exit', 'BT R', 'BT In', 'BT Out',
+                       'LV Dir', 'LV Entry', 'LV Exit', 'LV R', 'LV In', 'LV Out',
                        'LV-BT', 'Verdict']
     tbl.align = 'r'
     tbl.align['Sym'] = 'l'
@@ -180,8 +182,8 @@ for sym, icfg in INSTRUMENTS.items():
             bt_in = bt['entry_time'][11:16]; bt_out = '-'
         elif bt:
             bt_dir = bt['dir']; bt_entry = f"{bt['entry']:.2f}"; bt_exit = f"{bt['exit']:.2f}"
-            bt_pts = f"{bt['pnl_pts']:+.02f}"
-            bt_total_pts += bt['pnl_pts']
+            bt_pts = f"{bt['pnl_r']:+.2f}R"
+            bt_total_pts += bt['pnl_r']
             bt_in = bt['entry_time'][11:16]; bt_out = bt['exit_time'][11:16]
         else:
             bt_dir = '-'; bt_entry = '-'; bt_exit = '-'; bt_pts = '-'; bt_in = '-'; bt_out = '-'
@@ -191,8 +193,11 @@ for sym, icfg in INSTRUMENTS.items():
         if lv_t:
             lv_dir = lv_t['dir']; lv_entry = f"{lv_t['entry']:.2f}"; lv_exit = f"{lv_t['exit']:.2f}"
             lv_pnl_pts = (lv_t['exit'] - lv_t['entry']) if lv_t['dir'] == 'long' else (lv_t['entry'] - lv_t['exit'])
-            lv_pts = f"{lv_pnl_pts:+.02f}"
-            lv_total_pts += lv_pnl_pts
+            # R = pnl / risk_1r (utilise le risk_1r du BT si dispo, sinon ATR*3 par defaut)
+            risk_1r = bt['risk_1r'] if bt and not bt['skipped'] else 3.0 * atr
+            lv_pnl_r = lv_pnl_pts / risk_1r if risk_1r > 0 else 0
+            lv_pts = f"{lv_pnl_r:+.2f}R"
+            lv_total_pts += lv_pnl_r
             lv_entry_utc = lv_t['entry_time'] - timedelta(hours=3) if hasattr(lv_t['entry_time'], 'strftime') else lv_t['entry_time']
             lv_exit_utc = lv_t['exit_time'] - timedelta(hours=3) if hasattr(lv_t['exit_time'], 'strftime') else lv_t['exit_time']
             lv_in = lv_entry_utc.strftime('%H:%M') if hasattr(lv_entry_utc, 'strftime') else str(lv_entry_utc)[11:16]
@@ -208,11 +213,12 @@ for sym, icfg in INSTRUMENTS.items():
         else:
             lv_dir = '-'; lv_entry = '-'; lv_exit = '-'; lv_pts = '-'; lv_in = '-'; lv_out = '-'
 
-        # Delta PnL: LV pts - BT pts (positif = live mieux que BT)
+        # Delta R: LV R - BT R
         lv_bt_diff = '-'
         if bt and not bt['skipped'] and lv_t:
             lv_pnl = (lv_t['exit'] - lv_t['entry']) if lv_t['dir'] == 'long' else (lv_t['entry'] - lv_t['exit'])
-            lv_bt_diff = f"{lv_pnl - bt['pnl_pts']:+.2f}"
+            risk_1r_d = bt['risk_1r'] if bt['risk_1r'] > 0 else 1
+            lv_bt_diff = f"{(lv_pnl / risk_1r_d) - bt['pnl_r']:+.2f}R"
 
         # Verdict
         if bt and not bt['skipped'] and (lv_t or lo_t):
@@ -245,6 +251,6 @@ for sym, icfg in INSTRUMENTS.items():
         tbl.add_row(row)
 
     print(tbl)
-    print(f"  TOTAL:  BT {bt_total_pts:+.2f} pts  |  LV {lv_total_pts:+.2f} pts")
+    print(f"  TOTAL:  BT {bt_total_pts:+.2f}R  |  LV {lv_total_pts:+.2f}R")
 
 conn.close()
