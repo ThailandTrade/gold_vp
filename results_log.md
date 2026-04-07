@@ -2,6 +2,37 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-07 — CHECKLIST: ajouter un nouveau broker
+
+### Fichiers a CREER
+- `config_<broker>.py` : BROKER, ALL_INSTRUMENTS (symbol, risk_pct, portfolio), LIVE_INSTRUMENTS
+- `pairs_<broker>.txt` : liste des paires pour mt5_fetch_clean
+
+### Fichiers a MODIFIER (8 fichiers, lignes `choices`)
+- `strats.py:61` MAGIC_BASES : ajouter `'<broker>': <new_base>` (increments de 10000)
+- `strats.py:55-58` SYMBOL_ID : ajouter les nouveaux symboles si pas deja presents
+- `bt_portfolio.py:18` choices : ajouter `'<broker>'`
+- `compare_today.py:17` choices : ajouter `'<broker>'`
+- `live_mt5.py:27` choices : ajouter `'<broker>'`
+- `mqtt_publisher.py:25` choices : ajouter `'<broker>'`
+- `audit_bt_vs_compare.py:24` choices : ajouter `'<broker>'`
+- `live_paper.py:21` choices : ajouter `'<broker>'`
+- `strat_exits.py` : ajouter blocs `STRAT_EXITS[('<broker>', 'SYMBOL')]` pour chaque instrument
+
+### Pipeline a executer
+1. `mt5_fetch_clean.py --pairs-file pairs_<broker>.txt` → candles en DB
+2. `optimize_all.py <broker> --symbol <sym>` → pkl par instrument
+3. `analyze_combos.py <broker> --symbol <sym>` → combo_results.json
+4. User selectionne combos → mettre a jour `config_<broker>.py`
+5. Regenerer `strat_exits.py` depuis pkls
+6. `bt_portfolio.py <broker>` → validation agrege
+7. Deployer `live_mt5.py <broker>` sur VPS
+8. `mqtt_publisher.py <broker>` sur VPS
+9. Tout noter dans results_log.md a chaque etape
+
+### Note
+Les `choices` sont hardcodes dans 8 fichiers — a centraliser si on ajoute souvent des brokers.
+
 ## 2026-04-07 — Dashboard temps reel VPS → Laptop via MQTT
 
 ### Architecture
