@@ -30,8 +30,33 @@ OPEN_STRATS = frozenset({
 def load_data(conn, symbol):
     """Charge candles FULL history + ATR + trading_days + indicateurs precalcules.
     Retourne (candles_df, daily_atr_dict, global_atr_float, trading_days_list).
+    Pour bt_portfolio (backtest complet sur tout l'historique).
     """
     candles = load_candles_5m(conn, symbol=symbol.lower())
+    daily_atr, global_atr = compute_atr(conn, symbol=symbol.lower())
+    trading_days_list = get_trading_days(conn, symbol=symbol.lower())
+    candles = compute_indicators(candles)
+    return candles, daily_atr, global_atr, trading_days_list
+
+
+def load_data_recent(conn, symbol, n=2000):
+    """Charge les N derniers bars + ATR + indicateurs.
+    Meme resultat que load_data mais ~50x plus rapide.
+    Pour compare_today, vps_pusher, live (pas besoin de tout l'historique).
+    """
+    import re
+    table = f"candles_mt5_{re.sub(r'[^a-z0-9]+', '_', symbol.lower()).strip('_')}_5m"
+    cur = conn.cursor()
+    cur.execute(f"SELECT ts, open, high, low, close FROM {table} ORDER BY ts DESC LIMIT %s", (n,))
+    rows = cur.fetchall(); cur.close()
+    if not rows:
+        return pd.DataFrame(), {}, 0, []
+    candles = pd.DataFrame(rows, columns=['ts', 'open', 'high', 'low', 'close']).sort_values('ts').reset_index(drop=True)
+    candles['ts_dt'] = pd.to_datetime(candles['ts'], unit='ms', utc=True)
+    for c in ['open', 'high', 'low', 'close']:
+        candles[c] = candles[c].astype(float)
+    candles['date'] = candles['ts_dt'].dt.date
+    # ATR sur full history (identique a load_data — correcte, rapide car SQL seul)
     daily_atr, global_atr = compute_atr(conn, symbol=symbol.lower())
     trading_days_list = get_trading_days(conn, symbol=symbol.lower())
     candles = compute_indicators(candles)
