@@ -73,138 +73,202 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 <html><head>
 <meta charset="utf-8">
 <title>VP Swing Live</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { background:#0e1117; color:#fafafa; font-family:'Consolas','Monaco',monospace; font-size:13px; padding:20px; }
-  h1 { color:#ff6b35; margin-bottom:20px; font-size:24px; }
-  .grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
-  .card { background:#1a1d24; border-radius:8px; padding:16px; border:1px solid #2d3139; }
-  .card h2 { color:#4da6ff; margin-bottom:12px; font-size:18px; }
-  .metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:16px; }
-  .metric { background:#22262e; border-radius:6px; padding:10px; text-align:center; }
-  .metric .label { color:#888; font-size:11px; }
-  .metric .value { font-size:18px; font-weight:bold; margin-top:4px; }
-  .green { color:#00d26a; }
-  .red { color:#ff4757; }
-  .section { margin-top:12px; }
-  .section h3 { color:#ccc; font-size:14px; margin-bottom:8px; border-bottom:1px solid #2d3139; padding-bottom:4px; }
-  .trade { padding:4px 0; border-bottom:1px solid #1f2229; }
-  .pos { padding:6px 8px; background:#22262e; border-radius:4px; margin-bottom:4px; }
-  .waiting { color:#888; font-style:italic; }
-  .caption { color:#666; font-size:11px; margin-bottom:12px; }
-  .events { background:#1a1d24; border-radius:8px; padding:16px; margin-top:20px; border:1px solid #2d3139; }
-  .expander { cursor:pointer; color:#4da6ff; }
-  .expander-content { display:none; margin-top:8px; max-height:400px; overflow-y:auto; }
-  .expander-content.open { display:block; }
+  body { background:#f5f6f8; color:#1a1a2e; font-family:'Inter',sans-serif; font-size:13px; }
+
+  /* Header */
+  .header { background:#fff; border-bottom:2px solid #e8eaed; padding:16px 32px; display:flex; align-items:center; justify-content:space-between; }
+  .header h1 { font-size:20px; font-weight:700; color:#1a1a2e; }
+  .header h1 span { color:#2563eb; }
+  .status-bar { display:flex; gap:16px; align-items:center; font-size:12px; color:#6b7280; }
+  .status-dot { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:4px; }
+  .dot-green { background:#10b981; }
+  .dot-gray { background:#d1d5db; }
+
+  /* Layout */
+  .container { padding:24px 32px; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+
+  /* Cards */
+  .card { background:#fff; border-radius:12px; padding:20px 24px; box-shadow:0 1px 3px rgba(0,0,0,0.06); border:1px solid #e8eaed; }
+  .card-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+  .card-header h2 { font-size:16px; font-weight:700; color:#1a1a2e; text-transform:uppercase; letter-spacing:1px; }
+  .card-header .broker { font-size:11px; color:#6b7280; font-weight:400; }
+  .card-header .live-dot { font-size:11px; color:#10b981; }
+  .updated { font-size:11px; color:#9ca3af; margin-bottom:16px; }
+
+  /* Metrics */
+  .metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; }
+  .metric { background:#f9fafb; border-radius:8px; padding:12px; border:1px solid #f0f1f3; }
+  .metric .label { font-size:11px; color:#6b7280; font-weight:500; text-transform:uppercase; letter-spacing:0.5px; }
+  .metric .value { font-size:22px; font-weight:700; margin-top:4px; color:#1a1a2e; }
+  .metric .value.green { color:#059669; }
+  .metric .value.red { color:#dc2626; }
+
+  /* Sections */
+  .section { margin-top:16px; }
+  .section-title { font-size:12px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid #f0f1f3; }
+
+  /* Positions table */
+  table { width:100%; border-collapse:collapse; font-size:12px; }
+  th { text-align:left; color:#6b7280; font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:0.5px; padding:6px 8px; border-bottom:2px solid #e8eaed; }
+  td { padding:8px; border-bottom:1px solid #f0f1f3; vertical-align:middle; }
+  tr:hover { background:#f9fafb; }
+  .dir-long { color:#059669; font-weight:600; }
+  .dir-short { color:#dc2626; font-weight:600; }
+  .pnl-pos { color:#059669; font-weight:600; }
+  .pnl-neg { color:#dc2626; font-weight:600; }
+  .strat-name { color:#2563eb; font-weight:500; }
+  .sym { font-weight:600; }
+
+  /* No data */
+  .empty { color:#9ca3af; font-style:italic; padding:12px 0; }
+
+  /* Candle bar */
+  .candle-row { display:flex; justify-content:space-between; padding:4px 0; font-size:12px; color:#4b5563; border-bottom:1px solid #f9fafb; }
+  .candle-sym { font-weight:600; color:#1a1a2e; min-width:80px; }
+  .candle-r { font-weight:600; }
+
+  /* Expander */
+  .expander-btn { cursor:pointer; user-select:none; color:#2563eb; font-weight:500; }
+  .expander-btn:hover { text-decoration:underline; }
+  .expander-body { display:none; margin-top:8px; max-height:400px; overflow-y:auto; }
+  .expander-body.open { display:block; }
+  .hist-summary { background:#f0f7ff; border-radius:6px; padding:8px 12px; margin-bottom:8px; font-size:12px; color:#1e40af; }
+
+  /* Footer */
+  .footer { padding:12px 32px; text-align:center; font-size:11px; color:#9ca3af; }
 </style>
 </head><body>
-<h1>VP Swing &mdash; Live Dashboard</h1>
-<div class="grid" id="accounts"></div>
-<div class="events" id="status"></div>
+
+<div class="header">
+  <h1>VP <span>Swing</span> &mdash; Live</h1>
+  <div class="status-bar" id="statusbar">Connexion...</div>
+</div>
+
+<div class="container">
+  <div class="grid" id="accounts"></div>
+</div>
+
+<div class="footer">VP Swing Trading System &mdash; refresh 1s</div>
 
 <script>
-const API = '';  // meme origine
+const API = '';
 const ACCOUNTS = ['5ers', 'ftmo'];
 
-function fmt(n, d=0) { return n != null ? n.toLocaleString('en-US', {minimumFractionDigits:d, maximumFractionDigits:d}) : '-'; }
-function pnlClass(v) { return v >= 0 ? 'green' : 'red'; }
-function pnlSign(v) { return v >= 0 ? '+'+fmt(v,2) : fmt(v,2); }
+function fmt(n,d=0){if(n==null)return'-';return Number(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});}
+function pnl$(v){return v>=0?'<span class="pnl-pos">+$'+fmt(v,2)+'</span>':'<span class="pnl-neg">-$'+fmt(Math.abs(v),2)+'</span>';}
+function dirClass(d){return d==='long'?'dir-long':'dir-short';}
+function timeShort(s){return s?(s+'').slice(11,16):'';}
 
-function renderAccount(account, data) {
-  if (!data || !data.state || !data.state.account_info) {
-    return `<div class="card"><h2>${account.toUpperCase()}</h2><div class="waiting">En attente de donnees...</div></div>`;
+function renderAccount(acc, data) {
+  if(!data||!data.state||!data.state.account_info){
+    return '<div class="card"><div class="card-header"><h2>'+acc.toUpperCase()+'</h2></div><div class="empty">En attente de donnees du VPS...</div></div>';
   }
-  const s = data.state;
-  const a = s.account_info || {};
-  const positions = s.positions || [];
-  const trades = s.today_trades || [];
-  const candles = s.candles || {};
-  const hist = data.history || [];
+  const s=data.state, a=s.account_info||{}, pos=s.positions||[], trades=s.today_trades||[], candles=s.candles||{}, hist=data.history||[];
+  let h='<div class="card">';
 
-  let html = `<div class="card"><h2>${account.toUpperCase()}</h2>`;
-  html += `<div class="caption">Derniere maj: ${(s.ts||'').slice(0,19)}</div>`;
+  // Header
+  h+='<div class="card-header"><h2>'+acc.toUpperCase()+' <span class="broker">'+( s.broker||'')+'</span></h2>';
+  h+='<span class="live-dot"><span class="status-dot dot-green"></span> Live</span></div>';
+  h+='<div class="updated">'+timeShort(s.ts)+' UTC</div>';
 
   // Metrics
-  html += `<div class="metrics">
-    <div class="metric"><div class="label">Balance</div><div class="value">$${fmt(a.balance)}</div></div>
-    <div class="metric"><div class="label">Equity</div><div class="value">$${fmt(a.equity)}</div></div>
-    <div class="metric"><div class="label">PnL jour</div><div class="value ${pnlClass(s.today_pnl)}">$${pnlSign(s.today_pnl)}</div></div>
-    <div class="metric"><div class="label">Trades jour</div><div class="value">${s.today_count||0}</div></div>
-  </div>`;
+  h+='<div class="metrics">';
+  h+='<div class="metric"><div class="label">Balance</div><div class="value">$'+fmt(a.balance)+'</div></div>';
+  h+='<div class="metric"><div class="label">Equity</div><div class="value">$'+fmt(a.equity)+'</div></div>';
+  const pnlCls=(s.today_pnl||0)>=0?'green':'red';
+  h+='<div class="metric"><div class="label">PnL Jour</div><div class="value '+pnlCls+'">$'+(s.today_pnl>=0?'+':'')+fmt(s.today_pnl,2)+'</div></div>';
+  h+='<div class="metric"><div class="label">Trades</div><div class="value">'+(s.today_count||0)+'</div></div>';
+  h+='</div>';
 
   // Positions
-  html += `<div class="section"><h3>Positions ouvertes (${positions.length})</h3>`;
-  if (positions.length === 0) html += `<div class="waiting">Aucune position</div>`;
-  for (const p of positions) {
-    const icon = p.pnl >= 0 ? '&#x1F7E2;' : '&#x1F534;';
-    html += `<div class="pos">${icon} ${p.symbol} ${p.comment||''} ${p.dir.toUpperCase()} @ ${fmt(p.entry,2)} &rarr; ${fmt(p.current,2)} SL=${fmt(p.sl,2)} <span class="${pnlClass(p.pnl)}">$${pnlSign(p.pnl)}</span> (${p.volume}lots)</div>`;
+  h+='<div class="section"><div class="section-title">Positions ouvertes ('+pos.length+')</div>';
+  if(pos.length===0){h+='<div class="empty">Aucune position ouverte</div>';}
+  else{
+    h+='<table><tr><th>Sym</th><th>Strat</th><th>Dir</th><th>Entry</th><th>Current</th><th>SL</th><th>PnL</th><th>Lots</th></tr>';
+    for(const p of pos){
+      h+='<tr><td class="sym">'+p.symbol+'</td><td class="strat-name">'+(p.comment||'')+'</td>';
+      h+='<td class="'+dirClass(p.dir)+'">'+p.dir.toUpperCase()+'</td>';
+      h+='<td>'+fmt(p.entry,2)+'</td><td>'+fmt(p.current,2)+'</td><td>'+fmt(p.sl,2)+'</td>';
+      h+='<td>'+pnl$(p.pnl)+'</td><td>'+p.volume+'</td></tr>';
+    }
+    h+='</table>';
   }
-  html += `</div>`;
+  h+='</div>';
 
   // Today trades
-  if (trades.length > 0) {
-    html += `<div class="section"><h3>Trades du jour (${trades.length})</h3>`;
-    for (const t of [...trades].reverse()) {
-      const icon = t.pnl >= 0 ? '&#x1F7E2;' : '&#x1F534;';
-      html += `<div class="trade">${icon} ${(t.time_close||'').slice(0,16)} ${t.symbol} ${t.comment||''} ${t.dir.toUpperCase()} ${fmt(t.entry,2)}&rarr;${fmt(t.exit,2)} <span class="${pnlClass(t.pnl)}">$${pnlSign(t.pnl)}</span></div>`;
+  if(trades.length>0){
+    h+='<div class="section"><div class="section-title">Trades du jour ('+trades.length+')</div>';
+    h+='<table><tr><th>Heure</th><th>Sym</th><th>Strat</th><th>Dir</th><th>Entry</th><th>Exit</th><th>PnL</th></tr>';
+    for(const t of [...trades].reverse()){
+      h+='<tr><td>'+timeShort(t.time_close)+'</td><td class="sym">'+t.symbol+'</td><td class="strat-name">'+(t.comment||'')+'</td>';
+      h+='<td class="'+dirClass(t.dir)+'">'+t.dir.toUpperCase()+'</td>';
+      h+='<td>'+fmt(t.entry,2)+'</td><td>'+fmt(t.exit,2)+'</td>';
+      h+='<td>'+pnl$(t.pnl)+'</td></tr>';
     }
-    html += `</div>`;
+    h+='</table></div>';
   }
 
   // Candles
-  const syms = Object.keys(candles);
-  if (syms.length > 0) {
-    html += `<div class="section"><h3>Dernieres bougies</h3>`;
-    for (const sym of syms) {
-      const c = candles[sym];
-      if (c && c.close) {
-        const rng = (c.high - c.low).toFixed(1);
-        html += `<div class="trade">${sym} ${(c.time||'').slice(0,16)} O=${fmt(c.open,1)} H=${fmt(c.high,1)} L=${fmt(c.low,1)} C=${fmt(c.close,1)} R=${rng}</div>`;
-      }
+  const syms=Object.keys(candles).filter(s=>candles[s]&&candles[s].close);
+  if(syms.length>0){
+    h+='<div class="section"><div class="section-title">Dernieres bougies</div>';
+    for(const sym of syms){
+      const c=candles[sym]; const rng=(c.high-c.low).toFixed(1);
+      h+='<div class="candle-row"><span class="candle-sym">'+sym+'</span>';
+      h+='<span>'+timeShort(c.time)+'</span>';
+      h+='<span>O '+fmt(c.open,1)+'</span><span>H '+fmt(c.high,1)+'</span><span>L '+fmt(c.low,1)+'</span><span>C '+fmt(c.close,1)+'</span>';
+      h+='<span class="candle-r">R '+rng+'</span></div>';
     }
-    html += `</div>`;
+    h+='</div>';
   }
 
-  // History expander
-  if (hist.length > 0) {
-    const totalPnl = hist.reduce((s,t) => s + (t.pnl||0), 0);
-    const wins = hist.filter(t => (t.pnl||0) > 0).length;
-    const wr = (wins/hist.length*100).toFixed(0);
-    html += `<div class="section"><h3 class="expander" onclick="this.nextElementSibling.classList.toggle('open')">Historique (${hist.length} trades) &#x25BC;</h3>`;
-    html += `<div class="expander-content"><div style="margin-bottom:8px">Total: ${hist.length} trades | WR: ${wr}% | PnL: $${pnlSign(totalPnl)}</div>`;
-    for (const t of hist.slice(-50).reverse()) {
-      const icon = (t.pnl||0) >= 0 ? '&#x1F7E2;' : '&#x1F534;';
-      html += `<div class="trade">${icon} ${(t.time_close||'').slice(0,16)} ${t.symbol||''} ${t.comment||''} ${(t.dir||'').toUpperCase()} ${fmt(t.entry,2)}&rarr;${fmt(t.exit,2)} <span class="${pnlClass(t.pnl||0)}">$${pnlSign(t.pnl||0)}</span></div>`;
+  // History
+  if(hist.length>0){
+    const tp=hist.reduce((s,t)=>s+(t.pnl||0),0);
+    const w=hist.filter(t=>(t.pnl||0)>0).length;
+    const wr=(w/hist.length*100).toFixed(0);
+    h+='<div class="section"><div class="section-title expander-btn" onclick="document.getElementById(\'hist-'+acc+'\').classList.toggle(\'open\')">Historique ('+hist.length+' trades)</div>';
+    h+='<div id="hist-'+acc+'" class="expander-body">';
+    h+='<div class="hist-summary">'+hist.length+' trades &bull; WR '+wr+'% &bull; PnL $'+(tp>=0?'+':'')+fmt(tp,2)+'</div>';
+    h+='<table><tr><th>Date</th><th>Sym</th><th>Strat</th><th>Dir</th><th>Entry</th><th>Exit</th><th>PnL</th></tr>';
+    for(const t of hist.slice(-50).reverse()){
+      h+='<tr><td>'+timeShort(t.time_close)+'</td><td class="sym">'+(t.symbol||'')+'</td><td class="strat-name">'+(t.comment||'')+'</td>';
+      h+='<td class="'+dirClass(t.dir||'')+'">'+((t.dir||'').toUpperCase())+'</td>';
+      h+='<td>'+fmt(t.entry,2)+'</td><td>'+fmt(t.exit,2)+'</td>';
+      h+='<td>'+pnl$(t.pnl||0)+'</td></tr>';
     }
-    html += `</div></div>`;
+    h+='</table></div></div>';
   }
 
-  html += `</div>`;
-  return html;
+  h+='</div>';
+  return h;
 }
 
-async function refresh() {
-  try {
-    const r = await fetch(API + '/state');
-    const data = await r.json();
-    let html = '';
-    for (const acc of ACCOUNTS) {
-      html += renderAccount(acc, data[acc] || {});
-    }
-    document.getElementById('accounts').innerHTML = html;
+async function refresh(){
+  try{
+    const r=await fetch(API+'/state');
+    const data=await r.json();
+    let html='';
+    for(const acc of ACCOUNTS) html+=renderAccount(acc,data[acc]||{});
+    document.getElementById('accounts').innerHTML=html;
 
-    const accs = Object.keys(data);
-    const statusParts = accs.map(a => {
-      const lp = data[a]?.last_push;
-      return `${a.toUpperCase()}: ${lp ? lp.slice(11,19) : 'N/A'}`;
+    const parts=Object.keys(data).map(a=>{
+      const lp=data[a]?.last_push;
+      const ago=lp?Math.round((Date.now()-new Date(lp).getTime())/1000):999;
+      const dot=ago<10?'dot-green':'dot-gray';
+      return '<span class="status-dot '+dot+'"></span> '+a.toUpperCase()+' '+( ago<999?ago+'s ago':'offline');
     });
-    document.getElementById('status').innerHTML = `<span style="color:#666">Last push: ${statusParts.join(' | ')}</span>`;
-  } catch(e) {
-    document.getElementById('status').innerHTML = `<span class="red">API error: ${e.message}</span>`;
+    document.getElementById('statusbar').innerHTML=parts.join(' &nbsp;&bull;&nbsp; ');
+  }catch(e){
+    document.getElementById('statusbar').innerHTML='<span style="color:#dc2626">API error</span>';
   }
 }
 
 refresh();
-setInterval(refresh, 1000);
+setInterval(refresh,1000);
 </script>
 </body></html>"""
