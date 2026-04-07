@@ -105,8 +105,8 @@ for sym, icfg in INSTRUMENTS.items():
     if not portfolio: continue
     sym_exits = STRAT_EXITS.get((args.account, sym), {})
 
-    # Load recent data (2000 bars suffit pour compare today, ~50x plus rapide que full)
-    candles, daily_atr, global_atr, trading_days = load_data_recent(conn, sym)
+    # Load recent data (5000 bars = convergence garantie indicateurs, ~20x plus rapide que full)
+    candles, daily_atr, global_atr, trading_days = load_data_recent(conn, sym, n=5000)
     from backtest_engine import prev_trading_day
     pd_ = prev_trading_day(today, trading_days)
     atr = daily_atr.get(pd_, global_atr) if pd_ else global_atr
