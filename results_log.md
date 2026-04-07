@@ -57,6 +57,12 @@ VPS FTMO:          python vps_pusher.py ftmo
 VPS 5ers:          python vps_pusher.py 5ers
 ```
 
+## 2026-04-07 — Optim compare_today: load_data_recent (12s → 0.6s)
+
+`load_data_recent(conn, symbol, n=2000)` dans backtest_engine : charge 2000 bars au lieu de 70k.
+ATR toujours via compute_atr full (SQL seul, rapide). compare_today passe de ~15s a 2.25s total.
+bt_portfolio garde load_data full pour le backtest complet.
+
 ## 2026-04-07 — MQTT abandonne (broker public instable)
 
 ### Architecture
