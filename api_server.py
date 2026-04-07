@@ -201,53 +201,66 @@ function renderAccount(acc, data) {
   }
   h+='</div>';
 
-  // Today trades
-  if(trades.length>0){
-    h+='<div class="section"><div class="section-title">Trades du jour ('+trades.length+')</div>';
-    h+='<table><tr><th>Heure</th><th>Sym</th><th>Strat</th><th>Dir</th><th>Entry</th><th>Exit</th><th>PnL</th></tr>';
-    for(const t of [...trades].reverse()){
-      h+='<tr><td>'+timeShort(t.time_close)+'</td><td class="sym">'+t.symbol+'</td><td class="strat-name">'+(t.comment||'')+'</td>';
-      h+='<td class="'+dirClass(t.dir)+'">'+t.dir.toUpperCase()+'</td>';
-      h+='<td>'+fmt(t.entry,2)+'</td><td>'+fmt(t.exit,2)+'</td>';
-      h+='<td>'+pnl$(t.pnl)+'</td></tr>';
-    }
-    h+='</table></div>';
-  }
-
-  // BT vs Live compare
+  // Trades du jour: BT vs Live unifie sur la meme ligne
   const btc=data.bt_compare||{};
   const btSyms=Object.keys(btc);
-  if(btSyms.length>0 || trades.length>0){
-    h+='<div class="section"><div class="section-title">BT vs Live</div>';
-    h+='<table><tr><th>Strat</th><th>BT Dir</th><th>BT Entry</th><th>BT R</th><th>LV Dir</th><th>LV Entry</th><th>LV R</th><th>Delta</th></tr>';
-    for(const sym of btSyms){
-      const info=btc[sym]; if(!info) continue;
-      const bts=info.bt_trades||[];
-      // Match BT trades with live trades by strat name
-      const lvByStrat={};
-      for(const t of trades) lvByStrat[t.comment||t.strat||'']=t;
-      for(const bt of bts){
-        const lv=lvByStrat[bt.strat]||null;
-        const btR=bt.pnl_r!=null?(bt.pnl_r>=0?'+':'')+bt.pnl_r.toFixed(2)+'R':'-';
-        let lvDir='-',lvEntry='-',lvR='-',delta='-';
-        if(lv){
-          lvDir=lv.dir.toUpperCase();
-          lvEntry=fmt(lv.entry,2);
-          const lvPnl=(lv.dir==='long'?lv.exit-lv.entry:lv.entry-lv.exit);
-          const r1r=info.atr*3;
-          const lvRv=r1r>0?lvPnl/r1r:0;
-          lvR='<span class="'+(lvRv>=0?'pnl-pos':'pnl-neg')+'">'+(lvRv>=0?'+':'')+lvRv.toFixed(2)+'R</span>';
-          const d=lvRv-bt.pnl_r;
+  const lvByStrat={};
+  for(const t of trades) lvByStrat[t.comment||t.strat||'']=t;
+  // Collecter toutes les strats (BT + LV)
+  const allStrats=new Set();
+  for(const sym of btSyms){const bts=(btc[sym]||{}).bt_trades||[]; for(const b of bts) allStrats.add(b.strat);}
+  for(const t of trades) allStrats.add(t.comment||t.strat||'');
+  if(allStrats.size>0){
+    const atr0=btSyms.length>0?(btc[btSyms[0]]||{}).atr||1:1;
+    h+='<div class="section"><div class="section-title">Trades du jour &mdash; BT vs Live ('+allStrats.size+' strats)</div>';
+    h+='<table><tr><th>Strat</th><th>BT Dir</th><th>BT Entry</th><th>BT Exit</th><th>BT R</th><th>LV Dir</th><th>LV Entry</th><th>LV Exit</th><th>LV R</th><th>Delta</th></tr>';
+    // Build BT map
+    const btByStrat={};
+    for(const sym of btSyms){const bts=(btc[sym]||{}).bt_trades||[]; for(const b of bts) btByStrat[b.strat]=b;}
+    for(const sn of [...allStrats].sort()){
+      const bt=btByStrat[sn]||null;
+      const lv=lvByStrat[sn]||null;
+      // BT cols
+      let btDir='-',btEntry='-',btExit='-',btR='-';
+      if(bt){
+        btDir='<span class="'+dirClass(bt.dir)+'">'+bt.dir.toUpperCase()+'</span>';
+        btEntry=fmt(bt.entry,2);
+        btExit=fmt(bt.exit,2);
+        const rv=bt.pnl_r||0;
+        btR='<span class="'+(rv>=0?'pnl-pos':'pnl-neg')+'">'+(rv>=0?'+':'')+rv.toFixed(2)+'R</span>';
+      }
+      // LV cols
+      let lvDir='-',lvEntry='-',lvExit='-',lvR='-',delta='-';
+      if(lv){
+        lvDir='<span class="'+dirClass(lv.dir)+'">'+lv.dir.toUpperCase()+'</span>';
+        lvEntry=fmt(lv.entry,2);
+        lvExit=fmt(lv.exit,2);
+        const lvPnl=(lv.dir==='long'?lv.exit-lv.entry:lv.entry-lv.exit);
+        const sl_atr=bt?bt.pnl_r!==undefined?1:1:1;
+        const r1r=atr0*3;
+        const lvRv=r1r>0?lvPnl/r1r:0;
+        lvR='<span class="'+(lvRv>=0?'pnl-pos':'pnl-neg')+'">'+(lvRv>=0?'+':'')+lvRv.toFixed(2)+'R</span>';
+        if(bt){
+          const d=lvRv-(bt.pnl_r||0);
           delta='<span class="'+(d>=0?'pnl-pos':'pnl-neg')+'">'+(d>=0?'+':'')+d.toFixed(2)+'R</span>';
         }
-        h+='<tr><td class="strat-name">'+bt.strat+'</td>';
-        h+='<td class="'+dirClass(bt.dir)+'">'+bt.dir.toUpperCase()+'</td>';
-        h+='<td>'+fmt(bt.entry,2)+'</td>';
-        h+='<td>'+(bt.pnl_r>=0?'<span class="pnl-pos">':'<span class="pnl-neg">')+btR+'</span></td>';
-        h+='<td class="'+(lv?dirClass(lv.dir):'')+'">'+lvDir+'</td>';
-        h+='<td>'+lvEntry+'</td><td>'+lvR+'</td><td>'+delta+'</td></tr>';
       }
+      h+='<tr><td class="strat-name">'+sn+'</td>';
+      h+='<td>'+btDir+'</td><td>'+btEntry+'</td><td>'+btExit+'</td><td>'+btR+'</td>';
+      h+='<td>'+lvDir+'</td><td>'+lvEntry+'</td><td>'+lvExit+'</td><td>'+lvR+'</td><td>'+delta+'</td></tr>';
     }
+    // Totals
+    let btTotal=0,lvTotal=0;
+    for(const sn of allStrats){
+      const bt=btByStrat[sn]; if(bt) btTotal+=bt.pnl_r||0;
+      const lv=lvByStrat[sn]; if(lv){const p=(lv.dir==='long'?lv.exit-lv.entry:lv.entry-lv.exit); lvTotal+=atr0*3>0?p/(atr0*3):0;}
+    }
+    h+='<tr style="font-weight:700;border-top:2px solid #e8eaed"><td>TOTAL</td><td></td><td></td><td></td>';
+    h+='<td><span class="'+(btTotal>=0?'pnl-pos':'pnl-neg')+'">'+(btTotal>=0?'+':'')+btTotal.toFixed(2)+'R</span></td>';
+    h+='<td></td><td></td><td></td>';
+    h+='<td><span class="'+(lvTotal>=0?'pnl-pos':'pnl-neg')+'">'+(lvTotal>=0?'+':'')+lvTotal.toFixed(2)+'R</span></td>';
+    const dt=lvTotal-btTotal;
+    h+='<td><span class="'+(dt>=0?'pnl-pos':'pnl-neg')+'">'+(dt>=0?'+':'')+dt.toFixed(2)+'R</span></td></tr>';
     h+='</table></div>';
   }
 
