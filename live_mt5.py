@@ -370,6 +370,7 @@ def main():
         log.info("  MT5 #{} {} {} {} {:.2f}lots pnl={:+.2f}".format(p.ticket, sym, sn, d, p.volume, p.profit))
 
     conn = get_conn_autocommit()
+    _atr_cache = {}  # sym -> {'date', 'atr', 'trading_days', 'daily_atr', 'global_atr'}
 
     # Calage per symbol
     last_ts = {}
@@ -400,18 +401,26 @@ def main():
 
                 if not portfolio: continue
 
-                # Load data via backtest_engine (memes candles/ATR/indicateurs que bt_portfolio)
-                candles, daily_atr, global_atr, trading_days = load_data(conn, sym)
+                # Candles recentes (rapide) + indicateurs
+                candles = get_recent_candles(conn, sym, 1500)
                 if len(candles) == 0: continue
+                from strats import compute_indicators
+                candles = compute_indicators(candles)
 
                 current_ts = int(candles.iloc[-1]['ts'])
                 # REGLE: seule source de temps = ts_dt UTC des candles en DB
                 candle_time_utc = candles.iloc[-1]['ts_dt'].to_pydatetime()
                 today = candle_time_utc.date()
 
-                # ATR via backtest_engine (meme que bt_portfolio)
-                pd_ = prev_trading_day(today, trading_days)
-                atr = daily_atr.get(pd_, global_atr) if pd_ else global_atr
+                # ATR via backtest_engine (cache au demarrage, meme que bt_portfolio)
+                # _atr_cache est rempli au startup et refresh 1x/jour
+                if sym not in _atr_cache or _atr_cache[sym]['date'] != str(today):
+                    from backtest_engine import load_data as _ld, prev_trading_day as _ptd
+                    _, _da, _ga, _td = _ld(conn, sym)
+                    _pd = _ptd(today, _td)
+                    _atr_val = _da.get(_pd, _ga) if _pd else _ga
+                    _atr_cache[sym] = {'date': str(today), 'atr': _atr_val, 'trading_days': _td, 'daily_atr': _da, 'global_atr': _ga}
+                atr = _atr_cache[sym]['atr']
                 if not atr or atr == 0: continue
 
                 # Day reset
