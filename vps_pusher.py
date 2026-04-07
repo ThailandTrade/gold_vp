@@ -133,8 +133,49 @@ print("Fetching full history...", end='', flush=True)
 history = get_all_history()
 print(f" {len(history)} trades")
 
+# BT compare: init
+from phase1_poc_calculator import get_conn as _get_conn
+from backtest_engine import load_data_recent, collect_trades, prev_trading_day
+from strat_exits import STRAT_EXITS, DEFAULT_EXIT
+
+def compute_bt_today():
+    """Calcule les trades BT du jour (meme code que compare_today)."""
+    today = datetime.now(timezone.utc).date()
+    conn = _get_conn()
+    bt_all = {}
+    for sym, icfg in INSTRUMENTS.items():
+        portfolio = icfg['portfolio']
+        if not portfolio: continue
+        sym_exits = STRAT_EXITS.get((args.account, sym), {})
+        candles, daily_atr, global_atr, trading_days = load_data_recent(conn, sym, n=5000)
+        if len(candles) == 0: continue
+        pd_ = prev_trading_day(today, trading_days)
+        atr = daily_atr.get(pd_, global_atr) if pd_ else global_atr
+        raw = collect_trades(candles, daily_atr, global_atr, trading_days,
+                            portfolio, sym_exits, date_filter=today)
+        bt_trades = []
+        for ci, xi, di, pnl_oz, sl_atr, atr_t, mo, sn in raw:
+            entry = float(candles.iloc[ci]['close'])
+            risk_1r = sl_atr * atr_t
+            bt_trades.append({
+                'strat': sn, 'dir': 'long' if di == 1 else 'short',
+                'entry': round(entry, 2),
+                'exit': round(entry + pnl_oz if di == 1 else entry - pnl_oz, 2),
+                'pnl_r': round(pnl_oz / risk_1r, 2) if risk_1r > 0 else 0,
+                'entry_time': str(candles.iloc[ci]['ts_dt'])[:16],
+                'exit_time': str(candles.iloc[min(xi, len(candles)-1)]['ts_dt'])[:16],
+            })
+        bt_all[sym] = {'atr': round(atr, 2), 'bt_trades': bt_trades}
+    conn.close()
+    return bt_all
+
+print("Computing BT today...", end='', flush=True)
+bt_compare = compute_bt_today()
+print(f" {sum(len(v['bt_trades']) for v in bt_compare.values())} BT trades")
+
 push_count = 0
 history_sent = False
+BT_REFRESH = 60  # recalcule BT toutes les 60s (nouvelles bougies)
 
 try:
     while True:
@@ -158,12 +199,15 @@ try:
                 'candles': candles,
             }
 
-            payload = {'state': state}
+            payload = {'state': state, 'bt_compare': bt_compare}
             # Envoyer l'histo au premier push, puis toutes les 5 min
             if not history_sent or push_count % 300 == 0:
                 payload['history'] = history
                 history = get_all_history()  # refresh
                 history_sent = True
+            # Refresh BT compare toutes les 60s
+            if push_count % BT_REFRESH == 0:
+                bt_compare = compute_bt_today()
 
             r = requests.post(API_URL, json=payload, timeout=5)
             push_count += 1

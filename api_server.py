@@ -26,12 +26,13 @@ async def push(account: str, data: dict):
     """VPS pousse l'etat MT5 chaque seconde."""
     with _lock:
         if account not in _state:
-            _state[account] = {'state': {}, 'history': [], 'last_push': None}
+            _state[account] = {'state': {}, 'history': [], 'bt_compare': {}, 'last_push': None}
         _state[account]['state'] = data.get('state', {})
         _state[account]['last_push'] = datetime.now(timezone.utc).isoformat()
-        # History: remplace si fourni
         if 'history' in data and data['history']:
             _state[account]['history'] = data['history']
+        if 'bt_compare' in data and data['bt_compare']:
+            _state[account]['bt_compare'] = data['bt_compare']
     return {"ok": True}
 
 
@@ -44,6 +45,7 @@ async def get_all_states():
             result[account] = {
                 'state': d['state'],
                 'history': d['history'],
+                'bt_compare': d.get('bt_compare', {}),
                 'last_push': d['last_push'],
             }
     return result
@@ -208,6 +210,43 @@ function renderAccount(acc, data) {
       h+='<td class="'+dirClass(t.dir)+'">'+t.dir.toUpperCase()+'</td>';
       h+='<td>'+fmt(t.entry,2)+'</td><td>'+fmt(t.exit,2)+'</td>';
       h+='<td>'+pnl$(t.pnl)+'</td></tr>';
+    }
+    h+='</table></div>';
+  }
+
+  // BT vs Live compare
+  const btc=data.bt_compare||{};
+  const btSyms=Object.keys(btc);
+  if(btSyms.length>0 || trades.length>0){
+    h+='<div class="section"><div class="section-title">BT vs Live</div>';
+    h+='<table><tr><th>Strat</th><th>BT Dir</th><th>BT Entry</th><th>BT R</th><th>LV Dir</th><th>LV Entry</th><th>LV R</th><th>Delta</th></tr>';
+    for(const sym of btSyms){
+      const info=btc[sym]; if(!info) continue;
+      const bts=info.bt_trades||[];
+      // Match BT trades with live trades by strat name
+      const lvByStrat={};
+      for(const t of trades) lvByStrat[t.comment||t.strat||'']=t;
+      for(const bt of bts){
+        const lv=lvByStrat[bt.strat]||null;
+        const btR=bt.pnl_r!=null?(bt.pnl_r>=0?'+':'')+bt.pnl_r.toFixed(2)+'R':'-';
+        let lvDir='-',lvEntry='-',lvR='-',delta='-';
+        if(lv){
+          lvDir=lv.dir.toUpperCase();
+          lvEntry=fmt(lv.entry,2);
+          const lvPnl=(lv.dir==='long'?lv.exit-lv.entry:lv.entry-lv.exit);
+          const r1r=info.atr*3;
+          const lvRv=r1r>0?lvPnl/r1r:0;
+          lvR='<span class="'+(lvRv>=0?'pnl-pos':'pnl-neg')+'">'+(lvRv>=0?'+':'')+lvRv.toFixed(2)+'R</span>';
+          const d=lvRv-bt.pnl_r;
+          delta='<span class="'+(d>=0?'pnl-pos':'pnl-neg')+'">'+(d>=0?'+':'')+d.toFixed(2)+'R</span>';
+        }
+        h+='<tr><td class="strat-name">'+bt.strat+'</td>';
+        h+='<td class="'+dirClass(bt.dir)+'">'+bt.dir.toUpperCase()+'</td>';
+        h+='<td>'+fmt(bt.entry,2)+'</td>';
+        h+='<td>'+(bt.pnl_r>=0?'<span class="pnl-pos">':'<span class="pnl-neg">')+btR+'</span></td>';
+        h+='<td class="'+(lv?dirClass(lv.dir):'')+'">'+lvDir+'</td>';
+        h+='<td>'+lvEntry+'</td><td>'+lvR+'</td><td>'+delta+'</td></tr>';
+      }
     }
     h+='</table></div>';
   }
