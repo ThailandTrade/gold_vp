@@ -6,8 +6,7 @@ Usage:
   streamlit run dashboard_live.py
 """
 import streamlit as st
-from streamlit_autorefresh import st_autorefresh
-import requests, os
+import requests, time, os
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -16,7 +15,6 @@ ACCOUNTS = ['5ers', 'ftmo']
 
 # ── PAGE ──
 st.set_page_config(page_title="VP Swing Live", layout="wide")
-st_autorefresh(interval=2000, key="refresh")  # refresh toutes les 2s, sans clignotement
 st.title("VP Swing — Live Dashboard")
 
 # ── FETCH STATE ──
@@ -110,4 +108,5 @@ for i, account in enumerate(ACCOUNTS):
                            f"{t.get('entry', 0):.2f}→{t.get('exit', 0):.2f} "
                            f"PnL=${t.get('pnl', 0):+.2f}")
 
-# Auto-refresh gere par st_autorefresh (pas de sleep/rerun)
+time.sleep(3)
+st.rerun()
