@@ -43,9 +43,14 @@ def start_mqtt():
                 st.session_state.events.append(data)
                 if len(st.session_state.events) > 100:
                     st.session_state.events = st.session_state.events[-100:]
-            elif topic.endswith('/history'):
+            elif '/history/' in topic:
                 account = topic.split('/')[1]
                 chunk_trades = data.get('trades', [])
+                chunk_id = data.get('chunk', 0)
+                total_chunks = data.get('total_chunks', 1)
+                # Reset si chunk 0 (nouveau batch)
+                if chunk_id == 0:
+                    st.session_state.history[account] = []
                 st.session_state.history.setdefault(account, []).extend(chunk_trades)
         except:
             pass

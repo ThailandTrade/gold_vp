@@ -152,19 +152,32 @@ mq = mqtt_connect()
 print(f"Publisher {BROKER} — interval {INTERVAL}s")
 print(f"Instruments: {list(INSTRUMENTS.keys())}")
 
+def publish_history():
+    """Publie tout l'histo en retained messages (persiste meme si subscriber offline)."""
+    history = get_all_history()
+    CHUNK = 100
+    n_chunks = max(1, (len(history) - 1) // CHUNK + 1)
+    # Clear old chunks: publish empty retained sur les anciens topics
+    for i in range(50):  # max 50 chunks
+        mq.publish(f"{TOPIC_BASE}/history/{i}", b'', qos=1, retain=True)
+    # Publish fresh chunks as retained
+    for i in range(0, max(len(history), 1), CHUNK):
+        chunk = history[i:i+CHUNK]
+        mq.publish(f"{TOPIC_BASE}/history/{i // CHUNK}", json.dumps({
+            'chunk': i // CHUNK,
+            'total': len(history),
+            'total_chunks': n_chunks,
+            'trades': chunk,
+        }), qos=1, retain=True)
+    return len(history), n_chunks
+
 # Publish full history at startup
 print("Publishing full history...", end='', flush=True)
-history = get_all_history()
-# Split en chunks si trop gros (MQTT max ~256KB par message)
-CHUNK = 100
-for i in range(0, max(len(history), 1), CHUNK):
-    chunk = history[i:i+CHUNK]
-    mq.publish(f"{TOPIC_BASE}/history", json.dumps({
-        'chunk': i // CHUNK,
-        'total': len(history),
-        'trades': chunk,
-    }), qos=1)
-print(f" {len(history)} trades published in {max(1, (len(history)-1)//CHUNK+1)} chunks")
+n_trades, n_chunks = publish_history()
+print(f" {n_trades} trades in {n_chunks} chunks (retained)")
+
+HISTORY_REFRESH = 300  # re-publish histo toutes les 5 min
+last_history_publish = time.time()
 
 prev_positions = set()  # pour detecter trades ouverts/fermes
 
@@ -195,6 +208,11 @@ try:
 
             # Publish state
             mq.publish(f"{TOPIC_BASE}/state", json.dumps(state), qos=0)
+
+            # Re-publish history toutes les 5 min (pour nouveaux trades fermes)
+            if time.time() - last_history_publish > HISTORY_REFRESH:
+                publish_history()
+                last_history_publish = time.time()
 
             # Detecter events (trade ouvert/ferme)
             cur_tickets = set(p['ticket'] for p in positions)
