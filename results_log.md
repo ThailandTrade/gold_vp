@@ -2,6 +2,33 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-07 — Dashboard temps reel VPS → Laptop via MQTT
+
+### Architecture
+- `mqtt_publisher.py` (sur chaque VPS) : lit MT5 chaque seconde, publie sur MQTT
+- `dashboard_live.py` (sur laptop) : Streamlit, subscribe MQTT, vue unifiee 5ers + FTMO
+- Broker MQTT : HiveMQ Cloud (gratuit, 100 connexions, 100GB/mois)
+- Process separe de live_mt5.py (zero impact pipeline trading)
+
+### Donnees publiees chaque seconde
+- Positions ouvertes (strat, dir, entry, SL, pnl courant)
+- Balance / equity / margin
+- Trades fermes du jour (avec pnl)
+- Dernieres bougies par instrument
+- Events trade ouvert/ferme (topic separe, QoS 1)
+
+### Usage
+```
+VPS:    python mqtt_publisher.py ftmo
+VPS:    python mqtt_publisher.py 5ers
+Laptop: streamlit run dashboard_live.py
+```
+
+## 2026-04-07 — compare_today: affichage en R
+
+Remplacement des points par des multiples de risque (R = pnl / sl_atr*atr).
+Plus lisible : -1R = stop touche, +2R = 2x le risque gagne.
+
 ## 2026-04-07 — FIX URGENT live_mt5: latence 57s causee par load_data full history
 
 ### Probleme
