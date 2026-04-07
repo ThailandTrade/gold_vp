@@ -2,6 +2,27 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-07 — FIX URGENT live_mt5: latence 57s causee par load_data full history
+
+### Probleme
+Le refacto backtest_engine avait remplace `get_recent_candles(1500)` par `load_data()` (70k candles + compute_indicators full) dans la boucle live. Chaque tick chargeait 70k bars → 20-30s de latence supplementaire → 57s entre candle close et execution.
+
+En haute volatilite (bougies de 30+ pts / 5min), 57s de delai = 10-16 pts de slippage. Trades ALL_BB_TIGHT et ALL_STOCH_OB entres a 16 pts du close du signal → SL touche immediatement → -25 pts de pertes evitables.
+
+### Root cause
+Changement dans live_mt5.py : `load_data(conn, sym)` a chaque heartbeat au lieu de `get_recent_candles(1500)`. Performance acceptable en dev, catastrophique en live haute volat.
+
+### Fix
+- Retour a `get_recent_candles(1500)` + `compute_indicators()` a chaque tick (rapide, ~5-10s)
+- ATR via `compute_atr()` full history **cache 1x/jour** (`_atr_cache`) — refresh uniquement au changement de date
+- Meme ATR que backtest_engine, execution rapide
+
+### Lecon
+**Ne JAMAIS sacrifier la reactivite live pour l'alignement pipeline.** Le live doit etre le plus rapide possible. L'alignement des donnees (ATR) se fait via cache, pas via rechargement complet a chaque bar.
+
+### Contexte volat
+XAUUSD en regime extreme : range moyen 5m = 8.69 (vs 4.88 sur 1 an = x1.8). Bougies de 30-35 pts observees. ATR prev day (3.33) completement deconnecte de la realite intraday → SL trop serres (10 pts pour un range de 30 pts/bougie).
+
 ## 2026-04-06 — DECISION ARCHITECTURALE: un seul moteur pour tout le pipeline
 
 ### Probleme fondamental
