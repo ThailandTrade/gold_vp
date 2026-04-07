@@ -72,8 +72,7 @@ if not st.session_state.mqtt_started:
 st.set_page_config(page_title="VP Swing Live", layout="wide")
 st.title("VP Swing — Live Dashboard")
 
-# Auto-refresh
-refresh = st.sidebar.slider("Refresh (sec)", 1, 10, 2)
+refresh = 1  # refresh chaque seconde
 
 # ── ACCOUNTS ──
 cols = st.columns(len(ACCOUNTS))
