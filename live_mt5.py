@@ -412,14 +412,15 @@ def main():
                 candle_time_utc = candles.iloc[-1]['ts_dt'].to_pydatetime()
                 today = candle_time_utc.date()
 
-                # ATR via backtest_engine (cache au demarrage, meme que bt_portfolio)
-                # _atr_cache est rempli au startup et refresh 1x/jour
+                # ATR via compute_atr (SQL seul, rapide ~1s, meme source que backtest_engine)
                 if sym not in _atr_cache or _atr_cache[sym]['date'] != str(today):
-                    from backtest_engine import load_data as _ld, prev_trading_day as _ptd
-                    _, _da, _ga, _td = _ld(conn, sym)
+                    from phase1_poc_calculator import compute_atr as _ca, get_trading_days as _gtd
+                    from backtest_engine import prev_trading_day as _ptd
+                    _da, _ga = _ca(conn, symbol=sym.lower())
+                    _td = _gtd(conn, symbol=sym.lower())
                     _pd = _ptd(today, _td)
                     _atr_val = _da.get(_pd, _ga) if _pd else _ga
-                    _atr_cache[sym] = {'date': str(today), 'atr': _atr_val, 'trading_days': _td, 'daily_atr': _da, 'global_atr': _ga}
+                    _atr_cache[sym] = {'date': str(today), 'atr': _atr_val}
                 atr = _atr_cache[sym]['atr']
                 if not atr or atr == 0: continue
 

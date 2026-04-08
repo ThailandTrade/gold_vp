@@ -57,6 +57,12 @@ VPS FTMO:          python vps_pusher.py ftmo
 VPS 5ers:          python vps_pusher.py 5ers
 ```
 
+## 2026-04-08 — Fix latence 37s au changement de jour (ATR cache load_data → compute_atr)
+
+Le cache ATR dans live_mt5 appelait `load_data()` (70k bars, 11s+) au changement de date.
+Remplace par `compute_atr()` + `get_trading_days()` (SQL seul, ~1s).
+Meme ATR, meme source, mais sans charger 70k candles + indicateurs.
+
 ## 2026-04-08 — 5ers risk 0.05% → 0.02% (tous instruments)
 
 ## 2026-04-08 — Fix date systeme → date candle DB dans compare_today + vps_pusher
