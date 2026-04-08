@@ -206,6 +206,7 @@ def compute_compare_today():
                     'entry': lv['entry'],
                     'exit': lv['exit'],
                     'pnl_r': lv_r,
+                    'pnl_usd': lv['pnl'],
                 }
             if bt and row['lv']:
                 row['delta'] = round(row['lv']['pnl_r'] - bt['pnl_r'], 2)

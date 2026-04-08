@@ -211,7 +211,7 @@ function renderAccount(acc, data) {
     for(const sym of btSyms){
       const info=btc[sym]||{}; const rows=(info.rows||[]).sort((a,b)=>a.strat.localeCompare(b.strat));
       h+='<div class="section"><div class="section-title">'+sym+' &mdash; BT vs Live (ATR='+fmt(info.atr,2)+')</div>';
-      h+='<table><tr><th>Strat</th><th>BT Dir</th><th>BT Entry</th><th>BT Exit</th><th>BT R</th><th>LV Dir</th><th>LV Entry</th><th>LV Exit</th><th>LV R</th><th>Delta</th></tr>';
+      h+='<table><tr><th>Strat</th><th>BT Dir</th><th>BT Entry</th><th>BT Exit</th><th>BT R</th><th>LV Dir</th><th>LV Entry</th><th>LV Exit</th><th>LV R</th><th>LV $</th><th>Delta</th></tr>';
       for(const row of rows){
         const bt=row.bt; const lv=row.lv;
         const triggered=bt||lv;
@@ -223,11 +223,14 @@ function renderAccount(acc, data) {
           const rv=bt.pnl_r||0; totalBtR+=rv;
           bR='<span class="'+(rv>=0?'pnl-pos':'pnl-neg')+'">'+(rv>=0?'+':'')+rv.toFixed(2)+'R</span>';
         }
+        let lUsd='';
         if(lv){
           lD='<span class="'+dirClass(lv.dir)+'">'+lv.dir.toUpperCase()+'</span>';
           lE=fmt(lv.entry,2); lX=fmt(lv.exit,2);
           const rv=lv.pnl_r||0; totalLvR+=rv;
           lR='<span class="'+(rv>=0?'pnl-pos':'pnl-neg')+'">'+(rv>=0?'+':'')+rv.toFixed(2)+'R</span>';
+          const usd=lv.pnl_usd||0;
+          lUsd='<span class="'+(usd>=0?'pnl-pos':'pnl-neg')+'">$'+(usd>=0?'+':'')+fmt(usd,2)+'</span>';
         }
         if(row.delta!=null){
           const d=row.delta; totalDelta+=d;
@@ -235,12 +238,15 @@ function renderAccount(acc, data) {
         }
         h+='<tr '+rs+'><td class="strat-name">'+row.strat+'</td>';
         h+='<td>'+bD+'</td><td>'+bE+'</td><td>'+bX+'</td><td>'+bR+'</td>';
-        h+='<td>'+lD+'</td><td>'+lE+'</td><td>'+lX+'</td><td>'+lR+'</td><td>'+dl+'</td></tr>';
+        h+='<td>'+lD+'</td><td>'+lE+'</td><td>'+lX+'</td><td>'+lR+'</td><td>'+lUsd+'</td><td>'+dl+'</td></tr>';
       }
+      // Total $ from today_trades
+      const totalUsd=trades.reduce((s,t)=>s+(t.pnl||0),0);
       h+='<tr style="font-weight:700;border-top:2px solid #e8eaed"><td>TOTAL</td><td></td><td></td><td></td>';
       h+='<td><span class="'+(totalBtR>=0?'pnl-pos':'pnl-neg')+'">'+(totalBtR>=0?'+':'')+totalBtR.toFixed(2)+'R</span></td>';
       h+='<td></td><td></td><td></td>';
       h+='<td><span class="'+(totalLvR>=0?'pnl-pos':'pnl-neg')+'">'+(totalLvR>=0?'+':'')+totalLvR.toFixed(2)+'R</span></td>';
+      h+='<td><span class="'+(totalUsd>=0?'pnl-pos':'pnl-neg')+'">$'+(totalUsd>=0?'+':'')+fmt(totalUsd,2)+'</span></td>';
       h+='<td><span class="'+(totalDelta>=0?'pnl-pos':'pnl-neg')+'">'+(totalDelta>=0?'+':'')+totalDelta.toFixed(2)+'R</span></td></tr>';
       h+='</table></div>';
     }
