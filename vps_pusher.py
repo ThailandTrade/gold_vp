@@ -202,6 +202,9 @@ try:
             for sym in INSTRUMENTS:
                 candles[sym] = get_last_candle(sym)
 
+            # Portfolio par instrument (pour afficher toutes les strats dans le dashboard)
+            portfolios = {sym: icfg['portfolio'] for sym, icfg in INSTRUMENTS.items()}
+
             state = {
                 'ts': datetime.now(timezone.utc).isoformat(),
                 'account': args.account,
@@ -212,6 +215,7 @@ try:
                 'today_pnl': sum(t['pnl'] for t in today_trades),
                 'today_count': len(today_trades),
                 'candles': candles,
+                'portfolios': portfolios,
             }
 
             payload = {'state': state, 'bt_compare': bt_compare}

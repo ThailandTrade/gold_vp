@@ -201,13 +201,16 @@ function renderAccount(acc, data) {
   }
   h+='</div>';
 
-  // Trades du jour: BT vs Live unifie sur la meme ligne
+  // Trades du jour: toutes les strats du portfolio, BT vs Live
   const btc=data.bt_compare||{};
   const btSyms=Object.keys(btc);
   const lvByStrat={};
   for(const t of trades) lvByStrat[t.comment||t.strat||'']=t;
-  // Collecter toutes les strats (BT + LV)
+  // Toutes les strats du portfolio (pas juste celles declenchees)
+  const portfolios=s.portfolios||{};
   const allStrats=new Set();
+  for(const sym of Object.keys(portfolios)){for(const sn of portfolios[sym]) allStrats.add(sn);}
+  // Ajouter aussi les strats BT/LV au cas ou
   for(const sym of btSyms){const bts=(btc[sym]||{}).bt_trades||[]; for(const b of bts) allStrats.add(b.strat);}
   for(const t of trades) allStrats.add(t.comment||t.strat||'');
   if(allStrats.size>0){
@@ -220,8 +223,10 @@ function renderAccount(acc, data) {
     for(const sn of [...allStrats].sort()){
       const bt=btByStrat[sn]||null;
       const lv=lvByStrat[sn]||null;
+      const triggered=bt||lv;
+      const rowStyle=triggered?'':'style="color:#c0c0c0"';
       // BT cols
-      let btDir='-',btEntry='-',btExit='-',btR='-';
+      let btDir='',btEntry='',btExit='',btR='';
       if(bt){
         btDir='<span class="'+dirClass(bt.dir)+'">'+bt.dir.toUpperCase()+'</span>';
         btEntry=fmt(bt.entry,2);
@@ -230,13 +235,12 @@ function renderAccount(acc, data) {
         btR='<span class="'+(rv>=0?'pnl-pos':'pnl-neg')+'">'+(rv>=0?'+':'')+rv.toFixed(2)+'R</span>';
       }
       // LV cols
-      let lvDir='-',lvEntry='-',lvExit='-',lvR='-',delta='-';
+      let lvDir='',lvEntry='',lvExit='',lvR='',delta='';
       if(lv){
         lvDir='<span class="'+dirClass(lv.dir)+'">'+lv.dir.toUpperCase()+'</span>';
         lvEntry=fmt(lv.entry,2);
         lvExit=fmt(lv.exit,2);
         const lvPnl=(lv.dir==='long'?lv.exit-lv.entry:lv.entry-lv.exit);
-        const sl_atr=bt?bt.pnl_r!==undefined?1:1:1;
         const r1r=atr0*3;
         const lvRv=r1r>0?lvPnl/r1r:0;
         lvR='<span class="'+(lvRv>=0?'pnl-pos':'pnl-neg')+'">'+(lvRv>=0?'+':'')+lvRv.toFixed(2)+'R</span>';
@@ -245,7 +249,7 @@ function renderAccount(acc, data) {
           delta='<span class="'+(d>=0?'pnl-pos':'pnl-neg')+'">'+(d>=0?'+':'')+d.toFixed(2)+'R</span>';
         }
       }
-      h+='<tr><td class="strat-name">'+sn+'</td>';
+      h+='<tr '+rowStyle+'><td class="strat-name">'+sn+'</td>';
       h+='<td>'+btDir+'</td><td>'+btEntry+'</td><td>'+btExit+'</td><td>'+btR+'</td>';
       h+='<td>'+lvDir+'</td><td>'+lvEntry+'</td><td>'+lvExit+'</td><td>'+lvR+'</td><td>'+delta+'</td></tr>';
     }

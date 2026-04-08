@@ -57,6 +57,12 @@ VPS FTMO:          python vps_pusher.py ftmo
 VPS 5ers:          python vps_pusher.py 5ers
 ```
 
+## 2026-04-08 — Dashboard: toutes les strats du portfolio affichees
+
+Tableau "Trades du jour" affiche toutes les strats du portfolio par instrument.
+Strats non declenchees en gris (pas de valeurs BT/LV). Strats declenchees avec BT et/ou LV.
+vps_pusher envoie `portfolios` dans le payload state.
+
 ## 2026-04-08 — Fix latence 37s au changement de jour (ATR cache load_data → compute_atr)
 
 Le cache ATR dans live_mt5 appelait `load_data()` (70k bars, 11s+) au changement de date.
