@@ -57,6 +57,16 @@ VPS FTMO:          python vps_pusher.py ftmo
 VPS 5ers:          python vps_pusher.py 5ers
 ```
 
+## 2026-04-08 — LIVE: tous instruments actives a 0.01% risk
+
+### 5ers (6 instruments)
+LIVE_INSTRUMENTS = XAUUSD, JPN225, DAX40, NAS100, SP500, UK100
+Risk: 0.01% par instrument (0.0001)
+
+### FTMO (5 instruments)
+LIVE_INSTRUMENTS = XAUUSD, GER40.cash, US500.cash, US100.cash, US30.cash
+Risk: 0.01% par instrument (0.0001)
+
 ## 2026-04-08 — Dashboard: ameliorations multiples
 
 ### Calculs R cote pusher (plus de recalcul JS)
