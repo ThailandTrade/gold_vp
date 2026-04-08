@@ -57,18 +57,25 @@ VPS FTMO:          python vps_pusher.py ftmo
 VPS 5ers:          python vps_pusher.py 5ers
 ```
 
-## 2026-04-08 — Dashboard: calculs R cote pusher (plus de recalcul JS)
+## 2026-04-08 — Dashboard: ameliorations multiples
+
+### Calculs R cote pusher (plus de recalcul JS)
 
 Le JS du dashboard recalculait le LV R avec atr*3 hardcode (faux pour sl_atr!=3).
 Fix: le pusher calcule le compare complet (BT R + LV R + delta) avec les vrais sl_atr
 de strat_exits, exactement comme compare_today.py. Le dashboard affiche juste les valeurs.
 Zero calcul cote client = zero divergence.
 
-## 2026-04-08 — Dashboard: toutes les strats du portfolio affichees
+### Toutes les strats du portfolio affichees
 
 Tableau "Trades du jour" affiche toutes les strats du portfolio par instrument.
 Strats non declenchees en gris (pas de valeurs BT/LV). Strats declenchees avec BT et/ou LV.
 vps_pusher envoie `portfolios` dans le payload state.
+
+### Tri alphabetique des strats dans le tableau
+
+### Colonne LV $ (PnL en dollars)
+PnL en $ par trade live (MT5 dout.profit) + total en bas du tableau.
 
 ## 2026-04-08 — Fix latence 37s au changement de jour (ATR cache load_data → compute_atr)
 
