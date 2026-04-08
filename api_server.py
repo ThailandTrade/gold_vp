@@ -209,7 +209,7 @@ function renderAccount(acc, data) {
   if(hasRows){
     let totalBtR=0,totalLvR=0,totalDelta=0;
     for(const sym of btSyms){
-      const info=btc[sym]||{}; const rows=info.rows||[];
+      const info=btc[sym]||{}; const rows=(info.rows||[]).sort((a,b)=>a.strat.localeCompare(b.strat));
       h+='<div class="section"><div class="section-title">'+sym+' &mdash; BT vs Live (ATR='+fmt(info.atr,2)+')</div>';
       h+='<table><tr><th>Strat</th><th>BT Dir</th><th>BT Entry</th><th>BT Exit</th><th>BT R</th><th>LV Dir</th><th>LV Entry</th><th>LV Exit</th><th>LV R</th><th>Delta</th></tr>';
       for(const row of rows){
