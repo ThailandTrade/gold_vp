@@ -57,6 +57,8 @@ VPS FTMO:          python vps_pusher.py ftmo
 VPS 5ers:          python vps_pusher.py 5ers
 ```
 
+## 2026-04-08 — 5ers risk 0.05% → 0.02% (tous instruments)
+
 ## 2026-04-08 — Fix date systeme → date candle DB dans compare_today + vps_pusher
 
 compare_today.py et vps_pusher.py utilisaient `datetime.now(timezone.utc).date()` (horloge systeme).
