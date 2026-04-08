@@ -96,8 +96,23 @@ def _deals_to_trades(deals):
         })
     return trades
 
+def _get_candle_date():
+    """Date de la derniere bougie en DB (pas l'horloge systeme)."""
+    conn = _get_conn()
+    cur = conn.cursor()
+    import re
+    sym0 = list(INSTRUMENTS.keys())[0]
+    table = f"candles_mt5_{re.sub(r'[^a-z0-9]+', '_', sym0.lower()).strip('_')}_5m"
+    cur.execute(f"SELECT MAX(ts) FROM {table}")
+    max_ts = cur.fetchone()[0]
+    cur.close(); conn.close()
+    if max_ts:
+        return datetime.fromtimestamp(max_ts / 1000, tz=timezone.utc).date()
+    return datetime.now(timezone.utc).date()
+
 def get_today_trades():
-    today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    today_dt = _get_candle_date()
+    today = datetime(today_dt.year, today_dt.month, today_dt.day, tzinfo=timezone.utc)
     tomorrow = today.replace(hour=23, minute=59, second=59)
     deals = mt5.history_deals_get(today, tomorrow) or []
     return _deals_to_trades(deals)
@@ -140,7 +155,7 @@ from strat_exits import STRAT_EXITS, DEFAULT_EXIT
 
 def compute_bt_today():
     """Calcule les trades BT du jour (meme code que compare_today)."""
-    today = datetime.now(timezone.utc).date()
+    today = _get_candle_date()
     conn = _get_conn()
     bt_all = {}
     for sym, icfg in INSTRUMENTS.items():

@@ -57,6 +57,13 @@ VPS FTMO:          python vps_pusher.py ftmo
 VPS 5ers:          python vps_pusher.py 5ers
 ```
 
+## 2026-04-08 — Fix date systeme → date candle DB dans compare_today + vps_pusher
+
+compare_today.py et vps_pusher.py utilisaient `datetime.now(timezone.utc).date()` (horloge systeme).
+Si le VPS a un timezone different du laptop, la date du "jour" differe → trades BT differents.
+Fix: utiliser la date de la derniere bougie en DB (`MAX(ts)` de candles_mt5_xauusd_5m).
+Regle deja posee: "seule source de temps = ts_dt des candles en DB".
+
 ## 2026-04-07 — Dashboard: BT vs Live integre
 
 vps_pusher calcule les trades BT du jour via `load_data_recent(5000)` + `collect_trades(date_filter=today)`.

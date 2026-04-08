@@ -31,7 +31,13 @@ for sym, icfg in INSTRUMENTS.items():
     for sn in icfg['portfolio']:
         MAGIC_REVERSE[_magic(sym, sn)] = (sym, sn)
 
-today = datetime.now(timezone.utc).date()
+# Date = derniere bougie en DB (pas l'horloge systeme — regle UTC candles)
+_conn_tmp = get_conn(); _conn_tmp.autocommit = True
+_cur = _conn_tmp.cursor()
+_cur.execute("SELECT MAX(ts) FROM candles_mt5_xauusd_5m")
+_max_ts = _cur.fetchone()[0]
+_cur.close(); _conn_tmp.close()
+today = datetime.fromtimestamp(_max_ts / 1000, tz=timezone.utc).date() if _max_ts else datetime.now(timezone.utc).date()
 conn = get_conn(); conn.autocommit = True
 
 print(f"\n  COMPARE BT vs LIVE — {BROKER} — {today}")
