@@ -153,11 +153,13 @@ from phase1_poc_calculator import get_conn as _get_conn
 from backtest_engine import load_data_recent, collect_trades, prev_trading_day
 from strat_exits import STRAT_EXITS, DEFAULT_EXIT
 
-def compute_bt_today():
-    """Calcule les trades BT du jour (meme code que compare_today)."""
+def compute_compare_today():
+    """Calcule le compare BT vs LV complet (meme logique que compare_today.py).
+    Retourne le tableau final pret a afficher — aucun calcul cote dashboard."""
     today = _get_candle_date()
+    today_trades = get_today_trades()
     conn = _get_conn()
-    bt_all = {}
+    result = {}
     for sym, icfg in INSTRUMENTS.items():
         portfolio = icfg['portfolio']
         if not portfolio: continue
@@ -168,25 +170,53 @@ def compute_bt_today():
         atr = daily_atr.get(pd_, global_atr) if pd_ else global_atr
         raw = collect_trades(candles, daily_atr, global_atr, trading_days,
                             portfolio, sym_exits, date_filter=today)
-        bt_trades = []
+        # BT par strat
+        bt_by_strat = {}
         for ci, xi, di, pnl_oz, sl_atr, atr_t, mo, sn in raw:
             entry = float(candles.iloc[ci]['close'])
             risk_1r = sl_atr * atr_t
-            bt_trades.append({
-                'strat': sn, 'dir': 'long' if di == 1 else 'short',
+            bt_by_strat[sn] = {
+                'dir': 'long' if di == 1 else 'short',
                 'entry': round(entry, 2),
                 'exit': round(entry + pnl_oz if di == 1 else entry - pnl_oz, 2),
                 'pnl_r': round(pnl_oz / risk_1r, 2) if risk_1r > 0 else 0,
-                'entry_time': str(candles.iloc[ci]['ts_dt'])[:16],
-                'exit_time': str(candles.iloc[min(xi, len(candles)-1)]['ts_dt'])[:16],
-            })
-        bt_all[sym] = {'atr': round(atr, 2), 'bt_trades': bt_trades}
+                'risk_1r': round(risk_1r, 4),
+            }
+        # LV par strat
+        lv_by_strat = {}
+        for t in today_trades:
+            if t['symbol'] != sym: continue
+            sn = t.get('comment', '')
+            if sn in portfolio:
+                lv_by_strat[sn] = t
+        # Build compare rows (toutes les strats du portfolio)
+        rows = []
+        for sn in portfolio:
+            bt = bt_by_strat.get(sn)
+            lv = lv_by_strat.get(sn)
+            row = {'strat': sn, 'bt': None, 'lv': None, 'delta': None}
+            if bt:
+                row['bt'] = bt
+            if lv:
+                lv_pnl = (lv['exit'] - lv['entry']) if lv['dir'] == 'long' else (lv['entry'] - lv['exit'])
+                risk_1r = bt['risk_1r'] if bt else sl_atr * atr  # fallback
+                lv_r = round(lv_pnl / risk_1r, 2) if risk_1r > 0 else 0
+                row['lv'] = {
+                    'dir': lv['dir'],
+                    'entry': lv['entry'],
+                    'exit': lv['exit'],
+                    'pnl_r': lv_r,
+                }
+            if bt and row['lv']:
+                row['delta'] = round(row['lv']['pnl_r'] - bt['pnl_r'], 2)
+            rows.append(row)
+        result[sym] = {'atr': round(atr, 2), 'rows': rows}
     conn.close()
-    return bt_all
+    return result
 
-print("Computing BT today...", end='', flush=True)
-bt_compare = compute_bt_today()
-print(f" {sum(len(v['bt_trades']) for v in bt_compare.values())} BT trades")
+print("Computing compare today...", end='', flush=True)
+bt_compare = compute_compare_today()
+print(f" {sum(len(v['rows']) for v in bt_compare.values())} strats")
 
 push_count = 0
 history_sent = False
@@ -226,7 +256,7 @@ try:
                 history_sent = True
             # Refresh BT compare toutes les 60s
             if push_count % BT_REFRESH == 0:
-                bt_compare = compute_bt_today()
+                bt_compare = compute_compare_today()
 
             r = requests.post(API_URL, json=payload, timeout=5)
             push_count += 1

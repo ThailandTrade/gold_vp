@@ -201,71 +201,49 @@ function renderAccount(acc, data) {
   }
   h+='</div>';
 
-  // Trades du jour: toutes les strats du portfolio, BT vs Live
+  // Trades du jour: compare BT vs Live (valeurs pre-calculees par le pusher)
   const btc=data.bt_compare||{};
   const btSyms=Object.keys(btc);
-  const lvByStrat={};
-  for(const t of trades) lvByStrat[t.comment||t.strat||'']=t;
-  // Toutes les strats du portfolio (pas juste celles declenchees)
-  const portfolios=s.portfolios||{};
-  const allStrats=new Set();
-  for(const sym of Object.keys(portfolios)){for(const sn of portfolios[sym]) allStrats.add(sn);}
-  // Ajouter aussi les strats BT/LV au cas ou
-  for(const sym of btSyms){const bts=(btc[sym]||{}).bt_trades||[]; for(const b of bts) allStrats.add(b.strat);}
-  for(const t of trades) allStrats.add(t.comment||t.strat||'');
-  if(allStrats.size>0){
-    const atr0=btSyms.length>0?(btc[btSyms[0]]||{}).atr||1:1;
-    h+='<div class="section"><div class="section-title">Trades du jour &mdash; BT vs Live ('+allStrats.size+' strats)</div>';
-    h+='<table><tr><th>Strat</th><th>BT Dir</th><th>BT Entry</th><th>BT Exit</th><th>BT R</th><th>LV Dir</th><th>LV Entry</th><th>LV Exit</th><th>LV R</th><th>Delta</th></tr>';
-    // Build BT map
-    const btByStrat={};
-    for(const sym of btSyms){const bts=(btc[sym]||{}).bt_trades||[]; for(const b of bts) btByStrat[b.strat]=b;}
-    for(const sn of [...allStrats].sort()){
-      const bt=btByStrat[sn]||null;
-      const lv=lvByStrat[sn]||null;
-      const triggered=bt||lv;
-      const rowStyle=triggered?'':'style="color:#c0c0c0"';
-      // BT cols
-      let btDir='',btEntry='',btExit='',btR='';
-      if(bt){
-        btDir='<span class="'+dirClass(bt.dir)+'">'+bt.dir.toUpperCase()+'</span>';
-        btEntry=fmt(bt.entry,2);
-        btExit=fmt(bt.exit,2);
-        const rv=bt.pnl_r||0;
-        btR='<span class="'+(rv>=0?'pnl-pos':'pnl-neg')+'">'+(rv>=0?'+':'')+rv.toFixed(2)+'R</span>';
-      }
-      // LV cols
-      let lvDir='',lvEntry='',lvExit='',lvR='',delta='';
-      if(lv){
-        lvDir='<span class="'+dirClass(lv.dir)+'">'+lv.dir.toUpperCase()+'</span>';
-        lvEntry=fmt(lv.entry,2);
-        lvExit=fmt(lv.exit,2);
-        const lvPnl=(lv.dir==='long'?lv.exit-lv.entry:lv.entry-lv.exit);
-        const r1r=atr0*3;
-        const lvRv=r1r>0?lvPnl/r1r:0;
-        lvR='<span class="'+(lvRv>=0?'pnl-pos':'pnl-neg')+'">'+(lvRv>=0?'+':'')+lvRv.toFixed(2)+'R</span>';
+  let hasRows=false;
+  for(const sym of btSyms){if((btc[sym]||{}).rows&&btc[sym].rows.length>0) hasRows=true;}
+  if(hasRows){
+    let totalBtR=0,totalLvR=0,totalDelta=0;
+    for(const sym of btSyms){
+      const info=btc[sym]||{}; const rows=info.rows||[];
+      h+='<div class="section"><div class="section-title">'+sym+' &mdash; BT vs Live (ATR='+fmt(info.atr,2)+')</div>';
+      h+='<table><tr><th>Strat</th><th>BT Dir</th><th>BT Entry</th><th>BT Exit</th><th>BT R</th><th>LV Dir</th><th>LV Entry</th><th>LV Exit</th><th>LV R</th><th>Delta</th></tr>';
+      for(const row of rows){
+        const bt=row.bt; const lv=row.lv;
+        const triggered=bt||lv;
+        const rs=triggered?'':'style="color:#c0c0c0"';
+        let bD='',bE='',bX='',bR='',lD='',lE='',lX='',lR='',dl='';
         if(bt){
-          const d=lvRv-(bt.pnl_r||0);
-          delta='<span class="'+(d>=0?'pnl-pos':'pnl-neg')+'">'+(d>=0?'+':'')+d.toFixed(2)+'R</span>';
+          bD='<span class="'+dirClass(bt.dir)+'">'+bt.dir.toUpperCase()+'</span>';
+          bE=fmt(bt.entry,2); bX=fmt(bt.exit,2);
+          const rv=bt.pnl_r||0; totalBtR+=rv;
+          bR='<span class="'+(rv>=0?'pnl-pos':'pnl-neg')+'">'+(rv>=0?'+':'')+rv.toFixed(2)+'R</span>';
         }
+        if(lv){
+          lD='<span class="'+dirClass(lv.dir)+'">'+lv.dir.toUpperCase()+'</span>';
+          lE=fmt(lv.entry,2); lX=fmt(lv.exit,2);
+          const rv=lv.pnl_r||0; totalLvR+=rv;
+          lR='<span class="'+(rv>=0?'pnl-pos':'pnl-neg')+'">'+(rv>=0?'+':'')+rv.toFixed(2)+'R</span>';
+        }
+        if(row.delta!=null){
+          const d=row.delta; totalDelta+=d;
+          dl='<span class="'+(d>=0?'pnl-pos':'pnl-neg')+'">'+(d>=0?'+':'')+d.toFixed(2)+'R</span>';
+        }
+        h+='<tr '+rs+'><td class="strat-name">'+row.strat+'</td>';
+        h+='<td>'+bD+'</td><td>'+bE+'</td><td>'+bX+'</td><td>'+bR+'</td>';
+        h+='<td>'+lD+'</td><td>'+lE+'</td><td>'+lX+'</td><td>'+lR+'</td><td>'+dl+'</td></tr>';
       }
-      h+='<tr '+rowStyle+'><td class="strat-name">'+sn+'</td>';
-      h+='<td>'+btDir+'</td><td>'+btEntry+'</td><td>'+btExit+'</td><td>'+btR+'</td>';
-      h+='<td>'+lvDir+'</td><td>'+lvEntry+'</td><td>'+lvExit+'</td><td>'+lvR+'</td><td>'+delta+'</td></tr>';
+      h+='<tr style="font-weight:700;border-top:2px solid #e8eaed"><td>TOTAL</td><td></td><td></td><td></td>';
+      h+='<td><span class="'+(totalBtR>=0?'pnl-pos':'pnl-neg')+'">'+(totalBtR>=0?'+':'')+totalBtR.toFixed(2)+'R</span></td>';
+      h+='<td></td><td></td><td></td>';
+      h+='<td><span class="'+(totalLvR>=0?'pnl-pos':'pnl-neg')+'">'+(totalLvR>=0?'+':'')+totalLvR.toFixed(2)+'R</span></td>';
+      h+='<td><span class="'+(totalDelta>=0?'pnl-pos':'pnl-neg')+'">'+(totalDelta>=0?'+':'')+totalDelta.toFixed(2)+'R</span></td></tr>';
+      h+='</table></div>';
     }
-    // Totals
-    let btTotal=0,lvTotal=0;
-    for(const sn of allStrats){
-      const bt=btByStrat[sn]; if(bt) btTotal+=bt.pnl_r||0;
-      const lv=lvByStrat[sn]; if(lv){const p=(lv.dir==='long'?lv.exit-lv.entry:lv.entry-lv.exit); lvTotal+=atr0*3>0?p/(atr0*3):0;}
-    }
-    h+='<tr style="font-weight:700;border-top:2px solid #e8eaed"><td>TOTAL</td><td></td><td></td><td></td>';
-    h+='<td><span class="'+(btTotal>=0?'pnl-pos':'pnl-neg')+'">'+(btTotal>=0?'+':'')+btTotal.toFixed(2)+'R</span></td>';
-    h+='<td></td><td></td><td></td>';
-    h+='<td><span class="'+(lvTotal>=0?'pnl-pos':'pnl-neg')+'">'+(lvTotal>=0?'+':'')+lvTotal.toFixed(2)+'R</span></td>';
-    const dt=lvTotal-btTotal;
-    h+='<td><span class="'+(dt>=0?'pnl-pos':'pnl-neg')+'">'+(dt>=0?'+':'')+dt.toFixed(2)+'R</span></td></tr>';
-    h+='</table></div>';
   }
 
   // Candles

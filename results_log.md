@@ -57,6 +57,13 @@ VPS FTMO:          python vps_pusher.py ftmo
 VPS 5ers:          python vps_pusher.py 5ers
 ```
 
+## 2026-04-08 — Dashboard: calculs R cote pusher (plus de recalcul JS)
+
+Le JS du dashboard recalculait le LV R avec atr*3 hardcode (faux pour sl_atr!=3).
+Fix: le pusher calcule le compare complet (BT R + LV R + delta) avec les vrais sl_atr
+de strat_exits, exactement comme compare_today.py. Le dashboard affiche juste les valeurs.
+Zero calcul cote client = zero divergence.
+
 ## 2026-04-08 — Dashboard: toutes les strats du portfolio affichees
 
 Tableau "Trades du jour" affiche toutes les strats du portfolio par instrument.
