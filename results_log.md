@@ -57,6 +57,12 @@ VPS FTMO:          python vps_pusher.py ftmo
 VPS 5ers:          python vps_pusher.py 5ers
 ```
 
+## 2026-04-09 — Tag v1.0-5m + branche feature/15m
+
+Tag v1.0-5m sur main : pipeline 5m complet et stable.
+Branche feature/15m creee pour tester le passage en 15 minutes.
+Objectif: reduire les divergences BT vs live (spread/slippage/latence = plus petit % des moves en 15m).
+
 ## 2026-04-09 — live_mt5: 1500 bars → 500 bars (reactivite max)
 
 Benchmark: 500 bars = 0.10s vs 1500 bars = 0.22s (2x plus rapide).
