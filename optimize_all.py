@@ -405,15 +405,13 @@ def eval_config(signals, etype, p1, p2, p3):
 
 best_configs = {}
 for sn in sorted(SIG.keys()):
+    # Skip open strats (timing non reproductible en live, jamais dans les portfolios)
+    if sn in OPEN_STRATS:
+        print(f"  {sn:22s} --- SKIP (open strat) ---")
+        continue
     sigs = SIG[sn]
-    # Set is_open flag for open strats
-    is_open = sn in OPEN_STRATS
-    if is_open:
-        sigs_adj = [(ci, di, entry, atr, date, sp) for ci, di, entry, atr, date, sp in sigs]
-        # Patch sim to use check_entry_candle
-        orig_sigs = sigs
-    else:
-        sigs_adj = sigs
+    is_open = False
+    sigs_adj = sigs
 
     best = None; best_score = -1e9
     # Test TPSL
