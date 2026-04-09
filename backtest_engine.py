@@ -27,38 +27,89 @@ OPEN_STRATS = frozenset({
 #  LOAD DATA — candles + ATR + trading_days + indicateurs
 # ══════════════════════════════════════════════════════════════
 
-def load_data(conn, symbol):
+TF = '5m'  # timeframe par defaut, changeable pour 15m
+
+
+def _table_name(symbol, tf=None):
+    import re
+    if tf is None: tf = TF
+    sym_san = re.sub(r'[^a-z0-9]+', '_', symbol.lower()).strip('_')
+    return f"candles_mt5_{sym_san}_{tf}"
+
+
+def _load_candles_raw(conn, symbol, tf=None, limit=None):
+    """Charge candles brutes depuis DB. Si limit=None, charge tout."""
+    table = _table_name(symbol, tf)
+    cur = conn.cursor()
+    if limit:
+        cur.execute(f"SELECT ts, open, high, low, close FROM {table} ORDER BY ts DESC LIMIT %s", (limit,))
+    else:
+        cur.execute(f"SELECT ts, open, high, low, close FROM {table} ORDER BY ts")
+    rows = cur.fetchall(); cur.close()
+    if not rows:
+        return pd.DataFrame()
+    df = pd.DataFrame(rows, columns=['ts', 'open', 'high', 'low', 'close'])
+    if limit:
+        df = df.sort_values('ts').reset_index(drop=True)
+    df['ts_dt'] = pd.to_datetime(df['ts'], unit='ms', utc=True)
+    for c in ['open', 'high', 'low', 'close']:
+        df[c] = df[c].astype(float)
+    df['date'] = df['ts_dt'].dt.date
+    return df
+
+
+def _compute_atr_from_df(candles):
+    """Compute ATR daily from a candles DataFrame (any timeframe)."""
+    import numpy as np
+    df = candles.copy()
+    tr = np.maximum(
+        df['high'] - df['low'],
+        np.maximum(abs(df['high'] - df['close'].shift(1)), abs(df['low'] - df['close'].shift(1)))
+    )
+    df['atr'] = tr.ewm(span=14, adjust=False).mean()
+    daily_atr = df.groupby('date')['atr'].last().to_dict()
+    global_atr = df['atr'].mean()
+    return daily_atr, global_atr
+
+
+def _get_trading_days_from_df(candles):
+    """Trading days from candles DataFrame."""
+    return sorted(candles['date'].unique())
+
+
+def load_data(conn, symbol, tf=None):
     """Charge candles FULL history + ATR + trading_days + indicateurs precalcules.
     Retourne (candles_df, daily_atr_dict, global_atr_float, trading_days_list).
-    Pour bt_portfolio (backtest complet sur tout l'historique).
     """
-    candles = load_candles_5m(conn, symbol=symbol.lower())
-    daily_atr, global_atr = compute_atr(conn, symbol=symbol.lower())
-    trading_days_list = get_trading_days(conn, symbol=symbol.lower())
+    if tf is None: tf = TF
+    if tf == '5m':
+        candles = load_candles_5m(conn, symbol=symbol.lower())
+        daily_atr, global_atr = compute_atr(conn, symbol=symbol.lower())
+        trading_days_list = get_trading_days(conn, symbol=symbol.lower())
+    else:
+        candles = _load_candles_raw(conn, symbol, tf=tf)
+        daily_atr, global_atr = _compute_atr_from_df(candles)
+        trading_days_list = _get_trading_days_from_df(candles)
     candles = compute_indicators(candles)
     return candles, daily_atr, global_atr, trading_days_list
 
 
-def load_data_recent(conn, symbol, n=2000):
+def load_data_recent(conn, symbol, n=2000, tf=None):
     """Charge les N derniers bars + ATR + indicateurs.
     Meme resultat que load_data mais ~50x plus rapide.
-    Pour compare_today, vps_pusher, live (pas besoin de tout l'historique).
     """
-    import re
-    table = f"candles_mt5_{re.sub(r'[^a-z0-9]+', '_', symbol.lower()).strip('_')}_5m"
-    cur = conn.cursor()
-    cur.execute(f"SELECT ts, open, high, low, close FROM {table} ORDER BY ts DESC LIMIT %s", (n,))
-    rows = cur.fetchall(); cur.close()
-    if not rows:
+    if tf is None: tf = TF
+    candles = _load_candles_raw(conn, symbol, tf=tf, limit=n)
+    if len(candles) == 0:
         return pd.DataFrame(), {}, 0, []
-    candles = pd.DataFrame(rows, columns=['ts', 'open', 'high', 'low', 'close']).sort_values('ts').reset_index(drop=True)
-    candles['ts_dt'] = pd.to_datetime(candles['ts'], unit='ms', utc=True)
-    for c in ['open', 'high', 'low', 'close']:
-        candles[c] = candles[c].astype(float)
-    candles['date'] = candles['ts_dt'].dt.date
-    # ATR sur full history (identique a load_data — correcte, rapide car SQL seul)
-    daily_atr, global_atr = compute_atr(conn, symbol=symbol.lower())
-    trading_days_list = get_trading_days(conn, symbol=symbol.lower())
+    if tf == '5m':
+        daily_atr, global_atr = compute_atr(conn, symbol=symbol.lower())
+        trading_days_list = get_trading_days(conn, symbol=symbol.lower())
+    else:
+        # ATR sur full history meme en mode recent (SQL rapide)
+        full = _load_candles_raw(conn, symbol, tf=tf)
+        daily_atr, global_atr = _compute_atr_from_df(full)
+        trading_days_list = _get_trading_days_from_df(full)
     candles = compute_indicators(candles)
     return candles, daily_atr, global_atr, trading_days_list
 

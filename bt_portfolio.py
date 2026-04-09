@@ -19,6 +19,7 @@ parser.add_argument('account', nargs='?', default='icm', choices=['icm', 'ftmo',
 parser.add_argument('-c', '--capital', type=float, default=None)
 parser.add_argument('-r', '--risk', type=float, default=None)
 parser.add_argument('--symbol', default=None, help='Single instrument (default: all)')
+parser.add_argument('--tf', default='5m', help='Timeframe: 5m or 15m')
 args = parser.parse_args()
 
 cfg = importlib.import_module(f'config_{args.account}')
@@ -52,7 +53,7 @@ for sym, icfg in INSTRUMENTS.items():
     sym_exits = STRAT_EXITS.get((args.account, sym), {})
 
     print(f"\n  Loading {sym}...", end='', flush=True)
-    candles, daily_atr, global_atr, trading_days = load_data(conn, sym)
+    candles, daily_atr, global_atr, trading_days = load_data(conn, sym, tf=args.tf)
     print(f" {len(candles)} bars, {len(trading_days)} days", flush=True)
 
     trades = collect_trades(candles, daily_atr, global_atr, trading_days, portfolio, sym_exits)

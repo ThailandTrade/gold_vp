@@ -15,6 +15,7 @@ from prettytable import PrettyTable
 
 parser = argparse.ArgumentParser()
 parser.add_argument('account', nargs='?', default='5ers', choices=['icm','ftmo','5ers'])
+parser.add_argument('--tf', default='5m', help='Timeframe: 5m or 15m')
 args = parser.parse_args()
 
 cfg = importlib.import_module(f'config_{args.account}')
@@ -112,7 +113,7 @@ for sym, icfg in INSTRUMENTS.items():
     sym_exits = STRAT_EXITS.get((args.account, sym), {})
 
     # Load recent data (5000 bars = convergence garantie indicateurs, ~20x plus rapide que full)
-    candles, daily_atr, global_atr, trading_days = load_data_recent(conn, sym, n=5000)
+    candles, daily_atr, global_atr, trading_days = load_data_recent(conn, sym, n=5000, tf=args.tf)
     from backtest_engine import prev_trading_day
     pd_ = prev_trading_day(today, trading_days)
     atr = daily_atr.get(pd_, global_atr) if pd_ else global_atr

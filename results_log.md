@@ -57,6 +57,31 @@ VPS FTMO:          python vps_pusher.py ftmo
 VPS 5ers:          python vps_pusher.py 5ers
 ```
 
+## 2026-04-09 — Pipeline 15m: optimize + combos + config + scripts adaptes
+
+### Scripts modifies pour supporter --tf 15m
+- `backtest_engine.py`: load_data/load_data_recent acceptent tf='15m'
+- `optimize_all.py`: argument --tf, utilise backtest_engine.load_data
+- `bt_portfolio.py`: argument --tf
+- `compare_today.py`: argument --tf
+- `live_mt5.py`: argument --tf, get_recent_candles + ATR supportent 15m
+
+### Optimize FTMO 15m (7 instruments)
+Pkls regeneres sur candles 15m. Combos selectionnes:
+
+| Instrument | Combo | Nb | PF | WR | DD | Rend | M+ |
+|---|---|---|---|---|---|---|---|
+| XAUUSD | PF 9 | 9 | 1.68 | 76% | -0.2% | +3% | 13/13 |
+| GER40.cash | Calmar 7 | 7 | 1.53 | 74% | -0.1% | +2% | 13/13 |
+| US500.cash | PF 7 | 7 | 1.69 | 69% | -0.2% | +3% | 13/13 |
+| US100.cash | PF*WR 8 | 8 | 1.58 | 72% | -0.2% | +2% | 11/13 |
+| US30.cash | Calmar 4 | 4 | 1.61 | 70% | -0.1% | +1% | 13/13 |
+| UK100.cash | skip (9/13) | - | - | - | - | - | - |
+| JP225.cash | PF 3 | 3 | 1.88 | 79% | -0.1% | +1% | 11/13 |
+
+config_ftmo_15m.py + strat_exits_15m.py crees.
+Validation bt_portfolio en cours.
+
 ## 2026-04-09 — Tag v1.0-5m + branche feature/15m
 
 Tag v1.0-5m sur main : pipeline 5m complet et stable.

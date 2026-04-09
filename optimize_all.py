@@ -17,15 +17,16 @@ from strats import detect_all
 import argparse as _ap
 _p = _ap.ArgumentParser(); _p.add_argument('account', nargs='?', default='icm')
 _p.add_argument('--symbol', default='xauusd')
+_p.add_argument('--tf', default='5m', help='Timeframe: 5m or 15m')
 _a = _p.parse_args()
 SYMBOL = _a.symbol.lower()
+TF = _a.tf
 
 # ── DATA ──
-print(f"Loading data ({SYMBOL})...", flush=True)
+from backtest_engine import load_data as _be_load
+print(f"Loading data ({SYMBOL} {TF})...", flush=True)
 conn = get_conn()
-candles = load_candles_5m(conn, symbol=SYMBOL)
-daily_atr, global_atr = compute_atr(conn, symbol=SYMBOL)
-trading_days = get_trading_days(conn, symbol=SYMBOL)
+candles, daily_atr, global_atr, trading_days = _be_load(conn, SYMBOL, tf=TF)
 conn.close()
 def prev_day(day):
     for di, d in enumerate(trading_days):

@@ -26,6 +26,7 @@ from backtest_engine import load_data, prev_trading_day, OPEN_STRATS, _make_day_
 parser = argparse.ArgumentParser(description='Live MT5 trading')
 parser.add_argument('account', nargs='?', default='icm', choices=['icm','ftmo','5ers'])
 parser.add_argument('--reset', action='store_true', help='Reset state')
+parser.add_argument('--tf', default='5m', help='Timeframe: 5m or 15m')
 args = parser.parse_args()
 _account = args.account
 
@@ -158,9 +159,10 @@ def mt5_modify_sl(ticket, new_sl, symbol):
 def get_conn_autocommit():
     conn = get_conn(); conn.autocommit = True; return conn
 
-def get_recent_candles(conn, symbol, n=1500):
+def get_recent_candles(conn, symbol, n=1500, tf=None):
     import re
-    table = f"candles_mt5_{re.sub(r'[^a-z0-9]+', '_', symbol.lower()).strip('_')}_5m"
+    if tf is None: tf = args.tf
+    table = f"candles_mt5_{re.sub(r'[^a-z0-9]+', '_', symbol.lower()).strip('_')}_{tf}"
     cur = conn.cursor()
     cur.execute(f"SELECT ts, open, high, low, close FROM {table} ORDER BY ts DESC LIMIT %s", (n,))
     rows = cur.fetchall(); cur.close()
@@ -412,12 +414,12 @@ def main():
                 candle_time_utc = candles.iloc[-1]['ts_dt'].to_pydatetime()
                 today = candle_time_utc.date()
 
-                # ATR via compute_atr (SQL seul, rapide ~1s, meme source que backtest_engine)
+                # ATR via backtest_engine (supporte 5m et 15m)
                 if sym not in _atr_cache or _atr_cache[sym]['date'] != str(today):
-                    from phase1_poc_calculator import compute_atr as _ca, get_trading_days as _gtd
-                    from backtest_engine import prev_trading_day as _ptd
-                    _da, _ga = _ca(conn, symbol=sym.lower())
-                    _td = _gtd(conn, symbol=sym.lower())
+                    from backtest_engine import _load_candles_raw, _compute_atr_from_df, _get_trading_days_from_df, prev_trading_day as _ptd
+                    _full = _load_candles_raw(conn, sym, tf=args.tf)
+                    _da, _ga = _compute_atr_from_df(_full)
+                    _td = _get_trading_days_from_df(_full)
                     _pd = _ptd(today, _td)
                     _atr_val = _da.get(_pd, _ga) if _pd else _ga
                     _atr_cache[sym] = {'date': str(today), 'atr': _atr_val}
