@@ -402,7 +402,7 @@ def main():
                 if not portfolio: continue
 
                 # Candles recentes (rapide) + indicateurs
-                candles = get_recent_candles(conn, sym, 1500)
+                candles = get_recent_candles(conn, sym, 500)
                 if len(candles) == 0: continue
                 from strats import compute_indicators
                 candles = compute_indicators(candles)

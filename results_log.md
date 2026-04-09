@@ -57,6 +57,12 @@ VPS FTMO:          python vps_pusher.py ftmo
 VPS 5ers:          python vps_pusher.py 5ers
 ```
 
+## 2026-04-09 — live_mt5: 1500 bars → 500 bars (reactivite max)
+
+Benchmark: 500 bars = 0.10s vs 1500 bars = 0.22s (2x plus rapide).
+Verification: 6/6 instruments FTMO donnent exactement les memes trades avec 500 vs 5000 bars.
+EMA200 converge en ~200 bars, 500 bars = 300 bars de marge.
+
 ## 2026-04-09 — FTMO: ajout JP225.cash (PF 3, 3 strats)
 
 JP225.cash ajoute a FTMO: ALL_FIB_618, IDX_LATE_REV, TOK_NR4
