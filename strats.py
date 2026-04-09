@@ -55,7 +55,7 @@ STRAT_ID = {s: i for i, s in enumerate(ALL_STRATS)}
 SYMBOL_ID = {
     'XAUUSD': 0, 'JPN225': 1, 'DAX40': 2, 'NAS100': 3, 'SP500': 4, 'UK100': 5,
     'BTCUSD': 6, 'GER40.cash': 7, 'UK100.cash': 8, 'US100.cash': 9,
-    'US500.cash': 10, 'US30.cash': 11,
+    'US500.cash': 10, 'US30.cash': 11, 'JP225.cash': 12,
 }
 
 MAGIC_BASES = {'icm': 240000, 'ftmo': 250000, '5ers': 260000}

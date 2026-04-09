@@ -185,6 +185,19 @@ STRAT_EXITS[('ftmo', 'US30.cash')] = {
     'TOK_PREVEXT': ('TRAIL', 2.00, 0.50, 0.30),  # PF=1.45 WR=72%
 }
 
+STRAT_EXITS[('ftmo', 'JP225.cash')] = {
+    'ALL_FIB_618': ('TRAIL', 1.50, 0.30, 0.30),  # PF=1.84 WR=70%
+    'ALL_FISHER_9': ('TRAIL', 1.50, 0.30, 0.30),  # PF=1.42 WR=60%
+    'ALL_NR4': ('TRAIL', 3.00, 0.50, 0.50),  # PF=1.63 WR=77%
+    'ALL_WILLR_7': ('TRAIL', 2.00, 0.75, 0.30),  # PF=1.58 WR=63%
+    'IDX_LATE_REV': ('TRAIL', 3.00, 0.75, 0.75),  # PF=1.62 WR=77%
+    'IDX_NR4': ('TRAIL', 3.00, 0.50, 0.50),  # PF=1.63 WR=77%
+    'LON_BIGGAP': ('TRAIL', 2.00, 0.50, 0.50),  # PF=1.54 WR=73%
+    'LON_GAP': ('TRAIL', 2.00, 0.75, 0.75),  # PF=1.53 WR=70%
+    'LON_TOKEND': ('TRAIL', 2.00, 1.00, 1.00),  # PF=1.82 WR=62%
+    'TOK_NR4': ('TRAIL', 3.00, 0.50, 0.50),  # PF=1.76 WR=79%
+}
+
 STRAT_EXITS[('crypto', 'BNBUSD')] = {
     'ALL_CMO_9': ('TRAIL', 2.00, 0.30, 0.30),  # PF=2.03 WR=77%
     'ALL_HMA_CROSS': ('TRAIL', 3.00, 0.50, 0.50),  # PF=1.63 WR=76%

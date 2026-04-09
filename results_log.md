@@ -57,6 +57,12 @@ VPS FTMO:          python vps_pusher.py ftmo
 VPS 5ers:          python vps_pusher.py 5ers
 ```
 
+## 2026-04-09 — FTMO: ajout JP225.cash (PF 3, 3 strats)
+
+JP225.cash ajoute a FTMO: ALL_FIB_618, IDX_LATE_REV, TOK_NR4
+PF 1.78 | WR 76% | DD -0.1% | Rend +1% | 12/13
+SYMBOL_ID 12, strat_exits ajoute, LIVE_INSTRUMENTS active.
+
 ## 2026-04-08 — LIVE: tous instruments actives a 0.01% risk
 
 ### 5ers (6 instruments)

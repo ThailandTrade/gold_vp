@@ -45,12 +45,19 @@ ALL_INSTRUMENTS = {
         ],
         # PF 3: PF 1.51 | WR 72% | DD -0.5% | Rend +5% | 13/13
     },
+    'JP225.cash': {
+        'risk_pct': 0.0001,
+        'portfolio': [
+            'ALL_FIB_618','IDX_LATE_REV','TOK_NR4',
+        ],
+        # PF 3: PF 1.78 | WR 76% | DD -0.1% | Rend +1% | 12/13
+    },
 }
 
 # Skip: UK100.cash (PF 1.47, seulement 10/13 mois)
 
 # Instruments actifs en live (subset de ALL_INSTRUMENTS)
-LIVE_INSTRUMENTS = ['XAUUSD', 'GER40.cash', 'US500.cash', 'US100.cash', 'US30.cash']
+LIVE_INSTRUMENTS = ['XAUUSD', 'GER40.cash', 'US500.cash', 'US100.cash', 'US30.cash', 'JP225.cash']
 
 INSTRUMENTS = {k: v for k, v in ALL_INSTRUMENTS.items() if k in LIVE_INSTRUMENTS}
 
