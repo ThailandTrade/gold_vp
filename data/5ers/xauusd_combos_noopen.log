@@ -1,0 +1,538 @@
+Loading data/5ers/optim_data.pkl...
+  47 strats loaded. Capital=$100,000 Risk=0.05%
+
+==================================================================================================================================
+1. CORRELATIONS PAIRWISE
+==================================================================================================================================
+
+  Paires fortement correlees (>0.3):
+    ALL_CMO_14_ZERO        x ALL_MOM_14              corr=+1.000
+    ALL_KC_BRK             x IDX_KC_BRK              corr=+1.000
+    ALL_MOM_10             x ALL_ROC_ZERO            corr=+1.000
+    ALL_NR4                x IDX_NR4                 corr=+1.000
+    ALL_DC10               x ALL_DC10_EMA            corr=+0.992
+    ALL_FISHER_9           x TOK_FISHER              corr=+0.983
+    ALL_PSAR_EMA           x ALL_SUPERTREND          corr=+0.976
+    ALL_STOCH_OB           x TOK_STOCH               corr=+0.839
+    ALL_DC10_EMA           x ALL_MTF_BRK             corr=+0.770
+    ALL_DC10               x ALL_MTF_BRK             corr=+0.768
+    ALL_PIVOT_BOUNCE       x ALL_PIVOT_BRK           corr=+0.761
+    ALL_NR4                x TOK_NR4                 corr=+0.666
+    IDX_NR4                x TOK_NR4                 corr=+0.666
+    ALL_BB_TIGHT           x ALL_DC10                corr=+0.643
+    ALL_BB_TIGHT           x ALL_DC10_EMA            corr=+0.628
+    ALL_MOM_10             x ALL_STOCH_OB            corr=+0.623
+    ALL_ROC_ZERO           x ALL_STOCH_OB            corr=+0.623
+    ALL_DC50               x ALL_PIVOT_BOUNCE        corr=+0.596
+    ALL_HMA_CROSS          x ALL_NR4                 corr=+0.568
+    ALL_HMA_CROSS          x IDX_NR4                 corr=+0.568
+    ALL_DC50               x ALL_PIVOT_BRK           corr=+0.557
+    ALL_DC50               x IDX_VWAP_BOUNCE         corr=+0.537
+    ALL_FISHER_9           x ALL_MOM_10              corr=+0.527
+    ALL_FISHER_9           x ALL_ROC_ZERO            corr=+0.527
+    ALL_ELDER_BULL         x ALL_MACD_RSI            corr=+0.513
+    ALL_MOM_10             x TOK_FISHER              corr=+0.512
+    ALL_ROC_ZERO           x TOK_FISHER              corr=+0.512
+    ALL_ELDER_BULL         x ALL_FISHER_9            corr=+0.499
+    ALL_CMO_14_ZERO        x TOK_TRIX                corr=+0.499
+    ALL_MOM_14             x TOK_TRIX                corr=+0.499
+  Total paires >0.3: 164
+
+  Strats les plus decorrelees (avg |corr| faible):
+    D8                     avg|corr|=0.089  PF=1.58 WR=53%
+    ALL_SUPERTREND         avg|corr|=0.102  PF=1.37 WR=78%
+    IDX_TREND_DAY          avg|corr|=0.104  PF=1.55 WR=72%
+    ALL_PSAR_EMA           avg|corr|=0.111  PF=1.40 WR=78%
+    ALL_KC_BRK             avg|corr|=0.115  PF=1.32 WR=69%
+    IDX_KC_BRK             avg|corr|=0.115  PF=1.32 WR=69%
+    ALL_CCI_20_ZERO        avg|corr|=0.116  PF=1.50 WR=87%
+    ALL_FIB_618            avg|corr|=0.126  PF=1.63 WR=79%
+    IDX_NY_MOM             avg|corr|=0.131  PF=1.70 WR=89%
+    TOK_BIG                avg|corr|=0.133  PF=1.57 WR=87%
+    TOK_WILLR              avg|corr|=0.134  PF=1.46 WR=81%
+    ALL_BB_SQUEEZE         avg|corr|=0.135  PF=1.57 WR=86%
+    ALL_AROON_CROSS        avg|corr|=0.138  PF=1.48 WR=60%
+    TOK_TRIX               avg|corr|=0.141  PF=1.28 WR=53%
+    ALL_HAMMER             avg|corr|=0.143  PF=1.26 WR=55%
+
+  Strats les plus correlees (avg |corr| forte):
+    ALL_MOM_10             avg|corr|=0.257  PF=1.44 WR=73%
+    ALL_ROC_ZERO           avg|corr|=0.257  PF=1.44 WR=73%
+    ALL_HMA_CROSS          avg|corr|=0.244  PF=1.52 WR=79%
+    ALL_ELDER_BULL         avg|corr|=0.237  PF=1.59 WR=75%
+    ALL_FISHER_9           avg|corr|=0.233  PF=1.37 WR=56%
+    ALL_NR4                avg|corr|=0.228  PF=1.56 WR=59%
+    IDX_NR4                avg|corr|=0.228  PF=1.56 WR=59%
+    TOK_FISHER             avg|corr|=0.228  PF=1.52 WR=59%
+    ALL_PIVOT_BRK          avg|corr|=0.225  PF=1.92 WR=82%
+    ALL_BB_TIGHT           avg|corr|=0.223  PF=1.65 WR=71%
+
+==================================================================================================================================
+2. MEILLEURES PAIRES
+==================================================================================================================================
+
+  Top 15 paires par PF:
+    D8                   + PO3_SWEEP             PF=1.87 WR=72% DD=-0.2% n= 149 corr=-0.069
+    IDX_CONSEC_REV       + PO3_SWEEP             PF=1.77 WR=90% DD=-0.3% n= 378 corr=+0.175
+    ALL_PSAR_EMA         + PO3_SWEEP             PF=1.76 WR=79% DD=-0.4% n= 351 corr=-0.074
+    ALL_SUPERTREND       + PO3_SWEEP             PF=1.75 WR=79% DD=-0.4% n= 352 corr=-0.096
+    ALL_PIVOT_BRK        + PO3_SWEEP             PF=1.70 WR=82% DD=-0.3% n= 314 corr=+0.132
+    IDX_NY_MOM           + PO3_SWEEP             PF=1.66 WR=86% DD=-0.2% n= 328 corr=-0.003
+    ALL_PSAR_EMA         + D8                    PF=1.66 WR=74% DD=-0.4% n= 295 corr=-0.079
+    ALL_SUPERTREND       + D8                    PF=1.65 WR=74% DD=-0.4% n= 297 corr=-0.080
+    ALL_PSAR_EMA         + ALL_SUPERTREND        PF=1.64 WR=79% DD=-0.7% n= 494 corr=+0.976
+    IDX_VWAP_BOUNCE      + PO3_SWEEP             PF=1.63 WR=70% DD=-0.7% n= 340 corr=+0.381
+    ALL_PSAR_EMA         + IDX_CONSEC_REV        PF=1.63 WR=87% DD=-0.2% n= 512 corr=-0.099
+    ALL_SUPERTREND       + IDX_CONSEC_REV        PF=1.62 WR=87% DD=-0.2% n= 514 corr=-0.099
+    ALL_FIB_618          + PO3_SWEEP             PF=1.60 WR=79% DD=-0.3% n= 330 corr=+0.049
+    ALL_MSTAR            + PO3_SWEEP             PF=1.60 WR=69% DD=-0.5% n= 226 corr=-0.154
+    ALL_PIVOT_BRK        + ALL_PSAR_EMA          PF=1.60 WR=80% DD=-0.4% n= 453 corr=-0.010
+
+  Top 15 paires par Calmar:
+    ALL_PSAR_EMA         + IDX_CONSEC_REV        Cal=10.7 PF=1.63 DD=-0.2% n= 512 corr=-0.099
+    ALL_MACD_STD_SIG     + ALL_PSAR_EMA          Cal=10.3 PF=1.54 DD=-0.2% n= 539 corr=+0.022
+    ALL_MACD_STD_SIG     + ALL_SUPERTREND        Cal=10.0 PF=1.53 DD=-0.2% n= 541 corr=+0.023
+    ALL_PSAR_EMA         + IDX_NY_MOM            Cal=9.4 PF=1.54 DD=-0.2% n= 468 corr=-0.012
+    ALL_KC_BRK           + ALL_PSAR_EMA          Cal=9.3 PF=1.50 DD=-0.4% n= 525 corr=+0.139
+    ALL_PSAR_EMA         + IDX_KC_BRK            Cal=9.3 PF=1.50 DD=-0.4% n= 525 corr=+0.139
+    ALL_SUPERTREND       + IDX_CONSEC_REV        Cal=9.3 PF=1.62 DD=-0.2% n= 514 corr=-0.099
+    ALL_SUPERTREND       + IDX_NY_MOM            Cal=9.3 PF=1.53 DD=-0.2% n= 470 corr=-0.021
+    ALL_PSAR_EMA         + TOK_FISHER            Cal=8.7 PF=1.48 DD=-0.4% n= 484 corr=+0.066
+    ALL_KC_BRK           + ALL_SUPERTREND        Cal=8.6 PF=1.50 DD=-0.4% n= 527 corr=+0.141
+    ALL_SUPERTREND       + IDX_KC_BRK            Cal=8.6 PF=1.50 DD=-0.4% n= 527 corr=+0.141
+    ALL_SUPERTREND       + TOK_FISHER            Cal=8.6 PF=1.47 DD=-0.4% n= 485 corr=+0.023
+    IDX_NY_MOM           + PO3_SWEEP             Cal=8.5 PF=1.66 DD=-0.2% n= 328 corr=-0.003
+    D8                   + PO3_SWEEP             Cal=8.4 PF=1.87 DD=-0.2% n= 149 corr=-0.069
+    ALL_DC10             + IDX_VWAP_BOUNCE       Cal=8.3 PF=1.47 DD=-0.5% n= 541 corr=+0.263
+
+  Top 15 paires par Sharpe:
+    ALL_PSAR_EMA         + PO3_SWEEP             Sharpe=4.41 PF=1.76 DD=-0.4% corr=-0.074
+    ALL_SUPERTREND       + PO3_SWEEP             Sharpe=4.38 PF=1.75 DD=-0.4% corr=-0.096
+    ALL_PIVOT_BRK        + PO3_SWEEP             Sharpe=4.00 PF=1.70 DD=-0.3% corr=+0.132
+    ALL_PSAR_EMA         + IDX_VWAP_BOUNCE       Sharpe=3.92 PF=1.57 DD=-0.6% corr=-0.107
+    ALL_SUPERTREND       + IDX_VWAP_BOUNCE       Sharpe=3.88 PF=1.56 DD=-0.6% corr=-0.104
+    ALL_MSTAR            + ALL_PSAR_EMA          Sharpe=3.85 PF=1.58 DD=-0.7% corr=-0.055
+    ALL_MSTAR            + PO3_SWEEP             Sharpe=3.78 PF=1.60 DD=-0.5% corr=-0.154
+    ALL_MSTAR            + ALL_SUPERTREND        Sharpe=3.76 PF=1.57 DD=-0.7% corr=-0.021
+    ALL_DC10             + PO3_SWEEP             Sharpe=3.72 PF=1.55 DD=-0.5% corr=+0.116
+    ALL_KC_BRK           + PO3_SWEEP             Sharpe=3.69 PF=1.53 DD=-0.4% corr=+0.056
+    IDX_KC_BRK           + PO3_SWEEP             Sharpe=3.69 PF=1.53 DD=-0.4% corr=+0.056
+    ALL_DC10             + IDX_VWAP_BOUNCE       Sharpe=3.64 PF=1.47 DD=-0.5% corr=+0.263
+    D8                   + PO3_SWEEP             Sharpe=3.60 PF=1.87 DD=-0.2% corr=-0.069
+    ALL_FVG_BULL         + IDX_VWAP_BOUNCE       Sharpe=3.60 PF=1.46 DD=-0.8% corr=-0.210
+    ALL_DC10_EMA         + PO3_SWEEP             Sharpe=3.59 PF=1.52 DD=-0.5% corr=+0.117
+
+  Top 15 paires decorrelees + rentables (PF>1.3, |corr|<0.1):
+    D8                   + PO3_SWEEP             PF=1.87 WR=72% DD=-0.2% corr=-0.069
+    ALL_PSAR_EMA         + PO3_SWEEP             PF=1.76 WR=79% DD=-0.4% corr=-0.074
+    ALL_SUPERTREND       + PO3_SWEEP             PF=1.75 WR=79% DD=-0.4% corr=-0.096
+    IDX_NY_MOM           + PO3_SWEEP             PF=1.66 WR=86% DD=-0.2% corr=-0.003
+    ALL_PSAR_EMA         + D8                    PF=1.66 WR=74% DD=-0.4% corr=-0.079
+    ALL_SUPERTREND       + D8                    PF=1.65 WR=74% DD=-0.4% corr=-0.080
+    ALL_PSAR_EMA         + IDX_CONSEC_REV        PF=1.63 WR=87% DD=-0.2% corr=-0.099
+    ALL_SUPERTREND       + IDX_CONSEC_REV        PF=1.62 WR=87% DD=-0.2% corr=-0.099
+    ALL_FIB_618          + PO3_SWEEP             PF=1.60 WR=79% DD=-0.3% corr=+0.049
+    ALL_PIVOT_BRK        + ALL_PSAR_EMA          PF=1.60 WR=80% DD=-0.4% corr=-0.010
+    ALL_MACD_STD_SIG     + PO3_SWEEP             PF=1.59 WR=85% DD=-0.2% corr=-0.057
+    ALL_PIVOT_BRK        + ALL_SUPERTREND        PF=1.59 WR=80% DD=-0.4% corr=-0.021
+    ALL_MSTAR            + ALL_PSAR_EMA          PF=1.58 WR=72% DD=-0.7% corr=-0.055
+    D8                   + IDX_CONSEC_REV        PF=1.57 WR=87% DD=-0.3% corr=-0.085
+    ALL_MSTAR            + ALL_SUPERTREND        PF=1.57 WR=73% DD=-0.7% corr=-0.021
+
+==================================================================================================================================
+3. GREEDY BUILDERS — 5 CRITERES
+==================================================================================================================================
+
+  ── Calmar: Calmar (return/|DD|) ──
+     2 strats  n=  541 PF=1.47 WR=68% DD=-0.5% Rend=+4% Sharpe=3.6 M+=9/13
+     3 strats  n=  647 PF=1.54 WR=70% DD=-0.5% Rend=+5% Sharpe=4.3 M+=11/13
+     4 strats  n=  849 PF=1.56 WR=76% DD=-0.4% Rend=+6% Sharpe=4.7 M+=11/13
+     5 strats  n= 1087 PF=1.55 WR=75% DD=-0.5% Rend=+8% Sharpe=5.1 M+=11/13
+     6 strats  n= 1299 PF=1.52 WR=77% DD=-0.4% Rend=+8% Sharpe=5.1 M+=12/13
+     7 strats  n= 1342 PF=1.53 WR=76% DD=-0.4% Rend=+9% Sharpe=5.3 M+=11/13
+     8 strats  n= 1505 PF=1.48 WR=76% DD=-0.4% Rend=+9% Sharpe=5.2 M+=12/13
+     9 strats  n= 1687 PF=1.44 WR=74% DD=-0.4% Rend=+10% Sharpe=5.1 M+=11/13
+    10 strats  n= 1903 PF=1.47 WR=74% DD=-0.5% Rend=+12% Sharpe=5.6 M+=12/13
+    11 strats  n= 2137 PF=1.44 WR=74% DD=-0.5% Rend=+13% Sharpe=5.6 M+=12/13
+    12 strats  n= 2237 PF=1.44 WR=75% DD=-0.5% Rend=+13% Sharpe=5.6 M+=12/13
+    13 strats  n= 2420 PF=1.45 WR=75% DD=-0.6% Rend=+14% Sharpe=5.8 M+=12/13
+    14 strats  n= 2638 PF=1.44 WR=75% DD=-0.6% Rend=+15% Sharpe=5.5 M+=12/13
+    15 strats  n= 2870 PF=1.43 WR=76% DD=-0.7% Rend=+15% Sharpe=5.6 M+=12/13
+    20 strats  n= 3739 PF=1.41 WR=76% DD=-0.9% Rend=+20% Sharpe=5.4 M+=12/13
+
+  ── PF: Profit Factor ──
+     2 strats  n=  340 PF=1.63 WR=70% DD=-0.7% Rend=+3% Sharpe=3.4 M+=10/13
+     3 strats  n=  383 PF=1.64 WR=68% DD=-0.5% Rend=+4% Sharpe=3.7 M+=11/13
+     4 strats  n=  627 PF=1.64 WR=72% DD=-0.4% Rend=+6% Sharpe=4.8 M+=12/13
+     5 strats  n=  873 PF=1.64 WR=74% DD=-0.7% Rend=+8% Sharpe=4.8 M+=12/13
+     6 strats  n= 1078 PF=1.64 WR=76% DD=-0.8% Rend=+9% Sharpe=5.2 M+=12/13
+     7 strats  n= 1318 PF=1.63 WR=79% DD=-0.7% Rend=+9% Sharpe=5.5 M+=12/13
+     8 strats  n= 1553 PF=1.62 WR=79% DD=-0.9% Rend=+11% Sharpe=5.9 M+=12/13
+     9 strats  n= 1727 PF=1.63 WR=77% DD=-0.9% Rend=+13% Sharpe=6.1 M+=12/13
+    10 strats  n= 1925 PF=1.62 WR=78% DD=-1.0% Rend=+14% Sharpe=6.1 M+=12/13
+    11 strats  n= 2014 PF=1.61 WR=77% DD=-1.1% Rend=+15% Sharpe=6.4 M+=12/13
+    12 strats  n= 2129 PF=1.60 WR=75% DD=-1.0% Rend=+17% Sharpe=6.2 M+=12/13
+    13 strats  n= 2363 PF=1.63 WR=75% DD=-1.2% Rend=+20% Sharpe=6.4 M+=12/13
+    14 strats  n= 2468 PF=1.62 WR=76% DD=-1.2% Rend=+20% Sharpe=6.4 M+=12/13
+    15 strats  n= 2642 PF=1.63 WR=77% DD=-1.2% Rend=+21% Sharpe=6.5 M+=12/13
+    20 strats  n= 3666 PF=1.60 WR=76% DD=-2.5% Rend=+29% Sharpe=5.4 M+=11/13
+
+  ── MinDD: Minimize Max DD ──
+     2 strats  n=  529 PF=1.39 WR=78% DD=-0.5% Rend=+2% Sharpe=2.5 M+=9/13
+     3 strats  n=  770 PF=1.47 WR=78% DD=-0.5% Rend=+4% Sharpe=3.7 M+=10/13
+     4 strats  n=  819 PF=1.49 WR=76% DD=-0.4% Rend=+5% Sharpe=4.1 M+=11/13
+     5 strats  n=  918 PF=1.54 WR=77% DD=-0.4% Rend=+6% Sharpe=4.7 M+=12/13
+     6 strats  n= 1129 PF=1.50 WR=79% DD=-0.4% Rend=+6% Sharpe=4.8 M+=11/13
+     7 strats  n= 1389 PF=1.51 WR=82% DD=-0.4% Rend=+7% Sharpe=5.2 M+=12/13
+     8 strats  n= 1647 PF=1.48 WR=81% DD=-0.4% Rend=+8% Sharpe=5.4 M+=12/13
+     9 strats  n= 1744 PF=1.46 WR=79% DD=-0.4% Rend=+9% Sharpe=5.6 M+=13/13
+    10 strats  n= 1924 PF=1.44 WR=80% DD=-0.4% Rend=+9% Sharpe=5.6 M+=13/13
+    11 strats  n= 2096 PF=1.38 WR=80% DD=-0.4% Rend=+8% Sharpe=4.9 M+=13/13
+    12 strats  n= 2344 PF=1.37 WR=80% DD=-0.4% Rend=+9% Sharpe=5.1 M+=13/13
+    13 strats  n= 2478 PF=1.38 WR=79% DD=-0.5% Rend=+10% Sharpe=5.3 M+=12/13
+    14 strats  n= 2617 PF=1.35 WR=78% DD=-0.5% Rend=+10% Sharpe=5.3 M+=12/13
+    15 strats  n= 2829 PF=1.37 WR=78% DD=-0.5% Rend=+12% Sharpe=5.2 M+=12/13
+    20 strats  n= 3709 PF=1.38 WR=79% DD=-0.8% Rend=+15% Sharpe=5.3 M+=12/13
+
+  ── Sharpe: Sharpe Ratio ──
+     2 strats  n=  479 PF=1.57 WR=72% DD=-0.6% Rend=+4% Sharpe=3.9 M+=10/13
+     3 strats  n=  584 PF=1.64 WR=73% DD=-0.6% Rend=+5% Sharpe=4.7 M+=11/13
+     4 strats  n=  857 PF=1.59 WR=74% DD=-0.7% Rend=+7% Sharpe=5.3 M+=11/13
+     5 strats  n= 1118 PF=1.60 WR=78% DD=-0.6% Rend=+8% Sharpe=5.8 M+=11/13
+     6 strats  n= 1314 PF=1.53 WR=77% DD=-0.5% Rend=+8% Sharpe=6.3 M+=11/13
+     7 strats  n= 1405 PF=1.54 WR=76% DD=-0.7% Rend=+10% Sharpe=6.8 M+=11/13
+     8 strats  n= 1577 PF=1.55 WR=77% DD=-0.6% Rend=+11% Sharpe=7.1 M+=11/13
+     9 strats  n= 1799 PF=1.55 WR=79% DD=-0.5% Rend=+11% Sharpe=7.2 M+=12/13
+    10 strats  n= 2017 PF=1.51 WR=78% DD=-0.4% Rend=+12% Sharpe=7.3 M+=12/13
+    11 strats  n= 2218 PF=1.50 WR=79% DD=-0.5% Rend=+12% Sharpe=7.3 M+=11/13
+    12 strats  n= 2447 PF=1.53 WR=79% DD=-0.5% Rend=+14% Sharpe=7.3 M+=11/13
+    13 strats  n= 2699 PF=1.51 WR=80% DD=-0.6% Rend=+14% Sharpe=7.1 M+=11/13
+    14 strats  n= 2740 PF=1.50 WR=80% DD=-0.6% Rend=+15% Sharpe=7.0 M+=12/13
+    15 strats  n= 2930 PF=1.49 WR=80% DD=-0.6% Rend=+16% Sharpe=6.8 M+=12/13
+    20 strats  n= 3687 PF=1.49 WR=79% DD=-0.8% Rend=+20% Sharpe=6.8 M+=13/13
+
+  ── PF*WR: PF * WR ──
+     2 strats  n=  508 PF=1.50 WR=81% DD=-0.5% Rend=+2% Sharpe=2.9 M+=9/13
+     3 strats  n=  612 PF=1.60 WR=80% DD=-0.5% Rend=+4% Sharpe=3.6 M+=10/13
+     4 strats  n=  848 PF=1.63 WR=80% DD=-0.5% Rend=+5% Sharpe=5.0 M+=10/13
+     5 strats  n= 1094 PF=1.63 WR=80% DD=-0.7% Rend=+7% Sharpe=4.9 M+=11/13
+     6 strats  n= 1275 PF=1.63 WR=80% DD=-0.7% Rend=+8% Sharpe=5.3 M+=11/13
+     7 strats  n= 1548 PF=1.60 WR=81% DD=-0.6% Rend=+9% Sharpe=5.6 M+=11/13
+     8 strats  n= 1760 PF=1.62 WR=81% DD=-0.7% Rend=+11% Sharpe=6.2 M+=11/13
+     9 strats  n= 1803 PF=1.63 WR=80% DD=-0.8% Rend=+12% Sharpe=6.1 M+=12/13
+    10 strats  n= 2014 PF=1.60 WR=81% DD=-0.6% Rend=+12% Sharpe=6.2 M+=12/13
+    11 strats  n= 2212 PF=1.58 WR=81% DD=-0.9% Rend=+13% Sharpe=6.1 M+=12/13
+    12 strats  n= 2294 PF=1.58 WR=80% DD=-1.0% Rend=+14% Sharpe=6.4 M+=12/13
+    13 strats  n= 2550 PF=1.54 WR=81% DD=-0.9% Rend=+14% Sharpe=6.3 M+=12/13
+    14 strats  n= 2717 PF=1.55 WR=80% DD=-0.9% Rend=+16% Sharpe=6.4 M+=12/13
+    15 strats  n= 2951 PF=1.53 WR=80% DD=-0.9% Rend=+16% Sharpe=6.4 M+=12/13
+    20 strats  n= 3667 PF=1.52 WR=80% DD=-0.9% Rend=+20% Sharpe=6.3 M+=13/13
+
+  ── Diversifie: PF * decorrelation ──
+     2 strats  n=  283 PF=1.56 WR=63% DD=-0.7% Rend=+3% Sharpe=3.1 M+=11/13
+     3 strats  n=  528 PF=1.59 WR=70% DD=-0.5% Rend=+5% Sharpe=4.2 M+=11/13
+     4 strats  n=  819 PF=1.55 WR=76% DD=-0.5% Rend=+5% Sharpe=4.5 M+=11/13
+     5 strats  n= 1038 PF=1.44 WR=77% DD=-0.5% Rend=+5% Sharpe=4.3 M+=11/13
+     6 strats  n= 1146 PF=1.56 WR=74% DD=-0.7% Rend=+8% Sharpe=5.4 M+=11/13
+     7 strats  n= 1326 PF=1.54 WR=73% DD=-0.6% Rend=+10% Sharpe=5.3 M+=11/13
+     8 strats  n= 1566 PF=1.49 WR=75% DD=-0.6% Rend=+10% Sharpe=5.1 M+=11/13
+     9 strats  n= 1772 PF=1.48 WR=73% DD=-0.9% Rend=+11% Sharpe=5.1 M+=11/13
+    10 strats  n= 1991 PF=1.43 WR=73% DD=-1.1% Rend=+12% Sharpe=4.9 M+=11/13
+    11 strats  n= 2202 PF=1.46 WR=73% DD=-1.2% Rend=+14% Sharpe=5.3 M+=11/13
+    12 strats  n= 2405 PF=1.45 WR=74% DD=-1.1% Rend=+14% Sharpe=5.3 M+=11/13
+    13 strats  n= 2597 PF=1.45 WR=75% DD=-1.4% Rend=+15% Sharpe=5.1 M+=11/13
+    14 strats  n= 2771 PF=1.46 WR=76% DD=-1.3% Rend=+16% Sharpe=5.3 M+=11/13
+    15 strats  n= 2869 PF=1.48 WR=76% DD=-1.3% Rend=+17% Sharpe=5.6 M+=12/13
+    20 strats  n= 3695 PF=1.43 WR=76% DD=-1.6% Rend=+20% Sharpe=5.2 M+=12/13
+
+==================================================================================================================================
+4. COMPARATIF FINAL
+==================================================================================================================================
+
+  ── TAILLE 5 ──
+       Critere   Trades     PF     WR        DD        Rend   Sharpe     M+
+  ------------  -------  -----  -----  --------  ----------  -------  -----
+        Calmar     1087   1.55    75%     -0.5%         +8%      5.1  11/13
+            PF      873   1.64    74%     -0.7%         +8%      4.8  12/13
+         MinDD      918   1.54    77%     -0.4%         +6%      4.7  12/13
+        Sharpe     1118   1.60    78%     -0.6%         +8%      5.8  11/13
+         PF*WR     1094   1.63    80%     -0.7%         +7%      4.9  11/13
+       Diverse     1038   1.44    77%     -0.5%         +5%      4.3  11/13
+
+  ── TAILLE 8 ──
+       Critere   Trades     PF     WR        DD        Rend   Sharpe     M+
+  ------------  -------  -----  -----  --------  ----------  -------  -----
+        Calmar     1505   1.48    76%     -0.4%         +9%      5.2  12/13
+            PF     1553   1.62    79%     -0.9%        +11%      5.9  12/13
+         MinDD     1647   1.48    81%     -0.4%         +8%      5.4  12/13
+        Sharpe     1577   1.55    77%     -0.6%        +11%      7.1  11/13
+         PF*WR     1760   1.62    81%     -0.7%        +11%      6.2  11/13
+       Diverse     1566   1.49    75%     -0.6%        +10%      5.1  11/13
+
+  ── TAILLE 10 ──
+       Critere   Trades     PF     WR        DD        Rend   Sharpe     M+
+  ------------  -------  -----  -----  --------  ----------  -------  -----
+        Calmar     1903   1.47    74%     -0.5%        +12%      5.6  12/13
+            PF     1925   1.62    78%     -1.0%        +14%      6.1  12/13
+         MinDD     1924   1.44    80%     -0.4%         +9%      5.6  13/13
+        Sharpe     2017   1.51    78%     -0.4%        +12%      7.3  12/13
+         PF*WR     2014   1.60    81%     -0.6%        +12%      6.2  12/13
+       Diverse     1991   1.43    73%     -1.1%        +12%      4.9  11/13
+
+  ── TAILLE 12 ──
+       Critere   Trades     PF     WR        DD        Rend   Sharpe     M+
+  ------------  -------  -----  -----  --------  ----------  -------  -----
+        Calmar     2237   1.44    75%     -0.5%        +13%      5.6  12/13
+            PF     2129   1.60    75%     -1.0%        +17%      6.2  12/13
+         MinDD     2344   1.37    80%     -0.4%         +9%      5.1  13/13
+        Sharpe     2447   1.53    79%     -0.5%        +14%      7.3  11/13
+         PF*WR     2294   1.58    80%     -1.0%        +14%      6.4  12/13
+       Diverse     2405   1.45    74%     -1.1%        +14%      5.3  11/13
+
+  ── TAILLE 15 ──
+       Critere   Trades     PF     WR        DD        Rend   Sharpe     M+
+  ------------  -------  -----  -----  --------  ----------  -------  -----
+        Calmar     2870   1.43    76%     -0.7%        +15%      5.6  12/13
+            PF     2642   1.63    77%     -1.2%        +21%      6.5  12/13
+         MinDD     2829   1.37    78%     -0.5%        +12%      5.2  12/13
+        Sharpe     2930   1.49    80%     -0.6%        +16%      6.8  12/13
+         PF*WR     2951   1.53    80%     -0.9%        +16%      6.4  12/13
+       Diverse     2869   1.48    76%     -1.3%        +17%      5.6  12/13
+
+==================================================================================================================================
+5. MEILLEUR COMBO PAR PROFIL DE RISQUE
+==================================================================================================================================
+
+  CONSERVATEUR (DD > -10%, 13/13 mois):
+    [   PF*WR 18]  PF=1.54 WR=80% DD=-0.7% Rend=+19% M+=13/13
+      Strats: IDX_VWAP_BOUNCE, IDX_CONSEC_REV, PO3_SWEEP, ALL_PSAR_EMA, ALL_SUPERTREND, ALL_PIVOT_BRK, ALL_MACD_STD_SIG, ALL_ELDER_BULL, D8, IDX_NY_MOM, ALL_FIB_618, ALL_MSTAR, ALL_CCI_20_ZERO, ALL_MACD_RSI, ALL_BB_SQUEEZE, TOK_FISHER, TOK_BIG, ALL_STOCH_OB
+    [   PF*WR 19]  PF=1.53 WR=80% DD=-0.7% Rend=+20% M+=13/13
+      Strats: IDX_VWAP_BOUNCE, IDX_CONSEC_REV, PO3_SWEEP, ALL_PSAR_EMA, ALL_SUPERTREND, ALL_PIVOT_BRK, ALL_MACD_STD_SIG, ALL_ELDER_BULL, D8, IDX_NY_MOM, ALL_FIB_618, ALL_MSTAR, ALL_CCI_20_ZERO, ALL_MACD_RSI, ALL_BB_SQUEEZE, TOK_FISHER, TOK_BIG, ALL_STOCH_OB, TOK_WILLR
+    [   PF*WR 20]  PF=1.52 WR=80% DD=-0.9% Rend=+20% M+=13/13
+      Strats: IDX_VWAP_BOUNCE, IDX_CONSEC_REV, PO3_SWEEP, ALL_PSAR_EMA, ALL_SUPERTREND, ALL_PIVOT_BRK, ALL_MACD_STD_SIG, ALL_ELDER_BULL, D8, IDX_NY_MOM, ALL_FIB_618, ALL_MSTAR, ALL_CCI_20_ZERO, ALL_MACD_RSI, ALL_BB_SQUEEZE, TOK_FISHER, TOK_BIG, ALL_STOCH_OB, TOK_WILLR, ALL_MOM_10
+    [   PF*WR 21]  PF=1.51 WR=80% DD=-1.1% Rend=+22% M+=13/13
+      Strats: IDX_VWAP_BOUNCE, IDX_CONSEC_REV, PO3_SWEEP, ALL_PSAR_EMA, ALL_SUPERTREND, ALL_PIVOT_BRK, ALL_MACD_STD_SIG, ALL_ELDER_BULL, D8, IDX_NY_MOM, ALL_FIB_618, ALL_MSTAR, ALL_CCI_20_ZERO, ALL_MACD_RSI, ALL_BB_SQUEEZE, TOK_FISHER, TOK_BIG, ALL_STOCH_OB, TOK_WILLR, ALL_MOM_10, ALL_ROC_ZERO
+    [  Sharpe 20]  PF=1.49 WR=79% DD=-0.8% Rend=+20% M+=13/13
+      Strats: IDX_VWAP_BOUNCE, ALL_PSAR_EMA, PO3_SWEEP, ALL_ELDER_BULL, ALL_MACD_STD_SIG, TOK_NR4, ALL_MSTAR, ALL_PIVOT_BRK, IDX_CONSEC_REV, IDX_TREND_DAY, IDX_NY_MOM, ALL_SUPERTREND, ALL_CCI_20_ZERO, D8, ALL_FIB_618, ALL_MACD_RSI, ALL_BB_SQUEEZE, TOK_FISHER, TOK_BIG, ALL_STOCH_OB
+
+  EQUILIBRE (DD > -15%, PF > 1.4):
+    [      PF 21]  PF=1.59 WR=77% DD=-2.2% Rend=+30% M+=11/13
+      Strats: IDX_VWAP_BOUNCE, PO3_SWEEP, D8, ALL_PSAR_EMA, ALL_SUPERTREND, ALL_PIVOT_BRK, IDX_CONSEC_REV, ALL_ELDER_BULL, ALL_BB_TIGHT, ALL_FIB_618, ALL_MSTAR, TOK_FISHER, ALL_FVG_BULL, TOK_WILLR, TOK_BIG, ALL_MACD_STD_SIG, ALL_DC10, ALL_FISHER_9, ALL_DC10_EMA, ALL_MTF_BRK, ALL_BB_SQUEEZE
+    [      PF 20]  PF=1.60 WR=76% DD=-2.5% Rend=+29% M+=11/13
+      Strats: IDX_VWAP_BOUNCE, PO3_SWEEP, D8, ALL_PSAR_EMA, ALL_SUPERTREND, ALL_PIVOT_BRK, IDX_CONSEC_REV, ALL_ELDER_BULL, ALL_BB_TIGHT, ALL_FIB_618, ALL_MSTAR, TOK_FISHER, ALL_FVG_BULL, TOK_WILLR, TOK_BIG, ALL_MACD_STD_SIG, ALL_DC10, ALL_FISHER_9, ALL_DC10_EMA, ALL_MTF_BRK
+    [      PF 19]  PF=1.61 WR=76% DD=-2.1% Rend=+28% M+=12/13
+      Strats: IDX_VWAP_BOUNCE, PO3_SWEEP, D8, ALL_PSAR_EMA, ALL_SUPERTREND, ALL_PIVOT_BRK, IDX_CONSEC_REV, ALL_ELDER_BULL, ALL_BB_TIGHT, ALL_FIB_618, ALL_MSTAR, TOK_FISHER, ALL_FVG_BULL, TOK_WILLR, TOK_BIG, ALL_MACD_STD_SIG, ALL_DC10, ALL_FISHER_9, ALL_DC10_EMA
+    [      PF 18]  PF=1.62 WR=76% DD=-1.8% Rend=+26% M+=12/13
+      Strats: IDX_VWAP_BOUNCE, PO3_SWEEP, D8, ALL_PSAR_EMA, ALL_SUPERTREND, ALL_PIVOT_BRK, IDX_CONSEC_REV, ALL_ELDER_BULL, ALL_BB_TIGHT, ALL_FIB_618, ALL_MSTAR, TOK_FISHER, ALL_FVG_BULL, TOK_WILLR, TOK_BIG, ALL_MACD_STD_SIG, ALL_DC10, ALL_FISHER_9
+    [      PF 17]  PF=1.62 WR=77% DD=-1.6% Rend=+23% M+=12/13
+      Strats: IDX_VWAP_BOUNCE, PO3_SWEEP, D8, ALL_PSAR_EMA, ALL_SUPERTREND, ALL_PIVOT_BRK, IDX_CONSEC_REV, ALL_ELDER_BULL, ALL_BB_TIGHT, ALL_FIB_618, ALL_MSTAR, TOK_FISHER, ALL_FVG_BULL, TOK_WILLR, TOK_BIG, ALL_MACD_STD_SIG, ALL_DC10
+
+  AGRESSIF (PF > 1.3, max rendement):
+    [      PF 21]  PF=1.59 WR=77% DD=-2.2% Rend=+30% M+=11/13
+      Strats: IDX_VWAP_BOUNCE, PO3_SWEEP, D8, ALL_PSAR_EMA, ALL_SUPERTREND, ALL_PIVOT_BRK, IDX_CONSEC_REV, ALL_ELDER_BULL, ALL_BB_TIGHT, ALL_FIB_618, ALL_MSTAR, TOK_FISHER, ALL_FVG_BULL, TOK_WILLR, TOK_BIG, ALL_MACD_STD_SIG, ALL_DC10, ALL_FISHER_9, ALL_DC10_EMA, ALL_MTF_BRK, ALL_BB_SQUEEZE
+    [      PF 20]  PF=1.60 WR=76% DD=-2.5% Rend=+29% M+=11/13
+      Strats: IDX_VWAP_BOUNCE, PO3_SWEEP, D8, ALL_PSAR_EMA, ALL_SUPERTREND, ALL_PIVOT_BRK, IDX_CONSEC_REV, ALL_ELDER_BULL, ALL_BB_TIGHT, ALL_FIB_618, ALL_MSTAR, TOK_FISHER, ALL_FVG_BULL, TOK_WILLR, TOK_BIG, ALL_MACD_STD_SIG, ALL_DC10, ALL_FISHER_9, ALL_DC10_EMA, ALL_MTF_BRK
+    [      PF 19]  PF=1.61 WR=76% DD=-2.1% Rend=+28% M+=12/13
+      Strats: IDX_VWAP_BOUNCE, PO3_SWEEP, D8, ALL_PSAR_EMA, ALL_SUPERTREND, ALL_PIVOT_BRK, IDX_CONSEC_REV, ALL_ELDER_BULL, ALL_BB_TIGHT, ALL_FIB_618, ALL_MSTAR, TOK_FISHER, ALL_FVG_BULL, TOK_WILLR, TOK_BIG, ALL_MACD_STD_SIG, ALL_DC10, ALL_FISHER_9, ALL_DC10_EMA
+    [      PF 18]  PF=1.62 WR=76% DD=-1.8% Rend=+26% M+=12/13
+      Strats: IDX_VWAP_BOUNCE, PO3_SWEEP, D8, ALL_PSAR_EMA, ALL_SUPERTREND, ALL_PIVOT_BRK, IDX_CONSEC_REV, ALL_ELDER_BULL, ALL_BB_TIGHT, ALL_FIB_618, ALL_MSTAR, TOK_FISHER, ALL_FVG_BULL, TOK_WILLR, TOK_BIG, ALL_MACD_STD_SIG, ALL_DC10, ALL_FISHER_9
+    [      PF 17]  PF=1.62 WR=77% DD=-1.6% Rend=+23% M+=12/13
+      Strats: IDX_VWAP_BOUNCE, PO3_SWEEP, D8, ALL_PSAR_EMA, ALL_SUPERTREND, ALL_PIVOT_BRK, IDX_CONSEC_REV, ALL_ELDER_BULL, ALL_BB_TIGHT, ALL_FIB_618, ALL_MSTAR, TOK_FISHER, ALL_FVG_BULL, TOK_WILLR, TOK_BIG, ALL_MACD_STD_SIG, ALL_DC10
+
+  MEILLEUR SHARPE:
+    [  Sharpe 11]  Sharpe=7.30 PF=1.50 WR=79% DD=-0.5% Rend=+12%
+      Strats: IDX_VWAP_BOUNCE, ALL_PSAR_EMA, PO3_SWEEP, ALL_ELDER_BULL, ALL_MACD_STD_SIG, TOK_NR4, ALL_MSTAR, ALL_PIVOT_BRK, IDX_CONSEC_REV, IDX_TREND_DAY, IDX_NY_MOM
+    [  Sharpe 10]  Sharpe=7.27 PF=1.51 WR=78% DD=-0.4% Rend=+12%
+      Strats: IDX_VWAP_BOUNCE, ALL_PSAR_EMA, PO3_SWEEP, ALL_ELDER_BULL, ALL_MACD_STD_SIG, TOK_NR4, ALL_MSTAR, ALL_PIVOT_BRK, IDX_CONSEC_REV, IDX_TREND_DAY
+    [  Sharpe 12]  Sharpe=7.25 PF=1.53 WR=79% DD=-0.5% Rend=+14%
+      Strats: IDX_VWAP_BOUNCE, ALL_PSAR_EMA, PO3_SWEEP, ALL_ELDER_BULL, ALL_MACD_STD_SIG, TOK_NR4, ALL_MSTAR, ALL_PIVOT_BRK, IDX_CONSEC_REV, IDX_TREND_DAY, IDX_NY_MOM, ALL_SUPERTREND
+    [  Sharpe  9]  Sharpe=7.18 PF=1.55 WR=79% DD=-0.5% Rend=+11%
+      Strats: IDX_VWAP_BOUNCE, ALL_PSAR_EMA, PO3_SWEEP, ALL_ELDER_BULL, ALL_MACD_STD_SIG, TOK_NR4, ALL_MSTAR, ALL_PIVOT_BRK, IDX_CONSEC_REV
+    [  Sharpe 13]  Sharpe=7.15 PF=1.51 WR=80% DD=-0.6% Rend=+14%
+      Strats: IDX_VWAP_BOUNCE, ALL_PSAR_EMA, PO3_SWEEP, ALL_ELDER_BULL, ALL_MACD_STD_SIG, TOK_NR4, ALL_MSTAR, ALL_PIVOT_BRK, IDX_CONSEC_REV, IDX_TREND_DAY, IDX_NY_MOM, ALL_SUPERTREND, ALL_CCI_20_ZERO
+
+==================================================================================================================================
+5b. TOP 20 — SCORE = PF x WR x Rend x M+/TM / (1+|DD|) x min(1, n/500)
+==================================================================================================================================
+
+    #  Score  Nb  Trades    PF   WR      DD   Rend    M+  Combo Strats
+  ------------------------------------------------------------------------------------------------------------------------
+    1   1.41  19    3463  1.53  80%   -0.7%   +20% 13/13 [  PF*WR] IDX_VWAP_BOUNCE, IDX_CONSEC_REV, PO3_SWEEP, ALL_PSAR_EMA, ALL_SUPERTREND, ALL_PIVOT_BRK, ALL_MACD_STD_SIG, ALL_ELDER_BULL +11
+    2   1.39  18    3341  1.54  80%   -0.7%   +19% 13/13 [  PF*WR] IDX_VWAP_BOUNCE, IDX_CONSEC_REV, PO3_SWEEP, ALL_PSAR_EMA, ALL_SUPERTREND, ALL_PIVOT_BRK, ALL_MACD_STD_SIG, ALL_ELDER_BULL +10
+    3   1.33  21    3807  1.49  79%   -0.8%   +21% 13/13 [ Sharpe] IDX_VWAP_BOUNCE, ALL_PSAR_EMA, PO3_SWEEP, ALL_ELDER_BULL, ALL_MACD_STD_SIG, TOK_NR4, ALL_MSTAR, ALL_PIVOT_BRK +13
+    4   1.31  20    3687  1.49  79%   -0.8%   +20% 13/13 [ Sharpe] IDX_VWAP_BOUNCE, ALL_PSAR_EMA, PO3_SWEEP, ALL_ELDER_BULL, ALL_MACD_STD_SIG, TOK_NR4, ALL_MSTAR, ALL_PIVOT_BRK +12
+    5   1.29  20    3667  1.52  80%   -0.9%   +20% 13/13 [  PF*WR] IDX_VWAP_BOUNCE, IDX_CONSEC_REV, PO3_SWEEP, ALL_PSAR_EMA, ALL_SUPERTREND, ALL_PIVOT_BRK, ALL_MACD_STD_SIG, ALL_ELDER_BULL +12
+    6   1.24  21    3901  1.51  80%   -1.1%   +22% 13/13 [  PF*WR] IDX_VWAP_BOUNCE, IDX_CONSEC_REV, PO3_SWEEP, ALL_PSAR_EMA, ALL_SUPERTREND, ALL_PIVOT_BRK, ALL_MACD_STD_SIG, ALL_ELDER_BULL +13
+    7   1.21  16    3022  1.54  79%   -0.7%   +18% 12/13 [  PF*WR] IDX_VWAP_BOUNCE, IDX_CONSEC_REV, PO3_SWEEP, ALL_PSAR_EMA, ALL_SUPERTREND, ALL_PIVOT_BRK, ALL_MACD_STD_SIG, ALL_ELDER_BULL +8
+    8   1.20  17    3171  1.53  80%   -0.7%   +18% 12/13 [  PF*WR] IDX_VWAP_BOUNCE, IDX_CONSEC_REV, PO3_SWEEP, ALL_PSAR_EMA, ALL_SUPERTREND, ALL_PIVOT_BRK, ALL_MACD_STD_SIG, ALL_ELDER_BULL +9
+    9   1.14  16    3088  1.50  79%   -0.7%   +18% 12/13 [ Sharpe] IDX_VWAP_BOUNCE, ALL_PSAR_EMA, PO3_SWEEP, ALL_ELDER_BULL, ALL_MACD_STD_SIG, TOK_NR4, ALL_MSTAR, ALL_PIVOT_BRK +8
+   10   1.12  19    3525  1.49  79%   -0.9%   +19% 12/13 [ Sharpe] IDX_VWAP_BOUNCE, ALL_PSAR_EMA, PO3_SWEEP, ALL_ELDER_BULL, ALL_MACD_STD_SIG, TOK_NR4, ALL_MSTAR, ALL_PIVOT_BRK +11
+   11   1.12  16    2849  1.63  78%   -1.3%   +21% 12/13 [     PF] IDX_VWAP_BOUNCE, PO3_SWEEP, D8, ALL_PSAR_EMA, ALL_SUPERTREND, ALL_PIVOT_BRK, IDX_CONSEC_REV, ALL_ELDER_BULL +8
+   12   1.11  15    2642  1.63  77%   -1.2%   +21% 12/13 [     PF] IDX_VWAP_BOUNCE, PO3_SWEEP, D8, ALL_PSAR_EMA, ALL_SUPERTREND, ALL_PIVOT_BRK, IDX_CONSEC_REV, ALL_ELDER_BULL +7
+   13   1.11  21    3902  1.42  76%   -0.9%   +21% 12/13 [ Calmar] IDX_VWAP_BOUNCE, ALL_DC10, PO3_SWEEP, IDX_CONSEC_REV, ALL_MACD_RSI, IDX_NY_MOM, D8, ALL_STOCH_OB +13
+   14   1.10  17    3321  1.48  80%   -0.8%   +18% 12/13 [ Sharpe] IDX_VWAP_BOUNCE, ALL_PSAR_EMA, PO3_SWEEP, ALL_ELDER_BULL, ALL_MACD_STD_SIG, TOK_NR4, ALL_MSTAR, ALL_PIVOT_BRK +9
+   15   1.10  18    3378  1.48  79%   -0.9%   +19% 12/13 [ Sharpe] IDX_VWAP_BOUNCE, ALL_PSAR_EMA, PO3_SWEEP, ALL_ELDER_BULL, ALL_MACD_STD_SIG, TOK_NR4, ALL_MSTAR, ALL_PIVOT_BRK +10
+   16   1.06  18    3195  1.62  76%   -1.8%   +26% 12/13 [     PF] IDX_VWAP_BOUNCE, PO3_SWEEP, D8, ALL_PSAR_EMA, ALL_SUPERTREND, ALL_PIVOT_BRK, IDX_CONSEC_REV, ALL_ELDER_BULL +10
+   17   1.05  14    2740  1.50  80%   -0.6%   +15% 12/13 [ Sharpe] IDX_VWAP_BOUNCE, ALL_PSAR_EMA, PO3_SWEEP, ALL_ELDER_BULL, ALL_MACD_STD_SIG, TOK_NR4, ALL_MSTAR, ALL_PIVOT_BRK +6
+   18   1.05  20    3739  1.41  76%   -0.9%   +20% 12/13 [ Calmar] IDX_VWAP_BOUNCE, ALL_DC10, PO3_SWEEP, IDX_CONSEC_REV, ALL_MACD_RSI, IDX_NY_MOM, D8, ALL_STOCH_OB +12
+   19   1.04  19    3576  1.42  76%   -0.8%   +19% 12/13 [ Calmar] IDX_VWAP_BOUNCE, ALL_DC10, PO3_SWEEP, IDX_CONSEC_REV, ALL_MACD_RSI, IDX_NY_MOM, D8, ALL_STOCH_OB +11
+   20   1.04  15    2930  1.49  80%   -0.6%   +16% 12/13 [ Sharpe] IDX_VWAP_BOUNCE, ALL_PSAR_EMA, PO3_SWEEP, ALL_ELDER_BULL, ALL_MACD_STD_SIG, TOK_NR4, ALL_MSTAR, ALL_PIVOT_BRK +7
+
+==================================================================================================================================
+6. DETAIL DES MEILLEURES COMPOSITIONS
+==================================================================================================================================
+
+  #1 [PF 5] PF=1.64 WR=74% DD=-0.7% Rend=+8% Sharpe=4.8 M+=12/13
+  Correlation: avg=0.202 max=0.976
+  Sessions: {'All': 4, 'London': 1}
+    IDX_VWAP_BOUNCE        TRAIL SL=1.5 ACT=0.50 TR=0.50 PF=2.19 WR=65%
+    PO3_SWEEP              TRAIL SL=3.0 ACT=0.75 TR=0.75 PF=1.86 WR=80%
+    D8                     TRAIL SL=1.0 ACT=1.00 TR=0.75 PF=1.58 WR=53%
+    ALL_PSAR_EMA           TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.40 WR=78%
+    ALL_SUPERTREND         TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.37 WR=78%
+
+  #2 [PF 6] PF=1.64 WR=76% DD=-0.8% Rend=+9% Sharpe=5.2 M+=12/13
+  Correlation: avg=0.178 max=0.976
+  Sessions: {'All': 5, 'London': 1}
+    IDX_VWAP_BOUNCE        TRAIL SL=1.5 ACT=0.50 TR=0.50 PF=2.19 WR=65%
+    PO3_SWEEP              TRAIL SL=3.0 ACT=0.75 TR=0.75 PF=1.86 WR=80%
+    D8                     TRAIL SL=1.0 ACT=1.00 TR=0.75 PF=1.58 WR=53%
+    ALL_PSAR_EMA           TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.40 WR=78%
+    ALL_SUPERTREND         TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.37 WR=78%
+    ALL_PIVOT_BRK          TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.92 WR=82%
+
+  #3 [PF 7] PF=1.63 WR=79% DD=-0.7% Rend=+9% Sharpe=5.5 M+=12/13
+  Correlation: avg=0.171 max=0.976
+  Sessions: {'All': 6, 'London': 1}
+    IDX_VWAP_BOUNCE        TRAIL SL=1.5 ACT=0.50 TR=0.50 PF=2.19 WR=65%
+    PO3_SWEEP              TRAIL SL=3.0 ACT=0.75 TR=0.75 PF=1.86 WR=80%
+    D8                     TRAIL SL=1.0 ACT=1.00 TR=0.75 PF=1.58 WR=53%
+    ALL_PSAR_EMA           TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.40 WR=78%
+    ALL_SUPERTREND         TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.37 WR=78%
+    ALL_PIVOT_BRK          TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.92 WR=82%
+    IDX_CONSEC_REV         TPSL  SL=2.5 TP=0.25          PF=2.13 WR=93%
+
+  #4 [PF 15] PF=1.63 WR=77% DD=-1.2% Rend=+21% Sharpe=6.5 M+=12/13
+  Correlation: avg=0.157 max=0.976
+  Sessions: {'All': 11, 'London': 1, 'Tokyo': 3}
+    IDX_VWAP_BOUNCE        TRAIL SL=1.5 ACT=0.50 TR=0.50 PF=2.19 WR=65%
+    PO3_SWEEP              TRAIL SL=3.0 ACT=0.75 TR=0.75 PF=1.86 WR=80%
+    D8                     TRAIL SL=1.0 ACT=1.00 TR=0.75 PF=1.58 WR=53%
+    ALL_PSAR_EMA           TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.40 WR=78%
+    ALL_SUPERTREND         TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.37 WR=78%
+    ALL_PIVOT_BRK          TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.92 WR=82%
+    IDX_CONSEC_REV         TPSL  SL=2.5 TP=0.25          PF=2.13 WR=93%
+    ALL_ELDER_BULL         TRAIL SL=3.0 ACT=0.50 TR=0.50 PF=1.59 WR=75%
+    ALL_BB_TIGHT           TRAIL SL=3.0 ACT=0.75 TR=0.75 PF=1.65 WR=71%
+    ALL_FIB_618            TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.63 WR=79%
+    ALL_MSTAR              TPSL  SL=2.0 TP=2.00          PF=1.35 WR=58%
+    TOK_FISHER             TRAIL SL=2.0 ACT=1.00 TR=1.00 PF=1.52 WR=59%
+    ALL_FVG_BULL           TRAIL SL=3.0 ACT=1.00 TR=0.50 PF=1.61 WR=69%
+    TOK_WILLR              TPSL  SL=2.0 TP=0.50          PF=1.46 WR=81%
+    TOK_BIG                TPSL  SL=3.0 TP=0.50          PF=1.57 WR=87%
+
+  #5 [PF 16] PF=1.63 WR=78% DD=-1.3% Rend=+21% Sharpe=6.5 M+=12/13
+  Correlation: avg=0.155 max=0.976
+  Sessions: {'All': 12, 'London': 1, 'Tokyo': 3}
+    IDX_VWAP_BOUNCE        TRAIL SL=1.5 ACT=0.50 TR=0.50 PF=2.19 WR=65%
+    PO3_SWEEP              TRAIL SL=3.0 ACT=0.75 TR=0.75 PF=1.86 WR=80%
+    D8                     TRAIL SL=1.0 ACT=1.00 TR=0.75 PF=1.58 WR=53%
+    ALL_PSAR_EMA           TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.40 WR=78%
+    ALL_SUPERTREND         TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.37 WR=78%
+    ALL_PIVOT_BRK          TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.92 WR=82%
+    IDX_CONSEC_REV         TPSL  SL=2.5 TP=0.25          PF=2.13 WR=93%
+    ALL_ELDER_BULL         TRAIL SL=3.0 ACT=0.50 TR=0.50 PF=1.59 WR=75%
+    ALL_BB_TIGHT           TRAIL SL=3.0 ACT=0.75 TR=0.75 PF=1.65 WR=71%
+    ALL_FIB_618            TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.63 WR=79%
+    ALL_MSTAR              TPSL  SL=2.0 TP=2.00          PF=1.35 WR=58%
+    TOK_FISHER             TRAIL SL=2.0 ACT=1.00 TR=1.00 PF=1.52 WR=59%
+    ALL_FVG_BULL           TRAIL SL=3.0 ACT=1.00 TR=0.50 PF=1.61 WR=69%
+    TOK_WILLR              TPSL  SL=2.0 TP=0.50          PF=1.46 WR=81%
+    TOK_BIG                TPSL  SL=3.0 TP=0.50          PF=1.57 WR=87%
+    ALL_MACD_STD_SIG       TPSL  SL=2.5 TP=0.50          PF=1.57 WR=87%
+
+  #6 [PF 9] PF=1.63 WR=77% DD=-0.9% Rend=+13% Sharpe=6.1 M+=12/13
+  Correlation: avg=0.163 max=0.976
+  Sessions: {'All': 8, 'London': 1}
+    IDX_VWAP_BOUNCE        TRAIL SL=1.5 ACT=0.50 TR=0.50 PF=2.19 WR=65%
+    PO3_SWEEP              TRAIL SL=3.0 ACT=0.75 TR=0.75 PF=1.86 WR=80%
+    D8                     TRAIL SL=1.0 ACT=1.00 TR=0.75 PF=1.58 WR=53%
+    ALL_PSAR_EMA           TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.40 WR=78%
+    ALL_SUPERTREND         TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.37 WR=78%
+    ALL_PIVOT_BRK          TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.92 WR=82%
+    IDX_CONSEC_REV         TPSL  SL=2.5 TP=0.25          PF=2.13 WR=93%
+    ALL_ELDER_BULL         TRAIL SL=3.0 ACT=0.50 TR=0.50 PF=1.59 WR=75%
+    ALL_BB_TIGHT           TRAIL SL=3.0 ACT=0.75 TR=0.75 PF=1.65 WR=71%
+
+  #7 [PF*WR 9] PF=1.63 WR=80% DD=-0.8% Rend=+12% Sharpe=6.1 M+=12/13
+  Correlation: avg=0.160 max=0.976
+  Sessions: {'All': 8, 'London': 1}
+    IDX_VWAP_BOUNCE        TRAIL SL=1.5 ACT=0.50 TR=0.50 PF=2.19 WR=65%
+    IDX_CONSEC_REV         TPSL  SL=2.5 TP=0.25          PF=2.13 WR=93%
+    PO3_SWEEP              TRAIL SL=3.0 ACT=0.75 TR=0.75 PF=1.86 WR=80%
+    ALL_PSAR_EMA           TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.40 WR=78%
+    ALL_SUPERTREND         TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.37 WR=78%
+    ALL_PIVOT_BRK          TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.92 WR=82%
+    ALL_MACD_STD_SIG       TPSL  SL=2.5 TP=0.50          PF=1.57 WR=87%
+    ALL_ELDER_BULL         TRAIL SL=3.0 ACT=0.50 TR=0.50 PF=1.59 WR=75%
+    D8                     TRAIL SL=1.0 ACT=1.00 TR=0.75 PF=1.58 WR=53%
+
+  #8 [PF 13] PF=1.63 WR=75% DD=-1.2% Rend=+20% Sharpe=6.4 M+=12/13
+  Correlation: avg=0.169 max=0.976
+  Sessions: {'All': 11, 'London': 1, 'Tokyo': 1}
+    IDX_VWAP_BOUNCE        TRAIL SL=1.5 ACT=0.50 TR=0.50 PF=2.19 WR=65%
+    PO3_SWEEP              TRAIL SL=3.0 ACT=0.75 TR=0.75 PF=1.86 WR=80%
+    D8                     TRAIL SL=1.0 ACT=1.00 TR=0.75 PF=1.58 WR=53%
+    ALL_PSAR_EMA           TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.40 WR=78%
+    ALL_SUPERTREND         TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.37 WR=78%
+    ALL_PIVOT_BRK          TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.92 WR=82%
+    IDX_CONSEC_REV         TPSL  SL=2.5 TP=0.25          PF=2.13 WR=93%
+    ALL_ELDER_BULL         TRAIL SL=3.0 ACT=0.50 TR=0.50 PF=1.59 WR=75%
+    ALL_BB_TIGHT           TRAIL SL=3.0 ACT=0.75 TR=0.75 PF=1.65 WR=71%
+    ALL_FIB_618            TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.63 WR=79%
+    ALL_MSTAR              TPSL  SL=2.0 TP=2.00          PF=1.35 WR=58%
+    TOK_FISHER             TRAIL SL=2.0 ACT=1.00 TR=1.00 PF=1.52 WR=59%
+    ALL_FVG_BULL           TRAIL SL=3.0 ACT=1.00 TR=0.50 PF=1.61 WR=69%
+
+  #9 [PF 14] PF=1.62 WR=76% DD=-1.2% Rend=+20% Sharpe=6.4 M+=12/13
+  Correlation: avg=0.160 max=0.976
+  Sessions: {'All': 11, 'London': 1, 'Tokyo': 2}
+    IDX_VWAP_BOUNCE        TRAIL SL=1.5 ACT=0.50 TR=0.50 PF=2.19 WR=65%
+    PO3_SWEEP              TRAIL SL=3.0 ACT=0.75 TR=0.75 PF=1.86 WR=80%
+    D8                     TRAIL SL=1.0 ACT=1.00 TR=0.75 PF=1.58 WR=53%
+    ALL_PSAR_EMA           TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.40 WR=78%
+    ALL_SUPERTREND         TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.37 WR=78%
+    ALL_PIVOT_BRK          TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.92 WR=82%
+    IDX_CONSEC_REV         TPSL  SL=2.5 TP=0.25          PF=2.13 WR=93%
+    ALL_ELDER_BULL         TRAIL SL=3.0 ACT=0.50 TR=0.50 PF=1.59 WR=75%
+    ALL_BB_TIGHT           TRAIL SL=3.0 ACT=0.75 TR=0.75 PF=1.65 WR=71%
+    ALL_FIB_618            TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.63 WR=79%
+    ALL_MSTAR              TPSL  SL=2.0 TP=2.00          PF=1.35 WR=58%
+    TOK_FISHER             TRAIL SL=2.0 ACT=1.00 TR=1.00 PF=1.52 WR=59%
+    ALL_FVG_BULL           TRAIL SL=3.0 ACT=1.00 TR=0.50 PF=1.61 WR=69%
+    TOK_WILLR              TPSL  SL=2.0 TP=0.50          PF=1.46 WR=81%
+
+  #10 [PF 18] PF=1.62 WR=76% DD=-1.8% Rend=+26% Sharpe=5.8 M+=12/13
+  Correlation: avg=0.168 max=0.983
+  Sessions: {'All': 14, 'London': 1, 'Tokyo': 3}
+    IDX_VWAP_BOUNCE        TRAIL SL=1.5 ACT=0.50 TR=0.50 PF=2.19 WR=65%
+    PO3_SWEEP              TRAIL SL=3.0 ACT=0.75 TR=0.75 PF=1.86 WR=80%
+    D8                     TRAIL SL=1.0 ACT=1.00 TR=0.75 PF=1.58 WR=53%
+    ALL_PSAR_EMA           TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.40 WR=78%
+    ALL_SUPERTREND         TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.37 WR=78%
+    ALL_PIVOT_BRK          TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.92 WR=82%
+    IDX_CONSEC_REV         TPSL  SL=2.5 TP=0.25          PF=2.13 WR=93%
+    ALL_ELDER_BULL         TRAIL SL=3.0 ACT=0.50 TR=0.50 PF=1.59 WR=75%
+    ALL_BB_TIGHT           TRAIL SL=3.0 ACT=0.75 TR=0.75 PF=1.65 WR=71%
+    ALL_FIB_618            TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.63 WR=79%
+    ALL_MSTAR              TPSL  SL=2.0 TP=2.00          PF=1.35 WR=58%
+    TOK_FISHER             TRAIL SL=2.0 ACT=1.00 TR=1.00 PF=1.52 WR=59%
+    ALL_FVG_BULL           TRAIL SL=3.0 ACT=1.00 TR=0.50 PF=1.61 WR=69%
+    TOK_WILLR              TPSL  SL=2.0 TP=0.50          PF=1.46 WR=81%
+    TOK_BIG                TPSL  SL=3.0 TP=0.50          PF=1.57 WR=87%
+    ALL_MACD_STD_SIG       TPSL  SL=2.5 TP=0.50          PF=1.57 WR=87%
+    ALL_DC10               TRAIL SL=3.0 ACT=0.75 TR=0.75 PF=1.47 WR=70%
+    ALL_FISHER_9           TRAIL SL=2.0 ACT=1.00 TR=1.00 PF=1.37 WR=56%
+
+Saved data/5ers/combo_results.json
+==================================================================================================================================

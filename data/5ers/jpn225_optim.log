@@ -1,0 +1,340 @@
+Loading data (jpn225)...
+Precalcul indicateurs...
+Collecte signaux...
+Done. 90 strats, 23557 signaux total.
+
+Optimisation exits...
+  ALL_3SOLDIERS          TRAIL SL=0.5 ACT=1.00 TR=0.30 PF=1.12 WR=22% n= 295 split=Y
+  ALL_ADX_FAST           TPSL  SL=1.5 TP=2.00     PF=1.10 WR=46% n= 304 split=Y
+  ALL_AO_SAUCER          TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.07 WR=79% n= 300 split=Y
+  ALL_BB_SQUEEZE         TPSL  SL=2.5 TP=1.50     PF=1.08 WR=63% n= 279 split=Y
+  ALL_BB_TIGHT           TPSL  SL=3.0 TP=0.75     PF=1.34 WR=84% n= 311 split=Y
+  ALL_CCI_14_ZERO        TRAIL SL=3.0 ACT=0.75 TR=0.30 PF=1.06 WR=69% n= 310 split=Y
+  ALL_CCI_20_ZERO        TRAIL SL=3.0 ACT=1.00 TR=1.00 PF=1.21 WR=67% n= 304 split=Y
+  ALL_CMO_14             TRAIL SL=2.0 ACT=0.30 TR=0.30 PF=1.27 WR=71% n= 302 split=Y
+  ALL_CMO_14_ZERO        TPSL  SL=3.0 TP=0.75     PF=1.26 WR=82% n= 303 split=Y
+  ALL_CMO_9              TPSL  SL=2.5 TP=0.50     PF=1.29 WR=84% n= 311 split=Y
+  ALL_CONSEC_REV         TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.18 WR=79% n= 261 split=Y
+  ALL_DC10               TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.26 WR=78% n= 312 split=Y
+  ALL_DC10_EMA           TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.25 WR=78% n= 312 split=Y
+  ALL_DC50               TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.25 WR=76% n= 303 split=Y
+  ALL_DOJI_REV           TPSL  SL=2.5 TP=3.00     PF=1.06 WR=46% n= 300 split=Y
+  ALL_DPO_14             TRAIL SL=3.0 ACT=1.00 TR=1.00 PF=1.11 WR=63% n= 299 split=Y
+  ALL_EMA_513            TRAIL SL=3.0 ACT=1.00 TR=1.00 PF=1.27 WR=64% n= 301 split=Y
+  ALL_EMA_821            TPSL  SL=3.0 TP=0.50     PF=1.13 WR=85% n= 293 split=Y
+  ALL_EMA_921            TRAIL SL=2.0 ACT=0.30 TR=0.30 PF=1.32 WR=70% n= 291 split=Y
+  ALL_EMA_TREND_PB       TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.25 WR=79% n= 297 split=Y
+  ALL_ENGULF             TPSL  SL=2.5 TP=0.75     PF=1.13 WR=77% n= 298 split=Y
+  ALL_FIB_618            TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.95 WR=82% n= 228 split=Y
+  ALL_FISHER_9           TRAIL SL=2.0 ACT=0.50 TR=0.50 PF=1.35 WR=63% n= 312 split=Y
+  ALL_FVG_BULL           TPSL  SL=3.0 TP=0.50     PF=1.43 WR=88% n= 302 split=Y
+  ALL_HAMMER             TRAIL SL=2.0 ACT=0.75 TR=0.50 PF=1.16 WR=62% n= 303 split=Y
+  ALL_HMA_CROSS          TPSL  SL=3.0 TP=0.25     PF=1.10 WR=91% n= 310 split=Y
+  ALL_HMA_DIR            --- AUCUNE CONFIG VIABLE ---
+  ALL_ICHI_TK            TRAIL SL=1.0 ACT=0.30 TR=0.30 PF=1.10 WR=57% n= 276 split=Y
+  ALL_INSIDE_BRK         --- AUCUNE CONFIG VIABLE ---
+  ALL_KC_BRK             TPSL  SL=3.0 TP=0.50     PF=1.29 WR=89% n= 310 split=Y
+  ALL_MACD_ADX           TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.11 WR=75% n= 307 split=Y
+  ALL_MACD_FAST_SIG      TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.36 WR=76% n= 313 split=Y
+  ALL_MACD_FAST_ZERO     TRAIL SL=3.0 ACT=1.00 TR=1.00 PF=1.27 WR=64% n= 301 split=Y
+  ALL_MACD_HIST          TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.28 WR=76% n= 312 split=Y
+  ALL_MACD_MED_SIG       TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.29 WR=76% n= 308 split=Y
+  ALL_MACD_RSI           TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.36 WR=81% n= 298 split=Y
+  ALL_MACD_STD_SIG       TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.11 WR=75% n= 308 split=Y
+  ALL_MOM_10             TRAIL SL=3.0 ACT=1.00 TR=0.30 PF=1.08 WR=67% n= 308 split=Y
+  ALL_MOM_14             TPSL  SL=3.0 TP=0.75     PF=1.26 WR=82% n= 303 split=Y
+  ALL_MSTAR              --- AUCUNE CONFIG VIABLE ---
+  ALL_MTF_BRK            TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.38 WR=80% n= 312 split=Y
+  ALL_NR4                TRAIL SL=3.0 ACT=0.50 TR=0.30 PF=1.59 WR=78% n= 308 split=Y
+  ALL_PIVOT_BOUNCE       TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.34 WR=80% n= 250 split=Y
+  ALL_PIVOT_BRK          TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.22 WR=77% n= 215 split=Y
+  ALL_PSAR_EMA           TRAIL SL=3.0 ACT=1.00 TR=0.30 PF=1.14 WR=65% n= 268 split=Y
+  ALL_RSI_50             TPSL  SL=3.0 TP=1.00     PF=1.14 WR=74% n= 300 split=Y
+  ALL_RSI_DIV            TPSL  SL=2.0 TP=0.75     PF=1.17 WR=73% n= 301 split=Y
+  ALL_RSI_EXTREME        TRAIL SL=2.0 ACT=0.30 TR=0.30 PF=1.16 WR=70% n= 276 split=Y
+  ALL_WILLR_14           TRAIL SL=2.0 ACT=0.50 TR=0.50 PF=1.49 WR=63% n= 311 split=Y
+  ALL_WILLR_7            TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.41 WR=75% n= 312 split=Y
+  D8                     TRAIL SL=3.0 ACT=0.75 TR=1.00 PF=1.83 WR=63% n=  43 split=Y
+  IDX_3SOLDIERS          --- AUCUNE CONFIG VIABLE ---
+  IDX_BB_REV             TRAIL SL=3.0 ACT=0.75 TR=0.75 PF=1.24 WR=69% n= 312 split=Y
+  IDX_CONSEC_REV         TPSL  SL=2.5 TP=0.50     PF=1.09 WR=84% n= 273 split=Y
+  IDX_ENGULF             TPSL  SL=2.5 TP=0.75     PF=1.13 WR=77% n= 298 split=Y
+  IDX_GAP_CONT           TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.38 WR=82% n= 252 split=Y
+  IDX_GAP_FILL           TRAIL SL=3.0 ACT=0.75 TR=0.50 PF=1.18 WR=73% n= 257 split=Y
+  IDX_KC_BRK             TPSL  SL=3.0 TP=0.50     PF=1.29 WR=89% n= 310 split=Y
+  IDX_LATE_REV           TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.47 WR=83% n= 207 split=Y
+  IDX_NR4                TRAIL SL=3.0 ACT=0.50 TR=0.30 PF=1.59 WR=78% n= 308 split=Y
+  IDX_NY_MOM             TPSL  SL=2.5 TP=0.50     PF=1.31 WR=86% n= 218 split=Y
+  IDX_ORB15              TRAIL SL=3.0 ACT=0.75 TR=0.50 PF=1.39 WR=76% n= 255 split=Y
+  IDX_ORB30              TPSL  SL=2.0 TP=3.00     PF=1.17 WR=43% n= 253 split=Y
+  IDX_PREV_HL            TPSL  SL=3.0 TP=0.25     PF=1.44 WR=95% n= 181 split=Y
+  IDX_RSI_REV            TRAIL SL=2.0 ACT=0.30 TR=0.30 PF=1.16 WR=70% n= 276 split=Y
+  IDX_TREND_DAY          TPSL  SL=0.5 TP=2.00     PF=1.08 WR=20% n= 234 split=Y
+  IDX_VWAP_BOUNCE        --- AUCUNE CONFIG VIABLE ---
+  LON_ASIAN_BRK          TRAIL SL=1.5 ACT=1.00 TR=1.00 PF=1.22 WR=56% n= 136 split=Y
+  LON_BIGGAP             TRAIL SL=2.0 ACT=0.30 TR=0.30 PF=1.25 WR=73% n= 217 split=Y
+  LON_DC10               TRAIL SL=3.0 ACT=1.00 TR=1.00 PF=1.55 WR=74% n= 258 split=Y
+  LON_DC10_MOM           TRAIL SL=3.0 ACT=1.00 TR=1.00 PF=1.55 WR=74% n= 258 split=Y
+  LON_GAP                TRAIL SL=2.0 ACT=0.75 TR=0.75 PF=1.38 WR=68% n= 245 split=Y
+  LON_KZ                 TRAIL SL=0.5 ACT=0.30 TR=0.75 PF=1.12 WR=31% n= 222 split=Y
+  LON_PIN                TRAIL SL=3.0 ACT=1.00 TR=0.75 PF=1.12 WR=70% n= 257 split=Y
+  LON_PREV               TRAIL SL=2.0 ACT=0.30 TR=0.30 PF=1.12 WR=68% n= 209 split=Y
+  LON_TOKEND             TRAIL SL=2.0 ACT=0.50 TR=0.50 PF=1.27 WR=66% n=  59 split=Y
+  NY_DAYMOM              TRAIL SL=2.0 ACT=0.50 TR=0.50 PF=1.16 WR=66% n= 231 split=Y
+  NY_GAP                 --- AUCUNE CONFIG VIABLE ---
+  NY_HMA_CROSS           TRAIL SL=2.0 ACT=0.30 TR=0.50 PF=1.06 WR=57% n= 257 split=Y
+  NY_LONEND              TRAIL SL=2.0 ACT=1.00 TR=0.30 PF=1.35 WR=61% n=  80 split=Y
+  NY_LONMOM              TRAIL SL=3.0 ACT=0.75 TR=0.30 PF=1.10 WR=71% n= 147 split=Y
+  PO3_SWEEP              TPSL  SL=1.0 TP=0.25     PF=1.28 WR=82% n=  95 split=Y
+  TOK_2BAR               TPSL  SL=3.0 TP=0.50     PF=1.49 WR=89% n= 232 split=Y
+  TOK_BIG                TPSL  SL=3.0 TP=0.75     PF=1.34 WR=84% n= 253 split=Y
+  TOK_FADE               TRAIL SL=2.0 ACT=0.75 TR=0.30 PF=1.22 WR=47% n= 210 split=Y
+  TOK_FISHER             TPSL  SL=3.0 TP=1.00     PF=1.18 WR=76% n= 258 split=Y
+  TOK_MACD_MED           TRAIL SL=3.0 ACT=0.50 TR=0.30 PF=1.40 WR=74% n= 258 split=Y
+  TOK_NR4                TRAIL SL=3.0 ACT=0.50 TR=0.50 PF=1.56 WR=79% n= 258 split=Y
+  TOK_PREVEXT            TRAIL SL=2.0 ACT=0.30 TR=0.30 PF=1.33 WR=56% n=  55 split=Y
+  TOK_WILLR              TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.28 WR=76% n= 258 split=Y
+
+  84/90 strats avec config viable
+
+Filtre marge WR > 5%...
+  ALL_3SOLDIERS          WR=22% RR=3.98 WRmin=20% marge=+1.9% SKIP
+  ALL_ADX_FAST           WR=46% RR=1.29 WRmin=44% marge=+2.4% SKIP
+  ALL_AO_SAUCER          WR=79% RR=0.28 WRmin=78% marge=+1.1% SKIP
+  ALL_BB_SQUEEZE         WR=63% RR=0.63 WRmin=61% marge=+1.8% SKIP
+  ALL_BB_TIGHT           WR=84% RR=0.25 WRmin=80% marge=+4.3% SKIP
+  ALL_CCI_14_ZERO        WR=69% RR=0.47 WRmin=68% marge=+1.3% SKIP
+  ALL_CCI_20_ZERO        WR=67% RR=0.60 WRmin=62% marge=+4.3% SKIP
+  ALL_CMO_14             WR=71% RR=0.52 WRmin=66% marge=+5.2% OK
+  ALL_CMO_14_ZERO        WR=82% RR=0.28 WRmin=78% marge=+3.8% SKIP
+  ALL_CMO_9              WR=84% RR=0.24 WRmin=81% marge=+3.7% SKIP
+  ALL_CONSEC_REV         WR=79% RR=0.31 WRmin=76% marge=+2.8% SKIP
+  ALL_DC10               WR=78% RR=0.36 WRmin=73% marge=+4.2% SKIP
+  ALL_DC10_EMA           WR=78% RR=0.36 WRmin=73% marge=+4.2% SKIP
+  ALL_DC50               WR=76% RR=0.39 WRmin=72% marge=+4.3% SKIP
+  ALL_DOJI_REV           WR=46% RR=1.26 WRmin=44% marge=+1.5% SKIP
+  ALL_DPO_14             WR=63% RR=0.67 WRmin=60% marge=+2.5% SKIP
+  ALL_EMA_513            WR=64% RR=0.71 WRmin=59% marge=+5.6% OK
+  ALL_EMA_821            WR=85% RR=0.20 WRmin=83% marge=+1.6% SKIP
+  ALL_EMA_921            WR=70% RR=0.56 WRmin=64% marge=+6.1% OK
+  ALL_EMA_TREND_PB       WR=79% RR=0.34 WRmin=75% marge=+4.0% SKIP
+  ALL_ENGULF             WR=77% RR=0.35 WRmin=74% marge=+2.3% SKIP
+  ALL_FIB_618            WR=82% RR=0.41 WRmin=71% marge=+11.8% OK
+  ALL_FISHER_9           WR=63% RR=0.80 WRmin=56% marge=+7.3% OK
+  ALL_FVG_BULL           WR=88% RR=0.19 WRmin=84% marge=+4.2% SKIP
+  ALL_HAMMER             WR=62% RR=0.70 WRmin=59% marge=+3.4% SKIP
+  ALL_HMA_CROSS          WR=91% RR=0.11 WRmin=90% marge=+0.8% SKIP
+  ALL_ICHI_TK            WR=57% RR=0.84 WRmin=54% marge=+2.4% SKIP
+  ALL_KC_BRK             WR=89% RR=0.15 WRmin=87% marge=+2.7% SKIP
+  ALL_MACD_ADX           WR=75% RR=0.38 WRmin=73% marge=+1.9% SKIP
+  ALL_MACD_FAST_SIG      WR=76% RR=0.44 WRmin=70% marge=+6.1% OK
+  ALL_MACD_FAST_ZERO     WR=64% RR=0.71 WRmin=59% marge=+5.6% OK
+  ALL_MACD_HIST          WR=76% RR=0.41 WRmin=71% marge=+4.8% SKIP
+  ALL_MACD_MED_SIG       WR=76% RR=0.41 WRmin=71% marge=+5.0% SKIP
+  ALL_MACD_RSI           WR=81% RR=0.33 WRmin=75% marge=+5.3% OK
+  ALL_MACD_STD_SIG       WR=75% RR=0.36 WRmin=73% marge=+2.0% SKIP
+  ALL_MOM_10             WR=67% RR=0.54 WRmin=65% marge=+1.7% SKIP
+  ALL_MOM_14             WR=82% RR=0.28 WRmin=78% marge=+3.8% SKIP
+  ALL_MTF_BRK            WR=80% RR=0.35 WRmin=74% marge=+5.7% OK
+  ALL_NR4                WR=78% RR=0.46 WRmin=69% marge=+9.1% OK
+  ALL_PIVOT_BOUNCE       WR=80% RR=0.33 WRmin=75% marge=+5.1% OK
+  ALL_PIVOT_BRK          WR=77% RR=0.36 WRmin=74% marge=+3.7% SKIP
+  ALL_PSAR_EMA           WR=65% RR=0.60 WRmin=62% marge=+2.9% SKIP
+  ALL_RSI_50             WR=74% RR=0.40 WRmin=72% marge=+2.7% SKIP
+  ALL_RSI_DIV            WR=73% RR=0.44 WRmin=70% marge=+3.2% SKIP
+  ALL_RSI_EXTREME        WR=70% RR=0.50 WRmin=67% marge=+3.2% SKIP
+  ALL_WILLR_14           WR=63% RR=0.87 WRmin=53% marge=+9.7% OK
+  ALL_WILLR_7            WR=75% RR=0.48 WRmin=68% marge=+7.0% OK
+  D8                     WR=63% RR=1.08 WRmin=48% marge=+14.8% OK
+  IDX_BB_REV             WR=69% RR=0.55 WRmin=64% marge=+4.8% SKIP
+  IDX_CONSEC_REV         WR=84% RR=0.21 WRmin=83% marge=+1.1% SKIP
+  IDX_ENGULF             WR=77% RR=0.35 WRmin=74% marge=+2.3% SKIP
+  IDX_GAP_CONT           WR=82% RR=0.30 WRmin=77% marge=+5.2% OK
+  IDX_GAP_FILL           WR=73% RR=0.44 WRmin=69% marge=+3.4% SKIP
+  IDX_KC_BRK             WR=89% RR=0.15 WRmin=87% marge=+2.7% SKIP
+  IDX_LATE_REV           WR=83% RR=0.31 WRmin=76% marge=+6.3% OK
+  IDX_NR4                WR=78% RR=0.46 WRmin=69% marge=+9.1% OK
+  IDX_NY_MOM             WR=86% RR=0.21 WRmin=83% marge=+3.6% SKIP
+  IDX_ORB15              WR=76% RR=0.45 WRmin=69% marge=+6.5% OK
+  IDX_ORB30              WR=43% RR=1.55 WRmin=39% marge=+3.8% SKIP
+  IDX_PREV_HL            WR=95% RR=0.08 WRmin=93% marge=+2.0% SKIP
+  IDX_RSI_REV            WR=70% RR=0.50 WRmin=67% marge=+3.2% SKIP
+  IDX_TREND_DAY          WR=20% RR=4.43 WRmin=18% marge=+1.2% SKIP
+  LON_ASIAN_BRK          WR=56% RR=0.96 WRmin=51% marge=+4.9% SKIP
+  LON_BIGGAP             WR=73% RR=0.47 WRmin=68% marge=+4.7% SKIP
+  LON_DC10               WR=74% RR=0.56 WRmin=64% marge=+9.4% OK
+  LON_DC10_MOM           WR=74% RR=0.56 WRmin=64% marge=+9.4% OK
+  LON_GAP                WR=68% RR=0.66 WRmin=60% marge=+7.4% OK
+  LON_KZ                 WR=31% RR=2.47 WRmin=29% marge=+2.3% SKIP
+  LON_PIN                WR=70% RR=0.47 WRmin=68% marge=+2.5% SKIP
+  LON_PREV               WR=68% RR=0.53 WRmin=65% marge=+2.6% SKIP
+  LON_TOKEND             WR=66% RR=0.65 WRmin=61% marge=+5.5% OK
+  NY_DAYMOM              WR=66% RR=0.60 WRmin=62% marge=+3.4% SKIP
+  NY_HMA_CROSS           WR=57% RR=0.81 WRmin=55% marge=+1.5% SKIP
+  NY_LONEND              WR=61% RR=0.86 WRmin=54% marge=+7.3% OK
+  NY_LONMOM              WR=71% RR=0.45 WRmin=69% marge=+1.9% SKIP
+  PO3_SWEEP              WR=82% RR=0.28 WRmin=78% marge=+3.9% SKIP
+  TOK_2BAR               WR=89% RR=0.18 WRmin=85% marge=+4.5% SKIP
+  TOK_BIG                WR=84% RR=0.25 WRmin=80% marge=+4.3% SKIP
+  TOK_FADE               WR=47% RR=1.37 WRmin=42% marge=+4.9% SKIP
+  TOK_FISHER             WR=76% RR=0.38 WRmin=72% marge=+3.1% SKIP
+  TOK_MACD_MED           WR=74% RR=0.48 WRmin=68% marge=+6.9% OK
+  TOK_NR4                WR=79% RR=0.42 WRmin=70% marge=+8.4% OK
+  TOK_PREVEXT            WR=56% RR=1.03 WRmin=49% marge=+7.1% OK
+  TOK_WILLR              WR=76% RR=0.41 WRmin=71% marge=+4.8% SKIP
+
+  26/84 strats safe (marge>5.0%)
+
+Construction arrays trades...
+
+==================================================================================================================================
+GREEDY COMBO BUILDER (26 strats)
+==================================================================================================================================
+
+  Start: ALL_FIB_618
+    n=228 PF=1.80 WR=82% DD=-4.6% Rend=+40% M+=10/13
+
+  +LON_GAP                ( 2) n=  470 PF=1.71 WR=75% DD=-7.4% Rend=+135% M+=11/13 [TRAIL SL=2.0 0.75/0.75]
+
+  +ALL_MTF_BRK            ( 3) n=  773 PF=1.66 WR=77% DD=-6.4% Rend=+263% M+=13/13 [TRAIL SL=3.0 0.30/0.30]
+
+  +LON_DC10               ( 4) n=  969 PF=1.80 WR=78% DD=-8.6% Rend=+519% M+=13/13 [TRAIL SL=3.0 1.00/1.00]
+
+  +ALL_NR4                ( 5) n= 1215 PF=1.74 WR=78% DD=-7.0% Rend=+673% M+=13/13 [TRAIL SL=3.0 0.50/0.30]
+
+  +ALL_WILLR_14           ( 6) n= 1372 PF=1.75 WR=76% DD=-7.0% Rend=+1071% M+=13/13 [TRAIL SL=2.0 0.50/0.50]
+
+  +ALL_MACD_FAST_SIG      ( 7) n= 1579 PF=1.69 WR=76% DD=-7.4% Rend=+1430% M+=13/13 [TRAIL SL=3.0 0.30/0.30]
+
+  +IDX_GAP_CONT           ( 8) n= 1826 PF=1.67 WR=77% DD=-6.8% Rend=+1688% M+=13/13 [TRAIL SL=3.0 0.30/0.30]
+
+  +ALL_PIVOT_BOUNCE       ( 9) n= 1994 PF=1.62 WR=78% DD=-7.2% Rend=+2236% M+=13/13 [TRAIL SL=3.0 0.30/0.30]
+
+  +TOK_PREVEXT            (10) n= 2015 PF=1.69 WR=78% DD=-7.2% Rend=+2839% M+=13/13 [TRAIL SL=2.0 0.30/0.30]
+
+  +ALL_EMA_513            (11) n= 2229 PF=1.67 WR=77% DD=-9.5% Rend=+4207% M+=13/13 [TRAIL SL=3.0 1.00/1.00]
+
+  +IDX_NR4                (12) n= 2452 PF=1.68 WR=77% DD=-10.6% Rend=+5468% M+=13/13 [TRAIL SL=3.0 0.50/0.30]
+
+  +ALL_MACD_FAST_ZERO     (13) n= 2719 PF=1.66 WR=76% DD=-12.2% Rend=+7882% M+=13/13 [TRAIL SL=3.0 1.00/1.00]
+
+  +LON_DC10_MOM           (14) n= 2944 PF=1.67 WR=76% DD=-13.2% Rend=+10502% M+=13/13 [TRAIL SL=3.0 1.00/1.00]
+
+  +IDX_LATE_REV           (15) n= 3130 PF=1.64 WR=76% DD=-13.4% Rend=+12834% M+=13/13 [TRAIL SL=3.0 0.30/0.30]
+
+  +ALL_WILLR_7            (16) n= 3275 PF=1.65 WR=76% DD=-15.1% Rend=+17392% M+=13/13 [TRAIL SL=3.0 0.30/0.30]
+
+  +TOK_NR4                (17) n= 3461 PF=1.66 WR=77% DD=-15.0% Rend=+22616% M+=13/13 [TRAIL SL=3.0 0.50/0.50]
+
+  +ALL_CMO_14             (18) n= 3673 PF=1.62 WR=76% DD=-16.4% Rend=+28767% M+=13/13 [TRAIL SL=2.0 0.30/0.30]
+
+  +NY_LONEND              (19) n= 3714 PF=1.61 WR=76% DD=-15.8% Rend=+31261% M+=13/13 [TRAIL SL=2.0 1.00/0.30]
+
+  +LON_TOKEND             (20) n= 3744 PF=1.62 WR=76% DD=-15.8% Rend=+34905% M+=13/13 [TRAIL SL=2.0 0.50/0.50]
+
+  +ALL_MACD_RSI           (21) n= 3946 PF=1.62 WR=76% DD=-16.6% Rend=+41115% M+=13/13 [TRAIL SL=3.0 0.30/0.30]
+
+  +D8                     (22) n= 3966 PF=1.63 WR=76% DD=-16.6% Rend=+44463% M+=13/13 [TRAIL SL=3.0 0.75/1.00]
+
+  +ALL_EMA_921            (23) n= 4211 PF=1.61 WR=76% DD=-18.7% Rend=+52332% M+=13/13 [TRAIL SL=2.0 0.30/0.30]
+
+  +IDX_ORB15              (24) n= 4397 PF=1.58 WR=76% DD=-19.4% Rend=+55395% M+=13/13 [TRAIL SL=3.0 0.75/0.50]
+
+  +TOK_MACD_MED           (25) n= 4597 PF=1.56 WR=76% DD=-22.8% Rend=+59942% M+=13/13 [TRAIL SL=3.0 0.50/0.30]
+
+  +ALL_FISHER_9           (26) n= 4753 PF=1.53 WR=75% DD=-22.1% Rend=+46591% M+=13/13 [TRAIL SL=2.0 0.50/0.50]
+
+==================================================================================================================================
+RAPPORT FINAL
+==================================================================================================================================
+
+                 Combo   Trades     PF     WR     DD 1%       Rend 1%      M+
+  --------------------  -------  -----  -----  --------  ------------  ------
+              Greedy 2      470   1.71    75%     -7.4%         +135%  11/13
+              Greedy 3      773   1.66    77%     -6.4%         +263%  13/13
+              Greedy 4      969   1.80    78%     -8.6%         +519%  13/13
+              Greedy 5     1215   1.74    78%     -7.0%         +673%  13/13
+              Greedy 6     1372   1.75    76%     -7.0%        +1071%  13/13
+              Greedy 7     1579   1.69    76%     -7.4%        +1430%  13/13
+              Greedy 8     1826   1.67    77%     -6.8%        +1688%  13/13
+              Greedy 9     1994   1.62    78%     -7.2%        +2236%  13/13
+             Greedy 10     2015   1.69    78%     -7.2%        +2839%  13/13
+             Greedy 11     2229   1.67    77%     -9.5%        +4207%  13/13
+             Greedy 12     2452   1.68    77%    -10.6%        +5468%  13/13
+             Greedy 13     2719   1.66    76%    -12.2%        +7882%  13/13
+             Greedy 14     2944   1.67    76%    -13.2%       +10502%  13/13
+             Greedy 15     3130   1.64    76%    -13.4%       +12834%  13/13
+             Greedy 16     3275   1.65    76%    -15.1%       +17392%  13/13
+             Greedy 17     3461   1.66    77%    -15.0%       +22616%  13/13
+             Greedy 18     3673   1.62    76%    -16.4%       +28767%  13/13
+             Greedy 19     3714   1.61    76%    -15.8%       +31261%  13/13
+             Greedy 20     3744   1.62    76%    -15.8%       +34905%  13/13
+             Greedy 21     3946   1.62    76%    -16.6%       +41115%  13/13
+             Greedy 22     3966   1.63    76%    -16.6%       +44463%  13/13
+             Greedy 23     4211   1.61    76%    -18.7%       +52332%  13/13
+             Greedy 24     4397   1.58    76%    -19.4%       +55395%  13/13
+             Greedy 25     4597   1.56    76%    -22.8%       +59942%  13/13
+             Greedy 26     4753   1.53    75%    -22.1%       +46591%  13/13
+
+  Composition Greedy 5:
+    ALL_FIB_618            TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.95 WR=82%
+    LON_GAP                TRAIL SL=2.0 ACT=0.75 TR=0.75 PF=1.38 WR=68%
+    ALL_MTF_BRK            TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.38 WR=80%
+    LON_DC10               TRAIL SL=3.0 ACT=1.00 TR=1.00 PF=1.55 WR=74%
+    ALL_NR4                TRAIL SL=3.0 ACT=0.50 TR=0.30 PF=1.59 WR=78%
+
+  Composition Greedy 8:
+    ALL_FIB_618            TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.95 WR=82%
+    LON_GAP                TRAIL SL=2.0 ACT=0.75 TR=0.75 PF=1.38 WR=68%
+    ALL_MTF_BRK            TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.38 WR=80%
+    LON_DC10               TRAIL SL=3.0 ACT=1.00 TR=1.00 PF=1.55 WR=74%
+    ALL_NR4                TRAIL SL=3.0 ACT=0.50 TR=0.30 PF=1.59 WR=78%
+    ALL_WILLR_14           TRAIL SL=2.0 ACT=0.50 TR=0.50 PF=1.49 WR=63%
+    ALL_MACD_FAST_SIG      TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.36 WR=76%
+    IDX_GAP_CONT           TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.38 WR=82%
+
+  Composition Greedy 10:
+    ALL_FIB_618            TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.95 WR=82%
+    LON_GAP                TRAIL SL=2.0 ACT=0.75 TR=0.75 PF=1.38 WR=68%
+    ALL_MTF_BRK            TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.38 WR=80%
+    LON_DC10               TRAIL SL=3.0 ACT=1.00 TR=1.00 PF=1.55 WR=74%
+    ALL_NR4                TRAIL SL=3.0 ACT=0.50 TR=0.30 PF=1.59 WR=78%
+    ALL_WILLR_14           TRAIL SL=2.0 ACT=0.50 TR=0.50 PF=1.49 WR=63%
+    ALL_MACD_FAST_SIG      TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.36 WR=76%
+    IDX_GAP_CONT           TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.38 WR=82%
+    ALL_PIVOT_BOUNCE       TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.34 WR=80%
+    TOK_PREVEXT            TRAIL SL=2.0 ACT=0.30 TR=0.30 PF=1.33 WR=56%
+
+  Composition Greedy 12:
+    ALL_FIB_618            TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.95 WR=82%
+    LON_GAP                TRAIL SL=2.0 ACT=0.75 TR=0.75 PF=1.38 WR=68%
+    ALL_MTF_BRK            TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.38 WR=80%
+    LON_DC10               TRAIL SL=3.0 ACT=1.00 TR=1.00 PF=1.55 WR=74%
+    ALL_NR4                TRAIL SL=3.0 ACT=0.50 TR=0.30 PF=1.59 WR=78%
+    ALL_WILLR_14           TRAIL SL=2.0 ACT=0.50 TR=0.50 PF=1.49 WR=63%
+    ALL_MACD_FAST_SIG      TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.36 WR=76%
+    IDX_GAP_CONT           TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.38 WR=82%
+    ALL_PIVOT_BOUNCE       TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.34 WR=80%
+    TOK_PREVEXT            TRAIL SL=2.0 ACT=0.30 TR=0.30 PF=1.33 WR=56%
+    ALL_EMA_513            TRAIL SL=3.0 ACT=1.00 TR=1.00 PF=1.27 WR=64%
+    IDX_NR4                TRAIL SL=3.0 ACT=0.50 TR=0.30 PF=1.59 WR=78%
+
+  Composition Greedy 15:
+    ALL_FIB_618            TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.95 WR=82%
+    LON_GAP                TRAIL SL=2.0 ACT=0.75 TR=0.75 PF=1.38 WR=68%
+    ALL_MTF_BRK            TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.38 WR=80%
+    LON_DC10               TRAIL SL=3.0 ACT=1.00 TR=1.00 PF=1.55 WR=74%
+    ALL_NR4                TRAIL SL=3.0 ACT=0.50 TR=0.30 PF=1.59 WR=78%
+    ALL_WILLR_14           TRAIL SL=2.0 ACT=0.50 TR=0.50 PF=1.49 WR=63%
+    ALL_MACD_FAST_SIG      TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.36 WR=76%
+    IDX_GAP_CONT           TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.38 WR=82%
+    ALL_PIVOT_BOUNCE       TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.34 WR=80%
+    TOK_PREVEXT            TRAIL SL=2.0 ACT=0.30 TR=0.30 PF=1.33 WR=56%
+    ALL_EMA_513            TRAIL SL=3.0 ACT=1.00 TR=1.00 PF=1.27 WR=64%
+    IDX_NR4                TRAIL SL=3.0 ACT=0.50 TR=0.30 PF=1.59 WR=78%
+    ALL_MACD_FAST_ZERO     TRAIL SL=3.0 ACT=1.00 TR=1.00 PF=1.27 WR=64%
+    LON_DC10_MOM           TRAIL SL=3.0 ACT=1.00 TR=1.00 PF=1.55 WR=74%
+    IDX_LATE_REV           TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.47 WR=83%
+
+==================================================================================================================================
+Saved data/5ers/jpn225/optim_data.pkl

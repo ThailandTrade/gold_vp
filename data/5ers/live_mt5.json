@@ -1,0 +1,52 @@
+{
+  "broker": "5ers",
+  "risk_pct": 0.0005,
+  "daily_cache": {
+    "2026-03-26": {
+      "atr": 9.341451922104973
+    }
+  },
+  "_triggered_open": {
+    "ALL_KC_BRK": true,
+    "TOK_WILLR": true,
+    "TOK_2BAR": true,
+    "ALL_ADX_FAST": true,
+    "ALL_DC10": true,
+    "ALL_CONSEC_REV": true,
+    "ALL_MACD_RSI": true,
+    "TOK_BIG": true,
+    "ALL_3SOLDIERS": true,
+    "LON_GAP": true,
+    "LON_BIGGAP": true,
+    "LON_TOKEND": true,
+    "LON_PREV": true,
+    "PO3_SWEEP": true,
+    "LON_PIN": true
+  },
+  "_triggered_close": {
+    "ALL_KC_BRK": true,
+    "TOK_WILLR": true,
+    "TOK_2BAR": true,
+    "ALL_ADX_FAST": true,
+    "ALL_DC10": true,
+    "ALL_CONSEC_REV": true,
+    "ALL_MACD_RSI": true,
+    "TOK_BIG": true,
+    "ALL_3SOLDIERS": true,
+    "LON_GAP": true,
+    "LON_BIGGAP": true,
+    "LON_TOKEND": true,
+    "LON_PREV": true,
+    "PO3_SWEEP": true,
+    "LON_PIN": true
+  },
+  "_prev_day_data": {
+    "open": 4546.42,
+    "close": 4498.33,
+    "high": 4602.62,
+    "low": 4486.37,
+    "range": 116.25
+  },
+  "_prev_day_date": "2026-03-26",
+  "trail": {}
+}
