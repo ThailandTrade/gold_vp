@@ -106,7 +106,14 @@ Combos selectionnes:
 | UK100.cash | skip | - | - | - | - | - | - |
 | JP225.cash | Calmar 2 | 2 | 1.90 | 79% | -0.1% | +1% | 11/13 |
 
-Validation bt_portfolio en cours.
+### Validation bt_portfolio FTMO 15m agrege
+```
+Trades: 6,415 | WR: 73% | PF: 1.62 | Max DD: -0.24% | Rend: +11.3% | M+: 13/13
+Capital: $100,000 → $111,340
+```
+PF quasi identique au 5m (1.62 vs 1.64). DD 4x meilleur (-0.24% vs -1.05%).
+Rend plus bas (+11.3% vs +90.6%) car moins de trades, mais edge en R preserve.
+JP225 PF 1.90 (vs 1.04 avant fix sim_exit) — pipeline unifie a corrige la divergence.
 
 ### sim_exit_custom reimplemente en numpy (meme logique, 10x+ rapide)
 Remplace cdf.iloc[pos+j] par hi[idx]/lo[idx]/cl[idx]. Verifie: 1000 trades random, 0 differences.
