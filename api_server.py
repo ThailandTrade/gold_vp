@@ -241,7 +241,7 @@ function renderAccount(acc, data) {
         h+='<td>'+lD+'</td><td>'+lE+'</td><td>'+lX+'</td><td>'+lR+'</td><td>'+lUsd+'</td><td>'+dl+'</td></tr>';
       }
       // Total $ from today_trades
-      const totalUsd=trades.reduce((s,t)=>s+(t.pnl||0),0);
+      const totalUsd=trades.filter(t=>(t.symbol||'')==sym).reduce((s,t)=>s+(t.pnl||0),0);
       h+='<tr style="font-weight:700;border-top:2px solid #e8eaed"><td>TOTAL</td><td></td><td></td><td></td>';
       h+='<td><span class="'+(totalBtR>=0?'pnl-pos':'pnl-neg')+'">'+(totalBtR>=0?'+':'')+totalBtR.toFixed(2)+'R</span></td>';
       h+='<td></td><td></td><td></td>';
