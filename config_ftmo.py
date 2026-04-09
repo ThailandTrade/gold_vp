@@ -1,8 +1,6 @@
 """
-Config FTMO 15m — Prop firm — Multi-instrument (2026-04-09, branche feature/15m)
+Config FTMO 15m — 6 instruments (2026-04-09, sim_exit unifie, margin 5%)
 Max DD FTMO: 10%
-REGLE: PAS de strats open
-REGLE: Marge WR >= 8%
 """
 BROKER = 'FTMO'
 
@@ -11,7 +9,7 @@ ALL_INSTRUMENTS = {
         'risk_pct': 0.0001,
         'portfolio': [
             'ALL_MACD_RSI','IDX_TREND_DAY','ALL_BB_TIGHT','IDX_3SOLDIERS',
-            'ALL_ELDER_BEAR','ALL_MOM_10','ALL_KC_BRK','ALL_MACD_HIST','IDX_KC_BRK',
+            'ALL_ELDER_BEAR','ALL_ROC_ZERO','ALL_KC_BRK','ALL_MACD_HIST','IDX_KC_BRK',
         ],
         # PF 9: PF 1.68 | WR 76% | DD -0.2% | Rend +3% | 13/13
     },
@@ -19,17 +17,17 @@ ALL_INSTRUMENTS = {
         'risk_pct': 0.0001,
         'portfolio': [
             'ALL_MSTAR','ALL_CCI_100','ALL_TRIX','ALL_KB_SQUEEZE',
-            'ALL_RSI_EXTREME','ALL_ELDER_BULL','ALL_3SOLDIERS',
+            'IDX_RSI_REV','ALL_ELDER_BULL','ALL_3SOLDIERS',
         ],
         # Calmar 7: PF 1.53 | WR 74% | DD -0.1% | Rend +2% | 13/13
     },
     'US500.cash': {
         'risk_pct': 0.0001,
         'portfolio': [
-            'ALL_MSTAR','ALL_EMA_921','ALL_ELDER_BULL','TOK_BIG',
-            'ALL_MOM_14','ALL_MTF_BRK','ALL_CMO_14_ZERO',
+            'ALL_MSTAR','TOK_BIG','ALL_EMA_921','IDX_ENGULF',
+            'ALL_MTF_BRK','ALL_CMO_14_ZERO','ALL_ELDER_BULL','ALL_MACD_ADX',
         ],
-        # PF 7: PF 1.69 | WR 69% | DD -0.2% | Rend +3% | 13/13
+        # Sharpe 8: PF 1.63 | WR 69% | DD -0.2% | Rend +3% | 13/13
     },
     'US100.cash': {
         'risk_pct': 0.0001,
@@ -49,9 +47,9 @@ ALL_INSTRUMENTS = {
     'JP225.cash': {
         'risk_pct': 0.0001,
         'portfolio': [
-            'ALL_PSAR_EMA','ALL_SUPERTREND','ALL_MSTAR',
+            'ALL_PSAR_EMA','ALL_MSTAR',
         ],
-        # PF 3: PF 1.88 | WR 79% | DD -0.1% | Rend +1% | 11/13
+        # Calmar 2: PF 1.90 | WR 79% | DD -0.1% | Rend +1% | 11/13
     },
 }
 

@@ -90,6 +90,21 @@ et bt_portfolio utilisait sim_exit_custom → 2 implementations differentes.
 - 11 jamais safe: ALL_AO_SAUCER, ALL_BB_SQUEEZE, ALL_EMA_TREND_PB, ALL_HMA_DIR, ALL_MACD_MED_SIG, ALL_STOCH_CROSS, ALL_VOL_SPIKE, IDX_GAP_FILL, IDX_ORB15, LON_PIN, TOK_MACD_MED
 - REMOVED_STRATS dans strats.py, filtre dans detect_all, STRAT_ID preserve (magic numbers stables)
 
+### Pipeline 15m v4 final (sim_exit unifie + numpy + margin 5% + 88 strats)
+Combos selectionnes:
+
+| Instrument | Combo | Nb | PF | WR | DD | Rend | M+ |
+|---|---|---|---|---|---|---|---|
+| XAUUSD | PF 9 | 9 | 1.68 | 76% | -0.2% | +3% | 13/13 |
+| GER40.cash | Calmar 7 | 7 | 1.53 | 74% | -0.1% | +2% | 13/13 |
+| US500.cash | Sharpe 8 | 8 | 1.63 | 69% | -0.2% | +3% | 13/13 |
+| US100.cash | PF*WR 8 | 8 | 1.58 | 72% | -0.2% | +2% | 11/13 |
+| US30.cash | Calmar 4 | 4 | 1.61 | 70% | -0.1% | +1% | 13/13 |
+| UK100.cash | skip | - | - | - | - | - | - |
+| JP225.cash | Calmar 2 | 2 | 1.90 | 79% | -0.1% | +1% | 11/13 |
+
+Validation bt_portfolio en cours.
+
 ### sim_exit_custom reimplemente en numpy (meme logique, 10x+ rapide)
 Remplace cdf.iloc[pos+j] par hi[idx]/lo[idx]/cl[idx]. Verifie: 1000 trades random, 0 differences.
 Un seul sim_exit dans tout le pipeline : strats.py sim_exit_custom.
