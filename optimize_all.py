@@ -123,55 +123,14 @@ c['psar_dir'] = st_dir
 from strats import compute_indicators as _ci
 c = _ci(c)
 
-# Pre-extract numpy arrays for fast exit simulation
-hi = c['high'].values; lo = c['low'].values; cl = c['close'].values
-N = len(c)
+# ── EXIT SIMULATION — meme fonction que backtest_engine/strats.py ──
+from strats import sim_exit_custom as _sim_exit_custom
 
-# ── FAST EXIT SIMULATION (numpy) ──
-def sim_exit_np(pos, entry, d, atr, etype, p1, p2, p3, check_entry):
-    """Fast exit sim using numpy arrays."""
-    sl_val = p1
-    stop = entry + sl_val*atr if d == -1 else entry - sl_val*atr
-    start = 0 if check_entry else 1
-    max_bars = min(288, N - pos - 1)
-    if max_bars <= 0: return 1, entry
-
-    if etype == 0:  # TPSL
-        target = entry + p2*atr if d == 1 else entry - p2*atr
-        for j in range(start, max_bars):
-            idx = pos + j
-            if j == 0:
-                if d == 1 and lo[idx] <= stop: return 0, stop
-                if d == -1 and hi[idx] >= stop: return 0, stop
-                continue
-            if d == 1:
-                if lo[idx] <= stop: return j, stop
-                if hi[idx] >= target: return j, target
-            else:
-                if hi[idx] >= stop: return j, stop
-                if lo[idx] <= target: return j, target
-        return max_bars, cl[pos + max_bars]
-    else:  # TRAIL
-        best = entry; ta = False; act_val = p2; trail_val = p3
-        for j in range(start, max_bars):
-            idx = pos + j
-            if j == 0:
-                if d == 1 and lo[idx] <= stop: return 0, stop
-                if d == -1 and hi[idx] >= stop: return 0, stop
-                continue
-            if d == 1:
-                if lo[idx] <= stop: return j, stop
-                if cl[idx] > best: best = cl[idx]
-                if not ta and (best - entry) >= act_val * atr: ta = True
-                if ta: stop = max(stop, best - trail_val * atr)
-                if cl[idx] < stop: return j, cl[idx]
-            else:
-                if hi[idx] >= stop: return j, stop
-                if cl[idx] < best: best = cl[idx]
-                if not ta and (entry - best) >= act_val * atr: ta = True
-                if ta: stop = min(stop, best + trail_val * atr)
-                if cl[idx] > stop: return j, cl[idx]
-        return max_bars, cl[pos + max_bars]
+def sim_exit_unified(pos, entry, d, atr, etype, p1, p2, p3, check_entry):
+    """Wrapper: appelle sim_exit_custom de strats.py (source unique)."""
+    d_str = 'long' if d == 1 else 'short'
+    exit_type = 'TPSL' if etype == 0 else 'TRAIL'
+    return _sim_exit_custom(c, pos, entry, d_str, atr, exit_type, p1, p2, p3, check_entry_candle=check_entry)
 
 # ── SIGNAL COLLECTION ──
 print("Collecte signaux...", flush=True)
@@ -432,7 +391,7 @@ def eval_config(signals, etype, p1, p2, p3):
     for ci, di, entry, atr, date, sp in signals:
         is_open = False  # will be set per-strat later
         d_str = 'long' if di == 1 else 'short'
-        b, ex = sim_exit_np(ci, entry, di, atr, etype, p1, p2, p3, is_open)
+        b, ex = sim_exit_unified(ci, entry, di, atr, etype, p1, p2, p3, is_open)
         pnl = (ex - entry) if di == 1 else (entry - ex)
         pnls.append(pnl - sp)
     n = len(pnls)
@@ -461,7 +420,7 @@ for sn in sorted(SIG.keys()):
     for sl, tp in TPSL_GRID:
         results = []
         for ci, di, entry, atr, date, sp in sigs_adj:
-            b, ex = sim_exit_np(ci, entry, di, atr, 0, sl, tp, 0, is_open)
+            b, ex = sim_exit_unified(ci, entry, di, atr, 0, sl, tp, 0, is_open)
             pnl = ((ex - entry) if di == 1 else (entry - ex)) - sp
             results.append((pnl, date))
         n = len(results)
@@ -479,7 +438,7 @@ for sn in sorted(SIG.keys()):
     for sl, act, trail in TRAIL_GRID:
         results = []
         for ci, di, entry, atr, date, sp in sigs_adj:
-            b, ex = sim_exit_np(ci, entry, di, atr, 1, sl, act, trail, is_open)
+            b, ex = sim_exit_unified(ci, entry, di, atr, 1, sl, act, trail, is_open)
             pnl = ((ex - entry) if di == 1 else (entry - ex)) - sp
             results.append((pnl, date))
         n = len(results)
@@ -513,7 +472,7 @@ for sn, cfg in best_configs.items():
     is_open = sn in OPEN_STRATS
     pnls = []
     for ci, di, entry, atr, date, sp in SIG[sn]:
-        b, ex = sim_exit_np(ci, entry, di, atr, etype, cfg['p1'], cfg['p2'], cfg['p3'], is_open)
+        b, ex = sim_exit_unified(ci, entry, di, atr, etype, cfg['p1'], cfg['p2'], cfg['p3'], is_open)
         pnl = ((ex - entry) if di == 1 else (entry - ex)) - sp
         pnls.append(pnl)
     wins = [p for p in pnls if p > 0]
@@ -542,7 +501,7 @@ for sn in best_configs:
     is_open = sn in OPEN_STRATS
     rows = []
     for ci, di, entry, atr, date, sp in SIG[sn]:
-        b, ex = sim_exit_np(ci, entry, di, atr, etype, cfg['p1'], cfg['p2'], cfg['p3'], is_open)
+        b, ex = sim_exit_unified(ci, entry, di, atr, etype, cfg['p1'], cfg['p2'], cfg['p3'], is_open)
         pnl = ((ex - entry) if di == 1 else (entry - ex)) - sp
         mo = f"{date.year}-{str(date.month).zfill(2)}"
         rows.append((ci, ci + b, di, pnl, cfg['p1'], atr, mo, sn))

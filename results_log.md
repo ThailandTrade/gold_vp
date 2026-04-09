@@ -80,7 +80,15 @@ Pkls regeneres sur candles 15m. Combos selectionnes:
 | JP225.cash | PF 3 | 3 | 1.88 | 79% | -0.1% | +1% | 11/13 |
 
 config_ftmo_15m.py + strat_exits_15m.py crees.
-Validation bt_portfolio en cours.
+
+### BT 15m premier run (avant fix sim_exit)
+JP225 PF 1.04 (catastrophique vs 1.88 en optimize) car optimize utilisait sim_exit_np
+et bt_portfolio utilisait sim_exit_custom → 2 implementations differentes.
+
+### Fix: optimize_all utilise sim_exit_custom (source unique)
+Supprime sim_exit_np. optimize_all appelle sim_exit_custom de strats.py via wrapper.
+TOUT le pipeline utilise maintenant la MEME simulation d'exit.
+Re-optimize + re-validation necessaires.
 
 ## 2026-04-09 — Tag v1.0-5m + branche feature/15m
 
