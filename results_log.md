@@ -143,10 +143,24 @@ Pipeline 15m complet et valide:
 - live_mt5: --tf 15m (candles + ATR)
 - vps_pusher: --tf 15m (compare BT + candles)
 
+### Pipeline 5ers 15m (2026-04-09)
+4 instruments (skip JPN225 + UK100). Combos selectionnes:
+
+| Instrument | Combo | Nb | PF | WR | DD | Rend | M+ |
+|---|---|---|---|---|---|---|---|
+| XAUUSD | Calmar 13 | 13 | 1.71 | 78% | -0.2% | +4% | 13/13 |
+| DAX40 | Calmar 2 | 2 | 1.75 | 75% | -0.1% | +1% | 12/13 |
+| NAS100 | Calmar 5 | 5 | 1.51 | 73% | -0.1% | +1% | 13/13 |
+| SP500 | Calmar 4 | 4 | 1.85 | 74% | -0.1% | +1% | 12/13 |
+
+Validation bt_portfolio 5ers 15m agrege:
+```
+Trades: 3,948 | WR: 76% | PF: 1.69 | Max DD: -0.15% | Rend: +6.7% | M+: 13/13
+```
+
 ### Reste a faire
 - Merger sur main si resultats live satisfaisants
-- Meme pipeline pour 5ers en 15m
-- Tester live 15m sur FTMO
+- Tester live 15m sur 5ers + FTMO
 
 ### sim_exit_custom reimplemente en numpy (meme logique, 10x+ rapide)
 Remplace cdf.iloc[pos+j] par hi[idx]/lo[idx]/cl[idx]. Verifie: 1000 trades random, 0 differences.
