@@ -115,6 +115,39 @@ PF quasi identique au 5m (1.62 vs 1.64). DD 4x meilleur (-0.24% vs -1.05%).
 Rend plus bas (+11.3% vs +90.6%) car moins de trades, mais edge en R preserve.
 JP225 PF 1.90 (vs 1.04 avant fix sim_exit) — pipeline unifie a corrige la divergence.
 
+### Comparaison 5m vs 15m a meme risk (0.05%)
+| | 5m | 15m |
+|---|---|---|
+| PF | 1.64 | 1.64 |
+| WR | 71% | 73% |
+| DD | -1.05% | -1.21% |
+| Rend | +90.6% | +70.8% |
+| M+ | 13/13 | 13/13 |
+| Trades | 6,961 | 6,415 |
+
+PF identique. 15m a 20% de rend en moins (moins de trades) mais:
+- WR meilleur
+- Cout live en R ~2x plus petit (spread/slippage/latence = plus petit % des moves 15m)
+- Estimation live: 5m +55-65% reel vs 15m +63-68% reel
+- Le 15m live pourrait battre le 5m live malgre BT inferieur
+
+### Etat de la branche feature/15m
+Pipeline 15m complet et valide:
+- backtest_engine: tf='15m' supporte (load_data, load_data_recent)
+- optimize_all: --tf 15m, sim_exit_custom unifie (numpy), margin 5%, 88 strats (22 retirees)
+- analyze_combos: pkls 15m
+- config_ftmo: 6 instruments 15m selectionnes
+- strat_exits: regenere depuis pkls 15m
+- bt_portfolio: --tf 15m valide (PF 1.64, DD -1.21%, +70.8%, 13/13 @ 0.05%)
+- compare_today: --tf 15m
+- live_mt5: --tf 15m (candles + ATR)
+- vps_pusher: --tf 15m (compare BT + candles)
+
+### Reste a faire
+- Merger sur main si resultats live satisfaisants
+- Meme pipeline pour 5ers en 15m
+- Tester live 15m sur FTMO
+
 ### sim_exit_custom reimplemente en numpy (meme logique, 10x+ rapide)
 Remplace cdf.iloc[pos+j] par hi[idx]/lo[idx]/cl[idx]. Verifie: 1000 trades random, 0 differences.
 Un seul sim_exit dans tout le pipeline : strats.py sim_exit_custom.
