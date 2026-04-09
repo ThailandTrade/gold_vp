@@ -231,54 +231,57 @@ def sim_exit(cdf, pos, entry, d, atr, check_entry_candle=False):
     return sim_exit_custom(cdf, pos, entry, d, atr, 'TRAIL', SL, ACT, TRAIL, check_entry_candle)
 
 def sim_exit_custom(cdf, pos, entry, d, atr, exit_type, p1, p2, p3, check_entry_candle=False):
-    """Exit avec config custom.
+    """Exit avec config custom — version numpy (rapide) avec logique identique.
     TRAIL: p1=sl, p2=act, p3=trail
     TPSL:  p1=sl, p2=tp, p3=unused
     """
+    hi = cdf['high'].values; lo = cdf['low'].values; cl = cdf['close'].values
+    N = len(cdf)
     sl_val = p1
-    stop = entry + sl_val*atr if d == 'short' else entry - sl_val*atr
+    is_long = (d == 'long')
+    stop = entry + sl_val*atr if not is_long else entry - sl_val*atr
     start = 0 if check_entry_candle else 1
+    max_j = N - pos  # pas de cap a 288 — cherche sur TOUS les bars
 
     if exit_type == 'TPSL':
-        target = entry + p2*atr if d == 'long' else entry - p2*atr
-        for j in range(start, len(cdf)-pos):
-            b = cdf.iloc[pos+j]
+        target = entry + p2*atr if is_long else entry - p2*atr
+        for j in range(start, max_j):
+            idx = pos + j
             if j == 0:
-                if d == 'long' and b['low'] <= stop: return 0, stop
-                if d == 'short' and b['high'] >= stop: return 0, stop
+                if is_long and lo[idx] <= stop: return 0, stop
+                if not is_long and hi[idx] >= stop: return 0, stop
                 continue
-            if d == 'long':
-                # SL first (conservative: si les deux touchent sur la meme bougie, SL gagne)
-                if b['low'] <= stop: return j, stop
-                if b['high'] >= target: return j, target  # TP sur HIGH, exit au TARGET
+            if is_long:
+                if lo[idx] <= stop: return j, stop
+                if hi[idx] >= target: return j, target
             else:
-                if b['high'] >= stop: return j, stop
-                if b['low'] <= target: return j, target  # TP sur LOW, exit au TARGET
-        n = min(288, len(cdf)-pos-1)
-        if n > 0: return n, cdf.iloc[pos+n]['close']
+                if hi[idx] >= stop: return j, stop
+                if lo[idx] <= target: return j, target
+        n = min(288, N - pos - 1)
+        if n > 0: return n, cl[pos + n]
         return 1, entry
     else:  # TRAIL
         best = entry; ta = False; act_val = p2; trail_val = p3
-        for j in range(start, len(cdf)-pos):
-            b = cdf.iloc[pos+j]
+        for j in range(start, max_j):
+            idx = pos + j
             if j == 0:
-                if d == 'long' and b['low'] <= stop: return 0, stop
-                if d == 'short' and b['high'] >= stop: return 0, stop
+                if is_long and lo[idx] <= stop: return 0, stop
+                if not is_long and hi[idx] >= stop: return 0, stop
                 continue
-            if d == 'long':
-                if b['low'] <= stop: return j, stop
-                if b['close'] > best: best = b['close']
-                if not ta and (best-entry) >= act_val*atr: ta = True
-                if ta: stop = max(stop, best - trail_val*atr)
-                if b['close'] < stop: return j, b['close']
+            if is_long:
+                if lo[idx] <= stop: return j, stop
+                if cl[idx] > best: best = cl[idx]
+                if not ta and (best - entry) >= act_val * atr: ta = True
+                if ta: stop = max(stop, best - trail_val * atr)
+                if cl[idx] < stop: return j, cl[idx]
             else:
-                if b['high'] >= stop: return j, stop
-                if b['close'] < best: best = b['close']
-                if not ta and (entry-best) >= act_val*atr: ta = True
-                if ta: stop = min(stop, best + trail_val*atr)
-                if b['close'] > stop: return j, b['close']
-        n = min(288, len(cdf)-pos-1)
-        if n > 0: return n, cdf.iloc[pos+n]['close']
+                if hi[idx] >= stop: return j, stop
+                if cl[idx] < best: best = cl[idx]
+                if not ta and (entry - best) >= act_val * atr: ta = True
+                if ta: stop = min(stop, best + trail_val * atr)
+                if cl[idx] > stop: return j, cl[idx]
+        n = min(288, N - pos - 1)
+        if n > 0: return n, cl[pos + n]
         return 1, entry
 
 def compute_indicators(candles):
