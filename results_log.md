@@ -85,6 +85,11 @@ config_ftmo_15m.py + strat_exits_15m.py crees.
 JP225 PF 1.04 (catastrophique vs 1.88 en optimize) car optimize utilisait sim_exit_np
 et bt_portfolio utilisait sim_exit_custom → 2 implementations differentes.
 
+### Nettoyage strats: 110 → 88 (22 retirees)
+- 11 open strats (timing non reproductible): TOK_FADE, TOK_PREVEXT, LON_GAP, LON_BIGGAP, LON_KZ, LON_TOKEND, LON_PREV, NY_GAP, NY_LONEND, NY_LONMOM, NY_DAYMOM
+- 11 jamais safe: ALL_AO_SAUCER, ALL_BB_SQUEEZE, ALL_EMA_TREND_PB, ALL_HMA_DIR, ALL_MACD_MED_SIG, ALL_STOCH_CROSS, ALL_VOL_SPIKE, IDX_GAP_FILL, IDX_ORB15, LON_PIN, TOK_MACD_MED
+- REMOVED_STRATS dans strats.py, filtre dans detect_all, STRAT_ID preserve (magic numbers stables)
+
 ### Fix: optimize_all utilise sim_exit_custom (source unique)
 Supprime sim_exit_np. optimize_all appelle sim_exit_custom de strats.py via wrapper.
 TOUT le pipeline utilise maintenant la MEME simulation d'exit.

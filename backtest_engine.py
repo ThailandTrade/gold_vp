@@ -17,10 +17,9 @@ from strat_exits import STRAT_EXITS, DEFAULT_EXIT
 #  CONSTANTES — definies UNE SEULE FOIS
 # ══════════════════════════════════════════════════════════════
 
-OPEN_STRATS = frozenset({
-    'TOK_FADE', 'TOK_PREVEXT', 'LON_GAP', 'LON_BIGGAP', 'LON_KZ',
-    'LON_TOKEND', 'LON_PREV', 'NY_GAP', 'NY_LONEND', 'NY_LONMOM', 'NY_DAYMOM',
-})
+# Open strats retirees — importe depuis strats.py pour source unique
+from strats import REMOVED_STRATS
+OPEN_STRATS = frozenset()  # vide: toutes les open strats sont dans REMOVED_STRATS
 
 
 # ══════════════════════════════════════════════════════════════

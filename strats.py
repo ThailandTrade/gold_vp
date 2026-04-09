@@ -5,7 +5,18 @@ Le portfolio actif est defini dans config_icm.py / config_ftmo.py / config_5ers.
 import pandas as pd
 import numpy as np
 
-ALL_STRATS = [
+# Strats retirees definitivement (open strats + jamais safe sur aucun instrument)
+REMOVED_STRATS = frozenset({
+    # Open strats (timing non reproductible en live)
+    'TOK_FADE', 'TOK_PREVEXT', 'LON_GAP', 'LON_BIGGAP', 'LON_KZ',
+    'LON_TOKEND', 'LON_PREV', 'NY_GAP', 'NY_LONEND', 'NY_LONMOM', 'NY_DAYMOM',
+    # Jamais safe sur aucun instrument/TF
+    'ALL_AO_SAUCER', 'ALL_BB_SQUEEZE', 'ALL_EMA_TREND_PB', 'ALL_HMA_DIR',
+    'ALL_MACD_MED_SIG', 'ALL_STOCH_CROSS', 'ALL_VOL_SPIKE',
+    'IDX_GAP_FILL', 'IDX_ORB15', 'LON_PIN', 'TOK_MACD_MED',
+})
+
+_ALL_STRATS_RAW = [
     # Price Action
     'TOK_2BAR','TOK_BIG','TOK_FADE','TOK_PREVEXT',
     'LON_PIN','LON_GAP','LON_BIGGAP','LON_KZ','LON_TOKEND','LON_PREV',
@@ -47,9 +58,11 @@ ALL_STRATS = [
     'ALL_MACD_DIV','ALL_STOCH_PIVOT',
     'TOK_STOCH','TOK_TRIX','LON_STOCH','NY_ELDER',
 ]
+ALL_STRATS = [s for s in _ALL_STRATS_RAW if s not in REMOVED_STRATS]
 
 # Index unique par strat pour magic numbers (ne jamais changer l'ordre, ajouter en fin)
-STRAT_ID = {s: i for i, s in enumerate(ALL_STRATS)}
+# IMPORTANT: utilise _ALL_STRATS_RAW pour garder les index stables (meme si strat retiree)
+STRAT_ID = {s: i for i, s in enumerate(_ALL_STRATS_RAW)}
 
 # Symboles connus et leur offset (ne jamais changer, ajouter en fin)
 SYMBOL_ID = {
@@ -500,6 +513,10 @@ def compute_indicators(candles):
 
 def detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_day_data, add, prev2_day_data=None):
     """Detecte les signaux pour toutes les strats."""
+    # Wrapper add qui filtre les strats retirees
+    _orig_add = add
+    def add(sn, d, e):
+        if sn not in REMOVED_STRATS: _orig_add(sn, d, e)
     ds = pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')
     te = pd.Timestamp(today.year,today.month,today.day,6,0,tz='UTC')
     ls = pd.Timestamp(today.year,today.month,today.day,8,0,tz='UTC')
