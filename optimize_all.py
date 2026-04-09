@@ -465,7 +465,7 @@ print(f"\n  {len(best_configs)}/{len(SIG)} strats avec config viable")
 
 # ── FILTRE MARGE WR (strats rentables en live) ──
 print("\nFiltre marge WR > 8%...", flush=True)
-MIN_MARGIN = 8.0
+MIN_MARGIN = 5.0
 safe_configs = {}
 for sn, cfg in best_configs.items():
     etype = 0 if cfg['type'] == 'TPSL' else 1
