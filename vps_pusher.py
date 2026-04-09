@@ -22,6 +22,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('account', choices=['icm', 'ftmo', '5ers'])
 parser.add_argument('--url', default='https://unprolongable-nonexternalized-elizabet.ngrok-free.dev')
 parser.add_argument('--interval', type=float, default=1.0)
+parser.add_argument('--tf', default='5m', help='Timeframe: 5m or 15m')
 args = parser.parse_args()
 
 cfg = importlib.import_module(f'config_{args.account}')
@@ -102,7 +103,7 @@ def _get_candle_date():
     cur = conn.cursor()
     import re
     sym0 = list(INSTRUMENTS.keys())[0]
-    table = f"candles_mt5_{re.sub(r'[^a-z0-9]+', '_', sym0.lower()).strip('_')}_5m"
+    table = f"candles_mt5_{re.sub(r'[^a-z0-9]+', '_', sym0.lower()).strip('_')}_{args.tf}"
     cur.execute(f"SELECT MAX(ts) FROM {table}")
     max_ts = cur.fetchone()[0]
     cur.close(); conn.close()
@@ -124,7 +125,8 @@ def get_all_history():
     return _deals_to_trades(deals)
 
 def get_last_candle(symbol):
-    rates = mt5.copy_rates_from_pos(symbol, mt5.TIMEFRAME_M5, 1, 1)
+    tf_mt5 = mt5.TIMEFRAME_M15 if args.tf == '15m' else mt5.TIMEFRAME_M5
+    rates = mt5.copy_rates_from_pos(symbol, tf_mt5, 1, 1)
     if rates is None or len(rates) == 0: return {}
     r = rates[0]
     return {
@@ -164,7 +166,7 @@ def compute_compare_today():
         portfolio = icfg['portfolio']
         if not portfolio: continue
         sym_exits = STRAT_EXITS.get((args.account, sym), {})
-        candles, daily_atr, global_atr, trading_days = load_data_recent(conn, sym, n=5000)
+        candles, daily_atr, global_atr, trading_days = load_data_recent(conn, sym, n=5000, tf=args.tf)
         if len(candles) == 0: continue
         pd_ = prev_trading_day(today, trading_days)
         atr = daily_atr.get(pd_, global_atr) if pd_ else global_atr

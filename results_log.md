@@ -14,6 +14,7 @@
 - `bt_portfolio.py:18` choices : ajouter `'<broker>'`
 - `compare_today.py:17` choices : ajouter `'<broker>'`
 - `live_mt5.py:27` choices : ajouter `'<broker>'`
+- `vps_pusher.py:22` choices : ajouter `'<broker>'`
 - `mqtt_publisher.py:25` choices : ajouter `'<broker>'`
 - `audit_bt_vs_compare.py:24` choices : ajouter `'<broker>'`
 - `live_paper.py:21` choices : ajouter `'<broker>'`
@@ -21,17 +22,19 @@
 
 ### Pipeline a executer
 1. `mt5_fetch_clean.py --pairs-file pairs_<broker>.txt` → candles en DB
-2. `optimize_all.py <broker> --symbol <sym>` → pkl par instrument
+2. `optimize_all.py <broker> --symbol <sym> --tf <5m|15m>` → pkl par instrument
 3. `analyze_combos.py <broker> --symbol <sym>` → combo_results.json
 4. User selectionne combos → mettre a jour `config_<broker>.py`
 5. Regenerer `strat_exits.py` depuis pkls
-6. `bt_portfolio.py <broker>` → validation agrege
-7. Deployer `live_mt5.py <broker>` sur VPS
-8. `mqtt_publisher.py <broker>` sur VPS
-9. Tout noter dans results_log.md a chaque etape
+6. `bt_portfolio.py <broker> --tf <5m|15m>` → validation agrege
+7. `compare_today.py <broker> --tf <5m|15m>` → verif BT vs live
+8. Deployer `live_mt5.py <broker> --tf <5m|15m>` sur VPS
+9. Deployer `vps_pusher.py <broker> --tf <5m|15m>` sur VPS
+10. Tout noter dans results_log.md a chaque etape
 
 ### Note
-Les `choices` sont hardcodes dans 8 fichiers — a centraliser si on ajoute souvent des brokers.
+- Les `choices` sont hardcodes dans 9 fichiers — a centraliser si on ajoute souvent des brokers.
+- `vps_pusher.py` fait partie du pipeline (compare BT vs LV dans le dashboard).
 
 ## 2026-04-07 — Dashboard temps reel VPS → Laptop via FastAPI + ngrok
 
