@@ -90,6 +90,10 @@ et bt_portfolio utilisait sim_exit_custom → 2 implementations differentes.
 - 11 jamais safe: ALL_AO_SAUCER, ALL_BB_SQUEEZE, ALL_EMA_TREND_PB, ALL_HMA_DIR, ALL_MACD_MED_SIG, ALL_STOCH_CROSS, ALL_VOL_SPIKE, IDX_GAP_FILL, IDX_ORB15, LON_PIN, TOK_MACD_MED
 - REMOVED_STRATS dans strats.py, filtre dans detect_all, STRAT_ID preserve (magic numbers stables)
 
+### sim_exit_custom reimplemente en numpy (meme logique, 10x+ rapide)
+Remplace cdf.iloc[pos+j] par hi[idx]/lo[idx]/cl[idx]. Verifie: 1000 trades random, 0 differences.
+Un seul sim_exit dans tout le pipeline : strats.py sim_exit_custom.
+
 ### Fix: optimize_all utilise sim_exit_custom (source unique)
 Supprime sim_exit_np. optimize_all appelle sim_exit_custom de strats.py via wrapper.
 TOUT le pipeline utilise maintenant la MEME simulation d'exit.
