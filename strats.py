@@ -273,12 +273,14 @@ def sim_exit_custom(cdf, pos, entry, d, atr, exit_type, p1, p2, p3, check_entry_
                 if cl[idx] > best: best = cl[idx]
                 if not ta and (best - entry) >= act_val * atr: ta = True
                 if ta: stop = max(stop, best - trail_val * atr)
+                if lo[idx] <= stop: return j, stop  # re-check apres trail update
                 if cl[idx] < stop: return j, cl[idx]
             else:
                 if hi[idx] >= stop: return j, stop
                 if cl[idx] < best: best = cl[idx]
                 if not ta and (entry - best) >= act_val * atr: ta = True
                 if ta: stop = min(stop, best + trail_val * atr)
+                if hi[idx] >= stop: return j, stop  # re-check apres trail update
                 if cl[idx] > stop: return j, cl[idx]
         n = min(288, N - pos - 1)
         if n > 0: return n, cl[pos + n]
