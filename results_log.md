@@ -27,6 +27,12 @@ Apres modif, chemin uniforme: `data/{broker}/{sym}/optim_data.pkl` pour TOUS les
 - `optimize_crypto.py:332,402` : meme hack mais XAUUSD inexistant en crypto -> dead code
 - `temp/test_look_ahead.py:16` : dans temp/, gitignore
 
+## 2026-04-10 — ICM USDJPY 15m: Calmar 3 (score 0.19)
+
+PF 1.46 | WR 76% | DD -0.4% | Rend +3% | M+ 11/13 | N=501
+
+Strats: D8, ALL_ADX_FAST, ALL_PIVOT_BRK
+
 ## 2026-04-10 — ICM USDCHF 15m: PF 6 (score 0.79)
 
 PF 1.76 | WR 78% | DD -0.8% | Rend +10% | M+ 13/13 | N=1192
