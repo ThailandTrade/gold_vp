@@ -180,15 +180,17 @@ Exemple US500 IDX_ENGULF bar 00:45:
 - Les ecarts BT vs live observes (-0.19R a -0.65R) s'expliquent par ce bug
 - La regle dans LOOK_AHEAD_CHECKLIST etait FAUSSE ("pas de re-check" → corrige en "re-check obligatoire")
 
-### Modifications necessaires
-1. `strats.py` sim_exit_custom: apres trail update, re-check `lo[idx] <= stop` (long) ou `hi[idx] >= stop` (short)
-2. Re-run pipeline complet: optimize → combos → config → strat_exits → bt_portfolio (5ers + FTMO, 15m)
-3. Les PF vont probablement baisser — c'est la realite, pas un probleme
-4. Verification: 1000 trades random avant/apres pour mesurer l'impact
+### Resolution (2026-04-10)
+Le re-check a ete implemente puis **REVERTE** apres analyse approfondie :
+- Avec bougies 01:00+ ajoutees en DB, le code SANS re-check et AVEC re-check donnent les MEMES resultats
+- Les gros ecarts (-0.19R a -0.65R) etaient causes par des **bougies manquantes** (fallback), pas par un bug trail
+- Avec toutes les bougies, les deltas BT vs live tombent a **-0.02R a -0.15R** (spread/slippage normal au SL)
+- Le re-check sur la meme bougie est FAUX : le low s'est produit AVANT le trail update, le SL modifie prend effet sur la bougie SUIVANTE
+- PF 0.96 avec re-check = FAUX (trop pessimiste). PF 1.62 sans re-check = CORRECT.
+- LOOK_AHEAD_CHECKLIST mis a jour
 
 ### Reste a faire
-- Corriger sim_exit_custom
-- Re-pipeline complet 5ers + FTMO 15m
+- Confirmer PF 1.62 avec BT full apres revert
 - Tester live 15m
 
 ### sim_exit_custom reimplemente en numpy (meme logique, 10x+ rapide)

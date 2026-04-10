@@ -31,14 +31,15 @@ Un seul echec = resultats invalides.
 
 ### TRAIL (Trailing Stop)
 - [ ] **best = max(close)**, pas max(high) — coherence temporelle
-- [ ] **Apres trailing update, RE-CHECK low/high vs nouveau stop** (CORRIGE 2026-04-10)
-  - AVANT (FAUX): pas de re-check → BT survit quand le live sort par SL trail
-  - APRES (CORRECT): si low <= nouveau stop (long) ou high >= nouveau stop (short), exit au stop
-  - RAISON: en live MT5, le SL modifie est un ordre reel qui se declenche immediatement si le prix est deja au-dela
-- [ ] **Exit au stop price** quand low/high touche le trail stop (pas au close)
+- [ ] **Apres trailing update, PAS de re-check low/high vs nouveau stop sur la MEME bougie**
+  - Le trail update se fait APRES le close de la bougie (manage_trailing en live)
+  - Le low/high de la bougie courante s'est produit AVANT le trail update → ne peut pas declencher le nouveau SL
+  - Le nouveau SL est teste sur la bougie SUIVANTE (low vs stop)
+  - ATTENTION: un re-check sur la meme bougie rend le BT trop pessimiste (PF 0.96 au lieu de 1.62 — FAUX)
+- [ ] **Exit au close** quand close < stop apres trailing, **au stop** quand low <= stop sur bougie suivante
 
 **Erreur type**: best = max(high) au lieu de max(close) (corrige 2026-03-21)
-**Erreur type**: pas de re-check low vs trail stop apres update → BT surestime PF (identifie 2026-04-10)
+**Fausse alerte**: re-check low vs trail stop sur meme bougie (teste et REVERTE 2026-04-10 — le re-check donne des PF faux, le code original est correct)
 
 ### General
 - [ ] **Entry candle SL check** pour open strats (j=0: seulement SL, pas de trailing/TP)
