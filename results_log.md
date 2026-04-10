@@ -189,12 +189,14 @@ Le re-check a ete implemente puis **REVERTE** apres analyse approfondie :
 - PF 0.96 avec re-check = FAUX (trop pessimiste). PF 1.62 sans re-check = CORRECT.
 - LOOK_AHEAD_CHECKLIST mis a jour
 
-### BE_TP ajout (2026-04-10)
-Nouveau type d'exit: BE_TP (break-even + take profit).
+### BE_TP teste et abandonne (2026-04-10)
+Nouveau type d'exit teste: BE_TP (break-even + take profit).
 - p1=SL, p2=BE activation (SL → entry), p3=TP fixe
 - Grille: 5 SL × 4 BE × 4 TP = 80 configs supplementaires
-- sim_exit_custom + optimize_all + sim_exit_unified adaptes
-- Test sur XAUUSD FTMO 15m pour mesurer l'impact
+- Test sur XAUUSD FTMO 15m: seulement 2/88 strats l'ont choisi (PF 1.21-1.22)
+- Aucune strat BE_TP dans le greedy top 15 — TRAIL et TPSL dominent
+- **Decision: retirer BE_TP** de la grille (80 configs de calcul en plus pour quasi-rien)
+- Code conserve dans sim_exit_custom mais retire de la grille optimize_all
 
 ### Reste a faire
 - Confirmer PF avec BT full (revert trail + BE_TP)
