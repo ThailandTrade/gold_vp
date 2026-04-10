@@ -39,7 +39,7 @@ ALL_INSTRUMENTS = {
 
 # Skip: JPN225 (+0%, 260 trades), UK100 (+0%, 430 trades)
 
-LIVE_INSTRUMENTS = ['XAUUSD', 'DAX40', 'NAS100', 'SP500']
+LIVE_INSTRUMENTS = ['DAX40', 'NAS100', 'SP500']  # XAUUSD desactive (lot min trop gros pour petit risque)
 
 INSTRUMENTS = {k: v for k, v in ALL_INSTRUMENTS.items() if k in LIVE_INSTRUMENTS}
 

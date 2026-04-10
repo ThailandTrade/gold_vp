@@ -55,7 +55,7 @@ ALL_INSTRUMENTS = {
 
 # Skip: UK100.cash (9/13, Rend +0%)
 
-LIVE_INSTRUMENTS = ['XAUUSD', 'GER40.cash', 'US500.cash', 'US100.cash', 'US30.cash', 'JP225.cash']
+LIVE_INSTRUMENTS = ['GER40.cash', 'US500.cash', 'US100.cash', 'US30.cash', 'JP225.cash']  # XAUUSD desactive (lot min trop gros pour petit risque)
 
 INSTRUMENTS = {k: v for k, v in ALL_INSTRUMENTS.items() if k in LIVE_INSTRUMENTS}
 

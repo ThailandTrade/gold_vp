@@ -198,9 +198,14 @@ Nouveau type d'exit teste: BE_TP (break-even + take profit).
 - **Decision: retirer BE_TP** de la grille (80 configs de calcul en plus pour quasi-rien)
 - Code conserve dans sim_exit_custom mais retire de la grille optimize_all
 
+### XAUUSD desactive en live (2026-04-10)
+Lot min XAUUSD = 0.01 lot = $1/pt. Avec 0.01% risk sur $46k = $4.6 de risk,
+et SL ~20 pts → besoin de $4.6/20 = 0.23 lots. Lot min 0.01 = $0.20 risk par lot.
+Pas assez granulaire pour des petits risques. Desactive sur 5ers et FTMO.
+XAUUSD reste dans ALL_INSTRUMENTS (pour backtest) mais pas dans LIVE_INSTRUMENTS.
+
 ### Reste a faire
-- Confirmer PF avec BT full (revert trail + BE_TP)
-- Tester live 15m
+- Tester live 15m (indices uniquement)
 
 ### sim_exit_custom reimplemente en numpy (meme logique, 10x+ rapide)
 Remplace cdf.iloc[pos+j] par hi[idx]/lo[idx]/cl[idx]. Verifie: 1000 trades random, 0 differences.
