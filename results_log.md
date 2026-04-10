@@ -27,6 +27,15 @@ Apres modif, chemin uniforme: `data/{broker}/{sym}/optim_data.pkl` pour TOUS les
 - `optimize_crypto.py:332,402` : meme hack mais XAUUSD inexistant en crypto -> dead code
 - `temp/test_look_ahead.py:16` : dans temp/, gitignore
 
+## 2026-04-10 — ICM optimize_all: XAUUSD 15m
+
+Saved `data/icm/xauusd/optim_data.pkl`
+
+Greedy checkpoints (compositions):
+- **Greedy 5**: ALL_MACD_RSI (PF 2.52 WR 79%), IDX_PREV_HL (PF 1.74), IDX_TREND_DAY (PF 2.05 WR 82%), ALL_3SOLDIERS (PF 1.78), TOK_TRIX (PF 1.32)
+- **Greedy 12**: + IDX_3SOLDIERS, IDX_KC_BRK, ALL_PSAR_EMA, IDX_VWAP_BOUNCE, LON_STOCH, ALL_MSTAR (TPSL, WR 92%), ALL_CCI_100
+- **Greedy 15**: 2593 trades, PF 1.66, WR 72%, DD -18.0%, Rend +4325%, M+ 12/13
+
 ## 2026-04-10 — NEW BROKER: ICMarkets (ICM)
 
 ### Symboles disponibles en DB (15m, 16 instruments)
