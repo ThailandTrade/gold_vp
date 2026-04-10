@@ -234,7 +234,7 @@ def detect_open_strats(candles, sym_state, atr, candle_time_utc, today, portfoli
     prev2_day_data = sym_state.get('_prev2_day_data')
     def add_sig(sn, d, e):
         if sn in OPEN_STRATS and sn in portfolio:
-            signals.append({'strat': sn, 'dir': d})
+            signals.append({'strat': sn, 'dir': d, 'entry': e})
     detect_all(candles, ci, r, r['ts_dt'], today, hour, atr, trig, tv, tok, lon, prev_day_data, add_sig, prev2_day_data=prev2_day_data)
     return signals
 
@@ -254,7 +254,7 @@ def detect_close_strats(candles, sym_state, atr, candle_time_utc, today, portfol
     close_strats = [s for s in portfolio if s not in OPEN_STRATS]
     def add_sig(sn, d, e):
         if sn in close_strats:
-            signals.append({'strat': sn, 'dir': d})
+            signals.append({'strat': sn, 'dir': d, 'entry': e})
     detect_all(candles, len(candles)-1, r, r['ts_dt'], today, hour, atr, trig, tv, tok, lon, prev_day_data, add_sig, prev2_day_data=prev2_day_data)
     return signals
 
@@ -262,6 +262,7 @@ def detect_close_strats(candles, sym_state, atr, candle_time_utc, today, portfol
 
 def open_position(state, symbol, sig, atr, risk_pct):
     d = sig['dir']; sn = sig['strat']
+    signal_close = sig['entry']  # close de la bougie signal (= entry theorique BT)
     magic = _magic(symbol, sn)
     for p in mt5_our_positions(symbol):
         if p.magic == magic:
@@ -276,18 +277,19 @@ def open_position(state, symbol, sig, atr, risk_pct):
     sym_exits = STRAT_EXITS.get((_account, symbol), {})
     exit_cfg = sym_exits.get(sn, DEFAULT_EXIT)
     exit_type = exit_cfg[0]; sl_val = exit_cfg[1]
-    stop = entry - sl_val * atr if d == 'long' else entry + sl_val * atr
+    # SL/TP bases sur signal_close (= meme que BT), pas sur fill price
+    stop = signal_close - sl_val * atr if d == 'long' else signal_close + sl_val * atr
     risk = capital * risk_pct
     lots = mt5_lot_size(symbol, risk, entry, stop, d)
     tp = 0.0
     if exit_type == 'TPSL':
-        tp = entry + exit_cfg[2] * atr if d == 'long' else entry - exit_cfg[2] * atr
+        tp = signal_close + exit_cfg[2] * atr if d == 'long' else signal_close - exit_cfg[2] * atr
     result = mt5_send_order(symbol, sn, d, stop, tp, lots)
     if not result: return
     if exit_type == 'TRAIL':
         state['trail'][str(result['ticket'])] = {
-            'symbol': symbol, 'strat': sn, 'dir': d, 'entry': result['price'],
-            'best': result['price'], 'trail_active': False,
+            'symbol': symbol, 'strat': sn, 'dir': d, 'entry': signal_close,
+            'best': signal_close, 'trail_active': False,
             'atr': atr, 'act_val': exit_cfg[2], 'trail_val': exit_cfg[3], 'stop': stop,
         }
     log.info("    Cap=${:,.0f} Risk=${:.0f} ({:.1f}%)".format(capital, risk, risk_pct*100))

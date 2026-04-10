@@ -158,8 +158,13 @@ Validation bt_portfolio 5ers 15m agrege:
 Trades: 3,948 | WR: 76% | PF: 1.69 | Max DD: -0.15% | Rend: +6.7% | M+: 13/13
 ```
 
+### SL/TP/trail bases sur signal_close (pas fill price)
+Le live calcule maintenant SL, TP et trail reference a partir du close de la bougie signal
+(= meme valeur que le BT), pas du fill price. L'entry reelle (fill) peut differer de quelques
+centimes mais les niveaux d'invalidation sont identiques au BT.
+Trail entry/best aussi initialises au signal_close.
+
 ### Reste a faire
-- Merger sur main si resultats live satisfaisants
 - Tester live 15m sur 5ers + FTMO
 
 ### sim_exit_custom reimplemente en numpy (meme logique, 10x+ rapide)
