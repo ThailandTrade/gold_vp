@@ -27,30 +27,11 @@ Apres modif, chemin uniforme: `data/{broker}/{sym}/optim_data.pkl` pour TOUS les
 - `optimize_crypto.py:332,402` : meme hack mais XAUUSD inexistant en crypto -> dead code
 - `temp/test_look_ahead.py:16` : dans temp/, gitignore
 
-## 2026-04-10 — ICM optimize_all: US500 15m
+## 2026-04-10 — ICM XAUUSD 15m: Sharpe 15 (score 1.27)
 
-Saved `data/icm/us500/optim_data.pkl`
+PF 1.54 | WR 75% | DD -0.7% | Rend +19% | M+ 13/13 | N=2580
 
-Greedy checkpoints (Trades/PF/WR/DD/Rend/M+):
-- Greedy 5: 1003 / 1.75 / 77% / -10.6% / +438% / 12/13
-- Greedy 8: 1428 / 1.88 / 77% / -11.4% / +969% / 13/13
-- Greedy 10: 1577 / 1.85 / 76% / -11.4% / +1232% / 13/13
-- Greedy 12: 1827 / 1.79 / 76% / -14.8% / +1569% / 13/13
-- Greedy 15: 2237 / 1.84 / 76% / -16.0% / +2931% / 13/13
-- Greedy 18: 2664 / 1.97 / 76% / -22.9% / +5045% / 11/13
-
-Sweet spot Greedy 8-11 (PF ~1.85, DD -11%, M+ 13/13).
-
-Composition Greedy 8: ALL_MSTAR (PF 1.97 WR 91%), ALL_EMA_921, ALL_3SOLDIERS, ALL_PIVOT_BRK, ALL_EMA_821, ALL_KB_SQUEEZE, ALL_TRIX, TOK_BIG (TPSL).
-
-## 2026-04-10 — ICM optimize_all: XAUUSD 15m
-
-Saved `data/icm/xauusd/optim_data.pkl`
-
-Greedy checkpoints (compositions):
-- **Greedy 5**: ALL_MACD_RSI (PF 2.52 WR 79%), IDX_PREV_HL (PF 1.74), IDX_TREND_DAY (PF 2.05 WR 82%), ALL_3SOLDIERS (PF 1.78), TOK_TRIX (PF 1.32)
-- **Greedy 12**: + IDX_3SOLDIERS, IDX_KC_BRK, ALL_PSAR_EMA, IDX_VWAP_BOUNCE, LON_STOCH, ALL_MSTAR (TPSL, WR 92%), ALL_CCI_100
-- **Greedy 15**: 2593 trades, PF 1.66, WR 72%, DD -18.0%, Rend +4325%, M+ 12/13
+Strats: ALL_MACD_RSI, IDX_TREND_DAY, IDX_PREV_HL, ALL_KC_BRK, ALL_PSAR_EMA, ALL_MACD_FAST_SIG, LON_STOCH, IDX_VWAP_BOUNCE, IDX_KC_BRK, ALL_3SOLDIERS, ALL_SUPERTREND, ALL_CMO_14, IDX_3SOLDIERS, ALL_CMO_9, ALL_FVG_BULL
 
 ## 2026-04-10 — NEW BROKER: ICMarkets (ICM)
 
