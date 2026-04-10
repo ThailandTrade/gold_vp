@@ -27,6 +27,12 @@ Apres modif, chemin uniforme: `data/{broker}/{sym}/optim_data.pkl` pour TOUS les
 - `optimize_crypto.py:332,402` : meme hack mais XAUUSD inexistant en crypto -> dead code
 - `temp/test_look_ahead.py:16` : dans temp/, gitignore
 
+## 2026-04-10 — ICM US500 15m: PF*WR 7 (score 0.73)
+
+PF 1.73 | WR 75% | DD -0.9% | Rend +10% | M+ 13/13 | N=1106
+
+Strats: ALL_EMA_921, D8, ALL_EMA_821, ALL_KB_SQUEEZE, ALL_PIVOT_BRK, ALL_FIB_618, TOK_BIG
+
 ## 2026-04-10 — ICM XAUUSD 15m: Sharpe 15 (score 1.27)
 
 PF 1.54 | WR 75% | DD -0.7% | Rend +19% | M+ 13/13 | N=2580
