@@ -129,7 +129,8 @@ from strats import sim_exit_custom as _sim_exit_custom
 def sim_exit_unified(pos, entry, d, atr, etype, p1, p2, p3, check_entry):
     """Wrapper: appelle sim_exit_custom de strats.py (source unique)."""
     d_str = 'long' if d == 1 else 'short'
-    exit_type = 'TPSL' if etype == 0 else 'TRAIL'
+    etype_map = {0: 'TPSL', 1: 'TRAIL', 2: 'BE_TP'}
+    exit_type = etype_map.get(etype, 'TRAIL')
     return _sim_exit_custom(c, pos, entry, d_str, atr, exit_type, p1, p2, p3, check_entry_candle=check_entry)
 
 # ── SIGNAL COLLECTION ──
@@ -384,6 +385,8 @@ print("\nOptimisation exits...", flush=True)
 TPSL_GRID = [(sl, tp) for sl in [0.5, 1.0, 1.5, 2.0, 2.5, 3.0] for tp in [0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0]]
 TRAIL_GRID = [(sl, act, trail) for sl in [0.5, 1.0, 1.5, 2.0, 3.0]
               for act in [0.3, 0.5, 0.75, 1.0] for trail in [0.3, 0.5, 0.75, 1.0]]
+BE_TP_GRID = [(sl, be, tp) for sl in [0.5, 1.0, 1.5, 2.0, 3.0]
+              for be in [0.3, 0.5, 0.75, 1.0] for tp in [1.0, 1.5, 2.0, 3.0]]
 
 def eval_config(signals, etype, p1, p2, p3):
     """Evaluate one exit config on all signals for a strat."""
@@ -450,12 +453,31 @@ for sn in sorted(SIG.keys()):
         if score > best_score:
             best_score = score; best = ('TRAIL', sl, act, trail, pf, wr, n, split, pnls)
 
+    # Test BE_TP
+    for sl, be, tp in BE_TP_GRID:
+        results = []
+        for ci, di, entry, atr, date, sp in sigs_adj:
+            b, ex = sim_exit_unified(ci, entry, di, atr, 2, sl, be, tp, is_open)
+            pnl = ((ex - entry) if di == 1 else (entry - ex)) - sp
+            results.append((pnl, date))
+        n = len(results)
+        if n < 10: continue
+        pnls = [r[0] for r in results]
+        gp = sum(p for p in pnls if p > 0); gl = abs(sum(p for p in pnls if p < 0)) + 0.001
+        pf = gp / gl; wr = sum(1 for p in pnls if p > 0) / n * 100
+        mid = n // 2; split = np.mean(pnls[:mid]) > 0 and np.mean(pnls[mid:]) > 0
+        if not split or pf < 1.05: continue
+        score = pf * (wr / 100)
+        if score > best_score:
+            best_score = score; best = ('BE_TP', sl, be, tp, pf, wr, n, split, pnls)
+
     if best:
         etype, p1, p2, p3, pf, wr, n, split, pnls = best
         best_configs[sn] = {'type': etype, 'p1': p1, 'p2': p2, 'p3': p3,
                             'pf': pf, 'wr': wr, 'n': n, 'split': split}
-        print(f"  {sn:22s} {etype:5s} SL={p1:.1f} {'TP' if etype=='TPSL' else 'ACT'}={p2:.2f} "
-              f"{'   ' if etype=='TPSL' else f'TR={p3:.2f}'} PF={pf:.2f} WR={wr:.0f}% n={n:4d} split={'Y' if split else 'N'}")
+        p2_label = 'TP' if etype=='TPSL' else ('BE' if etype=='BE_TP' else 'ACT')
+        p3_label = f'TP={p3:.2f}' if etype=='BE_TP' else ('   ' if etype=='TPSL' else f'TR={p3:.2f}')
+        print(f"  {sn:22s} {etype:5s} SL={p1:.1f} {p2_label}={p2:.2f} {p3_label} PF={pf:.2f} WR={wr:.0f}% n={n:4d} split={'Y' if split else 'N'}")
     else:
         print(f"  {sn:22s} --- AUCUNE CONFIG VIABLE ---")
 

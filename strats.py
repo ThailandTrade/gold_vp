@@ -232,8 +232,9 @@ def sim_exit(cdf, pos, entry, d, atr, check_entry_candle=False):
 
 def sim_exit_custom(cdf, pos, entry, d, atr, exit_type, p1, p2, p3, check_entry_candle=False):
     """Exit avec config custom — version numpy (rapide) avec logique identique.
-    TRAIL: p1=sl, p2=act, p3=trail
-    TPSL:  p1=sl, p2=tp, p3=unused
+    TPSL:   p1=sl, p2=tp, p3=unused
+    TRAIL:  p1=sl, p2=act, p3=trail
+    BE_TP:  p1=sl, p2=be_act (move SL to entry), p3=tp
     """
     hi = cdf['high'].values; lo = cdf['low'].values; cl = cdf['close'].values
     N = len(cdf)
@@ -256,6 +257,34 @@ def sim_exit_custom(cdf, pos, entry, d, atr, exit_type, p1, p2, p3, check_entry_
                 if hi[idx] >= target: return j, target
             else:
                 if hi[idx] >= stop: return j, stop
+                if lo[idx] <= target: return j, target
+        n = min(288, N - pos - 1)
+        if n > 0: return n, cl[pos + n]
+        return 1, entry
+    elif exit_type == 'BE_TP':
+        be_act = p2; target = entry + p3*atr if is_long else entry - p3*atr
+        be_active = False
+        for j in range(start, max_j):
+            idx = pos + j
+            if j == 0:
+                if is_long and lo[idx] <= stop: return 0, stop
+                if not is_long and hi[idx] >= stop: return 0, stop
+                continue
+            if is_long:
+                if lo[idx] <= stop: return j, stop
+                if not be_active:
+                    fav = cl[idx] - entry
+                    if fav >= be_act * atr:
+                        be_active = True
+                        stop = entry  # SL → break-even
+                if hi[idx] >= target: return j, target
+            else:
+                if hi[idx] >= stop: return j, stop
+                if not be_active:
+                    fav = entry - cl[idx]
+                    if fav >= be_act * atr:
+                        be_active = True
+                        stop = entry  # SL → break-even
                 if lo[idx] <= target: return j, target
         n = min(288, N - pos - 1)
         if n > 0: return n, cl[pos + n]
