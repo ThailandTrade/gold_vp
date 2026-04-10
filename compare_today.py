@@ -35,7 +35,7 @@ for sym, icfg in INSTRUMENTS.items():
 # Date = derniere bougie en DB (pas l'horloge systeme — regle UTC candles)
 _conn_tmp = get_conn(); _conn_tmp.autocommit = True
 _cur = _conn_tmp.cursor()
-_cur.execute("SELECT MAX(ts) FROM candles_mt5_xauusd_5m")
+_cur.execute(f"SELECT MAX(ts) FROM candles_mt5_xauusd_{args.tf}")
 _max_ts = _cur.fetchone()[0]
 _cur.close(); _conn_tmp.close()
 today = datetime.fromtimestamp(_max_ts / 1000, tz=timezone.utc).date() if _max_ts else datetime.now(timezone.utc).date()
