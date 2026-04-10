@@ -27,6 +27,10 @@ Apres modif, chemin uniforme: `data/{broker}/{sym}/optim_data.pkl` pour TOUS les
 - `optimize_crypto.py:332,402` : meme hack mais XAUUSD inexistant en crypto -> dead code
 - `temp/test_look_ahead.py:16` : dans temp/, gitignore
 
+## 2026-04-10 — ICM UK100 15m: SKIP
+
+1 seul combo viable (2 strats, score 0.33). Trop pauvre.
+
 ## 2026-04-10 — ICM JP225 15m: PF 3 (score 0.53)
 
 PF 2.01 | WR 79% | DD -0.5% | Rend +5% | M+ 13/13 | N=473
