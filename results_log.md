@@ -164,8 +164,32 @@ Le live calcule maintenant SL, TP et trail reference a partir du close de la bou
 centimes mais les niveaux d'invalidation sont identiques au BT.
 Trail entry/best aussi initialises au signal_close.
 
+## 2026-04-10 — BUG CRITIQUE: trail stop re-check manquant dans sim_exit_custom
+
+### Bug identifie par analyse ultra-detaillee des trades FTMO 15m
+Apres trail update (SL monte), le BT ne re-verifie PAS si le low de la meme bougie
+est en dessous du nouveau stop. En live, MT5 sort immediatement car le SL est un ordre reel.
+
+Exemple US500 IDX_ENGULF bar 00:45:
+- Trail active: SL monte de 6812.81 → 6823.63
+- Low de la bougie = 6820.23 < 6823.63 → live sort (-0.44R), BT reste (+0.87R)
+
+### Impact
+- **TOUS les PF de backtest sont gonfles** (trades trail ou le stop monte et low est en dessous)
+- Affecte toutes les strats TRAIL (majoritaires dans les portfolios)
+- Les ecarts BT vs live observes (-0.19R a -0.65R) s'expliquent par ce bug
+- La regle dans LOOK_AHEAD_CHECKLIST etait FAUSSE ("pas de re-check" → corrige en "re-check obligatoire")
+
+### Modifications necessaires
+1. `strats.py` sim_exit_custom: apres trail update, re-check `lo[idx] <= stop` (long) ou `hi[idx] >= stop` (short)
+2. Re-run pipeline complet: optimize → combos → config → strat_exits → bt_portfolio (5ers + FTMO, 15m)
+3. Les PF vont probablement baisser — c'est la realite, pas un probleme
+4. Verification: 1000 trades random avant/apres pour mesurer l'impact
+
 ### Reste a faire
-- Tester live 15m sur 5ers + FTMO
+- Corriger sim_exit_custom
+- Re-pipeline complet 5ers + FTMO 15m
+- Tester live 15m
 
 ### sim_exit_custom reimplemente en numpy (meme logique, 10x+ rapide)
 Remplace cdf.iloc[pos+j] par hi[idx]/lo[idx]/cl[idx]. Verifie: 1000 trades random, 0 differences.

@@ -31,11 +31,14 @@ Un seul echec = resultats invalides.
 
 ### TRAIL (Trailing Stop)
 - [ ] **best = max(close)**, pas max(high) — coherence temporelle
-- [ ] **Apres trailing update, PAS de re-check low/high vs nouveau stop**
-- [ ] **Seul re-check**: close vs nouveau stop (MT5 ModifyPosition immediat)
-- [ ] **Exit au close** quand close < stop apres trailing (pas au stop)
+- [ ] **Apres trailing update, RE-CHECK low/high vs nouveau stop** (CORRIGE 2026-04-10)
+  - AVANT (FAUX): pas de re-check → BT survit quand le live sort par SL trail
+  - APRES (CORRECT): si low <= nouveau stop (long) ou high >= nouveau stop (short), exit au stop
+  - RAISON: en live MT5, le SL modifie est un ordre reel qui se declenche immediatement si le prix est deja au-dela
+- [ ] **Exit au stop price** quand low/high touche le trail stop (pas au close)
 
 **Erreur type**: best = max(high) au lieu de max(close) (corrige 2026-03-21)
+**Erreur type**: pas de re-check low vs trail stop apres update → BT surestime PF (identifie 2026-04-10)
 
 ### General
 - [ ] **Entry candle SL check** pour open strats (j=0: seulement SL, pas de trailing/TP)
@@ -127,6 +130,7 @@ Un seul echec = resultats invalides.
 | 2026-03-23 | Parabolic SAR ≠ Supertrend dans backtest | Indicateur different = signaux differents | strats.py |
 | 2026-03-23 | ALL_3SOLDIERS conditions trop strictes | Moins de signaux que backtest | strats.py |
 | 2026-03-23 | ALL_FIB_618 SHORT non teste | Direction non validee | strats.py |
+| 2026-04-10 | Trail: pas de re-check low vs nouveau stop apres update | PF surestime: BT survit a des bougies ou le live sort par SL trail | strats.py sim_exit_custom |
 | 2026-03-23 | _triggered jamais reset dans live | 0 signaux apres jour 1 | live_paper_icmarkets.py |
 | 2026-03-23 | TPSL TP sur CLOSE au lieu de HIGH/LOW | PF surestime (+20%), exit au close > target | strats.py |
 
