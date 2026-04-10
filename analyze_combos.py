@@ -18,8 +18,7 @@ _parser.add_argument('--symbol', default='xauusd')
 _args = _parser.parse_args()
 import re
 _sym = re.sub(r"[^a-z0-9]+", "_", _args.symbol.lower()).strip("_")
-_sym_dir = f'/{_sym}' if _sym != 'xauusd' else ''
-_pkl = f'data/{_args.account}{_sym_dir}/optim_data.pkl'
+_pkl = f'data/{_args.account}/{_sym}/optim_data.pkl'
 print(f"Loading {_pkl}...", flush=True)
 with open(_pkl, 'rb') as f:
     data = pickle.load(f)
@@ -446,7 +445,7 @@ for name, cp in all_results.items():
             'n': d['r']['n'], 'pf': d['r']['pf'], 'wr': d['r']['wr'],
             'mdd': d['r']['mdd'], 'ret': d['r']['ret'],
             'sharpe': d['r']['sharpe'], 'pm': d['r']['pm'], 'tm': d['r']['tm']}
-_json_file = f'data/{_args.account}{_sym_dir}/combo_results.json'
+_json_file = f'data/{_args.account}/{_sym}/combo_results.json'
 with open(_json_file, 'w') as f:
     json.dump(results_save, f, indent=2)
 print(f"\nSaved {_json_file}")

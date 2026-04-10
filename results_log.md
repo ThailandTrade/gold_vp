@@ -2,6 +2,48 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-10 — CLEANUP: suppression du hack XAUUSD a la racine
+
+### Probleme
+Hack legacy: `data/{broker}/optim_data.pkl` pour XAUUSD, `data/{broker}/{sym}/optim_data.pkl` pour les autres.
+Origine: epoque XAUUSD-only, jamais migre quand on a ajoute des instruments.
+
+### Modifications de code
+- `optimize_all.py:566-568` : retirer le `if _sym_san != 'xauusd' else ''`
+- `optimize_all.py:636-638` : idem (chemin de save normal)
+- `analyze_combos.py:21` : retirer le `if _sym != 'xauusd' else ''`
+- `audit_bt_vs_compare.py:41` : retirer le `if sym != 'XAUUSD' else ''`
+
+Apres modif, chemin uniforme: `data/{broker}/{sym}/optim_data.pkl` pour TOUS les symboles.
+
+### Migration des fichiers existants
+- `data/ftmo/optim_data.pkl` -> `data/ftmo/xauusd/optim_data.pkl`
+- `data/ftmo/combo_results.json` -> `data/ftmo/xauusd/combo_results.json`
+- `data/5ers/optim_data.pkl` -> `data/5ers/xauusd/optim_data.pkl`
+- `data/5ers/combo_results.json` -> `data/5ers/xauusd/combo_results.json`
+- `data/icm/` : rien a migrer (pas encore de pkl)
+
+### Hors scope (dead hacks)
+- `optimize_crypto.py:332,402` : meme hack mais XAUUSD inexistant en crypto -> dead code
+- `temp/test_look_ahead.py:16` : dans temp/, gitignore
+
+## 2026-04-10 — NEW BROKER: ICMarkets (ICM)
+
+### Symboles disponibles en DB (15m, 16 instruments)
+Indices/Or: XAUUSD, US500, USTEC, US30, DE40, JP225, UK100, AUS200, F40, STOXX50
+Forex: EURUSD, GBPUSD, AUDUSD, USDCAD, USDCHF, USDJPY
+
+Historique: 2025-04-09 -> 2026-04-10 (~1 an, 23-24k bars 15m)
+Note: F40 et STOXX50 a 15.5k bars (couverture limitee), arret au 2026-04-09
+
+### Pipeline (jusqu'au bt_portfolio agrege, pas de live)
+1. optimize_all sur les 16 symboles 15m
+2. strat_exits regenere
+3. analyze_combos par symbole
+4. Validation user combos
+5. config_icm.py
+6. bt_portfolio agrege
+
 ## 2026-04-07 — CHECKLIST: ajouter un nouveau broker
 
 ### Fichiers a CREER

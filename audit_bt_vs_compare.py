@@ -38,8 +38,7 @@ sym_exits = STRAT_EXITS.get((args.account, sym), {})
 
 # ── Load pkl trades ──
 sym_san = re.sub(r"[^a-z0-9]+", "_", sym.lower()).strip("_")
-sym_dir = f'/{sym_san}' if sym != 'XAUUSD' else ''
-pkl_file = f'data/{args.account}{sym_dir}/optim_data.pkl'
+pkl_file = f'data/{args.account}/{sym_san}/optim_data.pkl'
 with open(pkl_file, 'rb') as f:
     pkl_data = pickle.load(f)
 strat_arrays = pkl_data['strat_arrays']
