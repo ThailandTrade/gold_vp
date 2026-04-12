@@ -236,7 +236,7 @@ def sim_exit_custom(cdf, pos, entry, d, atr, exit_type, p1, p2, p3, check_entry_
     TRAIL:  p1=sl, p2=act, p3=trail
     BE_TP:  p1=sl, p2=be_act (move SL to entry), p3=tp
     """
-    hi = cdf['high'].values; lo = cdf['low'].values; cl = cdf['close'].values
+    hi = cdf['high'].values; lo = cdf['low'].values; cl = cdf['close'].values; op = cdf['open'].values
     N = len(cdf)
     sl_val = p1
     is_long = (d == 'long')
@@ -249,13 +249,15 @@ def sim_exit_custom(cdf, pos, entry, d, atr, exit_type, p1, p2, p3, check_entry_
         for j in range(start, max_j):
             idx = pos + j
             if j == 0:
-                if is_long and lo[idx] <= stop: return 0, stop
-                if not is_long and hi[idx] >= stop: return 0, stop
+                if is_long and lo[idx] <= stop: return 0, min(op[idx], stop)
+                if not is_long and hi[idx] >= stop: return 0, max(op[idx], stop)
                 continue
             if is_long:
+                if op[idx] <= stop: return j, op[idx]
                 if lo[idx] <= stop: return j, stop
                 if hi[idx] >= target: return j, target
             else:
+                if op[idx] >= stop: return j, op[idx]
                 if hi[idx] >= stop: return j, stop
                 if lo[idx] <= target: return j, target
         n = min(288, N - pos - 1)
@@ -267,10 +269,11 @@ def sim_exit_custom(cdf, pos, entry, d, atr, exit_type, p1, p2, p3, check_entry_
         for j in range(start, max_j):
             idx = pos + j
             if j == 0:
-                if is_long and lo[idx] <= stop: return 0, stop
-                if not is_long and hi[idx] >= stop: return 0, stop
+                if is_long and lo[idx] <= stop: return 0, min(op[idx], stop)
+                if not is_long and hi[idx] >= stop: return 0, max(op[idx], stop)
                 continue
             if is_long:
+                if op[idx] <= stop: return j, op[idx]
                 if lo[idx] <= stop: return j, stop
                 if not be_active:
                     fav = cl[idx] - entry
@@ -279,6 +282,7 @@ def sim_exit_custom(cdf, pos, entry, d, atr, exit_type, p1, p2, p3, check_entry_
                         stop = entry  # SL → break-even
                 if hi[idx] >= target: return j, target
             else:
+                if op[idx] >= stop: return j, op[idx]
                 if hi[idx] >= stop: return j, stop
                 if not be_active:
                     fav = entry - cl[idx]
@@ -294,16 +298,18 @@ def sim_exit_custom(cdf, pos, entry, d, atr, exit_type, p1, p2, p3, check_entry_
         for j in range(start, max_j):
             idx = pos + j
             if j == 0:
-                if is_long and lo[idx] <= stop: return 0, stop
-                if not is_long and hi[idx] >= stop: return 0, stop
+                if is_long and lo[idx] <= stop: return 0, min(op[idx], stop)
+                if not is_long and hi[idx] >= stop: return 0, max(op[idx], stop)
                 continue
             if is_long:
+                if op[idx] <= stop: return j, op[idx]
                 if lo[idx] <= stop: return j, stop
                 if cl[idx] > best: best = cl[idx]
                 if not ta and (best - entry) >= act_val * atr: ta = True
                 if ta: stop = max(stop, best - trail_val * atr)
                 if cl[idx] < stop: return j, cl[idx]
             else:
+                if op[idx] >= stop: return j, op[idx]
                 if hi[idx] >= stop: return j, stop
                 if cl[idx] < best: best = cl[idx]
                 if not ta and (entry - best) >= act_val * atr: ta = True
