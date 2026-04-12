@@ -2,6 +2,26 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-12 — FIX: gap SL dans sim_exit_custom
+
+### Probleme
+Quand une bougie ouvre en gap au-dela du SL, le backtest sortait au prix du SL au lieu du open (prix reel de sortie). PF artificiellement gonfle.
+
+### Fix
+`strats.py:sim_exit_custom()` — pour TPSL, BE_TP et TRAIL: si `open` deja au-dela du stop, exit au `open` au lieu du `stop`.
+
+### Impact ICM 15m agrege (12 instruments, $100k, 0.01%)
+
+| Metrique | Avant | Apres | Delta |
+|---|---|---|---|
+| PF | 1.60 | 1.58 | -0.02 |
+| WR | 76% | 75% | -1% |
+| Max DD | -0.25% | -0.33% | -0.08% |
+| Rend | +17.8% | +17.3% | -0.5% |
+| M+ | 13/13 | 13/13 | = |
+
+Impact faible. Mois le plus touche: oct 2025 (+901 -> +739).
+
 ## 2026-04-10 — CLEANUP: suppression du hack XAUUSD a la racine
 
 ### Probleme
