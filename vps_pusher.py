@@ -10,7 +10,7 @@ Usage:
 import warnings; warnings.filterwarnings('ignore')
 import sys, argparse, json, time, importlib, os
 sys.stdout.reconfigure(encoding='utf-8')
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -114,9 +114,11 @@ def _get_candle_date():
 def get_today_trades():
     today_dt = _get_candle_date()
     today = datetime(today_dt.year, today_dt.month, today_dt.day, tzinfo=timezone.utc)
-    tomorrow = today.replace(hour=23, minute=59, second=59)
-    deals = mt5.history_deals_get(today, tomorrow) or []
-    return _deals_to_trades(deals)
+    from_date = today - timedelta(days=2)
+    to_date = today.replace(hour=23, minute=59, second=59)
+    deals = mt5.history_deals_get(from_date, to_date) or []
+    all_trades = _deals_to_trades(deals)
+    return [t for t in all_trades if t['time_open'][:10] == str(today_dt)]
 
 def get_all_history():
     from_date = datetime(2020, 1, 1, tzinfo=timezone.utc)
