@@ -102,7 +102,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .updated { font-size:11px; color:#9ca3af; margin-bottom:16px; }
 
   /* Metrics */
-  .metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; }
+  .metrics { display:grid; grid-template-columns:repeat(6,1fr); gap:12px; margin-bottom:20px; }
   .metric { background:#f9fafb; border-radius:8px; padding:12px; border:1px solid #f0f1f3; }
   .metric .label { font-size:11px; color:#6b7280; font-weight:500; text-transform:uppercase; letter-spacing:0.5px; }
   .metric .value { font-size:22px; font-weight:700; margin-top:4px; color:#1a1a2e; }
@@ -184,6 +184,17 @@ function renderAccount(acc, data) {
   const pnlCls=(s.today_pnl||0)>=0?'green':'red';
   h+='<div class="metric"><div class="label">PnL Jour</div><div class="value '+pnlCls+'">$'+(s.today_pnl>=0?'+':'')+fmt(s.today_pnl,2)+'</div></div>';
   h+='<div class="metric"><div class="label">Trades</div><div class="value">'+(s.today_count||0)+'</div></div>';
+  // PF & WR from history
+  let hPf=0,hWr=0;
+  if(hist.length>0){
+    const gp=hist.filter(t=>(t.pnl||0)>0).reduce((s,t)=>s+t.pnl,0);
+    const gl=hist.filter(t=>(t.pnl||0)<=0).reduce((s,t)=>s+Math.abs(t.pnl),0);
+    hPf=gl>0?gp/gl:0;
+    hWr=hist.filter(t=>(t.pnl||0)>0).length/hist.length*100;
+  }
+  const pfCls=hPf>=1.5?'green':hPf>=1?'':'red';
+  h+='<div class="metric"><div class="label">PF</div><div class="value '+pfCls+'">'+hPf.toFixed(2)+'</div></div>';
+  h+='<div class="metric"><div class="label">WR</div><div class="value">'+hWr.toFixed(0)+'%</div></div>';
   h+='</div>';
 
   // Positions
