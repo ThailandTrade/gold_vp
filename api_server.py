@@ -184,13 +184,13 @@ function renderAccount(acc, data) {
   const pnlCls=(s.today_pnl||0)>=0?'green':'red';
   h+='<div class="metric"><div class="label">PnL Jour</div><div class="value '+pnlCls+'">$'+(s.today_pnl>=0?'+':'')+fmt(s.today_pnl,2)+'</div></div>';
   h+='<div class="metric"><div class="label">Trades</div><div class="value">'+(s.today_count||0)+'</div></div>';
-  // PF & WR from history
+  // PF & WR from today trades
   let hPf=0,hWr=0;
-  if(hist.length>0){
-    const gp=hist.filter(t=>(t.pnl||0)>0).reduce((s,t)=>s+t.pnl,0);
-    const gl=hist.filter(t=>(t.pnl||0)<=0).reduce((s,t)=>s+Math.abs(t.pnl),0);
+  if(trades.length>0){
+    const gp=trades.filter(t=>(t.pnl||0)>0).reduce((s,t)=>s+t.pnl,0);
+    const gl=trades.filter(t=>(t.pnl||0)<=0).reduce((s,t)=>s+Math.abs(t.pnl),0);
     hPf=gl>0?gp/gl:0;
-    hWr=hist.filter(t=>(t.pnl||0)>0).length/hist.length*100;
+    hWr=trades.filter(t=>(t.pnl||0)>0).length/trades.length*100;
   }
   const pfCls=hPf>=1.5?'green':hPf>=1?'':'red';
   h+='<div class="metric"><div class="label">PF</div><div class="value '+pfCls+'">'+hPf.toFixed(2)+'</div></div>';
