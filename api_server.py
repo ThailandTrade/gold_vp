@@ -189,7 +189,7 @@ function renderAccount(acc, data) {
   if(trades.length>0){
     const gp=trades.filter(t=>(t.pnl||0)>0).reduce((s,t)=>s+t.pnl,0);
     const gl=trades.filter(t=>(t.pnl||0)<=0).reduce((s,t)=>s+Math.abs(t.pnl),0);
-    hPf=gl>0?gp/gl:0;
+    hPf=gl>0?gp/gl:(gp>0?99.99:0);
     hWr=trades.filter(t=>(t.pnl||0)>0).length/trades.length*100;
   }
   const pfCls=hPf>=1.5?'green':hPf>=1?'':'red';
