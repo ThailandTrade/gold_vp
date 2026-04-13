@@ -2,6 +2,14 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-13 — Broker offset configurable (broker_offsets.json)
+
+Remplacement de tous les hardcodes `hours=3` par lecture de `broker_offsets.json`.
+Fichier unique geré manuellement: `{"icm": 3, "ftmo": 3, "5ers": 3}`.
+Passer a 2 en hiver.
+
+Fichiers modifies: live_mt5.py, vps_pusher.py, compare_today.py, check_candles_mt5_vs_db.py, mt5_fetch_clean.py (logique DST auto supprimee, arg --broker ajoute).
+
 ## 2026-04-13 — FIX CRITIQUE: live_mt5 broker UTC+3
 
 ### Audit complet BT vs Live (5ers, 13 avril)
