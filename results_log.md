@@ -2,6 +2,10 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-13 — Broker obligatoire en arg (plus de defaut)
+
+10 scripts: live_mt5, compare_today, check_candles_mt5_vs_db, mt5_fetch_clean, bt_portfolio, analyze_combos, optimize_all, optimize_crypto, optimize_indices, live_paper. Erreur si broker omis.
+
 ## 2026-04-13 — Broker offset configurable (broker_offsets.json)
 
 Remplacement de tous les hardcodes `hours=3` par lecture de `broker_offsets.json`.
