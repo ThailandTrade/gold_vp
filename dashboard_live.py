@@ -51,12 +51,25 @@ for i, account in enumerate(ACCOUNTS):
         st.header(f"{account.upper()}")
         st.caption(f"Derniere maj: {ts}")
 
+        # PF / WR depuis historique
+        if hist:
+            wins = sum(1 for t in hist if t.get('pnl', 0) > 0)
+            losses = [t for t in hist if t.get('pnl', 0) <= 0]
+            gross_profit = sum(t['pnl'] for t in hist if t['pnl'] > 0)
+            gross_loss = sum(abs(t['pnl']) for t in hist if t['pnl'] <= 0)
+            pf = gross_profit / (gross_loss + 0.01)
+            wr = wins / len(hist) * 100
+        else:
+            pf = 0; wr = 0
+
         # Metriques
-        c1, c2, c3, c4 = st.columns(4)
+        c1, c2, c3, c4, c5, c6 = st.columns(6)
         c1.metric("Balance", f"${balance:,.0f}")
         c2.metric("Equity", f"${equity:,.0f}")
         c3.metric("PnL jour", f"${today_pnl:+,.0f}")
         c4.metric("Trades jour", today_count)
+        c5.metric("PF", f"{pf:.2f}")
+        c6.metric("WR", f"{wr:.0f}%")
 
         # Positions ouvertes
         positions = state.get('positions', [])
