@@ -365,7 +365,7 @@ def main():
         sym_sn = ALL_MAGICS.get(p.magic)
         if not sym_sn: continue
         sym, sn = sym_sn
-        pos_date = datetime.fromtimestamp(p.time, tz=timezone.utc).date()
+        pos_date = (datetime.fromtimestamp(p.time, tz=timezone.utc) - timedelta(hours=3)).date()
         if pos_date == _db_today:
             ss = state['per_symbol'].get(sym, {})
             if sn in OPEN_STRATS: ss.setdefault('_triggered_open', {})[sn] = True
@@ -452,7 +452,8 @@ def main():
                 # En BT, un trade sorti a candle N est encore actif a candle N (>=)
                 try:
                     candle_start_utc = candle_time_utc if candle_time_utc.tzinfo else candle_time_utc.replace(tzinfo=timezone.utc)
-                    deals = mt5.history_deals_get(candle_start_utc, candle_start_utc + timedelta(minutes=5)) or []
+                    candle_start_broker = (candle_start_utc + timedelta(hours=3)).replace(tzinfo=None)
+                    deals = mt5.history_deals_get(candle_start_broker, candle_start_broker + timedelta(minutes=5)) or []
                     for d in deals:
                         if d.symbol != sym: continue
                         if d.magic not in ALL_MAGIC_SET: continue
