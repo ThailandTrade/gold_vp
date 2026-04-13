@@ -201,7 +201,11 @@ def compute_compare_today():
                 row['bt'] = bt
             if lv:
                 lv_pnl = (lv['exit'] - lv['entry']) if lv['dir'] == 'long' else (lv['entry'] - lv['exit'])
-                risk_1r = bt['risk_1r'] if bt else sl_atr * atr  # fallback
+                if bt:
+                    risk_1r = bt['risk_1r']
+                else:
+                    ex = sym_exits.get(sn, DEFAULT_EXIT)
+                    risk_1r = ex['p1'] * atr
                 lv_r = round(lv_pnl / risk_1r, 2) if risk_1r > 0 else 0
                 row['lv'] = {
                     'dir': lv['dir'],
