@@ -2,6 +2,21 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-13 — FIX CRITIQUE: live_mt5 broker UTC+3
+
+### Audit complet BT vs Live (5ers, 13 avril)
+- 4 trades SHORT pris a 22:15 UTC le 12 (= 01:15 broker le 13)
+- Entries matchent le BT du 12 avril (prix, direction OK, +15min normal)
+- Mais DAX40 ALL_TRIX LONG du 13 pas pris en live → strat bloquee a tort
+
+### Bug 1: trigger rebuild au demarrage (live_mt5.py:368)
+`p.time` (broker) traite comme UTC → trade du 12 a 22:15 UTC vu comme 13 avril → strat marquee "deja triggee" → signal LONG du 13 bloque.
+Fix: `(datetime.fromtimestamp(p.time, tz=timezone.utc) - timedelta(hours=3)).date()`
+
+### Bug 2: conflict check deals (live_mt5.py:455)
+`candle_start_utc` passe a `history_deals_get` qui attend du broker time → deals cherches 3h trop tot.
+Fix: `candle_start_broker = candle_start_utc + timedelta(hours=3)`
+
 ## 2026-04-13 — FIX: vps_pusher (3 bugs) + dashboard PF/WR
 
 ### Bugs fixes vps_pusher
