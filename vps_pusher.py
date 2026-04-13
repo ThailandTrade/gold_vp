@@ -205,7 +205,7 @@ def compute_compare_today():
                     risk_1r = bt['risk_1r']
                 else:
                     ex = sym_exits.get(sn, DEFAULT_EXIT)
-                    risk_1r = ex['p1'] * atr
+                    risk_1r = ex[1] * atr
                 lv_r = round(lv_pnl / risk_1r, 2) if risk_1r > 0 else 0
                 row['lv'] = {
                     'dir': lv['dir'],
