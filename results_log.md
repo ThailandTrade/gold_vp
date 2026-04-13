@@ -2,6 +2,19 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-13 — FIX: vps_pusher (3 bugs) + dashboard PF/WR
+
+### Bugs fixes vps_pusher
+1. **sl_atr UnboundLocalError** — quand trade live sans match BT, fallback utilisait `sl_atr` hors scope. Fix: lire `p1` depuis `sym_exits` / `DEFAULT_EXIT` (tuple index 1)
+2. **get_today_trades par date d'entree** — filtrait par date de sortie (deals du jour), trades overnight perdus. Fix: requete elargie 2 jours, filtre par `time_open[:10]`
+3. **Broker UTC+3 non pris en compte** — `p.time`, `din.time`, `dout.time` sont epoch serveur (UTC+3), pas UTC. Fix: `mt5_time_to_utc()` soustrait 3h, plages `history_deals_get` converties en heure serveur
+
+### Dashboard
+- PF et WR du jour ajoutes dans les metriques principales (api_server.py HTML)
+
+### Config
+- 5ers: risk 0.02% -> 0.01%
+
 ## 2026-04-12 — FIX: gap SL dans sim_exit_custom
 
 ### Probleme
