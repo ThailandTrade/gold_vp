@@ -36,6 +36,10 @@ BROKER = cfg_mod.BROKER
 INSTRUMENTS = cfg_mod.INSTRUMENTS
 CHECK_INTERVAL = 1
 
+with open(os.path.join(os.path.dirname(__file__), 'broker_offsets.json')) as f:
+    _offsets = json.load(f)
+BROKER_OFFSET = timedelta(hours=_offsets[_account])
+
 os.makedirs(f'data/{_account}', exist_ok=True)
 STATE_FILE = f"data/{_account}/live_mt5.json"
 
@@ -365,7 +369,7 @@ def main():
         sym_sn = ALL_MAGICS.get(p.magic)
         if not sym_sn: continue
         sym, sn = sym_sn
-        pos_date = (datetime.fromtimestamp(p.time, tz=timezone.utc) - timedelta(hours=3)).date()
+        pos_date = (datetime.fromtimestamp(p.time, tz=timezone.utc) - BROKER_OFFSET).date()
         if pos_date == _db_today:
             ss = state['per_symbol'].get(sym, {})
             if sn in OPEN_STRATS: ss.setdefault('_triggered_open', {})[sn] = True
@@ -452,7 +456,7 @@ def main():
                 # En BT, un trade sorti a candle N est encore actif a candle N (>=)
                 try:
                     candle_start_utc = candle_time_utc if candle_time_utc.tzinfo else candle_time_utc.replace(tzinfo=timezone.utc)
-                    candle_start_broker = (candle_start_utc + timedelta(hours=3)).replace(tzinfo=None)
+                    candle_start_broker = (candle_start_utc + BROKER_OFFSET).replace(tzinfo=None)
                     deals = mt5.history_deals_get(candle_start_broker, candle_start_broker + timedelta(minutes=5)) or []
                     for d in deals:
                         if d.symbol != sym: continue

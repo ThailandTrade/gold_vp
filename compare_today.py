@@ -18,9 +18,14 @@ parser.add_argument('account', nargs='?', default='5ers', choices=['icm','ftmo',
 parser.add_argument('--tf', default='5m', help='Timeframe: 5m or 15m')
 args = parser.parse_args()
 
+import os, json
 cfg = importlib.import_module(f'config_{args.account}')
 BROKER = cfg.BROKER
 INSTRUMENTS = cfg.INSTRUMENTS
+
+with open(os.path.join(os.path.dirname(__file__), 'broker_offsets.json')) as f:
+    _offsets = json.load(f)
+BROKER_OFFSET = timedelta(hours=_offsets[args.account])
 
 # OPEN_STRATS importe depuis backtest_engine (source unique)
 
@@ -70,7 +75,7 @@ try:
             din = td['in']; dout = td['out']
             # din.time est en heure broker (UTC+3) — convertir en UTC pour filtrer
             entry_broker = datetime.fromtimestamp(din.time, tz=timezone.utc)
-            entry_utc = entry_broker - timedelta(hours=3)
+            entry_utc = entry_broker - BROKER_OFFSET
             if entry_utc.date() != today: continue
             sym_sn = MAGIC_REVERSE.get(din.magic)
             if not sym_sn: continue
@@ -205,15 +210,15 @@ for sym, icfg in INSTRUMENTS.items():
             lv_pnl_r = lv_pnl_pts / risk_1r if risk_1r > 0 else 0
             lv_pts = f"{lv_pnl_r:+.2f}R"
             lv_total_pts += lv_pnl_r
-            lv_entry_utc = lv_t['entry_time'] - timedelta(hours=3) if hasattr(lv_t['entry_time'], 'strftime') else lv_t['entry_time']
-            lv_exit_utc = lv_t['exit_time'] - timedelta(hours=3) if hasattr(lv_t['exit_time'], 'strftime') else lv_t['exit_time']
+            lv_entry_utc = lv_t['entry_time'] - BROKER_OFFSET if hasattr(lv_t['entry_time'], 'strftime') else lv_t['entry_time']
+            lv_exit_utc = lv_t['exit_time'] - BROKER_OFFSET if hasattr(lv_t['exit_time'], 'strftime') else lv_t['exit_time']
             lv_in = lv_entry_utc.strftime('%H:%M') if hasattr(lv_entry_utc, 'strftime') else str(lv_entry_utc)[11:16]
             lv_out = lv_exit_utc.strftime('%H:%M') if hasattr(lv_exit_utc, 'strftime') else str(lv_exit_utc)[11:16]
             lv_sort_key = lv_in
         elif lo_t:
             lv_dir = lo_t['dir']; lv_entry = f"{lo_t['entry']:.2f}"; lv_exit = 'OPEN'
             lv_pts = '...'
-            lv_entry_utc = lo_t['time'] - timedelta(hours=3) if hasattr(lo_t['time'], 'strftime') else lo_t['time']
+            lv_entry_utc = lo_t['time'] - BROKER_OFFSET if hasattr(lo_t['time'], 'strftime') else lo_t['time']
             lv_in = lv_entry_utc.strftime('%H:%M') if hasattr(lv_entry_utc, 'strftime') else str(lv_entry_utc)[11:16]
             lv_out = '...'
             lv_sort_key = lv_in

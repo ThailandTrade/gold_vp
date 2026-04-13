@@ -12,11 +12,6 @@ import sys, argparse, json, time, importlib, os
 sys.stdout.reconfigure(encoding='utf-8')
 from datetime import datetime, timezone, timedelta
 
-BROKER_OFFSET = timedelta(hours=3)  # MT5 broker = UTC+3
-
-def mt5_time_to_utc(ts):
-    """Convertit un timestamp MT5 (epoch serveur UTC+3) en datetime UTC."""
-    return datetime.fromtimestamp(ts, tz=timezone.utc) - BROKER_OFFSET
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -32,6 +27,13 @@ parser.add_argument('--tf', default='5m', help='Timeframe: 5m or 15m')
 args = parser.parse_args()
 
 cfg = importlib.import_module(f'config_{args.account}')
+with open(os.path.join(os.path.dirname(__file__), 'broker_offsets.json')) as f:
+    _offsets = json.load(f)
+BROKER_OFFSET = timedelta(hours=_offsets[args.account])
+
+def mt5_time_to_utc(ts):
+    """Convertit un timestamp MT5 (epoch serveur) en datetime UTC."""
+    return datetime.fromtimestamp(ts, tz=timezone.utc) - BROKER_OFFSET
 BROKER = cfg.BROKER
 INSTRUMENTS = cfg.INSTRUMENTS
 API_URL = f"{args.url.rstrip('/')}/push/{args.account}"

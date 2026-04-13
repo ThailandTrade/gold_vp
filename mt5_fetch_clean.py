@@ -30,29 +30,21 @@ TF_MT5 = {
     "1d": mt5.TIMEFRAME_D1, "1w": mt5.TIMEFRAME_W1
 }
 
-# ── DST helpers (IC Markets = US DST) ──
-def get_nth_sunday(year, month, n):
-    d = datetime(year, month, 1, tzinfo=UTC)
-    count = 0
-    while True:
-        if d.weekday() == 6:
-            count += 1
-            if count == n: return d.replace(hour=0, minute=0, second=0)
-        d += timedelta(days=1)
+# ── Broker offset from config ──
+import json as _json
+_offsets_path = os.path.join(os.path.dirname(__file__), 'broker_offsets.json')
+with open(_offsets_path) as _f:
+    _BROKER_OFFSETS = _json.load(_f)
+_SERVER_OFFSET_H = None  # set in main() via --broker arg
 
-def get_server_offset_hours(utc_ms):
-    dt_utc = datetime.fromtimestamp(utc_ms / 1000, tz=UTC)
-    year = dt_utc.year
-    dst_start = get_nth_sunday(year, 3, 2) + timedelta(hours=7)
-    dst_end = get_nth_sunday(year, 11, 1) + timedelta(hours=6)
-    return 3 if dst_start <= dt_utc < dst_end else 2
+def get_server_offset_hours(utc_ms=None):
+    return _SERVER_OFFSET_H
 
 def utc_ms_to_server_ms(utc_ms):
-    return utc_ms + get_server_offset_hours(utc_ms) * 3600 * 1000
+    return utc_ms + _SERVER_OFFSET_H * 3600 * 1000
 
 def server_ms_to_utc_ms(server_ms):
-    approx = server_ms - 2 * 3600 * 1000
-    return server_ms - get_server_offset_hours(approx) * 3600 * 1000
+    return server_ms - _SERVER_OFFSET_H * 3600 * 1000
 
 # ── Utils ──
 def price_scale(base, quote):
@@ -215,7 +207,12 @@ def main():
     ap.add_argument("--pairs-file", default=os.getenv("PAIRS_FILE", "pairs_ftmo.txt"))
     ap.add_argument("--timeframes-file", default=os.getenv("TIMEFRAMES_FILE", "timeframes.txt"))
     ap.add_argument("--pairs", type=str, default=None)
+    ap.add_argument("--broker", default="icm", choices=list(_BROKER_OFFSETS.keys()))
     args = ap.parse_args()
+
+    global _SERVER_OFFSET_H
+    _SERVER_OFFSET_H = _BROKER_OFFSETS[args.broker]
+    print(f"[INIT] Broker={args.broker}, offset=UTC+{_SERVER_OFFSET_H}")
 
     user_to_ms = None
     if args.to:

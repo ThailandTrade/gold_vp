@@ -1,18 +1,25 @@
 """
 Compare bougies MT5 vs DB — trouver les differences
 """
-import sys; sys.stdout.reconfigure(encoding='utf-8')
+import sys, os, json, argparse; sys.stdout.reconfigure(encoding='utf-8')
 import warnings; warnings.filterwarnings('ignore')
 import MetaTrader5 as mt5
 import pandas as pd
 from dotenv import load_dotenv; load_dotenv()
 from phase1_poc_calculator import get_conn
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--broker', default='icm', choices=['icm','ftmo','5ers'])
+args = parser.parse_args()
+with open(os.path.join(os.path.dirname(__file__), 'broker_offsets.json')) as f:
+    _offsets = json.load(f)
+BROKER_OFFSET_H = _offsets[args.broker]
+
 mt5.initialize()
 rates = mt5.copy_rates_from_pos('XAUUSD', mt5.TIMEFRAME_M5, 0, 100)
 mt5.shutdown()
 mt5_df = pd.DataFrame(rates)
-mt5_df['time_utc'] = pd.to_datetime(mt5_df['time'], unit='s') - pd.Timedelta(hours=3)
+mt5_df['time_utc'] = pd.to_datetime(mt5_df['time'], unit='s') - pd.Timedelta(hours=BROKER_OFFSET_H)
 for c in ['open','high','low','close']: mt5_df[c] = mt5_df[c].astype(float)
 
 conn = get_conn(); conn.autocommit = True
