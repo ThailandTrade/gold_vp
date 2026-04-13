@@ -11,6 +11,12 @@ import warnings; warnings.filterwarnings('ignore')
 import sys, argparse, json, time, importlib, os
 sys.stdout.reconfigure(encoding='utf-8')
 from datetime import datetime, timezone, timedelta
+
+BROKER_OFFSET = timedelta(hours=3)  # MT5 broker = UTC+3
+
+def mt5_time_to_utc(ts):
+    """Convertit un timestamp MT5 (epoch serveur UTC+3) en datetime UTC."""
+    return datetime.fromtimestamp(ts, tz=timezone.utc) - BROKER_OFFSET
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -55,7 +61,7 @@ def get_positions():
                 'pnl': round(p.profit, 2),
                 'swap': round(p.swap, 2),
                 'comment': p.comment,
-                'time_open': datetime.fromtimestamp(p.time, tz=timezone.utc).isoformat(),
+                'time_open': mt5_time_to_utc(p.time).isoformat(),
             })
     return positions
 
@@ -92,8 +98,8 @@ def _deals_to_trades(deals):
             'volume': din.volume,
             'pnl': round(dout.profit, 2),
             'comment': din.comment,
-            'time_open': datetime.fromtimestamp(din.time, tz=timezone.utc).isoformat(),
-            'time_close': datetime.fromtimestamp(dout.time, tz=timezone.utc).isoformat(),
+            'time_open': mt5_time_to_utc(din.time).isoformat(),
+            'time_close': mt5_time_to_utc(dout.time).isoformat(),
         })
     return trades
 
@@ -114,15 +120,15 @@ def _get_candle_date():
 def get_today_trades():
     today_dt = _get_candle_date()
     today = datetime(today_dt.year, today_dt.month, today_dt.day, tzinfo=timezone.utc)
-    from_date = today - timedelta(days=2)
-    to_date = today.replace(hour=23, minute=59, second=59)
+    from_date = (today - timedelta(days=2) + BROKER_OFFSET).replace(tzinfo=None)
+    to_date = (today.replace(hour=23, minute=59, second=59) + BROKER_OFFSET).replace(tzinfo=None)
     deals = mt5.history_deals_get(from_date, to_date) or []
     all_trades = _deals_to_trades(deals)
     return [t for t in all_trades if t['time_open'][:10] == str(today_dt)]
 
 def get_all_history():
-    from_date = datetime(2020, 1, 1, tzinfo=timezone.utc)
-    to_date = datetime.now(timezone.utc)
+    from_date = datetime(2020, 1, 1)
+    to_date = (datetime.now(timezone.utc) + BROKER_OFFSET).replace(tzinfo=None)
     deals = mt5.history_deals_get(from_date, to_date) or []
     return _deals_to_trades(deals)
 
@@ -132,7 +138,7 @@ def get_last_candle(symbol):
     if rates is None or len(rates) == 0: return {}
     r = rates[0]
     return {
-        'time': datetime.fromtimestamp(r[0], tz=timezone.utc).isoformat(),
+        'time': mt5_time_to_utc(r[0]).isoformat(),
         'open': round(float(r[1]), 2),
         'high': round(float(r[2]), 2),
         'low': round(float(r[3]), 2),
