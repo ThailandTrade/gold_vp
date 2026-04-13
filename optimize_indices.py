@@ -13,7 +13,7 @@ from strats import sim_exit_custom
 
 # ── ARGS ──
 parser = argparse.ArgumentParser()
-parser.add_argument('account', nargs='?', default='icm')
+parser.add_argument('account')
 parser.add_argument('--symbol', default='nas100')
 args = parser.parse_args()
 SYMBOL = args.symbol.lower()

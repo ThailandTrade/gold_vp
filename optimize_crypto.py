@@ -15,7 +15,7 @@ from strats_crypto import detect_all_crypto, compute_indicators_crypto
 
 # ── SYMBOL ──
 import argparse as _ap
-_p = _ap.ArgumentParser(); _p.add_argument('account', nargs='?', default='icm')
+_p = _ap.ArgumentParser(); _p.add_argument('account')
 _p.add_argument('--symbol', default='xauusd')
 _a = _p.parse_args()
 SYMBOL = _a.symbol.lower()

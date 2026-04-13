@@ -13,7 +13,7 @@ from itertools import combinations
 # ── LOAD DATA ──
 import argparse
 import importlib
-_parser = argparse.ArgumentParser(); _parser.add_argument('account', nargs='?', default='icm')
+_parser = argparse.ArgumentParser(); _parser.add_argument('account')
 _parser.add_argument('--symbol', default='xauusd')
 _args = _parser.parse_args()
 import re

@@ -15,7 +15,7 @@ from strats import detect_all
 
 # ── SYMBOL ──
 import argparse as _ap
-_p = _ap.ArgumentParser(); _p.add_argument('account', nargs='?', default='icm')
+_p = _ap.ArgumentParser(); _p.add_argument('account')
 _p.add_argument('--symbol', default='xauusd')
 _p.add_argument('--tf', default='5m', help='Timeframe: 5m or 15m')
 _a = _p.parse_args()

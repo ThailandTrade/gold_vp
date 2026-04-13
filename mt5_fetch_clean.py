@@ -207,7 +207,7 @@ def main():
     ap.add_argument("--pairs-file", default=os.getenv("PAIRS_FILE", "pairs_ftmo.txt"))
     ap.add_argument("--timeframes-file", default=os.getenv("TIMEFRAMES_FILE", "timeframes.txt"))
     ap.add_argument("--pairs", type=str, default=None)
-    ap.add_argument("--broker", default="icm", choices=list(_BROKER_OFFSETS.keys()))
+    ap.add_argument("broker", choices=list(_BROKER_OFFSETS.keys()))
     args = ap.parse_args()
 
     global _SERVER_OFFSET_H

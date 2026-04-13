@@ -24,7 +24,7 @@ from backtest_engine import load_data, prev_trading_day, OPEN_STRATS, _make_day_
 # ── CONFIG ────────────────────────────────────────────
 
 parser = argparse.ArgumentParser(description='Live MT5 trading')
-parser.add_argument('account', nargs='?', default='icm', choices=['icm','ftmo','5ers'])
+parser.add_argument('account', choices=['icm','ftmo','5ers'])
 parser.add_argument('--reset', action='store_true', help='Reset state')
 parser.add_argument('--tf', default='5m', help='Timeframe: 5m or 15m')
 args = parser.parse_args()
