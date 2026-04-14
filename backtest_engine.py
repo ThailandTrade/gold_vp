@@ -105,8 +105,8 @@ def load_data_recent(conn, symbol, n=2000, tf=None):
         daily_atr, global_atr = compute_atr(conn, symbol=symbol.lower())
         trading_days_list = get_trading_days(conn, symbol=symbol.lower())
     else:
-        # ATR sur full history meme en mode recent (SQL rapide)
-        full = _load_candles_raw(conn, symbol, tf=tf)
+        # ATR sur 3000 derniers bars (suffisant pour ATR14 daily)
+        full = _load_candles_raw(conn, symbol, tf=tf, limit=3000)
         daily_atr, global_atr = _compute_atr_from_df(full)
         trading_days_list = _get_trading_days_from_df(full)
     candles = compute_indicators(candles)

@@ -423,7 +423,7 @@ def main():
                 # ATR via backtest_engine (supporte 5m et 15m)
                 if sym not in _atr_cache or _atr_cache[sym]['date'] != str(today):
                     from backtest_engine import _load_candles_raw, _compute_atr_from_df, _get_trading_days_from_df, prev_trading_day as _ptd
-                    _full = _load_candles_raw(conn, sym, tf=args.tf)
+                    _full = _load_candles_raw(conn, sym, tf=args.tf, limit=3000)
                     _da, _ga = _compute_atr_from_df(_full)
                     _td = _get_trading_days_from_df(_full)
                     _pd = _ptd(today, _td)
