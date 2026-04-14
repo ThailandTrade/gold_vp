@@ -2,9 +2,9 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
-## 2026-04-14 — PERF: ATR live limit=3000 au lieu de full historique
+## 2026-04-14 — PERF: ATR live limit=1500 au lieu de full historique
 
-live_mt5.py et backtest_engine.load_data_recent chargeaient TOUTES les bougies pour calculer l'ATR (1x/jour/symbole). ~55s de delai entre instruments au premier tick du jour. Fix: limit=3000 bars (suffisant pour ATR14 daily sur 15m).
+live_mt5.py et backtest_engine.load_data_recent chargeaient TOUTES les bougies pour calculer l'ATR (1x/jour/symbole). ~55s de delai entre instruments au premier tick du jour. Fix: limit=1500 bars (ATR14 daily = 14 jours, ~1344 bougies sur 15m).
 
 ## 2026-04-13 — Risk: 5ers 0.01% -> 0.02%, FTMO 0.02% -> 0.03%
 
