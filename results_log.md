@@ -2,6 +2,23 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-14 — TEST: suppression conflict filter (branche annulee)
+
+Test sur FTMO 15m agrege (6 instruments, $100k, 0.03%).
+
+| | Avec conflit | Sans conflit |
+|---|---|---|
+| Trades | 6,405 | 8,329 (+30%) |
+| PF | 1.58 | 1.46 |
+| WR | 73% | 71% |
+| Max DD | -0.74% | -0.71% |
+| Rend | +35.2% | +37.8% |
+| M+ | 13/13 | 13/13 |
+
+Conclusion: +30% de trades mais PF et WR inferieurs. Le gain de rendement vient du volume, pas de la qualite. **On garde le conflict filter.**
+
+Test biais long (tri LONG avant SHORT en cas de conflit): impact quasi nul (1 trade de difference sur FTMO). Pas retenu.
+
 ## 2026-04-14 — PERF: ATR live limit=1500 au lieu de full historique
 
 live_mt5.py et backtest_engine.load_data_recent chargeaient TOUTES les bougies pour calculer l'ATR (1x/jour/symbole). ~55s de delai entre instruments au premier tick du jour. Fix: limit=1500 bars (ATR14 daily = 14 jours, ~1344 bougies sur 15m).
