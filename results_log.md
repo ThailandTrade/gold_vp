@@ -2,6 +2,41 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-15 — Analyse spread reel BT vs Live (FTMO, 3 jours)
+
+### Spreads mesures en live (bid/ask MT5)
+
+| Instrument | FTMO | 5ers | ICM Std |
+|---|---|---|---|
+| XAUUSD | 0.55 | 0.52 | 0.20 |
+| DE40/GER40 | 1.29 | 1.24 | 0.50 |
+| US500/SP500 | 0.56 | 0.94 | 0.50 |
+| USTEC/NAS100 | 1.70 | 1.57 | 1.00 |
+| US30 | 2.00 | — | 1.20 |
+| JP225 | 10.00 | 4.38 | 4.00 |
+
+ICM Standard 1.5-2.7x moins cher que FTMO sur tous les instruments.
+
+### Delta BT vs Live FTMO (13-15 avril, 41 trades)
+
+| Instrument | Trades | Delta moy | Delta mediane |
+|---|---|---|---|
+| GER40.cash | 8 | +0.102R | -0.005R |
+| JP225.cash | 2 | -0.639R | -0.041R |
+| US100.cash | 11 | -0.092R | -0.043R |
+| US30.cash | 5 | +0.032R | -0.073R |
+| US500.cash | 15 | -0.138R | -0.041R |
+| **TOTAL** | **41** | **-0.083R** | **-0.043R** |
+| Sans outliers | 37 | -0.065R | |
+
+Mediane stable a -0.04R. Le spread pur (0.01-0.05R) explique quasi tout le delta systematique. Le decalage d'entree (+15min) est aleatoire et s'annule.
+
+### Conclusion provisoire
+- 0.1R trop pessimiste (tue toutes les strats XAUUSD FTMO)
+- 0.04-0.05R realiste pour FTMO
+- ~0.02R estime pour ICM (spreads 2x plus bas)
+- A confirmer sur la semaine complete avant de fixer la valeur du spread model
+
 ## 2026-04-15 — Spread -0.1R integre dans tout le pipeline
 
 6 fichiers modifies:
