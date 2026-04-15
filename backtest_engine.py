@@ -267,7 +267,7 @@ def eval_portfolio(trades, risk, capital=100000.0, spread=False):
         else:
             ei, xi, di, pnl_oz, sl_atr, atr, mo, _sn = trades[idx]
             if spread:
-                pnl_oz -= di * 0.1 * sl_atr * atr  # -0.1R par trade
+                pnl_oz -= 0.1 * sl_atr * atr  # -0.1R par trade (spread)
             pnl = pnl_oz * (entry_caps[idx] * risk) / (sl_atr * atr)
             cap += pnl
             if cap > peak: peak = cap

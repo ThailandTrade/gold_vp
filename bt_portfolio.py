@@ -116,7 +116,7 @@ if len(all_sym_trades) > 1:
         else:
             ei, xi, di, pnl_oz, sl_atr, atr, mo, sn, risk, sym = filtered[idx]
             if args.spread:
-                pnl_oz -= di * 0.1 * sl_atr * atr
+                pnl_oz -= 0.1 * sl_atr * atr  # -0.1R par trade (spread)
             pnl = pnl_oz * (entry_caps[idx] * risk) / (sl_atr * atr)
             cap += pnl
             if cap > peak: peak = cap
