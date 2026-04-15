@@ -2,6 +2,8 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-15 — Dashboard: lots arrondis a .01
+
 ## 2026-04-15 — FTMO risk 0.03% -> 0.05%
 
 ## 2026-04-14 — TEST: suppression conflict filter (branche annulee)
