@@ -2,6 +2,8 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-15 — FTMO: XAUUSD reactive en live
+
 ## 2026-04-15 — Analyse spread reel BT vs Live (FTMO, 3 jours)
 
 ### Spreads mesures en live (bid/ask MT5)
