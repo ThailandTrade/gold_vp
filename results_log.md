@@ -2,6 +2,17 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-15 — Spread -0.1R integre dans tout le pipeline
+
+6 fichiers modifies:
+- optimize_all.py: `--spread` soustrait 0.1*SL*ATR a chaque pnl (grille, marge WR, strat_arrays)
+- analyze_combos.py: pas de modif (lit pkl spread-aware)
+- backtest_engine.py + bt_portfolio.py: `--spread` dans eval_portfolio (deja fait)
+- vps_pusher.py + compare_today.py: BT pnl_r -= 0.1R
+
+Pipeline complet: `optimize --spread` → combos → config → `bt --spread`
+Necessite re-optimisation complete de tous les instruments.
+
 ## 2026-04-15 — FIX spread model + test XAUUSD FTMO
 
 Bug: `pnl_oz -= di * 0.1` → le spread ameliorait les shorts. Fix: `pnl_oz -= 0.1 * sl_atr * atr` (pnl_oz est deja signe correctement).
