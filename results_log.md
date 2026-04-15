@@ -2,6 +2,12 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-15 — TEST: FTMO 1h (branche annulee)
+
+Optimize + combos sur 6 instruments en 1h. PF et WR meilleurs qu'en 15m mais 3x moins d'historique (~5900 bars). GER40/US30 perdent le 13/13. Risque overfitting. Non retenu.
+
+Decouverte: ecart TOK_BIG US500 (BT +0.32R, live -1.08R) cause par le spread. SL=6972.73, bougie high bid=6972.38 (BT: SL pas touche), mais MT5 sort au ask=bid+spread → SL touche en live.
+
 ## 2026-04-15 — Dashboard: lots arrondis a .01
 
 ## 2026-04-15 — FTMO risk 0.03% -> 0.05%
