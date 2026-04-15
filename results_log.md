@@ -2,6 +2,20 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-15 — FIX spread model + test XAUUSD FTMO
+
+Bug: `pnl_oz -= di * 0.1` → le spread ameliorait les shorts. Fix: `pnl_oz -= 0.1 * sl_atr * atr` (pnl_oz est deja signe correctement).
+
+XAUUSD FTMO 15m avec/sans spread:
+
+| | Sans | Avec | Delta |
+|---|---|---|---|
+| PF | 1.65 | 1.21 | -0.44 |
+| WR | 76% | 63% | -13% |
+| DD | -1.0% | -1.7% | -0.7% |
+| Rend | +15% | +5% | -10% |
+| M+ | 13/13 | 9/13 | -4 |
+
 ## 2026-04-15 — Spread model: --spread (-0.1R par trade)
 
 Option `--spread` dans bt_portfolio.py et eval_portfolio(). Enleve 0.1R a chaque trade pour modeliser le cout du spread. Usage: `python bt_portfolio.py ftmo --tf 15m --spread`
