@@ -2,6 +2,10 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-15 — Spread model: --spread (-0.1R par trade)
+
+Option `--spread` dans bt_portfolio.py et eval_portfolio(). Enleve 0.1R a chaque trade pour modeliser le cout du spread. Usage: `python bt_portfolio.py ftmo --tf 15m --spread`
+
 ## 2026-04-15 — TEST: FTMO 1h (branche annulee)
 
 Optimize + combos sur 6 instruments en 1h. PF et WR meilleurs qu'en 15m mais 3x moins d'historique (~5900 bars). GER40/US30 perdent le 13/13. Risque overfitting. Non retenu.
