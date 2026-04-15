@@ -236,7 +236,7 @@ def _make_day_data(yc):
 #  EVAL PORTFOLIO — PF / WR / DD / Rend
 # ══════════════════════════════════════════════════════════════
 
-def eval_portfolio(trades, risk, capital=100000.0):
+def eval_portfolio(trades, risk, capital=100000.0, spread=False):
     """
     Evalue un portefeuille de trades (event-based simulation).
 
@@ -244,6 +244,7 @@ def eval_portfolio(trades, risk, capital=100000.0):
         trades: list of (ci, xi, di, pnl_oz, sl_atr, atr, mo, sn)
         risk: float (e.g. 0.0005 pour 0.05%)
         capital: float capital initial
+        spread: si True, enleve 0.1R a chaque trade pour modeliser le spread
 
     Returns:
         dict with n, pf, wr, mdd, ret, capital, pm, tm, months, strat_stats, accepted
@@ -265,6 +266,8 @@ def eval_portfolio(trades, risk, capital=100000.0):
             entry_caps[idx] = cap
         else:
             ei, xi, di, pnl_oz, sl_atr, atr, mo, _sn = trades[idx]
+            if spread:
+                pnl_oz -= di * 0.1 * sl_atr * atr  # -0.1R par trade
             pnl = pnl_oz * (entry_caps[idx] * risk) / (sl_atr * atr)
             cap += pnl
             if cap > peak: peak = cap
