@@ -2,6 +2,21 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-15 — TEST: multi-trigger par jour (branche annulee)
+
+FTMO 15m agrege, sans restriction 1 trigger/jour/strat.
+
+| | 1 trigger/jour | Multi-trigger |
+|---|---|---|
+| Trades | 6,425 | 32,172 (5x) |
+| PF | 1.58 | 1.11 |
+| WR | 73% | 66% |
+| DD | -1.23% | -7.26% |
+| Rend | +64.5% | +85.5% |
+| M+ | 13/13 | 11/13 |
+
+5x plus de trades mais PF 1.11, DD x6. Non retenu.
+
 ## 2026-04-15 — FTMO: XAUUSD reactive en live
 
 ## 2026-04-15 — Analyse spread reel BT vs Live (FTMO, 3 jours)
