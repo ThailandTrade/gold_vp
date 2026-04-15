@@ -206,7 +206,7 @@ function renderAccount(acc, data) {
       h+='<tr><td class="sym">'+p.symbol+'</td><td class="strat-name">'+(p.comment||'')+'</td>';
       h+='<td class="'+dirClass(p.dir)+'">'+p.dir.toUpperCase()+'</td>';
       h+='<td>'+fmt(p.entry,2)+'</td><td>'+fmt(p.current,2)+'</td><td>'+fmt(p.sl,2)+'</td>';
-      h+='<td>'+pnl$(p.pnl)+'</td><td>'+p.volume+'</td></tr>';
+      h+='<td>'+pnl$(p.pnl)+'</td><td>'+fmt(p.volume,2)+'</td></tr>';
     }
     h+='</table>';
   }
