@@ -18,7 +18,9 @@ import argparse as _ap
 _p = _ap.ArgumentParser(); _p.add_argument('account')
 _p.add_argument('--symbol', default='xauusd')
 _p.add_argument('--tf', default='5m', help='Timeframe: 5m or 15m')
+_p.add_argument('--spread', action='store_true', help='Modelise le spread (-0.1R par trade)')
 _a = _p.parse_args()
+SPREAD_R = 0.1 if _a.spread else 0.0
 SYMBOL = _a.symbol.lower()
 TF = _a.tf
 
@@ -396,7 +398,7 @@ def eval_config(signals, etype, p1, p2, p3):
         d_str = 'long' if di == 1 else 'short'
         b, ex = sim_exit_unified(ci, entry, di, atr, etype, p1, p2, p3, is_open)
         pnl = (ex - entry) if di == 1 else (entry - ex)
-        pnls.append(pnl - sp)
+        pnls.append(pnl - sp - SPREAD_R * p1 * atr)
     n = len(pnls)
     if n < 10: return None
     gp = sum(p for p in pnls if p > 0); gl = abs(sum(p for p in pnls if p < 0)) + 0.001
@@ -422,7 +424,7 @@ for sn in sorted(SIG.keys()):
         results = []
         for ci, di, entry, atr, date, sp in sigs_adj:
             b, ex = sim_exit_unified(ci, entry, di, atr, 0, sl, tp, 0, is_open)
-            pnl = ((ex - entry) if di == 1 else (entry - ex)) - sp
+            pnl = ((ex - entry) if di == 1 else (entry - ex)) - sp - SPREAD_R * sl * atr
             results.append((pnl, date))
         n = len(results)
         if n < 10: continue
@@ -440,7 +442,7 @@ for sn in sorted(SIG.keys()):
         results = []
         for ci, di, entry, atr, date, sp in sigs_adj:
             b, ex = sim_exit_unified(ci, entry, di, atr, 1, sl, act, trail, is_open)
-            pnl = ((ex - entry) if di == 1 else (entry - ex)) - sp
+            pnl = ((ex - entry) if di == 1 else (entry - ex)) - sp - SPREAD_R * sl * atr
             results.append((pnl, date))
         n = len(results)
         if n < 10: continue
@@ -475,7 +477,7 @@ for sn, cfg in best_configs.items():
     pnls = []
     for ci, di, entry, atr, date, sp in SIG[sn]:
         b, ex = sim_exit_unified(ci, entry, di, atr, etype, cfg['p1'], cfg['p2'], cfg['p3'], is_open)
-        pnl = ((ex - entry) if di == 1 else (entry - ex)) - sp
+        pnl = ((ex - entry) if di == 1 else (entry - ex)) - sp - SPREAD_R * cfg['p1'] * atr
         pnls.append(pnl)
     wins = [p for p in pnls if p > 0]
     losses = [p for p in pnls if p <= 0]
@@ -504,7 +506,7 @@ for sn in best_configs:
     rows = []
     for ci, di, entry, atr, date, sp in SIG[sn]:
         b, ex = sim_exit_unified(ci, entry, di, atr, etype, cfg['p1'], cfg['p2'], cfg['p3'], is_open)
-        pnl = ((ex - entry) if di == 1 else (entry - ex)) - sp
+        pnl = ((ex - entry) if di == 1 else (entry - ex)) - sp - SPREAD_R * cfg['p1'] * atr
         mo = f"{date.year}-{str(date.month).zfill(2)}"
         rows.append((ci, ci + b, di, pnl, cfg['p1'], atr, mo, sn))
     strat_arrays[sn] = rows
