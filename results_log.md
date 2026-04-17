@@ -2,6 +2,39 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-17 — Phase C: resultats 4 nouvelles strats FTMO 15m
+
+Pkl FTMO 15m regenerees (6 instruments) avec 4 nouvelles strats + nouvelles candles.
+
+**Perfs nouvelles strats:**
+
+| Strat | XAUUSD | GER40 | US500 | US100 | US30 | JP225 | #inst |
+|---|---|---|---|---|---|---|---|
+| BOS_FVG | 1.59/71/287 | 1.52/78/274 | 1.48/76/280 | — | — | 1.25/68/291 | **4/6** |
+| AVWAP_RECLAIM | 1.33/67/278 | — | — | — | — | 1.42/34/281 | 2/6 |
+| EXH_GAP | 1.33/79/19 | 1.41/35/46 | — | 5.10/89/19 | 9.66/95/20 | — | 4/6 |
+| FLAG_BRK | — | — | — | — | 1.83/81/16 | — | 1/6 |
+
+**Verdict:**
+- **BOS_FVG**: SOLIDE. 4/6 instruments, n>270, PF/WR coherents — a integrer
+- **AVWAP_RECLAIM**: moyen. 2/6, WR 34% JP225 suspect — variantes a explorer
+- **EXH_GAP**: OVERFIT probable. n=16-46 trades, PF extreme 9.66 sur 20 trades — a retirer ou abaisser seuil gap
+- **FLAG_BRK**: OVERFIT. 16 trades seulement — a retirer ou assouplir seuils
+
+**Impact global (nombre strats safe par instrument):**
+| Instrument | Avant | Apres |
+|---|---|---|
+| XAUUSD | 36 | 39 |
+| GER40 | 23 | 26 |
+| US500 | 28 | 31 |
+| US100 | 29 | 29 |
+| US30 | 21 | 19 |
+| JP225 | 11 | 14 |
+
+Total safe unique: 94 / 114 strats (vs 72 / 110 avant). 20 strats mortes 0/6 (dont ALL_CONSEC_REV, ALL_HAMMER, ALL_DOJI_REV nouvelles mortes apres redownload candles).
+
+**Greedy XAUUSD (Calmar 8):** PF 1.60, WR 77%, DD -9.4%, +531%, M+ 13/13 — leger recul vs 1.65 avant (mais redownload candles).
+
 ## 2026-04-17 — Revue strats 15m FTMO: plan (en cours)
 
 Audit 110 strats FTMO 15m:
