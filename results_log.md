@@ -2,6 +2,36 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-17 — cleanup-v2 P8: detection vrais doublons (en cours)
+
+**Motivation user:** Distinguer vrais doublons (meme signal sous 2 noms = bug/redondance) vs correlations (signaux differents qui coincident parfois = confluence utile).
+
+**Script:** `temp/find_true_duplicates.py` - compare les sets de (ci, direction) de toutes les paires de strats validees par instrument. Overlap 100% = doublon.
+
+**Resultats (parmi 40 strats validees FTMO 15m):**
+
+| Instrument | Strat 1 | Strat 2 | Overlap |
+|---|---|---|---|
+| US500 | ALL_EMA_513 | ALL_MACD_FAST_ZERO | 100% |
+| US100 | ALL_KC_BRK | IDX_KC_BRK | 100% |
+
+**Explication mathematique:**
+1. ALL_EMA_513 = "EMA5 cross EMA13". ALL_MACD_FAST_ZERO = "MACD(5,13,1) zero cross". Or MACD_fast = EMA(5) - EMA(13) donc zero cross du MACD = EMA5 cross EMA13. Doublon mathematique pur.
+2. ALL_KC_BRK = "Keltner breakout". IDX_KC_BRK = "Keltner breakout (index)". Meme code, 2 noms.
+
+**Limitation:** Le pkl stocke uniquement les strats validees. Les paires observees historiquement dans les runs precedents (ALL_MOM_14 == ALL_CMO_14_ZERO, ALL_RSI_EXTREME == IDX_RSI_REV) ne sont pas dans les validees actuelles mais leurs definitions restent dans le code.
+
+**Plan d'action (en discussion):**
+- Ajouter a REMOVED_STRATS dans strats.py:
+  - IDX_KC_BRK (doublon confirme de ALL_KC_BRK)
+  - ALL_MACD_FAST_ZERO (doublon confirme de ALL_EMA_513)
+  - IDX_RSI_REV (doublon presume de ALL_RSI_EXTREME, a reconfirmer)
+  - ALL_CMO_14_ZERO (doublon presume de ALL_MOM_14, a reconfirmer)
+- Relancer optimize sur US500, US100 (et autres si les doublons presumes sont re-introduits)
+- Rebootstrap portefeuille
+
+Status: en attente discussion user.
+
 ## 2026-04-17 — cleanup-v2 P7b: bootstrap PORTEFEUILLE par instrument
 
 **Correction user (majeur):** Le bootstrap individuel par strat est trop strict. En portefeuille, la diversification entre strats (meme "atténuées") peut stabiliser le PF agrege.
