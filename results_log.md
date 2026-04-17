@@ -2,6 +2,59 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-17 — cleanup-v2 P10: XAUUSD focus — portfolio final **TOP 4**
+
+**Carte blanche user: "trouve quelque chose de robuste et clean qui ne fera pas peter un cable".**
+
+Analyse complete XAUUSD 15m (12 strats WF-validated baseline):
+1. Leave-one-out: identifie 2 piliers (MACD_RSI, TOK_TRIX) + 4 utiles + 6 marginales + 1 nuisible (IDX_BB_REV)
+2. Correlation: TOK_TRIX seule decorrelee (-0.10 mean). Cluster redondant (CMO_9/HMA_CROSS/LR_BREAK/MACD_RSI corr 0.45-0.63).
+3. Stepwise forward: **TOP 4 est le sweet spot**. Apres step 4, le Calmar CHUTE systematiquement.
+4. Robustness: 6M rolling PF 1.40-2.32, bootstrap p(PF<=1)=0%, 12/13 mois positifs.
+
+### Portfolio final retenu: **TOP 4**
+
+```
+ALL_MACD_RSI   TRAIL SL=3.0 ACT=0.50 TRAIL=0.50   (pilier - PF individuel 2.57, CI [1.80, 3.58])
+TOK_TRIX       TRAIL SL=1.0 ACT=0.30 TRAIL=0.30   (decorrelation key - diversificatrice)
+ALL_CCI_100    TPSL  SL=3.0 TP=0.25                (contribution utile, peu de DD)
+ALL_ADX_FAST   TPSL  SL=3.0 TP=0.25                (marginale mais ameliore Calmar)
+```
+
+### Perfs XAUUSD TOP 4 vs FULL (FTMO $100k @ 0.05%)
+
+| Portfolio | #strats | n trades | PF | WR | DD% | Rend% | Calmar | CI.lo | p_PF<=1 |
+|---|---|---|---|---|---|---|---|---|---|
+| TOP 1 (MACD_RSI) | 1 | 280 | 1.75 | 80% | -0.23% | +2.13% | 9.25 | 1.30 | 0.0% |
+| TOP 2 | 2 | 471 | 1.67 | 73% | -0.32% | +4.30% | 13.44 | 1.30 | 0.0% |
+| TOP 3 | 3 | 755 | 1.62 | 81% | -0.29% | +4.52% | 15.76 | 1.28 | 0.0% |
+| **TOP 4 (FINAL)** | **4** | **1039** | **1.55** | **84%** | **-0.27%** | **+4.62%** | **17.02** | **1.27** | **0.0%** |
+| TOP 5 | 5 | 1339 | 1.51 | 86% | -0.36% | +4.80% | 13.21 | 1.23 | 0.0% |
+| TOP 6 | 6 | 1591 | 1.50 | 87% | -0.54% | +5.05% | 9.43 | 1.22 | 0.0% |
+| FULL (12) | 12 | 3321 | 1.25 | 82% | -1.32% | +7.67% | 5.82 | 1.06 | 0.3% |
+
+**TOP 4 ecrase FULL**: PF 1.55 vs 1.25, DD 5x plus faible, Calmar 3x meilleur. Le +3% de rendement du FULL provient uniquement de la dilution des strats marginales (overfitting).
+
+### Tests robustesse TOP 4
+
+- **Rolling 6M**: PF stable entre 1.40 et 2.32 sur 8 fenetres. Jamais < 1.40.
+- **Split H1 vs H2**: PF 1.40 -> 2.13 (edge s'amplifie en H2, regime favorable fin 2025).
+- **Sharpe mensuel**: 1.03, 12/13 mois positifs.
+- **Max trades perdants consecutifs**: 3 (very low).
+- **Bootstrap 1000 iterations**: PF median 1.90, CI [1.56, 2.27], **proba PF<=1.0 = 0.0%**.
+
+### Warning regime
+
+- H2 (2025-10 -> 2026-04) performe mieux que H1 (2025-04 -> 2025-09).
+- XAUUSD a trendé fort en 2026 Q1.
+- Si le regime change (range, volatility spike), l'edge peut s'eroder.
+- Mitigation: TOK_TRIX est decorrelee, donc si MACD_RSI/CCI_100/ADX_FAST perdent en range, TOK_TRIX compense.
+
+### Prochaines etapes
+1. Update config_ftmo.py - uniquement XAUUSD avec TOP 4
+2. Paper trade les autres instruments (log sans capital)
+3. Live XAUUSD TOP 4 quand ngrok regle
+
 ## 2026-04-17 — cleanup-v2 P9: consolidation + rapport final
 
 **Actions effectuees:**

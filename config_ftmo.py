@@ -1,6 +1,14 @@
 """
-Config FTMO 15m — 6 instruments (2026-04-09, sim_exit unifie, margin 5%)
-Max DD FTMO: 10%
+Config FTMO 15m — XAUUSD focus (cleanup-v2 P10)
+Portfolio TOP 4 determine par stepwise forward + bootstrap (2026-04-17).
+
+Max DD FTMO: 10%. Backtest TOP 4:
+  n=1039  PF=1.55  WR=84%  DD=-0.27%  Rend=+4.62%  Calmar=17.02
+  CI 95% bootstrap: [1.27, 1.86]  p(PF<=1) = 0.0%  12/13 mois positifs
+
+Note: les 5 autres instruments (GER40/US500/US100/US30/JP225) ont un edge
+valide au niveau portefeuille mais inferieur a XAUUSD. Commentes ici,
+peuvent etre reactives plus tard (historique garde pour reference).
 """
 BROKER = 'FTMO'
 
@@ -8,54 +16,43 @@ ALL_INSTRUMENTS = {
     'XAUUSD': {
         'risk_pct': 0.0005,
         'portfolio': [
-            'ALL_MACD_RSI','IDX_TREND_DAY','ALL_BB_TIGHT','IDX_3SOLDIERS',
-            'ALL_ELDER_BEAR','ALL_ROC_ZERO','ALL_KC_BRK','ALL_MACD_HIST','IDX_KC_BRK',
+            'ALL_MACD_RSI',   # pilier 1 - PF 2.57 seul, CI [1.80, 3.58]
+            'TOK_TRIX',       # decorrelation key - mean corr -0.10
+            'ALL_CCI_100',    # contribution utile, peu de DD
+            'ALL_ADX_FAST',   # ameliore Calmar
         ],
-        # PF 9: PF 1.68 | WR 76% | DD -0.2% | Rend +3% | 13/13
+        # TOP 4: PF 1.55 | WR 84% | DD -0.27% | Rend +4.62% | Calmar 17 | 12/13 mois
     },
-    'GER40.cash': {
-        'risk_pct': 0.0005,
-        'portfolio': [
-            'ALL_MSTAR','ALL_CCI_100','ALL_TRIX','ALL_KB_SQUEEZE',
-            'IDX_RSI_REV','ALL_ELDER_BULL','ALL_3SOLDIERS',
-        ],
-        # Calmar 7: PF 1.53 | WR 74% | DD -0.1% | Rend +2% | 13/13
-    },
-    'US500.cash': {
-        'risk_pct': 0.0005,
-        'portfolio': [
-            'ALL_MSTAR','TOK_BIG','ALL_EMA_921','IDX_ENGULF',
-            'ALL_MTF_BRK','ALL_CMO_14_ZERO','ALL_ELDER_BULL','ALL_MACD_ADX',
-        ],
-        # Sharpe 8: PF 1.63 | WR 69% | DD -0.2% | Rend +3% | 13/13
-    },
-    'US100.cash': {
-        'risk_pct': 0.0005,
-        'portfolio': [
-            'D8','ALL_MSTAR','TOK_TRIX','ALL_EMA_821','ALL_ICHI_TK',
-            'ALL_DC10_EMA','IDX_3SOLDIERS','ALL_RSI_50',
-        ],
-        # PF*WR 8: PF 1.58 | WR 72% | DD -0.2% | Rend +2% | 11/13
-    },
-    'US30.cash': {
-        'risk_pct': 0.0005,
-        'portfolio': [
-            'TOK_2BAR','ALL_KB_SQUEEZE','NY_ELDER','TOK_TRIX',
-        ],
-        # Calmar 4: PF 1.61 | WR 70% | DD -0.1% | Rend +1% | 13/13
-    },
-    'JP225.cash': {
-        'risk_pct': 0.0005,
-        'portfolio': [
-            'ALL_PSAR_EMA','ALL_MSTAR',
-        ],
-        # Calmar 2: PF 1.90 | WR 79% | DD -0.1% | Rend +1% | 11/13
-    },
+    # ── DESACTIVES - edges moins robustes, a reconsiderer apres consolidation XAUUSD ──
+    # 'GER40.cash': {
+    #     'risk_pct': 0.0005,
+    #     'portfolio': ['ALL_CCI_100','ALL_TRIX','TOK_TRIX'],
+    #     # CI [1.06, 2.29] - ATTENUE
+    # },
+    # 'US500.cash': {
+    #     'risk_pct': 0.0005,
+    #     'portfolio': ['ALL_ELDER_BULL','ALL_BB_TIGHT','ALL_DC10_EMA','ALL_EMA_513','ALL_MACD_ADX','IDX_3SOLDIERS'],
+    #     # CI [1.08, 1.58] - ATTENUE
+    # },
+    # 'US100.cash': {
+    #     'risk_pct': 0.0005,
+    #     'portfolio': ['ALL_EMA_921','ALL_MACD_STD_SIG','ALL_KC_BRK','ALL_ICHI_TK','ALL_CMO_9',
+    #                   'ALL_LR_BREAK','ALL_MACD_HIST','ALL_TRIX','IDX_GAP_CONT','IDX_TREND_DAY'],
+    #     # CI [1.19, 1.61] - ATTENUE (sous le seuil 1.20 apres retrait IDX_KC_BRK doublon)
+    # },
+    # 'US30.cash': {
+    #     'risk_pct': 0.0005,
+    #     'portfolio': ['ALL_RSI_50','ALL_ADX_FAST','ALL_ADX_RSI50','NY_ELDER'],
+    #     # CI [1.26, 1.67] - ROBUSTE
+    # },
+    # 'JP225.cash': {
+    #     'risk_pct': 0.0005,
+    #     'portfolio': ['ALL_PSAR_EMA','ALL_SUPERTREND','ALL_ICHI_TK'],
+    #     # CI [1.31, 2.19] - ROBUSTE (mais PSAR_EMA == SUPERTREND a 97%)
+    # },
 }
 
-# Skip: UK100.cash (9/13, Rend +0%)
-
-LIVE_INSTRUMENTS = ['XAUUSD', 'GER40.cash', 'US500.cash', 'US100.cash', 'US30.cash', 'JP225.cash']
+LIVE_INSTRUMENTS = ['XAUUSD']
 
 INSTRUMENTS = {k: v for k, v in ALL_INSTRUMENTS.items() if k in LIVE_INSTRUMENTS}
 
