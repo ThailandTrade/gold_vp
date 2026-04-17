@@ -2,6 +2,20 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-17 — cleanup-v2 P2: unifier detect_all + optimize_all
+
+`optimize_all.py`: suppression des lignes 174-380 (207 lignes de redetection doublee).
+
+**Avant P2**: la boucle principale appelait `detect_all(...)` puis redetectait manuellement 32 strats (MACD, RSI, DC, KC, HMA, CMO, Fisher, DPO, AO, MTF, NR4, EMA, BB_TIGHT, CCI, etc.). Le `trig[sn]` bloquait les doubles emissions mais la redetection etait morte.
+
+**Apres P2**: `detect_all()` = source unique. 436 lignes (-207, -32%).
+
+**Test regression XAUUSD FTMO 15m:**
+- Strats before: 39 safe
+- Strats after: 39 safe
+- Diff signaux: **0** sur les 39 strats
+- Unification reussie, aucun comportement change
+
 ## 2026-04-17 — cleanup-v2 P1: menage 163 scripts racine
 
 Passage de 187 a 25 fichiers Python a la racine (-86%).
