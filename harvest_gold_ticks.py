@@ -14,7 +14,7 @@ SYMBOLS = {
     "XAUUSD": "market_ticks_xauusd",    
 }
 
-DEFAULT_DAYS_BACK = 1000  # Nombre de jours à récupérer si DB vide
+DEFAULT_DAYS_BACK = 400  # Nombre de jours à récupérer si DB vide
 CHUNK_SIZE_HOURS = 24    # Taille des morceaux pour le téléchargement historique
 SLEEP_INTERVAL = 1       # Pause en mode Live
 UTC = timezone.utc

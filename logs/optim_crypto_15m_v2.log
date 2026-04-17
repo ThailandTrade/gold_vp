@@ -1,0 +1,82 @@
+=== aaveusd ===
+  CRYPTO_OTE_618         WR=58% RR=0.80 WRmin=55% marge=+2.8% SKIP
+  CRYPTO_PSAR_EMA200     WR=25% RR=3.49 WRmin=22% marge=+2.4% SKIP
+  CRYPTO_RSI_DEEP_DIV    WR=52% RR=1.08 WRmin=48% marge=+3.7% SKIP
+  CRYPTO_STOCH_RSI_EXTREME WR=24% RR=3.76 WRmin=21% marge=+2.6% SKIP
+  CRYPTO_WEEKLY_PIVOT    WR=68% RR=0.50 WRmin=67% marge=+1.4% SKIP
+
+  0/19 strats safe (marge>8.0%)
+
+Construction arrays trades...
+
+Aucune strat safe. Arret.
+Saved data/crypto/aaveusd/optim_data.pkl (vide)
+=== adausd ===
+  Start: CRYPTO_RSI_DEEP_DIV
+    n=54 PF=0.90 WR=81% DD=-3.9% Rend=-1% M+=13/20
+
+==================================================================================================================================
+RAPPORT FINAL
+==================================================================================================================================
+
+                 Combo   Trades     PF     WR     DD 1%       Rend 1%      M+
+  --------------------  -------  -----  -----  --------  ------------  ------
+
+==================================================================================================================================
+Saved data/crypto/adausd/optim_data.pkl
+=== algousd ===
+  Start: CRYPTO_INV_HS
+    n=87 PF=1.06 WR=75% DD=-5.2% Rend=+1% M+=13/25
+
+==================================================================================================================================
+RAPPORT FINAL
+==================================================================================================================================
+
+                 Combo   Trades     PF     WR     DD 1%       Rend 1%      M+
+  --------------------  -------  -----  -----  --------  ------------  ------
+
+==================================================================================================================================
+Saved data/crypto/algousd/optim_data.pkl
+=== avausd ===
+  Start: CRYPTO_RSI_DEEP_DIV
+    n=50 PF=1.41 WR=44% DD=-4.1% Rend=+9% M+=10/19
+
+==================================================================================================================================
+RAPPORT FINAL
+==================================================================================================================================
+
+                 Combo   Trades     PF     WR     DD 1%       Rend 1%      M+
+  --------------------  -------  -----  -----  --------  ------------  ------
+
+==================================================================================================================================
+Saved data/crypto/avausd/optim_data.pkl
+=== bchusd ===
+  Start: CRYPTO_INV_HS
+    n=104 PF=1.39 WR=75% DD=-5.4% Rend=+12% M+=15/25
+
+==================================================================================================================================
+RAPPORT FINAL
+==================================================================================================================================
+
+                 Combo   Trades     PF     WR     DD 1%       Rend 1%      M+
+  --------------------  -------  -----  -----  --------  ------------  ------
+
+==================================================================================================================================
+Saved data/crypto/bchusd/optim_data.pkl
+=== bnbusd ===
+  CRYPTO_ICHIMOKU_CROSS  WR=63% RR=0.62 WRmin=62% marge=+1.3% SKIP
+  CRYPTO_INV_HS          WR=56% RR=0.87 WRmin=53% marge=+2.3% SKIP
+  CRYPTO_MACD_ZERO       WR=70% RR=0.57 WRmin=64% marge=+6.7% SKIP
+  CRYPTO_STOCH_RSI_EXTREME WR=69% RR=0.47 WRmin=68% marge=+1.4% SKIP
+  CRYPTO_WYCKOFF_SPRING  WR=47% RR=1.18 WRmin=46% marge=+1.6% SKIP
+
+  0/6 strats safe (marge>8.0%)
+
+Construction arrays trades...
+
+Aucune strat safe. Arret.
+Saved data/crypto/bnbusd/optim_data.pkl (vide)
+=== dogeusd ===
+Loading data (dogeusd) 15m HL...
+Precalcul indicateurs crypto...
+Collecte signaux...

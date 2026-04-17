@@ -1,0 +1,133 @@
+======== xauusd ========
+    ALL_PIVOT_BRK          TPSL  SL=3.0 TP=0.75          PF=1.82 WR=87%
+    IDX_PREV_HL            TRAIL SL=3.0 ACT=0.50 TR=0.50 PF=1.59 WR=73%
+    ALL_FIB_618            TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.54 WR=78%
+    ALL_BB_TIGHT           TRAIL SL=3.0 ACT=0.75 TR=0.75 PF=1.73 WR=71%
+    ALL_FVG_BULL           TRAIL SL=3.0 ACT=1.00 TR=0.50 PF=1.60 WR=69%
+
+  #10 [PF*WR 8] PF=1.52 WR=74% DD=-0.9% Rend=+10% Sharpe=5.3 M+=12/13
+  Correlation: avg=0.157 max=0.423
+  Sessions: {'All': 7, 'London': 1}
+    IDX_VWAP_BOUNCE        TRAIL SL=1.5 ACT=0.50 TR=0.50 PF=2.11 WR=65%
+    ALL_PIVOT_BRK          TPSL  SL=3.0 TP=0.75          PF=1.82 WR=87%
+    PO3_SWEEP              TRAIL SL=2.0 ACT=0.75 TR=0.75 PF=1.83 WR=73%
+    D8                     TPSL  SL=1.0 TP=2.00          PF=1.79 WR=50%
+    IDX_PREV_HL            TRAIL SL=3.0 ACT=0.50 TR=0.50 PF=1.59 WR=73%
+    ALL_FIB_618            TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.54 WR=78%
+    ALL_BB_TIGHT           TRAIL SL=3.0 ACT=0.75 TR=0.75 PF=1.73 WR=71%
+    ALL_ELDER_BULL         TRAIL SL=3.0 ACT=0.50 TR=0.50 PF=1.51 WR=75%
+
+Saved data/5ers/combo_results.json
+==================================================================================================================================
+
+======== jpn225 ========
+      Strats: ALL_NR4, ALL_STOCH_PIVOT, TOK_NR4
+    [   PF*WR  3]  Sharpe=3.67 PF=1.59 WR=79% DD=-0.6% Rend=+5%
+      Strats: ALL_NR4, ALL_STOCH_PIVOT, TOK_NR4
+
+==================================================================================================================================
+5b. TOP 20 — SCORE = PF x WR x Rend x M+/TM / (1+|DD|) x min(1, n/500)
+==================================================================================================================================
+
+    #  Score  Nb  Trades    PF   WR      DD   Rend    M+  Combo Strats
+  ------------------------------------------------------------------------------------------------------------------------
+    1   0.32   4    1038  1.54  79%   -1.0%    +6% 11/13 [ Calmar] ALL_NR4, ALL_STOCH_PIVOT, TOK_NR4, IDX_NR4
+    2   0.30   3     734  1.59  79%   -0.6%    +5% 11/13 [ Calmar] ALL_NR4, ALL_STOCH_PIVOT, TOK_NR4
+    3   0.25   2     482  1.60  79%   -0.4%    +3% 12/13 [ Calmar] ALL_NR4, ALL_STOCH_PIVOT
+
+==================================================================================================================================
+6. DETAIL DES MEILLEURES COMPOSITIONS
+==================================================================================================================================
+
+Saved data/5ers/jpn225/combo_results.json
+==================================================================================================================================
+
+======== dax40 ========
+    TOK_WILLR              TRAIL SL=1.5 ACT=0.30 TR=0.30 PF=1.59 WR=62%
+    ALL_KB_SQUEEZE         TRAIL SL=1.5 ACT=0.30 TR=0.30 PF=1.72 WR=60%
+    IDX_BB_REV             TRAIL SL=3.0 ACT=0.50 TR=0.30 PF=1.49 WR=73%
+    TOK_STOCH              TRAIL SL=3.0 ACT=0.75 TR=0.30 PF=1.56 WR=74%
+
+  #10 [PF*WR 9] PF=1.79 WR=76% DD=-1.2% Rend=+18% Sharpe=4.9 M+=12/13
+  Correlation: avg=0.214 max=1.000
+  Sessions: {'All': 8, 'Tokyo': 1}
+    ALL_MACD_HIST          TRAIL SL=1.5 ACT=0.30 TR=0.30 PF=2.05 WR=68%
+    ALL_CCI_20_ZERO        TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.66 WR=82%
+    ALL_ELDER_BULL         TRAIL SL=3.0 ACT=0.50 TR=0.30 PF=1.71 WR=76%
+    TOK_FISHER             TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.95 WR=75%
+    IDX_ENGULF             TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.68 WR=80%
+    ALL_FISHER_9           TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.86 WR=75%
+    ALL_ENGULF             TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.68 WR=80%
+    IDX_BB_REV             TRAIL SL=3.0 ACT=0.50 TR=0.30 PF=1.49 WR=73%
+    ALL_KB_SQUEEZE         TRAIL SL=1.5 ACT=0.30 TR=0.30 PF=1.72 WR=60%
+
+Saved data/5ers/dax40/combo_results.json
+==================================================================================================================================
+
+======== nas100 ========
+  Sessions: {'All': 5, 'London': 1}
+    D8                     TRAIL SL=1.5 ACT=0.50 TR=0.30 PF=2.02 WR=62%
+    ALL_RSI_50             TRAIL SL=2.0 ACT=0.30 TR=0.30 PF=1.56 WR=74%
+    ALL_WILLR_7            TRAIL SL=1.5 ACT=0.30 TR=0.30 PF=1.48 WR=69%
+    LON_STOCH              TRAIL SL=2.0 ACT=1.00 TR=1.00 PF=1.47 WR=62%
+    ALL_STOCH_RSI          TRAIL SL=1.0 ACT=0.30 TR=0.30 PF=1.43 WR=62%
+    ALL_ADX_RSI50          TRAIL SL=2.0 ACT=0.30 TR=0.30 PF=1.56 WR=74%
+
+  #4 [MinDD 6] PF=1.42 WR=67% DD=-0.8% Rend=+10% Sharpe=4.1 M+=12/13
+  Correlation: avg=0.124 max=0.518
+  Sessions: {'All': 5, 'London': 1}
+    D8                     TRAIL SL=1.5 ACT=0.50 TR=0.30 PF=2.02 WR=62%
+    ALL_ADX_RSI50          TRAIL SL=2.0 ACT=0.30 TR=0.30 PF=1.56 WR=74%
+    ALL_STOCH_RSI          TRAIL SL=1.0 ACT=0.30 TR=0.30 PF=1.43 WR=62%
+    LON_STOCH              TRAIL SL=2.0 ACT=1.00 TR=1.00 PF=1.47 WR=62%
+    ALL_DOJI_REV           TRAIL SL=1.5 ACT=0.30 TR=0.30 PF=1.47 WR=69%
+    ALL_WILLR_7            TRAIL SL=1.5 ACT=0.30 TR=0.30 PF=1.48 WR=69%
+
+Saved data/5ers/nas100/combo_results.json
+==================================================================================================================================
+
+======== sp500 ========
+    IDX_CONSEC_REV         TRAIL SL=1.5 ACT=0.50 TR=0.50 PF=1.78 WR=67%
+    ALL_RSI_EXTREME        TRAIL SL=1.5 ACT=0.30 TR=0.30 PF=1.53 WR=71%
+    ALL_MACD_HIST          TRAIL SL=2.0 ACT=0.50 TR=0.50 PF=1.47 WR=72%
+    IDX_ENGULF             TRAIL SL=1.5 ACT=0.50 TR=0.30 PF=1.46 WR=66%
+
+  #10 [Sharpe 9] PF=1.43 WR=64% DD=-1.3% Rend=+18% Sharpe=4.8 M+=12/13
+  Correlation: avg=0.219 max=1.000
+  Sessions: {'Tokyo': 1, 'All': 8}
+    TOK_FISHER             TRAIL SL=1.0 ACT=0.30 TR=0.30 PF=1.80 WR=61%
+    IDX_CONSEC_REV         TRAIL SL=1.5 ACT=0.50 TR=0.50 PF=1.78 WR=67%
+    IDX_RSI_REV            TRAIL SL=1.5 ACT=0.30 TR=0.30 PF=1.53 WR=71%
+    ALL_ENGULF             TRAIL SL=1.5 ACT=0.50 TR=0.30 PF=1.46 WR=66%
+    ALL_HAMMER             TRAIL SL=1.0 ACT=0.30 TR=0.30 PF=1.56 WR=59%
+    ALL_RSI_EXTREME        TRAIL SL=1.5 ACT=0.30 TR=0.30 PF=1.53 WR=71%
+    ALL_MACD_FAST_SIG      TRAIL SL=1.0 ACT=0.30 TR=0.30 PF=1.75 WR=62%
+    IDX_ENGULF             TRAIL SL=1.5 ACT=0.50 TR=0.30 PF=1.46 WR=66%
+    ALL_LR_BREAK           TRAIL SL=1.0 ACT=0.30 TR=0.30 PF=1.45 WR=60%
+
+Saved data/5ers/sp500/combo_results.json
+==================================================================================================================================
+
+======== uk100 ========
+
+==================================================================================================================================
+5b. TOP 20 — SCORE = PF x WR x Rend x M+/TM / (1+|DD|) x min(1, n/500)
+==================================================================================================================================
+
+    #  Score  Nb  Trades    PF   WR      DD   Rend    M+  Combo Strats
+  ------------------------------------------------------------------------------------------------------------------------
+    1   0.32   4    1021  1.51  80%   -0.5%    +5% 10/13 [ Calmar] ALL_MACD_HIST, IDX_LATE_REV, ALL_CONSEC_REV, ALL_MACD_DIV
+    2   0.31   3     788  1.51  83%   -0.3%    +4% 12/13 [ Calmar] ALL_MACD_HIST, IDX_LATE_REV, ALL_CONSEC_REV
+    3   0.30   3     778  1.53  80%   -0.4%    +4% 11/13 [     PF] ALL_MACD_HIST, IDX_LATE_REV, ALL_MACD_DIV
+    4   0.20   2     531  1.54  84%   -0.3%    +2% 11/13 [ Calmar] ALL_MACD_HIST, IDX_LATE_REV
+    5   0.18   2     540  1.52  82%   -0.4%    +3% 10/13 [ Sharpe] ALL_MACD_HIST, ALL_MACD_DIV
+    6   0.14   2     550  1.46  86%   -0.2%    +2% 10/13 [  MinDD] ALL_MACD_HIST, ALL_CONSEC_REV
+
+==================================================================================================================================
+6. DETAIL DES MEILLEURES COMPOSITIONS
+==================================================================================================================================
+
+Saved data/5ers/uk100/combo_results.json
+==================================================================================================================================
+
+DONE

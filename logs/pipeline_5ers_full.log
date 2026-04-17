@@ -1,0 +1,133 @@
+======== xauusd ========
+
+  Composition Greedy 15:
+    IDX_VWAP_BOUNCE        TRAIL SL=1.5 ACT=0.50 TR=0.50 PF=2.11 WR=65%
+    ALL_BB_TIGHT           TRAIL SL=3.0 ACT=0.75 TR=0.75 PF=1.73 WR=71%
+    PO3_SWEEP              TRAIL SL=2.0 ACT=0.75 TR=0.75 PF=1.83 WR=73%
+    LON_KZ                 TPSL  SL=3.0 TP=0.75          PF=1.95 WR=87%
+    TOK_PREVEXT            TRAIL SL=2.0 ACT=0.75 TR=0.75 PF=1.92 WR=64%
+    D8                     TPSL  SL=1.0 TP=2.00          PF=1.79 WR=50%
+    IDX_PREV_HL            TRAIL SL=3.0 ACT=0.50 TR=0.50 PF=1.59 WR=73%
+    NY_GAP                 TRAIL SL=1.5 ACT=0.50 TR=0.50 PF=1.44 WR=52%
+    ALL_FVG_BULL           TRAIL SL=3.0 ACT=1.00 TR=0.50 PF=1.60 WR=69%
+    TOK_FISHER             TRAIL SL=2.0 ACT=1.00 TR=1.00 PF=1.38 WR=57%
+    TOK_WILLR              TPSL  SL=1.5 TP=0.50          PF=1.54 WR=77%
+    ALL_ELDER_BULL         TRAIL SL=3.0 ACT=0.50 TR=0.50 PF=1.51 WR=75%
+    LON_TOKEND             TRAIL SL=3.0 ACT=0.50 TR=0.30 PF=1.61 WR=73%
+    IDX_ORB30              TRAIL SL=3.0 ACT=0.50 TR=1.00 PF=1.57 WR=58%
+    TOK_STOCH              TRAIL SL=3.0 ACT=0.50 TR=0.50 PF=1.53 WR=75%
+
+==================================================================================================================================
+Saved data/5ers/optim_data.pkl
+
+======== jpn225 ========
+==================================================================================================================================
+RAPPORT FINAL
+==================================================================================================================================
+
+                 Combo   Trades     PF     WR     DD 1%       Rend 1%      M+
+  --------------------  -------  -----  -----  --------  ------------  ------
+              Greedy 2      522   1.57    74%     -6.6%         +109%  12/13
+              Greedy 3      688   1.65    76%     -6.8%         +187%  12/13
+              Greedy 4      940   1.64    77%    -11.8%         +277%  12/13
+              Greedy 5     1244   1.61    77%    -17.5%         +389%  12/13
+
+  Composition Greedy 5:
+    ALL_NR4                TRAIL SL=3.0 ACT=0.50 TR=0.30 PF=1.71 WR=78%
+    LON_BIGGAP             TRAIL SL=2.0 ACT=0.75 TR=0.75 PF=1.45 WR=68%
+    ALL_STOCH_PIVOT        TRAIL SL=2.0 ACT=0.30 TR=0.30 PF=1.71 WR=79%
+    TOK_NR4                TRAIL SL=3.0 ACT=0.50 TR=0.50 PF=1.71 WR=79%
+    IDX_NR4                TRAIL SL=3.0 ACT=0.50 TR=0.30 PF=1.71 WR=78%
+
+==================================================================================================================================
+Saved data/5ers/jpn225/optim_data.pkl
+
+======== dax40 ========
+
+  Composition Greedy 15:
+    ALL_MACD_HIST          TRAIL SL=1.5 ACT=0.30 TR=0.30 PF=2.05 WR=68%
+    ALL_STOCH_OB           TRAIL SL=0.5 ACT=0.30 TR=0.30 PF=1.72 WR=43%
+    ALL_MSTAR              TRAIL SL=0.5 ACT=0.30 TR=0.30 PF=1.61 WR=47%
+    ALL_ENGULF             TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.68 WR=80%
+    ALL_FIB_618            TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.75 WR=77%
+    IDX_TREND_DAY          TRAIL SL=2.0 ACT=0.30 TR=0.30 PF=1.58 WR=65%
+    ALL_CONSEC_REV         TRAIL SL=1.0 ACT=0.30 TR=0.30 PF=1.58 WR=57%
+    IDX_BB_REV             TRAIL SL=3.0 ACT=0.50 TR=0.30 PF=1.49 WR=73%
+    TOK_FADE               TRAIL SL=3.0 ACT=0.50 TR=0.50 PF=1.49 WR=71%
+    ALL_RSI_DIV            TRAIL SL=1.0 ACT=0.30 TR=0.30 PF=1.58 WR=57%
+    TOK_WILLR              TRAIL SL=1.5 ACT=0.30 TR=0.30 PF=1.59 WR=62%
+    ALL_FISHER_9           TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.86 WR=75%
+    TOK_FISHER             TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.95 WR=75%
+    IDX_ENGULF             TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.68 WR=80%
+    IDX_PREV_HL            TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.68 WR=68%
+
+==================================================================================================================================
+Saved data/5ers/dax40/optim_data.pkl
+
+======== nas100 ========
+
+  Composition Greedy 5:
+    D8                     TRAIL SL=1.5 ACT=0.50 TR=0.30 PF=2.02 WR=62%
+    ALL_STOCH_RSI          TRAIL SL=1.0 ACT=0.30 TR=0.30 PF=1.43 WR=62%
+    LON_STOCH              TRAIL SL=2.0 ACT=1.00 TR=1.00 PF=1.47 WR=62%
+    ALL_CCI_100            TRAIL SL=1.0 ACT=0.30 TR=0.30 PF=1.40 WR=60%
+    ALL_WILLR_7            TRAIL SL=1.5 ACT=0.30 TR=0.30 PF=1.48 WR=69%
+
+  Composition Greedy 8:
+    D8                     TRAIL SL=1.5 ACT=0.50 TR=0.30 PF=2.02 WR=62%
+    ALL_STOCH_RSI          TRAIL SL=1.0 ACT=0.30 TR=0.30 PF=1.43 WR=62%
+    LON_STOCH              TRAIL SL=2.0 ACT=1.00 TR=1.00 PF=1.47 WR=62%
+    ALL_CCI_100            TRAIL SL=1.0 ACT=0.30 TR=0.30 PF=1.40 WR=60%
+    ALL_WILLR_7            TRAIL SL=1.5 ACT=0.30 TR=0.30 PF=1.48 WR=69%
+    ALL_DOJI_REV           TRAIL SL=1.5 ACT=0.30 TR=0.30 PF=1.47 WR=69%
+    ALL_RSI_50             TRAIL SL=2.0 ACT=0.30 TR=0.30 PF=1.56 WR=74%
+    ALL_ADX_RSI50          TRAIL SL=2.0 ACT=0.30 TR=0.30 PF=1.56 WR=74%
+
+==================================================================================================================================
+Saved data/5ers/nas100/optim_data.pkl
+
+======== sp500 ========
+    ALL_RSI_EXTREME        TRAIL SL=1.5 ACT=0.30 TR=0.30 PF=1.53 WR=71%
+    ALL_ENGULF             TRAIL SL=1.5 ACT=0.50 TR=0.30 PF=1.46 WR=66%
+    IDX_RSI_REV            TRAIL SL=1.5 ACT=0.30 TR=0.30 PF=1.53 WR=71%
+    ALL_MACD_FAST_SIG      TRAIL SL=1.0 ACT=0.30 TR=0.30 PF=1.75 WR=62%
+    IDX_ENGULF             TRAIL SL=1.5 ACT=0.50 TR=0.30 PF=1.46 WR=66%
+
+  Composition Greedy 10:
+    TOK_FISHER             TRAIL SL=1.0 ACT=0.30 TR=0.30 PF=1.80 WR=61%
+    IDX_CONSEC_REV         TRAIL SL=1.5 ACT=0.50 TR=0.50 PF=1.78 WR=67%
+    ALL_HAMMER             TRAIL SL=1.0 ACT=0.30 TR=0.30 PF=1.56 WR=59%
+    ALL_RSI_EXTREME        TRAIL SL=1.5 ACT=0.30 TR=0.30 PF=1.53 WR=71%
+    ALL_ENGULF             TRAIL SL=1.5 ACT=0.50 TR=0.30 PF=1.46 WR=66%
+    IDX_RSI_REV            TRAIL SL=1.5 ACT=0.30 TR=0.30 PF=1.53 WR=71%
+    ALL_MACD_FAST_SIG      TRAIL SL=1.0 ACT=0.30 TR=0.30 PF=1.75 WR=62%
+    IDX_ENGULF             TRAIL SL=1.5 ACT=0.50 TR=0.30 PF=1.46 WR=66%
+    ALL_MACD_HIST          TRAIL SL=2.0 ACT=0.50 TR=0.50 PF=1.47 WR=72%
+    ALL_LR_BREAK           TRAIL SL=1.0 ACT=0.30 TR=0.30 PF=1.45 WR=60%
+
+==================================================================================================================================
+Saved data/5ers/sp500/optim_data.pkl
+
+======== uk100 ========
+RAPPORT FINAL
+==================================================================================================================================
+
+                 Combo   Trades     PF     WR     DD 1%       Rend 1%      M+
+  --------------------  -------  -----  -----  --------  ------------  ------
+              Greedy 2      531   1.51    84%     -5.4%          +58%  11/13
+              Greedy 3      788   1.50    83%     -6.0%          +96%  11/13
+              Greedy 4     1003   1.41    78%     -8.1%         +142%  12/13
+              Greedy 5     1233   1.41    77%    -10.6%         +227%  10/13
+              Greedy 6     1365   1.41    76%    -11.2%         +267%  11/13
+
+  Composition Greedy 5:
+    ALL_MACD_HIST          TPSL  SL=3.0 TP=0.50          PF=2.03 WR=90%
+    IDX_LATE_REV           TRAIL SL=2.0 ACT=0.30 TR=0.30 PF=1.52 WR=76%
+    ALL_CONSEC_REV         TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.76 WR=81%
+    LON_PREV               TRAIL SL=3.0 ACT=0.50 TR=0.50 PF=1.39 WR=61%
+    ALL_MACD_DIV           TRAIL SL=3.0 ACT=1.00 TR=0.50 PF=1.74 WR=74%
+
+==================================================================================================================================
+Saved data/5ers/uk100/optim_data.pkl
+
+DONE

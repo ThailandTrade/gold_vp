@@ -1,0 +1,73 @@
+Loading data (btcusd) 15m HL...
+Precalcul indicateurs crypto...
+Collecte signaux...
+Done. 32 strats, 15254 signaux total.
+
+Optimisation exits...
+  CRYPTO_ATR_SPIKE       --- AUCUNE CONFIG VIABLE ---
+  CRYPTO_AVWAP_BOUNCE    --- AUCUNE CONFIG VIABLE ---
+  CRYPTO_BBKC_SQUEEZE    --- AUCUNE CONFIG VIABLE ---
+  CRYPTO_BB_OUTLIER      --- AUCUNE CONFIG VIABLE ---
+  CRYPTO_BOS_FVG         --- AUCUNE CONFIG VIABLE ---
+  CRYPTO_DONCHIAN_20     --- AUCUNE CONFIG VIABLE ---
+  CRYPTO_DONCHIAN_50     --- AUCUNE CONFIG VIABLE ---
+  CRYPTO_DOUBLE_BOT_TOP  --- AUCUNE CONFIG VIABLE ---
+  CRYPTO_EMA_21_55_ADX   TPSL  SL=2.0 TP=2.00     PF=1.08 WR=57% n= 402 split=Y
+  CRYPTO_HA_TREND        --- AUCUNE CONFIG VIABLE ---
+  CRYPTO_HMA_TRIPLE      --- AUCUNE CONFIG VIABLE ---
+  CRYPTO_HTF_BIAS        --- AUCUNE CONFIG VIABLE ---
+  CRYPTO_HVN_REJECT      --- AUCUNE CONFIG VIABLE ---
+  CRYPTO_ICHIMOKU_CROSS  TRAIL SL=3.0 ACT=1.00 TR=0.75 PF=1.08 WR=68% n= 503 split=Y
+  CRYPTO_INV_HS          TRAIL SL=3.0 ACT=0.50 TR=0.30 PF=1.87 WR=84% n= 103 split=Y
+  CRYPTO_KELTNER_MOMO    --- AUCUNE CONFIG VIABLE ---
+  CRYPTO_LIQ_SWEEP       --- AUCUNE CONFIG VIABLE ---
+  CRYPTO_LONDON_OR       --- AUCUNE CONFIG VIABLE ---
+  CRYPTO_LVN_BRK         TRAIL SL=3.0 ACT=0.50 TR=1.00 PF=1.11 WR=48% n= 582 split=Y
+  CRYPTO_MACD_ZERO       --- AUCUNE CONFIG VIABLE ---
+  CRYPTO_NR7             --- AUCUNE CONFIG VIABLE ---
+  CRYPTO_ORB_UTC         --- AUCUNE CONFIG VIABLE ---
+  CRYPTO_ORDER_BLOCK     --- AUCUNE CONFIG VIABLE ---
+  CRYPTO_OTE_618         --- AUCUNE CONFIG VIABLE ---
+  CRYPTO_POC_MIGRATION   --- AUCUNE CONFIG VIABLE ---
+  CRYPTO_PSAR_EMA200     --- AUCUNE CONFIG VIABLE ---
+  CRYPTO_RSI_DEEP_DIV    TPSL  SL=2.5 TP=2.00     PF=2.23 WR=74% n=  46 split=Y
+  CRYPTO_STOCH_RSI_EXTREME --- AUCUNE CONFIG VIABLE ---
+  CRYPTO_SUPERTREND_FLIP TRAIL SL=3.0 ACT=0.75 TR=0.30 PF=1.54 WR=74% n=  99 split=Y
+  CRYPTO_VWAP_RECLAIM    --- AUCUNE CONFIG VIABLE ---
+  CRYPTO_WEEKLY_PIVOT    --- AUCUNE CONFIG VIABLE ---
+  CRYPTO_WYCKOFF_SPRING  --- AUCUNE CONFIG VIABLE ---
+
+  6/32 strats avec config viable
+
+Filtre marge WR > 8%...
+  CRYPTO_EMA_21_55_ADX   WR=57% RR=0.81 WRmin=55% marge=+1.8% SKIP
+  CRYPTO_ICHIMOKU_CROSS  WR=68% RR=0.52 WRmin=66% marge=+1.7% SKIP
+  CRYPTO_INV_HS          WR=84% RR=0.34 WRmin=74% marge=+10.1% OK
+  CRYPTO_LVN_BRK         WR=48% RR=1.18 WRmin=46% marge=+2.6% SKIP
+  CRYPTO_RSI_DEEP_DIV    WR=74% RR=0.79 WRmin=56% marge=+18.0% OK
+  CRYPTO_SUPERTREND_FLIP WR=74% RR=0.55 WRmin=65% marge=+9.1% OK
+
+  3/6 strats safe (marge>8.0%)
+
+Construction arrays trades...
+
+==================================================================================================================================
+GREEDY COMBO BUILDER (3 strats)
+==================================================================================================================================
+
+  +CRYPTO_SUPERTREND_FLIP ( 2) n=  142 PF=1.58 WR=75% DD=-4.4% Rend=+25% M+=15/24 [TRAIL SL=3.0 0.75/0.30]
+
+  +CRYPTO_INV_HS          ( 3) n=  244 PF=1.72 WR=79% DD=-6.6% Rend=+46% M+=19/24 [TRAIL SL=3.0 0.50/0.30]
+
+==================================================================================================================================
+RAPPORT FINAL
+==================================================================================================================================
+
+                 Combo   Trades     PF     WR     DD 1%       Rend 1%      M+
+  --------------------  -------  -----  -----  --------  ------------  ------
+              Greedy 2      142   1.58    75%     -4.4%          +25%  15/24
+              Greedy 3      244   1.72    79%     -6.6%          +46%  19/24
+
+==================================================================================================================================
+Saved data/crypto/btcusd/optim_data.pkl
+DONE

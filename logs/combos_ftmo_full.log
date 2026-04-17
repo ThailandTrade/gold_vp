@@ -1,0 +1,103 @@
+======== xauusd ========
+    IDX_VWAP_BOUNCE        TRAIL SL=1.5 ACT=0.50 TR=0.50 PF=2.13 WR=63%
+
+  #10 [Calmar 7] PF=1.60 WR=70% DD=-0.4% Rend=+10% Sharpe=5.5 M+=13/13
+  Correlation: avg=0.146 max=0.457
+  Sessions: {'London': 1, 'All': 5, 'Tokyo': 1}
+    PO3_SWEEP              TRAIL SL=1.5 ACT=0.75 TR=0.75 PF=2.23 WR=69%
+    ALL_BB_TIGHT           TRAIL SL=3.0 ACT=0.75 TR=0.75 PF=1.88 WR=72%
+    ALL_MSTAR              TRAIL SL=2.0 ACT=0.50 TR=0.30 PF=2.12 WR=77%
+    IDX_VWAP_BOUNCE        TRAIL SL=1.5 ACT=0.50 TR=0.50 PF=2.13 WR=63%
+    TOK_WILLR              TRAIL SL=3.0 ACT=0.50 TR=0.50 PF=1.74 WR=77%
+    D8                     TRAIL SL=1.0 ACT=1.00 TR=0.75 PF=1.72 WR=52%
+    IDX_PREV_HL            TRAIL SL=3.0 ACT=1.00 TR=0.50 PF=1.73 WR=68%
+
+Saved data/ftmo/combo_results.json
+==================================================================================================================================
+
+======== ger40_cash ========
+    ALL_MACD_HIST          TRAIL SL=2.0 ACT=0.30 TR=0.30 PF=2.71 WR=75%
+    ALL_ADX_RSI50          TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.79 WR=81%
+    ALL_ELDER_BULL         TRAIL SL=3.0 ACT=0.50 TR=0.50 PF=1.90 WR=77%
+    TOK_FISHER             TRAIL SL=2.0 ACT=0.30 TR=0.30 PF=2.41 WR=72%
+    ALL_WILLR_7            TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.59 WR=77%
+    ALL_FISHER_9           TRAIL SL=2.0 ACT=0.30 TR=0.30 PF=2.03 WR=71%
+    TOK_WILLR              TRAIL SL=2.0 ACT=0.30 TR=0.30 PF=1.59 WR=70%
+    ALL_RSI_DIV            TRAIL SL=1.0 ACT=0.30 TR=0.30 PF=1.95 WR=59%
+    TOK_STOCH              TRAIL SL=3.0 ACT=0.75 TR=0.30 PF=1.49 WR=72%
+    ALL_FIB_618            TRAIL SL=3.0 ACT=0.75 TR=0.30 PF=1.42 WR=68%
+    ALL_BB_SQUEEZE         TRAIL SL=2.0 ACT=0.30 TR=0.30 PF=1.56 WR=68%
+    ALL_WILLR_14           TRAIL SL=2.0 ACT=0.75 TR=0.75 PF=1.65 WR=62%
+
+Saved data/ftmo/ger40_cash/combo_results.json
+==================================================================================================================================
+
+======== us500_cash ========
+   10   0.53   5    1194  1.52  67%   -0.6%   +11% 10/13 [ Calmar] TOK_FISHER, ALL_RSI_EXTREME, IDX_CONSEC_REV, ALL_ELDER_BULL, ALL_LR_BREAK
+   11   0.52   8    1912  1.45  67%   -1.4%   +16% 11/13 [ Calmar] TOK_FISHER, ALL_RSI_EXTREME, IDX_CONSEC_REV, ALL_ELDER_BULL, ALL_LR_BREAK, IDX_RSI_REV, ALL_FISHER_9, ALL_MACD_FAST_SIG
+   12   0.50   5    1269  1.54  68%   -0.8%   +12% 10/13 [Diverse] TOK_FISHER, IDX_CONSEC_REV, ALL_RSI_EXTREME, ALL_ELDER_BULL, ALL_MACD_FAST_SIG
+   13   0.50   6    1414  1.45  65%   -0.9%   +12% 11/13 [Diverse] TOK_FISHER, IDX_CONSEC_REV, ALL_RSI_EXTREME, ALL_ELDER_BULL, ALL_MACD_FAST_SIG, ALL_LR_BREAK
+   14   0.39   2     516  1.61  65%   -0.4%    +6% 12/13 [ Calmar] TOK_FISHER, ALL_RSI_EXTREME
+   15   0.37   3     760  1.65  69%   -0.9%    +8% 10/13 [     PF] TOK_FISHER, IDX_CONSEC_REV, ALL_ELDER_BULL
+   16   0.35   2     514  1.66  65%   -0.6%    +6% 11/13 [     PF] TOK_FISHER, IDX_CONSEC_REV
+   17   0.27   2     514  1.65  67%   -0.9%    +6% 11/13 [  PF*WR] TOK_FISHER, ALL_ELDER_BULL
+
+==================================================================================================================================
+6. DETAIL DES MEILLEURES COMPOSITIONS
+==================================================================================================================================
+
+Saved data/ftmo/us500_cash/combo_results.json
+==================================================================================================================================
+
+======== uk100_cash ========
+==================================================================================================================================
+5b. TOP 20 — SCORE = PF x WR x Rend x M+/TM / (1+|DD|) x min(1, n/500)
+==================================================================================================================================
+
+    #  Score  Nb  Trades    PF   WR      DD   Rend    M+  Combo Strats
+  ------------------------------------------------------------------------------------------------------------------------
+    1   0.18   2     521  1.47  77%   -0.4%    +3% 10/13 [ Calmar] ALL_MACD_DIV, ALL_CONSEC_REV
+    2   0.15   3     772  1.37  74%   -0.9%    +4% 10/13 [ Calmar] ALL_MACD_DIV, ALL_CONSEC_REV, ALL_RSI_DIV
+
+==================================================================================================================================
+6. DETAIL DES MEILLEURES COMPOSITIONS
+==================================================================================================================================
+
+Saved data/ftmo/uk100_cash/combo_results.json
+==================================================================================================================================
+
+======== us100_cash ========
+
+  #10 [Calmar 8] PF=1.44 WR=70% DD=-1.1% Rend=+13% Sharpe=4.4 M+=12/13
+  Correlation: avg=0.141 max=0.993
+  Sessions: {'All': 7, 'London': 1}
+    D8                     TRAIL SL=1.5 ACT=0.50 TR=0.30 PF=2.03 WR=62%
+    ALL_HMA_CROSS          TRAIL SL=1.5 ACT=0.30 TR=0.30 PF=1.49 WR=75%
+    ALL_STOCH_RSI          TRAIL SL=1.0 ACT=0.30 TR=0.30 PF=1.47 WR=63%
+    LON_STOCH              TRAIL SL=2.0 ACT=1.00 TR=1.00 PF=1.43 WR=62%
+    ALL_ADX_RSI50          TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.65 WR=81%
+    ALL_RSI_50             TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.62 WR=81%
+    ALL_WILLR_7            TRAIL SL=1.5 ACT=0.30 TR=0.30 PF=1.51 WR=69%
+    ALL_CCI_100            TRAIL SL=1.0 ACT=0.30 TR=0.30 PF=1.39 WR=59%
+
+Saved data/ftmo/us100_cash/combo_results.json
+==================================================================================================================================
+
+======== us30_cash ========
+==================================================================================================================================
+6. DETAIL DES MEILLEURES COMPOSITIONS
+==================================================================================================================================
+
+  #1 [PF 5] PF=1.42 WR=69% DD=-1.2% Rend=+8% Sharpe=4.3 M+=12/13
+  Correlation: avg=0.124 max=0.267
+  Sessions: {'All': 5}
+    ALL_MACD_HIST          TRAIL SL=2.0 ACT=0.30 TR=0.30 PF=1.73 WR=79%
+    ALL_FIB_618            TRAIL SL=3.0 ACT=1.00 TR=1.00 PF=1.57 WR=70%
+    ALL_MSTAR              TRAIL SL=1.0 ACT=0.30 TR=0.30 PF=1.54 WR=65%
+    IDX_PREV_HL            TRAIL SL=3.0 ACT=0.50 TR=0.50 PF=1.65 WR=65%
+    IDX_VWAP_BOUNCE        TRAIL SL=3.0 ACT=0.75 TR=0.50 PF=1.66 WR=61%
+
+Saved data/ftmo/us30_cash/combo_results.json
+==================================================================================================================================
+
+DONE

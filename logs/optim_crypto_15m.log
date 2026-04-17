@@ -1,0 +1,40 @@
+=== aaveusd ===
+
+Construction arrays trades...
+
+Aucune strat safe. Arret.
+Saved data/crypto/aaveusd/optim_data.pkl (vide)
+=== adausd ===
+                 Combo   Trades     PF     WR     DD 1%       Rend 1%      M+
+  --------------------  -------  -----  -----  --------  ------------  ------
+
+==================================================================================================================================
+Saved data/crypto/adausd/optim_data.pkl
+=== algousd ===
+                 Combo   Trades     PF     WR     DD 1%       Rend 1%      M+
+  --------------------  -------  -----  -----  --------  ------------  ------
+
+==================================================================================================================================
+Saved data/crypto/algousd/optim_data.pkl
+=== avausd ===
+
+Construction arrays trades...
+
+Aucune strat safe. Arret.
+Saved data/crypto/avausd/optim_data.pkl (vide)
+=== bchusd ===
+
+Construction arrays trades...
+
+Aucune strat safe. Arret.
+Saved data/crypto/bchusd/optim_data.pkl (vide)
+=== bnbusd ===
+
+Construction arrays trades...
+
+Aucune strat safe. Arret.
+Saved data/crypto/bnbusd/optim_data.pkl (vide)
+=== btcusd ===
+Loading data (btcusd) 15m HL...
+Precalcul indicateurs...
+Collecte signaux...

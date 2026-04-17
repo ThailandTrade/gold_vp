@@ -1,0 +1,133 @@
+======== xauusd ========
+
+  Composition Greedy 15:
+    PO3_SWEEP              TRAIL SL=1.5 ACT=0.75 TR=0.75 PF=2.23 WR=69%
+    LON_KZ                 TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.97 WR=85%
+    ALL_MSTAR              TRAIL SL=2.0 ACT=0.50 TR=0.30 PF=2.12 WR=77%
+    LON_TOKEND             TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=2.07 WR=78%
+    TOK_PREVEXT            TRAIL SL=1.5 ACT=0.75 TR=0.75 PF=2.06 WR=56%
+    IDX_VWAP_BOUNCE        TRAIL SL=1.5 ACT=0.50 TR=0.50 PF=2.13 WR=63%
+    TOK_WILLR              TRAIL SL=3.0 ACT=0.50 TR=0.50 PF=1.74 WR=77%
+    IDX_PREV_HL            TRAIL SL=3.0 ACT=1.00 TR=0.50 PF=1.73 WR=68%
+    NY_LONMOM              TRAIL SL=1.0 ACT=0.30 TR=0.30 PF=1.43 WR=38%
+    ALL_FVG_BULL           TRAIL SL=3.0 ACT=0.50 TR=0.50 PF=1.59 WR=74%
+    TOK_FADE               TRAIL SL=0.5 ACT=0.30 TR=0.30 PF=1.85 WR=37%
+    ALL_BB_TIGHT           TRAIL SL=3.0 ACT=0.75 TR=0.75 PF=1.88 WR=72%
+    ALL_MACD_RSI           TRAIL SL=1.5 ACT=0.30 TR=0.30 PF=1.53 WR=65%
+    ALL_STOCH_OB           TRAIL SL=3.0 ACT=0.50 TR=0.50 PF=1.75 WR=77%
+    D8                     TRAIL SL=1.0 ACT=1.00 TR=0.75 PF=1.72 WR=52%
+
+==================================================================================================================================
+Saved data/ftmo/optim_data.pkl
+
+======== ger40_cash ========
+
+  Composition Greedy 15:
+    ALL_MACD_HIST          TRAIL SL=2.0 ACT=0.30 TR=0.30 PF=2.71 WR=75%
+    ALL_MACD_DIV           TRAIL SL=1.0 ACT=0.30 TR=0.30 PF=1.86 WR=60%
+    ALL_RSI_DIV            TRAIL SL=1.0 ACT=0.30 TR=0.30 PF=1.95 WR=59%
+    TOK_FISHER             TRAIL SL=2.0 ACT=0.30 TR=0.30 PF=2.41 WR=72%
+    ALL_ENGULF             TRAIL SL=1.5 ACT=0.30 TR=0.30 PF=1.66 WR=62%
+    ALL_FIB_618            TRAIL SL=3.0 ACT=0.75 TR=0.30 PF=1.42 WR=68%
+    IDX_ENGULF             TRAIL SL=1.5 ACT=0.30 TR=0.30 PF=1.66 WR=62%
+    ALL_ELDER_BULL         TRAIL SL=3.0 ACT=0.50 TR=0.50 PF=1.90 WR=77%
+    TOK_STOCH              TRAIL SL=3.0 ACT=0.75 TR=0.30 PF=1.49 WR=72%
+    TOK_WILLR              TRAIL SL=2.0 ACT=0.30 TR=0.30 PF=1.59 WR=70%
+    ALL_FISHER_9           TRAIL SL=2.0 ACT=0.30 TR=0.30 PF=2.03 WR=71%
+    ALL_WILLR_14           TRAIL SL=2.0 ACT=0.75 TR=0.75 PF=1.65 WR=62%
+    IDX_TREND_DAY          TRAIL SL=2.0 ACT=0.30 TR=0.30 PF=1.46 WR=61%
+    ALL_ADX_RSI50          TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.79 WR=81%
+    ALL_PSAR_EMA           TRAIL SL=2.0 ACT=0.30 TR=0.30 PF=1.46 WR=65%
+
+==================================================================================================================================
+Saved data/ftmo/ger40_cash/optim_data.pkl
+
+======== us500_cash ========
+
+  Composition Greedy 5:
+    TOK_FISHER             TRAIL SL=1.0 ACT=0.50 TR=0.50 PF=1.94 WR=59%
+    ALL_RSI_EXTREME        TRAIL SL=1.5 ACT=0.30 TR=0.30 PF=1.56 WR=72%
+    IDX_CONSEC_REV         TRAIL SL=1.5 ACT=0.30 TR=0.30 PF=1.53 WR=72%
+    ALL_ELDER_BULL         TRAIL SL=2.0 ACT=0.30 TR=0.30 PF=1.64 WR=74%
+    ALL_LR_BREAK           TRAIL SL=1.0 ACT=0.30 TR=0.30 PF=1.47 WR=60%
+
+  Composition Greedy 8:
+    TOK_FISHER             TRAIL SL=1.0 ACT=0.50 TR=0.50 PF=1.94 WR=59%
+    ALL_RSI_EXTREME        TRAIL SL=1.5 ACT=0.30 TR=0.30 PF=1.56 WR=72%
+    IDX_CONSEC_REV         TRAIL SL=1.5 ACT=0.30 TR=0.30 PF=1.53 WR=72%
+    ALL_ELDER_BULL         TRAIL SL=2.0 ACT=0.30 TR=0.30 PF=1.64 WR=74%
+    ALL_LR_BREAK           TRAIL SL=1.0 ACT=0.30 TR=0.30 PF=1.47 WR=60%
+    IDX_RSI_REV            TRAIL SL=1.5 ACT=0.30 TR=0.30 PF=1.56 WR=72%
+    ALL_FISHER_9           TRAIL SL=1.5 ACT=0.30 TR=0.30 PF=1.42 WR=67%
+    ALL_MACD_FAST_SIG      TRAIL SL=1.0 ACT=0.30 TR=0.30 PF=1.44 WR=62%
+
+==================================================================================================================================
+Saved data/ftmo/us500_cash/optim_data.pkl
+
+======== uk100_cash ========
+==================================================================================================================================
+
+  Start: ALL_MACD_DIV
+    n=272 PF=1.53 WR=74% DD=-5.5% Rend=+46% M+=9/13
+
+  +ALL_CONSEC_REV         ( 2) n=  521 PF=1.48 WR=77% DD=-7.5% Rend=+73% M+=10/13 [TRAIL SL=3.0 0.30/0.30]
+
+  +ALL_RSI_DIV            ( 3) n=  772 PF=1.38 WR=74% DD=-17.1% Rend=+100% M+=10/13 [TRAIL SL=3.0 1.00/0.50]
+
+==================================================================================================================================
+RAPPORT FINAL
+==================================================================================================================================
+
+                 Combo   Trades     PF     WR     DD 1%       Rend 1%      M+
+  --------------------  -------  -----  -----  --------  ------------  ------
+              Greedy 2      521   1.48    77%     -7.5%          +73%  10/13
+              Greedy 3      772   1.38    74%    -17.1%         +100%  10/13
+
+==================================================================================================================================
+Saved data/ftmo/uk100_cash/optim_data.pkl
+
+======== us100_cash ========
+
+  Composition Greedy 5:
+    D8                     TRAIL SL=1.5 ACT=0.50 TR=0.30 PF=2.03 WR=62%
+    ALL_HMA_CROSS          TRAIL SL=1.5 ACT=0.30 TR=0.30 PF=1.49 WR=75%
+    ALL_STOCH_RSI          TRAIL SL=1.0 ACT=0.30 TR=0.30 PF=1.47 WR=63%
+    LON_STOCH              TRAIL SL=2.0 ACT=1.00 TR=1.00 PF=1.43 WR=62%
+    ALL_CCI_100            TRAIL SL=1.0 ACT=0.30 TR=0.30 PF=1.39 WR=59%
+
+  Composition Greedy 8:
+    D8                     TRAIL SL=1.5 ACT=0.50 TR=0.30 PF=2.03 WR=62%
+    ALL_HMA_CROSS          TRAIL SL=1.5 ACT=0.30 TR=0.30 PF=1.49 WR=75%
+    ALL_STOCH_RSI          TRAIL SL=1.0 ACT=0.30 TR=0.30 PF=1.47 WR=63%
+    LON_STOCH              TRAIL SL=2.0 ACT=1.00 TR=1.00 PF=1.43 WR=62%
+    ALL_CCI_100            TRAIL SL=1.0 ACT=0.30 TR=0.30 PF=1.39 WR=59%
+    ALL_WILLR_7            TRAIL SL=1.5 ACT=0.30 TR=0.30 PF=1.51 WR=69%
+    ALL_RSI_50             TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.62 WR=81%
+    ALL_ADX_RSI50          TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.65 WR=81%
+
+==================================================================================================================================
+Saved data/ftmo/us100_cash/optim_data.pkl
+
+======== us30_cash ========
+
+  Composition Greedy 5:
+    ALL_MACD_HIST          TRAIL SL=2.0 ACT=0.30 TR=0.30 PF=1.73 WR=79%
+    NY_LONEND              TRAIL SL=2.0 ACT=1.00 TR=1.00 PF=1.68 WR=46%
+    ALL_FIB_618            TRAIL SL=3.0 ACT=1.00 TR=1.00 PF=1.57 WR=70%
+    NY_LONMOM              TRAIL SL=1.0 ACT=1.00 TR=0.50 PF=1.68 WR=28%
+    IDX_VWAP_BOUNCE        TRAIL SL=3.0 ACT=0.75 TR=0.50 PF=1.66 WR=61%
+
+  Composition Greedy 8:
+    ALL_MACD_HIST          TRAIL SL=2.0 ACT=0.30 TR=0.30 PF=1.73 WR=79%
+    NY_LONEND              TRAIL SL=2.0 ACT=1.00 TR=1.00 PF=1.68 WR=46%
+    ALL_FIB_618            TRAIL SL=3.0 ACT=1.00 TR=1.00 PF=1.57 WR=70%
+    NY_LONMOM              TRAIL SL=1.0 ACT=1.00 TR=0.50 PF=1.68 WR=28%
+    IDX_VWAP_BOUNCE        TRAIL SL=3.0 ACT=0.75 TR=0.50 PF=1.66 WR=61%
+    IDX_PREV_HL            TRAIL SL=3.0 ACT=0.50 TR=0.50 PF=1.65 WR=65%
+    ALL_MSTAR              TRAIL SL=1.0 ACT=0.30 TR=0.30 PF=1.54 WR=65%
+    ALL_EMA_TREND_PB       TRAIL SL=1.0 ACT=0.30 TR=0.30 PF=1.42 WR=61%
+
+==================================================================================================================================
+Saved data/ftmo/us30_cash/optim_data.pkl
+
+DONE

@@ -1,0 +1,103 @@
+======== xauusd 15m ========
+    IDX_TREND_DAY          TRAIL SL=3.0 ACT=0.50 TR=0.50 PF=2.27 WR=83%
+    IDX_3SOLDIERS          TRAIL SL=3.0 ACT=1.00 TR=0.75 PF=1.67 WR=69%
+    ALL_MACD_HIST          TRAIL SL=1.5 ACT=0.50 TR=0.50 PF=1.48 WR=59%
+    ALL_BB_TIGHT           TRAIL SL=3.0 ACT=0.50 TR=0.50 PF=1.63 WR=78%
+    ALL_TRIX               TRAIL SL=1.0 ACT=0.30 TR=0.30 PF=1.31 WR=62%
+    ALL_KC_BRK             TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.76 WR=81%
+    IDX_VWAP_BOUNCE        TRAIL SL=3.0 ACT=1.00 TR=0.30 PF=1.74 WR=69%
+    IDX_KC_BRK             TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.76 WR=81%
+    TOK_STOCH              TRAIL SL=1.0 ACT=0.30 TR=0.30 PF=1.65 WR=58%
+    ALL_LR_BREAK           TRAIL SL=2.0 ACT=0.75 TR=0.75 PF=1.32 WR=61%
+    ALL_SUPERTREND         TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.52 WR=72%
+    ALL_DPO_14             TRAIL SL=2.0 ACT=0.50 TR=0.30 PF=1.54 WR=69%
+
+==================================================================================================================================
+Saved data/5ers/optim_data.pkl
+
+======== jpn225 15m ========
+    ALL_MSTAR              TRAIL SL=1.5 ACT=0.30 TR=0.30 PF=2.08 WR=75%
+    ALL_PSAR_EMA           TRAIL SL=3.0 ACT=0.50 TR=0.50 PF=1.91 WR=78%
+    ALL_EMA_821            TRAIL SL=3.0 ACT=0.75 TR=0.50 PF=1.31 WR=71%
+    ALL_3SOLDIERS          TPSL  SL=3.0 TP=0.75          PF=1.53 WR=84%
+    ALL_ELDER_BULL         TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.35 WR=80%
+    IDX_KC_BRK             TRAIL SL=2.0 ACT=0.75 TR=0.75 PF=1.24 WR=62%
+    ALL_EMA_921            TRAIL SL=3.0 ACT=0.75 TR=0.50 PF=1.40 WR=72%
+    ALL_FVG_BULL           TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.35 WR=79%
+    ALL_KC_BRK             TRAIL SL=2.0 ACT=0.75 TR=0.75 PF=1.24 WR=62%
+    ALL_SUPERTREND         TRAIL SL=3.0 ACT=0.50 TR=0.30 PF=1.79 WR=77%
+    ALL_ICHI_TK            TRAIL SL=2.0 ACT=0.30 TR=0.30 PF=1.44 WR=74%
+    ALL_FIB_618            TRAIL SL=3.0 ACT=0.75 TR=0.75 PF=1.30 WR=72%
+
+==================================================================================================================================
+Saved data/5ers/jpn225/optim_data.pkl
+
+======== dax40 15m ========
+    ALL_LR_BREAK           TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.38 WR=80%
+    IDX_KC_BRK             TRAIL SL=3.0 ACT=0.75 TR=0.75 PF=1.35 WR=70%
+    ALL_RSI_50             TRAIL SL=2.0 ACT=0.50 TR=1.00 PF=1.26 WR=48%
+    IDX_CONSEC_REV         TRAIL SL=1.5 ACT=1.00 TR=1.00 PF=1.27 WR=51%
+    ALL_SUPERTREND         TRAIL SL=2.0 ACT=0.50 TR=0.50 PF=1.30 WR=60%
+    TOK_FISHER             TRAIL SL=3.0 ACT=1.00 TR=0.30 PF=1.36 WR=71%
+    ALL_MTF_BRK            TRAIL SL=3.0 ACT=1.00 TR=1.00 PF=1.42 WR=67%
+    ALL_FVG_BULL           TPSL  SL=3.0 TP=1.50          PF=1.31 WR=73%
+    ALL_3SOLDIERS          TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.42 WR=76%
+    ALL_ADX_RSI50          TRAIL SL=2.0 ACT=0.75 TR=1.00 PF=1.29 WR=52%
+    ALL_KC_BRK             TRAIL SL=3.0 ACT=0.75 TR=0.75 PF=1.35 WR=70%
+    TOK_2BAR               TRAIL SL=3.0 ACT=0.75 TR=0.75 PF=1.55 WR=72%
+
+==================================================================================================================================
+Saved data/5ers/dax40/optim_data.pkl
+
+======== nas100 15m ========
+    ALL_EMA_921            TRAIL SL=3.0 ACT=1.00 TR=1.00 PF=1.53 WR=73%
+    ALL_ICHI_TK            TRAIL SL=3.0 ACT=1.00 TR=1.00 PF=1.75 WR=74%
+    ALL_MSTAR              TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.58 WR=88%
+    ALL_DC10               TRAIL SL=2.0 ACT=0.75 TR=0.75 PF=1.42 WR=69%
+    TOK_BIG                TRAIL SL=2.0 ACT=0.30 TR=0.30 PF=1.30 WR=75%
+    ALL_EMA_821            TRAIL SL=3.0 ACT=1.00 TR=1.00 PF=1.41 WR=73%
+    ALL_NR4                TRAIL SL=2.0 ACT=1.00 TR=1.00 PF=1.26 WR=65%
+    TOK_TRIX               TRAIL SL=2.0 ACT=0.75 TR=0.75 PF=1.61 WR=70%
+    ALL_RSI_50             TRAIL SL=1.0 ACT=0.30 TR=0.30 PF=1.39 WR=63%
+    IDX_GAP_CONT           TPSL  SL=2.5 TP=3.00          PF=1.27 WR=48%
+    IDX_NR4                TRAIL SL=2.0 ACT=1.00 TR=1.00 PF=1.26 WR=65%
+    IDX_VWAP_BOUNCE        TRAIL SL=3.0 ACT=0.50 TR=0.50 PF=1.33 WR=70%
+
+==================================================================================================================================
+Saved data/5ers/nas100/optim_data.pkl
+
+======== sp500 15m ========
+    ALL_LR_BREAK           TRAIL SL=3.0 ACT=1.00 TR=1.00 PF=1.35 WR=74%
+    ALL_MSTAR              TPSL  SL=3.0 TP=1.50          PF=1.66 WR=75%
+    ALL_ELDER_BULL         TRAIL SL=3.0 ACT=0.75 TR=0.75 PF=1.56 WR=76%
+    ALL_EMA_821            TRAIL SL=3.0 ACT=0.75 TR=0.75 PF=1.30 WR=77%
+    NY_ELDER               TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.31 WR=74%
+    ALL_PIVOT_BRK          TRAIL SL=1.5 ACT=0.30 TR=0.30 PF=1.35 WR=69%
+    LON_STOCH              TRAIL SL=3.0 ACT=0.50 TR=0.50 PF=1.42 WR=78%
+    IDX_VWAP_BOUNCE        TRAIL SL=2.0 ACT=0.30 TR=0.30 PF=1.28 WR=64%
+    ALL_FVG_BULL           TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.47 WR=85%
+    ALL_TRIX               TRAIL SL=2.0 ACT=0.50 TR=0.50 PF=1.37 WR=76%
+    ALL_MOM_14             TRAIL SL=1.0 ACT=0.50 TR=0.50 PF=1.35 WR=58%
+    ALL_BB_TIGHT           TRAIL SL=3.0 ACT=0.75 TR=0.75 PF=1.43 WR=76%
+
+==================================================================================================================================
+Saved data/5ers/sp500/optim_data.pkl
+
+======== uk100 15m ========
+    TOK_TRIX               TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=2.40 WR=89%
+    ALL_EMA_821            TRAIL SL=3.0 ACT=0.50 TR=0.50 PF=1.36 WR=78%
+    ALL_RSI_DIV            TPSL  SL=2.5 TP=1.00          PF=1.29 WR=76%
+    ALL_TRIX               TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.72 WR=82%
+    ALL_EMA_921            TRAIL SL=3.0 ACT=0.50 TR=0.50 PF=1.35 WR=78%
+    ALL_CONSEC_REV         TRAIL SL=1.0 ACT=0.30 TR=0.30 PF=1.31 WR=50%
+    ALL_LR_BREAK           TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.39 WR=83%
+    ALL_PIVOT_BRK          TRAIL SL=3.0 ACT=0.75 TR=0.30 PF=1.40 WR=69%
+    ALL_CCI_20_ZERO        TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.54 WR=85%
+    ALL_DPO_14             TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.53 WR=84%
+    ALL_CMO_14             TPSL  SL=2.5 TP=0.75          PF=1.35 WR=81%
+    IDX_RSI_REV            TRAIL SL=3.0 ACT=0.30 TR=0.30 PF=1.28 WR=73%
+
+==================================================================================================================================
+Saved data/5ers/uk100/optim_data.pkl
+
+DONE
