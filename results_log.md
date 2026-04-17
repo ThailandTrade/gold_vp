@@ -2,6 +2,32 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-17 — cleanup-v2 P1: menage 163 scripts racine
+
+Passage de 187 a 25 fichiers Python a la racine (-86%).
+
+**Supprime** (163 .py + 10 non-py):
+- 19 audit_* sauf analyze_combos garde
+- 12 backtest_* (sauf bt_portfolio.py)
+- 35 explore_* (tous)
+- 11 find_* (tous)
+- 9 simu_* (tous)
+- 18 test_*/verify_* (tests ponctuels)
+- 11 live_* (sauf live_mt5.py)
+- 7 optimize_* (sauf optimize_all.py, optimize_crypto.py)
+- 3 build_*, 3 mr_*, 4 phase2/4/6/7_*
+- 2 retest_*, duplicates configs, et divers (NUL, Capture.JPG, combo_results.json racine, paper_*, etc.)
+
+**Conserve** (25):
+- Core: strats, strat_exits, optimize_all, bt_portfolio, live_mt5, compare_today, backtest_engine
+- Infra: api_server, dashboard_live, vps_pusher, mt5_fetch_clean, check_candles_mt5_vs_db
+- Tools: analyze_combos (sera refactor P3), harvest_gold_ticks
+- Configs: config_{ftmo,5ers,icm}
+- Utils: phase1_poc_calculator, phase3_analyze
+- Crypto (non live): config_crypto, hl_fetch, crypto_data, strats_crypto, optimize_crypto, bt_portfolio_crypto
+
+**Smoke test**: imports strats, strat_exits, backtest_engine, config_ftmo OK. 92 strats, 6 instruments FTMO.
+
 ## 2026-04-17 — Branche cleanup-v2: plan de refactoring
 
 Apres audit critique (prolif scripts, duplication detect_all/optimize_all, overfitting structurel, combos fragiles, pkl obsoletes), plan de refonte majeure.
