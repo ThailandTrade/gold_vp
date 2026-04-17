@@ -2,6 +2,37 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-17 — Branche cleanup-v2: plan de refactoring
+
+Apres audit critique (prolif scripts, duplication detect_all/optimize_all, overfitting structurel, combos fragiles, pkl obsoletes), plan de refonte majeure.
+
+**Decisions:**
+- Abandon du concept "combo" (plus de Calmar 8/12, plus de selection greedy multi-strats)
+- **Mutex LONG/SHORT supprime**: les strats tradent librement, zero restriction inter-strats
+- Selection individuelle des strats par (broker, instrument)
+- Walk-forward OOS: **10 mois rolling, step 1 mois**
+
+**Criteres selection strat (par broker x instrument):**
+- PF >= 1.30
+- WR >= 65% (ou PF >= 1.5 pour TPSL high-RR)
+- n >= 200 trades
+- M+ >= 10/13 sur IS
+- PF OOS >= 1.15 (validation rolling)
+
+**Phases:**
+- P0 setup (branche + CLAUDE.md + log + push) ✓
+- P1 menage code (~70 scripts racine morts)
+- P2 unifier detect_all + optimize_all (supprimer duplication 200 lignes)
+- P3 supprimer mutex LONG/SHORT + `analyze_combos.py` + concept combo
+- P4 appliquer criteres de selection + regen pkl FTMO 15m
+- P5 walk-forward rolling 10m/1m
+- P6 regeneration finale + audit live
+
+**Hors scope de cette branche:**
+- Nouvelles strats (arret des ajouts)
+- Refonte SL/TP structure
+- Calibration spread
+
 ## 2026-04-17 — Phase C: resultats 4 nouvelles strats FTMO 15m
 
 Pkl FTMO 15m regenerees (6 instruments) avec 4 nouvelles strats + nouvelles candles.
