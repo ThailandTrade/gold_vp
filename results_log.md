@@ -2,6 +2,42 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-17 — cleanup-v2 P7b: bootstrap PORTEFEUILLE par instrument
+
+**Correction user (majeur):** Le bootstrap individuel par strat est trop strict. En portefeuille, la diversification entre strats (meme "atténuées") peut stabiliser le PF agrege.
+
+**Script:** `temp/bootstrap_portfolio.py` - agrege tous les trades des strats validees par instrument, block bootstrap mensuel x1000 sur le portefeuille complet.
+
+**Resultats FTMO 15m par instrument:**
+
+| Instrument | Strats | Trades | PF obs | CI 95% | Verdict |
+|---|---|---|---|---|---|
+| XAUUSD | 12 | 3321 | 1.69 | [1.29, 2.02] | ROBUSTE |
+| GER40 | 3 | 716 | 1.64 | [1.06, 2.29] | ATTENUE |
+| US500 | 7 | 1990 | 1.29 | [1.08, 1.53] | ATTENUE |
+| US100 | 11 | 2869 | 1.36 | [1.20, 1.59] | ROBUSTE |
+| US30 | 4 | 1071 | 1.45 | [1.26, 1.67] | ROBUSTE |
+| JP225 | 3 | 592 | 1.71 | [1.31, 2.19] | ROBUSTE |
+
+**Criteres:**
+- CI lower > 1.0 = edge significatif a 95%
+- CI lower > 1.20 = edge ROBUSTE (peu sensible a la composition des mois)
+- Tous les 6 instruments ont CI lower > 1.0 -> tous ont un edge significatif
+- 4 sur 6 ont CI lower > 1.20 -> edge robuste
+- 2 (GER40, US500) ont edge attenue (entre 1.0 et 1.20)
+
+**Comparaison avec bootstrap individuel (P7):**
+- Individuel: 4 strats edge robuste / 40 (10%)
+- Portefeuille: 4 instruments robustes / 6 (67%), 6 instruments significatifs / 6
+
+**Insight cle:** la diversification entre strats "attenuees" transforme un portefeuille fragile par strat en portefeuille robuste au niveau instrument. US500/US100/US30 ont 0 strat individuellement robuste, mais les portefeuilles tiennent.
+
+**Implications:**
+- On peut trader les 6 instruments avec confiance (CI > 1.0)
+- 4 ont un edge robuste (risk normal)
+- 2 sont attenues (risk reduit recommande)
+- Le user avait raison de contester le test individuel
+
 ## 2026-04-17 — cleanup-v2 P7: resultats bootstrap edge (brutal)
 
 **Script:** `temp/bootstrap_edge.py` - block bootstrap mensuel, 1000 resamples, 95% CI + p-value, correction Benjamini-Hochberg FDR 5%.
