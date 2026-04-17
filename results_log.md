@@ -2,6 +2,42 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-17 — cleanup-v2 P4+P5: walk-forward OOS integre
+
+**Design:**
+- Grille TPSL etendue: TP {0.25, 0.5, 0.75, 1.0, 1.5, 2.0, **2.5**, 3.0} — ajoute 2.5 pour completer RR=1 sur tous les SL
+- Grille TRAIL inchangee
+- Walk-forward: fenetres glissantes IS=10m / OOS=1m / step=1m = **3 fenetres** sur 13 mois de data
+- Pour chaque strat x fenetre: best_IS_config -> mesure PF_OOS
+- Validation stricte:
+  - n_total >= **100** trades
+  - median(PF_OOS) >= **1.20**
+  - pct fenetres profitables >= **70%** (donc 3/3 avec 3 fenetres)
+- PF OOS cappe a 10 (artifacts quand gl ~= 0)
+- Config finale = best sur full period avec score PF * WR/100
+
+**Resultats FTMO 15m (6 instruments):**
+
+| Instrument | Strats IS (avant) | Strats validees OOS |
+|---|---|---|
+| XAUUSD | 39 | **18** |
+| GER40.cash | 26 | **13** |
+| US500.cash | 31 | **7** |
+| US100.cash | 29 | **10** |
+| US30.cash | 19 | **13** |
+| JP225.cash | 14 | **5** |
+
+**Observations:**
+- Le filtre OOS 70% pct + median 1.20 divise par 2 le nombre de strats safe.
+- **Aucune config RR=1 selectionnee naturellement**: les strats robustes vont plutot TRAIL ou TPSL avec TP < SL (ex TP=0.25). Conclusion: forcer RR=1 n'aide pas l'anti-overfit ici.
+- **TRAIL domine** (~75% des configs validees). Coherent avec l'intuition: TRAIL adapte dynamiquement = + robuste.
+- **AVWAP_RECLAIM** passe WF sur 3/6 instruments (XAUUSD, GER40, JP225). Nouvelle strat validee.
+- **BOS_FVG** 2/6 (GER40, US500). Moins bon que prevu mais OK.
+- **EXH_GAP, FLAG_BRK, D8** ejectees partout (n_total < 100).
+- Doublons stats detectes: `ALL_MOM_14` == `ALL_CMO_14_ZERO`, `ALL_RSI_EXTREME` == `IDX_RSI_REV` (a nettoyer plus tard).
+
+**optimize_all.py final:** 333 -> 364 lignes (+31 pour walk-forward).
+
 ## 2026-04-17 — cleanup-v2 P3: suppression combos + mutex LONG/SHORT
 
 **Fichiers modifies:**

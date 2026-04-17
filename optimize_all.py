@@ -176,12 +176,21 @@ print(f"Done. {len(SIG)} strats, {sum(len(v) for v in SIG.values())} signaux tot
 # ── EXIT OPTIMIZATION GRID ──
 print("\nOptimisation exits...", flush=True)
 
-# Grid configs
-TPSL_GRID = [(sl, tp) for sl in [0.5, 1.0, 1.5, 2.0, 2.5, 3.0] for tp in [0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0]]
+# Grid configs (+ TP=2.5 pour completer RR=1 sur toutes les bornes SL)
+TP_VALS = [0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 2.5, 3.0]
+SL_VALS = [0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
+TPSL_GRID = [(sl, tp) for sl in SL_VALS for tp in TP_VALS]
 TRAIL_GRID = [(sl, act, trail) for sl in [0.5, 1.0, 1.5, 2.0, 3.0]
               for act in [0.3, 0.5, 0.75, 1.0] for trail in [0.3, 0.5, 0.75, 1.0]]
-# BE_TP_GRID retire: teste sur XAUUSD 15m, seulement 2/88 strats l'ont choisi (PF faible)
-# Code BE_TP conserve dans sim_exit_custom si besoin futur
+# BE_TP_GRID retire definitivement cleanup-v2
+
+# Walk-forward OOS parameters
+IS_MONTHS = 10
+OOS_MONTHS = 1
+STEP = 1
+MIN_N_TRADES = 100
+MIN_MEDIAN_PF_OOS = 1.20
+MIN_PCT_PROFITABLE_OOS = 0.70
 
 def eval_config(signals, etype, p1, p2, p3):
     """Evaluate one exit config on all signals for a strat."""
@@ -201,117 +210,142 @@ def eval_config(signals, etype, p1, p2, p3):
     avg_pnl = np.mean(pnls)
     return {'pf': pf, 'wr': wr, 'n': n, 'split': split, 'avg': avg_pnl, 'pnls': pnls}
 
+# ── WALK-FORWARD OOS VALIDATION ──
+# Construire les mois presents dans les donnees
+all_months = sorted(set((d.year, d.month) for strat_sigs in SIG.values() for (_, _, _, _, d, _) in strat_sigs))
+print(f"\nData span: {len(all_months)} mois ({all_months[0]} -> {all_months[-1]})")
+
+# Fenetres walk-forward: IS 10 mois + OOS 1 mois, step 1 mois
+wf_windows = []
+for i in range(0, len(all_months) - IS_MONTHS - OOS_MONTHS + 1, STEP):
+    is_set = set(all_months[i : i + IS_MONTHS])
+    oos_set = set(all_months[i + IS_MONTHS : i + IS_MONTHS + OOS_MONTHS])
+    wf_windows.append((is_set, oos_set))
+print(f"Walk-forward: {len(wf_windows)} fenetres (IS={IS_MONTHS}m, OOS={OOS_MONTHS}m, step={STEP}m)")
+print(f"Criteres: n_total >= {MIN_N_TRADES}, median(PF_OOS) >= {MIN_MEDIAN_PF_OOS}, pct profitable >= {MIN_PCT_PROFITABLE_OOS:.0%}\n")
+
+def _pnl_from_signals(sigs, etype, p1, p2, p3, is_open):
+    """Calcule les pnls (avec dates) pour une config donnee."""
+    out = []
+    for ci, di, entry, atr, date, sp in sigs:
+        b, ex = sim_exit_unified(ci, entry, di, atr, etype, p1, p2, p3, is_open)
+        pnl = ((ex - entry) if di == 1 else (entry - ex)) - sp - SPREAD_R * p1 * atr
+        out.append((pnl, date))
+    return out
+
+def _pf_of(pnls):
+    """Calcule PF d'une liste de pnls (cap a 10 pour eviter artifacts quand gl~=0)."""
+    gp = sum(p for p in pnls if p > 0)
+    gl = abs(sum(p for p in pnls if p < 0))
+    if gl < 0.001:
+        return 10.0 if gp > 0 else 0.0
+    pf = gp / gl
+    return min(pf, 10.0)
+
+def _window_pnls(pnls_dates, month_set):
+    """Extrait les pnls dont la date appartient au set de mois."""
+    return [p for (p, d) in pnls_dates if (d.year, d.month) in month_set]
+
 best_configs = {}
 for sn in sorted(SIG.keys()):
-    # Skip open strats (timing non reproductible en live, jamais dans les portfolios)
     if sn in OPEN_STRATS:
-        print(f"  {sn:22s} --- SKIP (open strat) ---")
+        print(f"  {sn:22s} --- SKIP (open strat)")
         continue
     sigs = SIG[sn]
-    is_open = False
-    sigs_adj = sigs
+    if len(sigs) < MIN_N_TRADES:
+        print(f"  {sn:22s} --- SKIP (n={len(sigs)} < {MIN_N_TRADES})")
+        continue
 
-    best = None; best_score = -1e9
-    # Test TPSL
+    # Pre-calcul: pnls pour chaque config (TPSL + TRAIL)
+    config_pnls = {}
     for sl, tp in TPSL_GRID:
-        results = []
-        for ci, di, entry, atr, date, sp in sigs_adj:
-            b, ex = sim_exit_unified(ci, entry, di, atr, 0, sl, tp, 0, is_open)
-            pnl = ((ex - entry) if di == 1 else (entry - ex)) - sp - SPREAD_R * sl * atr
-            results.append((pnl, date))
-        n = len(results)
-        if n < 10: continue
-        pnls = [r[0] for r in results]
-        gp = sum(p for p in pnls if p > 0); gl = abs(sum(p for p in pnls if p < 0)) + 0.001
-        pf = gp / gl; wr = sum(1 for p in pnls if p > 0) / n * 100
-        mid = n // 2; split = np.mean(pnls[:mid]) > 0 and np.mean(pnls[mid:]) > 0
-        if not split or pf < 1.05: continue
-        score = pf * (wr / 100)  # PF * WR balance
-        if score > best_score:
-            best_score = score; best = ('TPSL', sl, tp, 0, pf, wr, n, split, pnls)
-
-    # Test TRAIL
+        config_pnls[('TPSL', sl, tp, 0)] = _pnl_from_signals(sigs, 0, sl, tp, 0, False)
     for sl, act, trail in TRAIL_GRID:
-        results = []
-        for ci, di, entry, atr, date, sp in sigs_adj:
-            b, ex = sim_exit_unified(ci, entry, di, atr, 1, sl, act, trail, is_open)
-            pnl = ((ex - entry) if di == 1 else (entry - ex)) - sp - SPREAD_R * sl * atr
-            results.append((pnl, date))
-        n = len(results)
-        if n < 10: continue
-        pnls = [r[0] for r in results]
-        gp = sum(p for p in pnls if p > 0); gl = abs(sum(p for p in pnls if p < 0)) + 0.001
-        pf = gp / gl; wr = sum(1 for p in pnls if p > 0) / n * 100
-        mid = n // 2; split = np.mean(pnls[:mid]) > 0 and np.mean(pnls[mid:]) > 0
-        if not split or pf < 1.05: continue
+        config_pnls[('TRAIL', sl, act, trail)] = _pnl_from_signals(sigs, 1, sl, act, trail, False)
+
+    # Pour chaque fenetre: trouver best config IS, mesurer PF_OOS
+    pf_oos_list = []
+    for (is_set, oos_set) in wf_windows:
+        best_is_pf = -1; best_is_cfg = None
+        for cfg, pnls_dates in config_pnls.items():
+            is_pnls = _window_pnls(pnls_dates, is_set)
+            if len(is_pnls) < 10:
+                continue
+            pf_is = _pf_of(is_pnls)
+            if pf_is > best_is_pf:
+                best_is_pf = pf_is; best_is_cfg = cfg
+        if best_is_cfg is None:
+            continue
+        oos_pnls = _window_pnls(config_pnls[best_is_cfg], oos_set)
+        if len(oos_pnls) < 3:
+            continue
+        pf_oos_list.append(_pf_of(oos_pnls))
+
+    if len(pf_oos_list) < len(wf_windows):
+        print(f"  {sn:22s} --- SKIP (WF incomplet {len(pf_oos_list)}/{len(wf_windows)})")
+        continue
+
+    # Validation walk-forward
+    import statistics
+    median_pf_oos = statistics.median(pf_oos_list)
+    pct_profitable = sum(1 for p in pf_oos_list if p > 1.0) / len(pf_oos_list)
+
+    if median_pf_oos < MIN_MEDIAN_PF_OOS or pct_profitable < MIN_PCT_PROFITABLE_OOS:
+        print(f"  {sn:22s} FAIL WF  median={median_pf_oos:.2f}  pct={pct_profitable:.0%}  ({len(pf_oos_list)}w)")
+        continue
+
+    # Config finale: meilleure sur full period (parmi configs avec n >= MIN_N_TRADES)
+    best_full = None; best_full_score = -1
+    for cfg, pnls_dates in config_pnls.items():
+        pnls = [p for (p, _) in pnls_dates]
+        if len(pnls) < MIN_N_TRADES:
+            continue
+        pf = _pf_of(pnls); wr = sum(1 for p in pnls if p > 0) / len(pnls) * 100
         score = pf * (wr / 100)
-        if score > best_score:
-            best_score = score; best = ('TRAIL', sl, act, trail, pf, wr, n, split, pnls)
+        if score > best_full_score:
+            best_full_score = score; best_full = (cfg, pf, wr, len(pnls))
 
-    if best:
-        etype, p1, p2, p3, pf, wr, n, split, pnls = best
-        best_configs[sn] = {'type': etype, 'p1': p1, 'p2': p2, 'p3': p3,
-                            'pf': pf, 'wr': wr, 'n': n, 'split': split}
-        p2_label = 'TP' if etype=='TPSL' else 'ACT'
-        p3_label = '   ' if etype=='TPSL' else f'TR={p3:.2f}'
-        print(f"  {sn:22s} {etype:5s} SL={p1:.1f} {p2_label}={p2:.2f} {p3_label} PF={pf:.2f} WR={wr:.0f}% n={n:4d} split={'Y' if split else 'N'}")
-    else:
-        print(f"  {sn:22s} --- AUCUNE CONFIG VIABLE ---")
+    if best_full is None:
+        print(f"  {sn:22s} --- SKIP (aucune config n >= {MIN_N_TRADES})")
+        continue
 
-print(f"\n  {len(best_configs)}/{len(SIG)} strats avec config viable")
+    (etype, p1, p2, p3), pf, wr, n = best_full
+    best_configs[sn] = {
+        'type': etype, 'p1': p1, 'p2': p2, 'p3': p3,
+        'pf': pf, 'wr': wr, 'n': n,
+        'median_pf_oos': median_pf_oos,
+        'pct_profitable_oos': pct_profitable,
+        'wf_windows': len(pf_oos_list),
+    }
+    p2_label = 'TP' if etype == 'TPSL' else 'ACT'
+    p3_str = '' if etype == 'TPSL' else f' TR={p3:.2f}'
+    rr_tag = ' [RR=1]' if etype == 'TPSL' and abs(p1 - p2) < 0.01 else ''
+    print(f"  {sn:22s} {etype:5s} SL={p1:.1f} {p2_label}={p2:.2f}{p3_str} | PF={pf:.2f} WR={wr:.0f}% n={n:4d} | OOS med={median_pf_oos:.2f} pct={pct_profitable:.0%}{rr_tag}")
 
-# ── FILTRE MARGE WR (strats rentables en live) ──
-print("\nFiltre marge WR > 8%...", flush=True)
-MIN_MARGIN = 5.0
-safe_configs = {}
-for sn, cfg in best_configs.items():
-    etype = 0 if cfg['type'] == 'TPSL' else 1
-    is_open = sn in OPEN_STRATS
-    pnls = []
-    for ci, di, entry, atr, date, sp in SIG[sn]:
-        b, ex = sim_exit_unified(ci, entry, di, atr, etype, cfg['p1'], cfg['p2'], cfg['p3'], is_open)
-        pnl = ((ex - entry) if di == 1 else (entry - ex)) - sp - SPREAD_R * cfg['p1'] * atr
-        pnls.append(pnl)
-    wins = [p for p in pnls if p > 0]
-    losses = [p for p in pnls if p <= 0]
-    if not wins or not losses: continue
-    wr = len(wins) / len(pnls) * 100
-    avg_w = sum(wins) / len(wins)
-    avg_l = abs(sum(losses) / len(losses))
-    rr = avg_w / avg_l if avg_l > 0 else 0
-    wr_min = 1 / (1 + rr) * 100 if rr > 0 else 100
-    marge = wr - wr_min
-    tag = "OK" if marge > MIN_MARGIN else "SKIP"
-    print(f"  {sn:22s} WR={wr:.0f}% RR={rr:.2f} WRmin={wr_min:.0f}% marge={marge:+.1f}% {tag}")
-    if marge > MIN_MARGIN:
-        safe_configs[sn] = cfg
-
-print(f"\n  {len(safe_configs)}/{len(best_configs)} strats safe (marge>{MIN_MARGIN}%)")
-best_configs = safe_configs
+print(f"\n  {len(best_configs)}/{len(SIG)} strats validees walk-forward")
 
 # ── BUILD TRADE ARRAYS WITH BEST CONFIGS ──
-print("\nConstruction arrays trades...", flush=True)
 strat_arrays = {}
-for sn in best_configs:
-    cfg = best_configs[sn]
+for sn, cfg in best_configs.items():
     etype = 0 if cfg['type'] == 'TPSL' else 1
-    is_open = sn in OPEN_STRATS
     rows = []
     for ci, di, entry, atr, date, sp in SIG[sn]:
-        b, ex = sim_exit_unified(ci, entry, di, atr, etype, cfg['p1'], cfg['p2'], cfg['p3'], is_open)
+        b, ex = sim_exit_unified(ci, entry, di, atr, etype, cfg['p1'], cfg['p2'], cfg['p3'], False)
         pnl = ((ex - entry) if di == 1 else (entry - ex)) - sp - SPREAD_R * cfg['p1'] * atr
         mo = f"{date.year}-{str(date.month).zfill(2)}"
         rows.append((ci, ci + b, di, pnl, cfg['p1'], atr, mo, sn))
     strat_arrays[sn] = rows
 
 # ── SUMMARY ──
-print("\n" + "=" * 80)
-print(f"  {len(best_configs)} strats safe (marge > {MIN_MARGIN}%)")
-print("=" * 80)
-for sn in sorted(best_configs.keys(), key=lambda x: best_configs[x]['pf'], reverse=True):
+print("\n" + "=" * 100)
+print(f"  {len(best_configs)} strats validees walk-forward OOS")
+print("=" * 100)
+print(f"  {'STRAT':<22} {'TYPE':<6} {'SL':>4} {'P2':>5} {'P3':>5} | {'PF':>5} {'WR':>4} {'n':>5} | {'OOS.med':>8} {'OOS.pct':>7}")
+for sn in sorted(best_configs.keys(), key=lambda x: -best_configs[x]['median_pf_oos']):
     cfg = best_configs[sn]
-    tp_str = f"TP={cfg['p2']:.2f}" if cfg['type'] == 'TPSL' else f"ACT={cfg['p2']:.2f} TR={cfg['p3']:.2f}"
-    print(f"  {sn:22s} {cfg['type']:5s} SL={cfg['p1']:.1f} {tp_str:16s} PF={cfg['pf']:.2f} WR={cfg['wr']:.0f}% n={cfg['n']}")
+    p3 = cfg['p3'] if cfg['type'] == 'TRAIL' else 0
+    rr1 = '*' if cfg['type'] == 'TPSL' and abs(cfg['p1'] - cfg['p2']) < 0.01 else ' '
+    print(f"  {sn:<22} {cfg['type']:<6} {cfg['p1']:>4.1f} {cfg['p2']:>5.2f} {p3:>5.2f} | {cfg['pf']:>5.2f} {cfg['wr']:>3.0f}% {cfg['n']:>5d} | {cfg['median_pf_oos']:>8.2f} {cfg['pct_profitable_oos']:>7.0%} {rr1}")
 
 
 # ── SAVE TO DISK ──
