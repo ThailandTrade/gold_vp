@@ -2,6 +2,30 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-17 — Revue strats 15m FTMO: plan (en cours)
+
+Audit 110 strats FTMO 15m:
+- 72 safe (marge >= 8%) / 110 total
+- 0 safe sur 6/6, 5 sur 5/6 (ALL_EMA_921, ALL_ICHI_TK, ALL_MSTAR, IDX_3SOLDIERS, IDX_VWAP_BOUNCE)
+- 16 strats mortes: ALL_FIB_618, PO3_SWEEP, TOK_WILLR, IDX_ORB30, IDX_NY_MOM, IDX_LATE_REV, IDX_BB_REV, LON_DC10_MOM, ALL_FISHER_9, ALL_WILLR_14, LON_DC10, ALL_MACD_FAST_SIG, ALL_WILLR_7, ALL_STOCH_OB, ALL_STOCH_RSI, TOK_STOCH
+
+**Plan:**
+1. **Phase C** (en cours): Ajout 4 nouvelles strats (AVWAP_RECLAIM, BOS_FVG, FLAG_BRK, EXH_GAP), test sur 6 instruments FTMO via pipeline complet
+2. **Phase B** (apres): Refonte optimize_all.py
+   - SL/TP bases sur points de structure (swing high/low) au lieu de multiples ATR
+   - Marge 5% -> 8% (aligner sur CLAUDE.md)
+   - Score PF * sqrt(n) * pm/tm (privilegier consistance mensuelle)
+   - Elargir grille TRAIL (SL 2.5, trail 0.4/0.6)
+3. Regeneration complete des pkl FTMO (6 instruments)
+4. BE_TP abandonne definitivement
+5. Spread mis de cote (a calibrer plus tard)
+
+**Specs nouvelles strats:**
+- **AVWAP_RECLAIM**: anchor sur swing high/low des 20 dernieres bars, reclaim de l'AVWAP (tick_volume pondere)
+- **BOS_FVG**: break of structure (cassure swing 17 bars) + FVG 3-bougies simultane, body >= 0.3 ATR
+- **FLAG_BRK**: impulsion 5b >= 1 ATR + consolidation 3b <= 0.5 ATR + breakout
+- **EXH_GAP**: gap intraday >= 0.5 ATR + bougie oppose au gap (fade)
+
 ## 2026-04-17 — TEST: multi-trigger par jour v2 — pipeline complet (branche annulee)
 
 Pipeline complet (optimize + combos) avec multi-trigger sur FTMO 15m.
