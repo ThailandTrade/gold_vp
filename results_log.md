@@ -2,6 +2,44 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-17 — cleanup-v2 P7: resultats bootstrap edge (brutal)
+
+**Script:** `temp/bootstrap_edge.py` - block bootstrap mensuel, 1000 resamples, 95% CI + p-value, correction Benjamini-Hochberg FDR 5%.
+
+**Criteres:**
+- (A) CI[2.5%] > 1.20 - edge robuste a 95%
+- (B) p_bh < 0.05 (FDR corrige)
+
+**Resultats:**
+- 40 strats testees
+- (A) seul: 4 strats
+- (B) seul: 22 strats
+- (A+B): **4 strats**
+
+**Les 4 vrais edges (A+B):**
+
+| Instrument | Strat | Type | n | PF | CI 95% | p_bh |
+|---|---|---|---|---|---|---|
+| xauusd | ALL_MACD_RSI | TRAIL | 280 | 2.57 | [1.80, 3.58] | <0.0001 |
+| ger40_cash | ALL_CCI_100 | TRAIL | 274 | 1.81 | [1.29, 2.31] | <0.0001 |
+| jp225_cash | ALL_PSAR_EMA | TRAIL | 190 | 1.91 | [1.28, 3.17] | <0.0001 |
+| jp225_cash | ALL_SUPERTREND | TRAIL | 195 | 1.90 | [1.23, 3.20] | <0.0001 |
+
+**Observations critiques:**
+- **US500, US100, US30: 0 strat avec edge robuste.** Les 22 validees WF+6m+12m n'ont pas survecu au bootstrap.
+- **JP225 avec seulement 3 strats WF-validees a 2 edges robustes** (taux le plus eleve).
+- **ALL_PSAR_EMA et ALL_SUPERTREND JP225 sont probablement le meme signal** (PSAR implemente comme proxy supertrend dans strats.py). Doublon a verifier.
+- **Doublon confirme:** ALL_KC_BRK == IDX_KC_BRK sur US100 (stats identiques, meme CI). Detection dupliquee dans detect_all.
+- Les 36 strats ejectees passent WF+6m+12m mais echouent au bootstrap: **overfit / chance** sur 13 mois de data.
+
+**Conclusion:**
+Le filtre WF+6m+12m (bien plus strict que split 2 moitiés du baseline) **n'est pas encore assez strict sur 13 mois**. Le bootstrap expose que seulement 10% des "validees" ont un edge vraiment robuste.
+
+**Implications:**
+- La prod actuelle (38 strats) contient tres probablement majoritairement des faux positifs qui tournent par chance.
+- Pour trader FTMO sur 6 instruments avec des edges robustes: **manque de matiere premiere** (4 edges pour 3 instruments).
+- Options: (a) baisser le critere a FDR seul (22 strats mais moins robustes), (b) ne trader que les 4 edges confirmes, (c) chercher plus de strats genres (hors 89 actuelles).
+
 ## 2026-04-17 — cleanup-v2 P7: plan bootstrap significativite edge
 
 **Motivation:** Challenge honnete de l'user — "comment distinguer edge de chance?"
