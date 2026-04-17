@@ -191,7 +191,9 @@ STEP = 1
 MIN_N_TRADES = 30
 MIN_MEDIAN_PF_OOS = 1.20
 MIN_PCT_PROFITABLE_OOS = 0.70
-MIN_PF_FULL_PERIOD = 1.20  # double validation: la config finale doit tenir sur 13m
+MIN_PF_RECENT = 1.20  # la config finale doit tenir sur 6 ET 12 derniers mois
+RECENT_SHORT = 6  # mois
+RECENT_LONG = 12  # mois
 
 # Exits structurels: SL au swing low/high des N bars, TP = distance * RR
 STRUCT_N = [5, 10, 20]
@@ -230,7 +232,12 @@ for i in range(0, len(all_months) - IS_MONTHS - OOS_MONTHS + 1, STEP):
     oos_set = set(all_months[i + IS_MONTHS : i + IS_MONTHS + OOS_MONTHS])
     wf_windows.append((is_set, oos_set))
 print(f"Walk-forward: {len(wf_windows)} fenetres (IS={IS_MONTHS}m, OOS={OOS_MONTHS}m, step={STEP}m)")
-print(f"Criteres: n_total >= {MIN_N_TRADES}, median(PF_OOS) >= {MIN_MEDIAN_PF_OOS}, pct profitable >= {MIN_PCT_PROFITABLE_OOS:.0%}\n")
+print(f"Criteres: n_total >= {MIN_N_TRADES}, median(PF_OOS) >= {MIN_MEDIAN_PF_OOS}, pct profitable >= {MIN_PCT_PROFITABLE_OOS:.0%}")
+
+# Sets de mois pour PF recent (6 et 12 derniers mois)
+recent_6_set = set(all_months[-RECENT_SHORT:]) if len(all_months) >= RECENT_SHORT else set(all_months)
+recent_12_set = set(all_months[-RECENT_LONG:]) if len(all_months) >= RECENT_LONG else set(all_months)
+print(f"Validation periodes: PF {RECENT_SHORT}m >= {MIN_PF_RECENT} ET PF {RECENT_LONG}m >= {MIN_PF_RECENT}\n")
 
 def _pnl_from_signals(sigs, etype, p1, p2, p3, is_open):
     """Calcule les pnls (avec dates) pour une config donnee. Retourne [(pnl, date, sl_atr), ...]"""
@@ -361,9 +368,17 @@ for sn in sorted(SIG.keys()):
 
     (etype, p1, p2, p3), pf, wr, n = best_full
 
-    # Double validation: la config finale doit aussi avoir PF full period >= seuil
-    if pf < MIN_PF_FULL_PERIOD:
-        print(f"  {sn:22s} FAIL full PF={pf:.2f} < {MIN_PF_FULL_PERIOD}")
+    # Double validation: PF sur 6 derniers mois ET sur 12 derniers mois
+    final_pnls_dates = config_pnls[(etype, p1, p2, p3)]
+    pnls_6m = _window_pnls(final_pnls_dates, recent_6_set)
+    pnls_12m = _window_pnls(final_pnls_dates, recent_12_set)
+    pf_6m = _pf_of(pnls_6m) if pnls_6m else 0
+    pf_12m = _pf_of(pnls_12m) if pnls_12m else 0
+    n_6m = len(pnls_6m)
+    n_12m = len(pnls_12m)
+
+    if pf_6m < MIN_PF_RECENT or pf_12m < MIN_PF_RECENT:
+        print(f"  {sn:22s} FAIL recent  PF 6m={pf_6m:.2f} (n={n_6m})  PF 12m={pf_12m:.2f} (n={n_12m})")
         continue
 
     # Stats sl_atr pour STRUCT (dynamique)
@@ -375,11 +390,13 @@ for sn in sorted(SIG.keys()):
     best_configs[sn] = {
         'type': etype, 'p1': p1, 'p2': p2, 'p3': p3,
         'pf': pf, 'wr': wr, 'n': n,
+        'pf_6m': pf_6m, 'n_6m': n_6m,
+        'pf_12m': pf_12m, 'n_12m': n_12m,
         'median_pf_oos': median_pf_oos,
         'pct_profitable_oos': pct_profitable,
         'wf_windows': len(pf_oos_list),
-        'avg_sl_atr': avg_sl_atr,  # utile pour STRUCT
-        'rr1_alt': best_rr1,  # best config RR=1 ou STRUCT pour comparaison
+        'avg_sl_atr': avg_sl_atr,
+        'rr1_alt': best_rr1,
     }
 
     # Affichage
@@ -397,7 +414,7 @@ for sn in sorted(SIG.keys()):
         rr1_type = rcfg[0]
         rr1_str = f"  [alt RR1/STRUCT: {rr1_type} PF={rpf:.2f} WR={rwr:.0f}%]"
 
-    print(f"  {sn:22s} {main_str:40s} | PF={pf:.2f} WR={wr:.0f}% n={n:4d} | OOS med={median_pf_oos:.2f} pct={pct_profitable:.0%}{rr1_str}")
+    print(f"  {sn:22s} {main_str:40s} | PF={pf:.2f} WR={wr:.0f}% n={n:4d} | OOS med={median_pf_oos:.2f} pct={pct_profitable:.0%} | 6m={pf_6m:.2f}(n={n_6m}) 12m={pf_12m:.2f}(n={n_12m}){rr1_str}")
 
 print(f"\n  {len(best_configs)}/{len(SIG)} strats validees walk-forward")
 
@@ -433,23 +450,23 @@ for sn, cfg in best_configs.items():
     strat_arrays[sn] = rows
 
 # ── SUMMARY ──
-print("\n" + "=" * 100)
-print(f"  {len(best_configs)} strats validees (WF 6M/1M + PF full period >= {MIN_PF_FULL_PERIOD})")
-print("=" * 100)
+print("\n" + "=" * 115)
+print(f"  {len(best_configs)} strats validees (WF 6M/1M + PF 6m >= {MIN_PF_RECENT} + PF 12m >= {MIN_PF_RECENT})")
+print("=" * 115)
 n_tpsl = sum(1 for c in best_configs.values() if c['type'] == 'TPSL')
 n_trail = sum(1 for c in best_configs.values() if c['type'] == 'TRAIL')
 n_struct = sum(1 for c in best_configs.values() if c['type'] == 'STRUCT')
 n_rr1 = sum(1 for c in best_configs.values() if _is_rr1_cfg((c['type'], c['p1'], c['p2'], c['p3'])))
 print(f"  Repartition: {n_tpsl} TPSL ({n_rr1} RR=1) | {n_trail} TRAIL | {n_struct} STRUCT")
 print()
-print(f"  {'STRAT':<22} {'TYPE':<6} {'P1':>5} {'P2':>5} {'P3':>5} | {'PF':>5} {'WR':>4} {'n':>5} | {'OOS.med':>8} {'OOS.pct':>7}")
-for sn in sorted(best_configs.keys(), key=lambda x: -best_configs[x]['median_pf_oos']):
+print(f"  {'STRAT':<22} {'TYPE':<6} {'P1':>5} {'P2':>5} {'P3':>5} | {'PF':>5} {'WR':>4} {'n':>5} | {'PF6m':>5} {'n6':>4} | {'PF12m':>6} {'n12':>4} | {'OOS.med':>7} {'OOS.pct':>7}")
+for sn in sorted(best_configs.keys(), key=lambda x: -best_configs[x]['pf_6m']):
     cfg = best_configs[sn]
     p3 = cfg['p3'] if cfg['type'] == 'TRAIL' else 0
     tag = ''
     if cfg['type'] == 'STRUCT': tag = 'S'
     elif _is_rr1_cfg((cfg['type'], cfg['p1'], cfg['p2'], cfg['p3'])): tag = 'R'
-    print(f"  {sn:<22} {cfg['type']:<6} {cfg['p1']:>5.1f} {cfg['p2']:>5.2f} {p3:>5.2f} | {cfg['pf']:>5.2f} {cfg['wr']:>3.0f}% {cfg['n']:>5d} | {cfg['median_pf_oos']:>8.2f} {cfg['pct_profitable_oos']:>7.0%} {tag}")
+    print(f"  {sn:<22} {cfg['type']:<6} {cfg['p1']:>5.1f} {cfg['p2']:>5.2f} {p3:>5.2f} | {cfg['pf']:>5.2f} {cfg['wr']:>3.0f}% {cfg['n']:>5d} | {cfg['pf_6m']:>5.2f} {cfg['n_6m']:>4d} | {cfg['pf_12m']:>6.2f} {cfg['n_12m']:>4d} | {cfg['median_pf_oos']:>7.2f} {cfg['pct_profitable_oos']:>7.0%} {tag}")
 
 
 # ── SAVE TO DISK ──

@@ -2,6 +2,31 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-17 — cleanup-v2 P5c: validation double periode 6m + 12m
+
+**Changement:**
+- Remplacement de `PF full period >= 1.20` par `PF 6 derniers mois >= 1.20 ET PF 12 derniers mois >= 1.20`
+- Plus strict et mieux cible sur la performance recente + moyenne
+- Walk-forward 6M/1M conserve (7 fenetres)
+
+**Resultats FTMO 15m:**
+
+| Instrument | Strats | TPSL | TRAIL | STRUCT | RR=1 |
+|---|---|---|---|---|---|
+| XAUUSD | 12 | 6 | 6 | 0 | 0 |
+| GER40 | 3 | 0 | 3 | 0 | 0 |
+| US500 | 7 | 0 | 7 | 0 | 0 |
+| US100 | 11 | 6 | 5 | 0 | 1 |
+| US30 | 4 | 0 | 4 | 0 | 0 |
+| JP225 | 3 | 0 | 3 | 0 | 0 |
+| **Total** | **40** | **12** | **28** | **0** | **1** |
+
+**Observations:**
+- 40 strats validees (vs 43 avec ancien critere PF full). Coherent, plus strict.
+- **1 RR=1** passe desormais (US100 IDX_GAP_CONT, TPSL SL=3.0 TP=3.00) - preuve qu'une RR=1 peut tenir si l'edge est franc.
+- **STRUCT toujours 0/40** - design actuel n'apporte rien.
+- TRAIL domine (28/40 = 70%).
+
 ## 2026-04-17 — cleanup-v2 P5b: WF renforce 6M/1M + STRUCT + double validation
 
 **Design renforce:**
