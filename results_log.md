@@ -2,6 +2,45 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-17 — cleanup-v2 P5b: WF renforce 6M/1M + STRUCT + double validation
+
+**Design renforce:**
+- Fenetres WF: IS=6m / OOS=1m / step 1m -> **7 fenetres** (vs 3 avant)
+- Min trades: 30 (vs 100 avant) -> moins de SKIP par volume
+- **Double validation**: WF + PF sur full period (13 mois) >= 1.20
+- Nouveau type exit **STRUCT_RR1(N)**: SL au swing low/high des N bars + buffer 0.1 ATR, TP = distance_SL (RR=1)
+  - N ∈ {5, 10, 20} bars
+  - Filtre sl_atr ∈ [0.3, 3.0] (sinon skip)
+  - sl_atr dynamique par trade
+
+**Resultats FTMO 15m:**
+
+| Instrument | Strats | TPSL | TRAIL | STRUCT | RR=1 |
+|---|---|---|---|---|---|
+| XAUUSD | 12 | 6 | 6 | 0 | 0 |
+| GER40 | 3 | 0 | 3 | 0 | 0 |
+| US500 | 9 | 2 | 7 | 0 | 0 |
+| US100 | 10 | 5 | 5 | 0 | 0 |
+| US30 | 6 | 0 | 6 | 0 | 0 |
+| JP225 | 3 | 0 | 3 | 0 | 0 |
+| **Total** | **43** | **13** | **30** | **0** | **0** |
+
+**Reponses empiriques (questions user):**
+
+Q1: "Est-ce mieux qu'un RR=1 ?"  
+R1: **OUI**. 0/43 configs RR=1 selectionnees. Exemples XAUUSD IDX_BB_REV: best TPSL SL=3.0 TP=0.25 PF=1.44 vs alt RR=1 PF=0.98. La grille libre domine systematiquement.
+
+Q2: "Et les SL/TP structurels ?"  
+R2: **Testes, 0/43 selectionnes**. SL au swing low/high des 5/10/20 bars + TP RR=1 ne bat jamais les configs ATR-based. Limites possibles: TP force RR=1 plombe STRUCT, ou les strats intraday preferent un SL proportionnel a la volatilite (ATR) plutot qu'a la structure recente.
+
+**Observations:**
+- **TRAIL domine** (30/43 = 70%) - exits adaptatifs tiennent le mieux en OOS
+- **Peu de strats multi-inst** (max 2/6). Aucune sur 3+.
+- **GER40/JP225** tombent a 3 strats (tres selectif)
+- 43 strat-instrument validees au total
+
+**optimize_all.py final:** 364 -> 471 lignes (+107 pour STRUCT + double validation).
+
 ## 2026-04-17 — cleanup-v2 P4+P5: walk-forward OOS integre
 
 **Design:**

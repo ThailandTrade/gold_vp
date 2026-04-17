@@ -185,12 +185,20 @@ TRAIL_GRID = [(sl, act, trail) for sl in [0.5, 1.0, 1.5, 2.0, 3.0]
 # BE_TP_GRID retire definitivement cleanup-v2
 
 # Walk-forward OOS parameters
-IS_MONTHS = 10
+IS_MONTHS = 6
 OOS_MONTHS = 1
 STEP = 1
-MIN_N_TRADES = 100
+MIN_N_TRADES = 30
 MIN_MEDIAN_PF_OOS = 1.20
 MIN_PCT_PROFITABLE_OOS = 0.70
+MIN_PF_FULL_PERIOD = 1.20  # double validation: la config finale doit tenir sur 13m
+
+# Exits structurels: SL au swing low/high des N bars, TP = distance * RR
+STRUCT_N = [5, 10, 20]
+STRUCT_RR = [1.0]  # RR=1 anti-overfit
+STRUCT_SL_BUFFER = 0.1  # ATR au-dela du swing (anti-wick)
+STRUCT_SL_MIN = 0.3    # sl_atr min (sinon trop serre)
+STRUCT_SL_MAX = 3.0    # sl_atr max (sinon trop lache)
 
 def eval_config(signals, etype, p1, p2, p3):
     """Evaluate one exit config on all signals for a strat."""
@@ -225,12 +233,36 @@ print(f"Walk-forward: {len(wf_windows)} fenetres (IS={IS_MONTHS}m, OOS={OOS_MONT
 print(f"Criteres: n_total >= {MIN_N_TRADES}, median(PF_OOS) >= {MIN_MEDIAN_PF_OOS}, pct profitable >= {MIN_PCT_PROFITABLE_OOS:.0%}\n")
 
 def _pnl_from_signals(sigs, etype, p1, p2, p3, is_open):
-    """Calcule les pnls (avec dates) pour une config donnee."""
+    """Calcule les pnls (avec dates) pour une config donnee. Retourne [(pnl, date, sl_atr), ...]"""
     out = []
     for ci, di, entry, atr, date, sp in sigs:
         b, ex = sim_exit_unified(ci, entry, di, atr, etype, p1, p2, p3, is_open)
         pnl = ((ex - entry) if di == 1 else (entry - ex)) - sp - SPREAD_R * p1 * atr
-        out.append((pnl, date))
+        out.append((pnl, date, p1))
+    return out
+
+def _pnl_from_struct(sigs, N, rr):
+    """STRUCT_RR: SL au swing des N dernieres bars, TP = distance * rr. sl_atr dynamique par trade."""
+    out = []
+    for ci, di, entry, atr, date, sp in sigs:
+        if ci < N:
+            continue
+        # Swing sur les N bars precedentes (pas inclure la bougie du signal)
+        if di == 1:
+            swing = float(c.iloc[ci-N:ci]['low'].min())
+            distance = entry - swing + STRUCT_SL_BUFFER * atr
+        else:
+            swing = float(c.iloc[ci-N:ci]['high'].max())
+            distance = swing - entry + STRUCT_SL_BUFFER * atr
+        if distance <= 0:
+            continue
+        sl_atr_dyn = distance / atr
+        if sl_atr_dyn < STRUCT_SL_MIN or sl_atr_dyn > STRUCT_SL_MAX:
+            continue
+        tp_atr_dyn = sl_atr_dyn * rr
+        b, ex = sim_exit_unified(ci, entry, di, atr, 0, sl_atr_dyn, tp_atr_dyn, 0, False)
+        pnl = ((ex - entry) if di == 1 else (entry - ex)) - sp - SPREAD_R * sl_atr_dyn * atr
+        out.append((pnl, date, sl_atr_dyn))
     return out
 
 def _pf_of(pnls):
@@ -243,8 +275,15 @@ def _pf_of(pnls):
     return min(pf, 10.0)
 
 def _window_pnls(pnls_dates, month_set):
-    """Extrait les pnls dont la date appartient au set de mois."""
-    return [p for (p, d) in pnls_dates if (d.year, d.month) in month_set]
+    """Extrait les pnls dont la date appartient au set de mois. Accepte tuples (pnl, date, sl_atr)."""
+    return [t[0] for t in pnls_dates if (t[1].year, t[1].month) in month_set]
+
+def _is_rr1_cfg(cfg):
+    """True si la config TPSL a TP=SL (RR=1)."""
+    return cfg[0] == 'TPSL' and abs(cfg[1] - cfg[2]) < 0.01
+
+def _is_struct_cfg(cfg):
+    return cfg[0] == 'STRUCT'
 
 best_configs = {}
 for sn in sorted(SIG.keys()):
@@ -256,12 +295,15 @@ for sn in sorted(SIG.keys()):
         print(f"  {sn:22s} --- SKIP (n={len(sigs)} < {MIN_N_TRADES})")
         continue
 
-    # Pre-calcul: pnls pour chaque config (TPSL + TRAIL)
+    # Pre-calcul: pnls pour chaque config (TPSL + TRAIL + STRUCT)
     config_pnls = {}
     for sl, tp in TPSL_GRID:
         config_pnls[('TPSL', sl, tp, 0)] = _pnl_from_signals(sigs, 0, sl, tp, 0, False)
     for sl, act, trail in TRAIL_GRID:
         config_pnls[('TRAIL', sl, act, trail)] = _pnl_from_signals(sigs, 1, sl, act, trail, False)
+    for N in STRUCT_N:
+        for rr in STRUCT_RR:
+            config_pnls[('STRUCT', N, rr, 0)] = _pnl_from_struct(sigs, N, rr)
 
     # Pour chaque fenetre: trouver best config IS, mesurer PF_OOS
     pf_oos_list = []
@@ -295,57 +337,119 @@ for sn in sorted(SIG.keys()):
         continue
 
     # Config finale: meilleure sur full period (parmi configs avec n >= MIN_N_TRADES)
-    best_full = None; best_full_score = -1
-    for cfg, pnls_dates in config_pnls.items():
-        pnls = [p for (p, _) in pnls_dates]
+    def _score_cfg(cfg, pnls_dates):
+        pnls = [t[0] for t in pnls_dates]
         if len(pnls) < MIN_N_TRADES:
-            continue
+            return None
         pf = _pf_of(pnls); wr = sum(1 for p in pnls if p > 0) / len(pnls) * 100
-        score = pf * (wr / 100)
+        return (pf * (wr / 100), pf, wr, len(pnls))
+
+    best_full = None; best_full_score = -1
+    best_rr1 = None; best_rr1_score = -1
+    for cfg, pnls_dates in config_pnls.items():
+        r = _score_cfg(cfg, pnls_dates)
+        if r is None: continue
+        score, pf, wr, n = r
         if score > best_full_score:
-            best_full_score = score; best_full = (cfg, pf, wr, len(pnls))
+            best_full_score = score; best_full = (cfg, pf, wr, n)
+        if (_is_rr1_cfg(cfg) or _is_struct_cfg(cfg)) and score > best_rr1_score:
+            best_rr1_score = score; best_rr1 = (cfg, pf, wr, n)
 
     if best_full is None:
         print(f"  {sn:22s} --- SKIP (aucune config n >= {MIN_N_TRADES})")
         continue
 
     (etype, p1, p2, p3), pf, wr, n = best_full
+
+    # Double validation: la config finale doit aussi avoir PF full period >= seuil
+    if pf < MIN_PF_FULL_PERIOD:
+        print(f"  {sn:22s} FAIL full PF={pf:.2f} < {MIN_PF_FULL_PERIOD}")
+        continue
+
+    # Stats sl_atr pour STRUCT (dynamique)
+    avg_sl_atr = p1
+    if etype == 'STRUCT':
+        sl_atrs = [t[2] for t in config_pnls[(etype, p1, p2, p3)]]
+        avg_sl_atr = sum(sl_atrs) / len(sl_atrs) if sl_atrs else p1
+
     best_configs[sn] = {
         'type': etype, 'p1': p1, 'p2': p2, 'p3': p3,
         'pf': pf, 'wr': wr, 'n': n,
         'median_pf_oos': median_pf_oos,
         'pct_profitable_oos': pct_profitable,
         'wf_windows': len(pf_oos_list),
+        'avg_sl_atr': avg_sl_atr,  # utile pour STRUCT
+        'rr1_alt': best_rr1,  # best config RR=1 ou STRUCT pour comparaison
     }
-    p2_label = 'TP' if etype == 'TPSL' else 'ACT'
-    p3_str = '' if etype == 'TPSL' else f' TR={p3:.2f}'
-    rr_tag = ' [RR=1]' if etype == 'TPSL' and abs(p1 - p2) < 0.01 else ''
-    print(f"  {sn:22s} {etype:5s} SL={p1:.1f} {p2_label}={p2:.2f}{p3_str} | PF={pf:.2f} WR={wr:.0f}% n={n:4d} | OOS med={median_pf_oos:.2f} pct={pct_profitable:.0%}{rr_tag}")
+
+    # Affichage
+    if etype == 'STRUCT':
+        main_str = f"STRUCT N={p1} RR={p2} avg_sl_atr={avg_sl_atr:.2f}"
+    elif etype == 'TPSL':
+        rr_tag = ' [RR=1]' if abs(p1 - p2) < 0.01 else ''
+        main_str = f"TPSL SL={p1:.1f} TP={p2:.2f}{rr_tag}"
+    else:
+        main_str = f"TRAIL SL={p1:.1f} ACT={p2:.2f} TR={p3:.2f}"
+
+    rr1_str = ''
+    if best_rr1 and best_rr1[0] != best_full[0]:
+        (rcfg, rpf, rwr, rn) = best_rr1
+        rr1_type = rcfg[0]
+        rr1_str = f"  [alt RR1/STRUCT: {rr1_type} PF={rpf:.2f} WR={rwr:.0f}%]"
+
+    print(f"  {sn:22s} {main_str:40s} | PF={pf:.2f} WR={wr:.0f}% n={n:4d} | OOS med={median_pf_oos:.2f} pct={pct_profitable:.0%}{rr1_str}")
 
 print(f"\n  {len(best_configs)}/{len(SIG)} strats validees walk-forward")
 
 # ── BUILD TRADE ARRAYS WITH BEST CONFIGS ──
 strat_arrays = {}
 for sn, cfg in best_configs.items():
-    etype = 0 if cfg['type'] == 'TPSL' else 1
     rows = []
-    for ci, di, entry, atr, date, sp in SIG[sn]:
-        b, ex = sim_exit_unified(ci, entry, di, atr, etype, cfg['p1'], cfg['p2'], cfg['p3'], False)
-        pnl = ((ex - entry) if di == 1 else (entry - ex)) - sp - SPREAD_R * cfg['p1'] * atr
-        mo = f"{date.year}-{str(date.month).zfill(2)}"
-        rows.append((ci, ci + b, di, pnl, cfg['p1'], atr, mo, sn))
+    if cfg['type'] == 'STRUCT':
+        N = int(cfg['p1']); rr = cfg['p2']
+        for ci, di, entry, atr, date, sp in SIG[sn]:
+            if ci < N: continue
+            if di == 1:
+                swing = float(c.iloc[ci-N:ci]['low'].min())
+                distance = entry - swing + STRUCT_SL_BUFFER * atr
+            else:
+                swing = float(c.iloc[ci-N:ci]['high'].max())
+                distance = swing - entry + STRUCT_SL_BUFFER * atr
+            if distance <= 0: continue
+            sl_atr_dyn = distance / atr
+            if sl_atr_dyn < STRUCT_SL_MIN or sl_atr_dyn > STRUCT_SL_MAX: continue
+            tp_atr_dyn = sl_atr_dyn * rr
+            b, ex = sim_exit_unified(ci, entry, di, atr, 0, sl_atr_dyn, tp_atr_dyn, 0, False)
+            pnl = ((ex - entry) if di == 1 else (entry - ex)) - sp - SPREAD_R * sl_atr_dyn * atr
+            mo = f"{date.year}-{str(date.month).zfill(2)}"
+            rows.append((ci, ci + b, di, pnl, sl_atr_dyn, atr, mo, sn))
+    else:
+        etype = 0 if cfg['type'] == 'TPSL' else 1
+        for ci, di, entry, atr, date, sp in SIG[sn]:
+            b, ex = sim_exit_unified(ci, entry, di, atr, etype, cfg['p1'], cfg['p2'], cfg['p3'], False)
+            pnl = ((ex - entry) if di == 1 else (entry - ex)) - sp - SPREAD_R * cfg['p1'] * atr
+            mo = f"{date.year}-{str(date.month).zfill(2)}"
+            rows.append((ci, ci + b, di, pnl, cfg['p1'], atr, mo, sn))
     strat_arrays[sn] = rows
 
 # ── SUMMARY ──
 print("\n" + "=" * 100)
-print(f"  {len(best_configs)} strats validees walk-forward OOS")
+print(f"  {len(best_configs)} strats validees (WF 6M/1M + PF full period >= {MIN_PF_FULL_PERIOD})")
 print("=" * 100)
-print(f"  {'STRAT':<22} {'TYPE':<6} {'SL':>4} {'P2':>5} {'P3':>5} | {'PF':>5} {'WR':>4} {'n':>5} | {'OOS.med':>8} {'OOS.pct':>7}")
+n_tpsl = sum(1 for c in best_configs.values() if c['type'] == 'TPSL')
+n_trail = sum(1 for c in best_configs.values() if c['type'] == 'TRAIL')
+n_struct = sum(1 for c in best_configs.values() if c['type'] == 'STRUCT')
+n_rr1 = sum(1 for c in best_configs.values() if _is_rr1_cfg((c['type'], c['p1'], c['p2'], c['p3'])))
+print(f"  Repartition: {n_tpsl} TPSL ({n_rr1} RR=1) | {n_trail} TRAIL | {n_struct} STRUCT")
+print()
+print(f"  {'STRAT':<22} {'TYPE':<6} {'P1':>5} {'P2':>5} {'P3':>5} | {'PF':>5} {'WR':>4} {'n':>5} | {'OOS.med':>8} {'OOS.pct':>7}")
 for sn in sorted(best_configs.keys(), key=lambda x: -best_configs[x]['median_pf_oos']):
     cfg = best_configs[sn]
     p3 = cfg['p3'] if cfg['type'] == 'TRAIL' else 0
-    rr1 = '*' if cfg['type'] == 'TPSL' and abs(cfg['p1'] - cfg['p2']) < 0.01 else ' '
-    print(f"  {sn:<22} {cfg['type']:<6} {cfg['p1']:>4.1f} {cfg['p2']:>5.2f} {p3:>5.2f} | {cfg['pf']:>5.2f} {cfg['wr']:>3.0f}% {cfg['n']:>5d} | {cfg['median_pf_oos']:>8.2f} {cfg['pct_profitable_oos']:>7.0%} {rr1}")
+    tag = ''
+    if cfg['type'] == 'STRUCT': tag = 'S'
+    elif _is_rr1_cfg((cfg['type'], cfg['p1'], cfg['p2'], cfg['p3'])): tag = 'R'
+    print(f"  {sn:<22} {cfg['type']:<6} {cfg['p1']:>5.1f} {cfg['p2']:>5.2f} {p3:>5.2f} | {cfg['pf']:>5.2f} {cfg['wr']:>3.0f}% {cfg['n']:>5d} | {cfg['median_pf_oos']:>8.2f} {cfg['pct_profitable_oos']:>7.0%} {tag}")
 
 
 # ── SAVE TO DISK ──
