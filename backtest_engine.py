@@ -3,7 +3,7 @@ Moteur de backtest unifie — source unique de verite pour tout le pipeline.
 Importe par: bt_portfolio, compare_today, live_mt5, optimize_all.
 
 Garantit: memes candles, meme ATR, memes indicateurs, memes signaux,
-memes exits, meme conflict filter — partout.
+memes exits — partout. Pas de conflict filter (mutex LONG/SHORT supprime v2).
 """
 import numpy as np
 import pandas as pd
@@ -126,7 +126,7 @@ def prev_trading_day(day, trading_days_list):
 
 
 # ══════════════════════════════════════════════════════════════
-#  COLLECT TRADES — signaux + exits + conflict filter
+#  COLLECT TRADES — signaux + exits (pas de conflict filter)
 # ══════════════════════════════════════════════════════════════
 
 def collect_trades(candles, daily_atr, global_atr, trading_days_list, portfolio, sym_exits, date_filter=None):
@@ -191,10 +191,9 @@ def collect_trades(candles, daily_atr, global_atr, trading_days_list, portfolio,
         detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon,
                    prev_day_data, add_sig, prev2_day_data)
 
-    # Phase 2: simuler exits + conflict filter
+    # Phase 2: simuler exits (pas de conflict filter - chaque strat trade librement)
     signals.sort(key=lambda x: (x[0], x[1]))
     trades = []
-    active_pos = []
 
     for ci, sn, d_dir, entry, atr, today in signals:
         is_open = sn in OPEN_STRATS
@@ -208,12 +207,6 @@ def collect_trades(candles, daily_atr, global_atr, trading_days_list, portfolio,
         di = 1 if d_dir == 'long' else -1
         pnl_oz = (ex - entry) if d_dir == 'long' else (entry - ex)
         mo = f"{today.year}-{str(today.month).zfill(2)}"
-
-        # Conflict filter: pas de trades opposes simultanes
-        active_pos = [(axi, ad) for axi, ad in active_pos if axi >= ci]
-        if any(ad != di for _, ad in active_pos):
-            continue
-        active_pos.append((xi, di))
 
         trades.append((ci, xi, di, pnl_oz, p1, atr, mo, sn))
 

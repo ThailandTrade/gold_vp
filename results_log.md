@@ -2,6 +2,25 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-17 — cleanup-v2 P3: suppression combos + mutex LONG/SHORT
+
+**Fichiers modifies:**
+- `optimize_all.py`: 436 -> 333 lignes (-103). Retrait greedy combo builder + `eval_combo()`. Affiche summary plat trie par PF.
+- `backtest_engine.py`: retrait conflict filter dans `collect_trades()` (-5 lignes). Tous les signaux deviennent des trades.
+- `analyze_combos.py`: supprime
+
+**Impact mesure XAUUSD FTMO 15m (portfolio config_ftmo.py 9 strats):**
+| | Avec mutex (avant) | Sans mutex (P3) |
+|---|---|---|
+| Trades | ~2000 | 2,413 (+20%) |
+| PF | 1.68 | 1.45 |
+| WR | 76% | 74% |
+| DD | -0.2% | -1.2% |
+| Rend | +15% | +15% |
+| M+ | 13/13 | 13/13 |
+
+Hausse des trades (+413), PF legerement plus bas (certains trades auparavant filtres etaient perdants). Cohérent: sans filtre, les strats tradent librement. BT et live sont desormais alignes (live n'avait pas de filter non plus - alignement corrige un biais systemique).
+
 ## 2026-04-17 — cleanup-v2 P2: unifier detect_all + optimize_all
 
 `optimize_all.py`: suppression des lignes 174-380 (207 lignes de redetection doublee).

@@ -304,118 +304,15 @@ for sn in best_configs:
         rows.append((ci, ci + b, di, pnl, cfg['p1'], atr, mo, sn))
     strat_arrays[sn] = rows
 
-# ── EVAL COMBO (event-based) ──
-def eval_combo(strats, capital=1000.0, risk=0.01):
-    combined = []
-    for sn in strats:
-        if sn in strat_arrays: combined.extend(strat_arrays[sn])
-    if len(combined) < 50: return None
-    combined.sort(key=lambda x: (x[0], x[7]))
-    active = []; accepted = []
-    for ei, xi, di, pnl_oz, sl_atr, atr, mo, _sn in combined:
-        active = [(axi, ad) for axi, ad in active if axi >= ei]
-        if any(ad != di for _, ad in active): continue
-        accepted.append((ei, xi, di, pnl_oz, sl_atr, atr, mo, _sn))
-        active.append((xi, di))
-    n = len(accepted)
-    if n < 50: return None
-    events = []
-    for idx, (ei, xi, di, pnl_oz, sl_atr, atr, mo, _sn) in enumerate(accepted):
-        events.append((ei, 0, idx))
-        events.append((xi, 1, idx))
-    events.sort()
-    cap = capital; peak = cap; max_dd = 0; gp = 0; gl = 0; wins = 0; months = {}
-    has_l = False; has_s = False; entry_caps = {}; pnl_by_entry = []
-    for bar, evt, idx in events:
-        if evt == 0:
-            entry_caps[idx] = cap
-        else:
-            ei, xi, di, pnl_oz, sl_atr, atr, mo, _sn = accepted[idx]
-            pnl = pnl_oz * (entry_caps[idx] * risk) / (sl_atr * atr)
-            cap += pnl; pnl_by_entry.append((ei, pnl))
-            if cap > peak: peak = cap
-            dd = (cap - peak) / peak
-            if dd < max_dd: max_dd = dd
-            if pnl > 0: gp += pnl; wins += 1
-            else: gl += abs(pnl)
-            months[mo] = months.get(mo, 0.0) + pnl
-            if di == 1: has_l = True
-            else: has_s = True
-    mdd = max_dd * 100; ret = (cap - capital) / capital * 100
-    pnl_by_entry.sort(); pnls = [p for _, p in pnl_by_entry]
-    mid = n // 2; p1 = sum(pnls[:mid]); p2 = sum(pnls[mid:])
-    pm = sum(1 for v in months.values() if v > 0)
-    return {'n': n, 'ret': ret, 'mdd': mdd, 'cal': ret / abs(mdd) if mdd < 0 else 0,
-            'pf': gp / (gl + 0.01), 'wr': wins / n * 100, 'capital': cap,
-            'split': p1 > 0 and p2 > 0, 'both': has_s and has_l, 'pm': pm, 'tm': len(months)}
+# ── SUMMARY ──
+print("\n" + "=" * 80)
+print(f"  {len(best_configs)} strats safe (marge > {MIN_MARGIN}%)")
+print("=" * 80)
+for sn in sorted(best_configs.keys(), key=lambda x: best_configs[x]['pf'], reverse=True):
+    cfg = best_configs[sn]
+    tp_str = f"TP={cfg['p2']:.2f}" if cfg['type'] == 'TPSL' else f"ACT={cfg['p2']:.2f} TR={cfg['p3']:.2f}"
+    print(f"  {sn:22s} {cfg['type']:5s} SL={cfg['p1']:.1f} {tp_str:16s} PF={cfg['pf']:.2f} WR={cfg['wr']:.0f}% n={cfg['n']}")
 
-# ── GREEDY COMBO BUILDER ──
-valid = list(best_configs.keys())
-ranked = sorted(valid, key=lambda sn: best_configs[sn]['pf'], reverse=True)
-
-if len(ranked) == 0:
-    print("\nAucune strat safe. Arret.")
-    import pickle, os
-    import re
-    _broker = _a.account
-    _sym_san = re.sub(r"[^a-z0-9]+", "_", SYMBOL).strip("_")
-    _dir = f'data/{_broker}/{_sym_san}'
-    os.makedirs(_dir, exist_ok=True)
-    with open(f'{_dir}/optim_data.pkl', 'wb') as f:
-        pickle.dump({'strat_arrays': {}, 'best_configs': {}}, f)
-    print(f"Saved {_dir}/optim_data.pkl (vide)")
-    sys.exit(0)
-
-print(f"\n{'='*130}")
-print(f"GREEDY COMBO BUILDER ({len(valid)} strats)")
-print(f"{'='*130}")
-
-combo = [ranked[0]]; remaining = set(ranked[1:])
-r = eval_combo(combo)
-if r:
-    print(f"\n  Start: {combo[0]}")
-    print(f"    n={r['n']} PF={r['pf']:.2f} WR={r['wr']:.0f}% DD={r['mdd']:+.1f}% Rend={r['ret']:+.0f}% M+={r['pm']}/{r['tm']}")
-
-# Track best combos at different sizes
-checkpoints = {}
-for step in range(min(30, len(remaining))):
-    best_add = None; best_cal = -1e9
-    for sn in remaining:
-        test = combo + [sn]
-        r = eval_combo(test)
-        if r and r['split'] and r['both']:
-            if r['cal'] > best_cal:
-                best_cal = r['cal']; best_add = sn; best_r = r
-    if best_add is None: break
-    combo.append(best_add); remaining.remove(best_add)
-    r = best_r
-    cfg = best_configs[best_add]
-    print(f"\n  +{best_add:22s} ({len(combo):2d}) n={r['n']:5d} PF={r['pf']:.2f} WR={r['wr']:.0f}% "
-          f"DD={r['mdd']:+.1f}% Rend={r['ret']:+.0f}% M+={r['pm']}/{r['tm']} "
-          f"[{cfg['type']} SL={cfg['p1']:.1f} {cfg['p2']:.2f}/{cfg['p3']:.2f}]")
-    checkpoints[len(combo)] = {'combo': list(combo), 'r': dict(r)}
-
-# ── FINAL REPORT ──
-print(f"\n{'='*130}")
-print(f"RAPPORT FINAL")
-print(f"{'='*130}")
-
-print(f"\n  {'Combo':>20s}  {'Trades':>7s}  {'PF':>5s}  {'WR':>5s}  {'DD 1%':>8s}  {'Rend 1%':>12s}  {'M+':>6s}")
-print(f"  {'-'*20}  {'-'*7}  {'-'*5}  {'-'*5}  {'-'*8}  {'-'*12}  {'-'*6}")
-for sz in sorted(checkpoints.keys()):
-    r = checkpoints[sz]['r']
-    print(f"  {'Greedy '+str(sz):>20s}  {r['n']:7d}  {r['pf']:5.2f}  {r['wr']:4.0f}%  {r['mdd']:+7.1f}%  {r['ret']:+11.0f}%  {r['pm']:2d}/{r['tm']}")
-
-# Print best configs for top combos
-for sz in [5, 8, 10, 12, 15]:
-    if sz in checkpoints:
-        print(f"\n  Composition Greedy {sz}:")
-        for sn in checkpoints[sz]['combo']:
-            cfg = best_configs[sn]
-            tp_str = f"TP={cfg['p2']:.2f}" if cfg['type'] == 'TPSL' else f"ACT={cfg['p2']:.2f} TR={cfg['p3']:.2f}"
-            print(f"    {sn:22s} {cfg['type']:5s} SL={cfg['p1']:.1f} {tp_str:16s} PF={cfg['pf']:.2f} WR={cfg['wr']:.0f}%")
-
-print(f"\n{'='*130}")
 
 # ── SAVE TO DISK ──
 import pickle
