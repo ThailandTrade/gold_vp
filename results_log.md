@@ -2,6 +2,36 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-17 — cleanup-v2 P9: consolidation + rapport final
+
+**Actions effectuees:**
+1. Rollback 10 strats v9 lab P1 (aucune ne passe WF, polluaient le code) -> REMOVED_STRATS
+2. Ajout 2 doublons dans REMOVED_STRATS:
+   - IDX_KC_BRK (== ALL_KC_BRK)
+   - ALL_MACD_FAST_ZERO (== ALL_EMA_513, mathematiquement equivalent)
+3. Regeneration pkl FTMO 15m 6 instruments
+4. Script temp/report_strats.py - stats par strat (n, PF, WR, MaxDD, Exp, PF 6m/12m, OOS, CI bootstrap)
+
+**ALL_STRATS: 102 -> 90** (-12: -10 v9 + -2 doublons). 87 safe potentielles (hors OPEN_STRATS).
+
+**Resultats FTMO 15m post-cleanup:**
+
+| Instrument | #strats | #trades | PF | WR | MaxDD | CI95% | Verdict |
+|---|---|---|---|---|---|---|---|
+| xauusd | 12 | 3321 | 1.69 | 82% | -372 | [1.29, 2.02] | ROBUSTE |
+| ger40_cash | 3 | 716 | 1.64 | 82% | -646 | [1.06, 2.29] | ATTENUE |
+| us500_cash | 6 | 1704 | 1.30 | 77% | -320 | [1.08, 1.58] | ATTENUE |
+| us100_cash | 10 | 2578 | 1.36 | 81% | -1006 | [1.19, 1.61] | ATTENUE* |
+| us30_cash | 4 | 1071 | 1.45 | 76% | -923 | [1.26, 1.67] | ROBUSTE |
+| jp225_cash | 3 | 592 | 1.71 | 77% | -1981 | [1.31, 2.19] | ROBUSTE |
+
+38 strat-instrument validees (vs 40 avant, -2 doublons retires).
+
+*US100: CI_lo 1.19 vs seuil 1.20 (marginalement sous ROBUSTE apres retrait IDX_KC_BRK).
+
+**Nouveau doublon detecte (97% overlap):**
+JP225: ALL_PSAR_EMA (190 signaux) == ALL_SUPERTREND (195 signaux). Dans `compute_indicators`, psar_dir est implemente comme proxy supertrend. Les 3% de diff viennent du filtre EMA20 additionnel dans PSAR_EMA. Status: a discuter.
+
 ## 2026-04-17 — cleanup-v2 P8: detection vrais doublons (en cours)
 
 **Motivation user:** Distinguer vrais doublons (meme signal sous 2 noms = bug/redondance) vs correlations (signaux differents qui coincident parfois = confluence utile).

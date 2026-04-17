@@ -14,6 +14,12 @@ REMOVED_STRATS = frozenset({
     'ALL_AO_SAUCER', 'ALL_BB_SQUEEZE', 'ALL_EMA_TREND_PB', 'ALL_HMA_DIR',
     'ALL_MACD_MED_SIG', 'ALL_STOCH_CROSS', 'ALL_VOL_SPIKE',
     'IDX_GAP_FILL', 'IDX_ORB15', 'LON_PIN', 'TOK_MACD_MED',
+    # Doublons mathematiques (detectes bootstrap 2026-04-17)
+    'IDX_KC_BRK',          # == ALL_KC_BRK (meme code)
+    'ALL_MACD_FAST_ZERO',  # == ALL_EMA_513 (MACD_fast(5,13) zero cross = EMA5 cross EMA13)
+    # v9 lab P1 retirees (testees 2026-04-17, 0/10 passent WF sur XAUUSD)
+    'KAMA_CROSS', 'ZSCORE_MR', 'CONNORS_RSI2', 'VWAP_DEV', 'TTM_SQUEEZE',
+    'ORB_PREMARKET', 'MTF_TREND_PB', 'MTF_DAILY_BIAS', 'HURST_TREND', 'WEEKEND_GAP_FADE',
 })
 
 _ALL_STRATS_RAW = [
@@ -59,6 +65,9 @@ _ALL_STRATS_RAW = [
     'TOK_STOCH','TOK_TRIX','LON_STOCH','NY_ELDER',
     # New strats v8 (structure / ICT / price action)
     'AVWAP_RECLAIM','BOS_FVG','FLAG_BRK','EXH_GAP',
+    # v9 lab P1 (10 strats testees 2026-04-17) - AUCUNE NE TIENT le WF sur XAUUSD -> REMOVED_STRATS
+    'KAMA_CROSS','ZSCORE_MR','CONNORS_RSI2','VWAP_DEV','TTM_SQUEEZE',
+    'ORB_PREMARKET','MTF_TREND_PB','MTF_DAILY_BIAS','HURST_TREND','WEEKEND_GAP_FADE',
 ]
 ALL_STRATS = [s for s in _ALL_STRATS_RAW if s not in REMOVED_STRATS]
 
@@ -187,6 +196,16 @@ STRAT_NAMES = {
     'BOS_FVG':'Break of structure + FVG retrace',
     'FLAG_BRK':'Flag breakout (impulsion + consolidation)',
     'EXH_GAP':'Exhaustion gap fade',
+    'KAMA_CROSS':'KAMA (Kaufman Adaptive MA) cross',
+    'ZSCORE_MR':'Z-score 20 > |2| mean reversion',
+    'CONNORS_RSI2':'RSI(2) < 10 or > 90 (Connors)',
+    'VWAP_DEV':'Session VWAP +/- 2 SD mean reversion',
+    'TTM_SQUEEZE':'TTM squeeze release (BB inside KC)',
+    'ORB_PREMARKET':'London opening range breakout (08:00 UTC 15m)',
+    'MTF_TREND_PB':'1H trend + 15m RSI pullback entry',
+    'MTF_DAILY_BIAS':'Prev daily bias + EMA21 trigger',
+    'HURST_TREND':'Efficiency ratio > 0.5 trend filter',
+    'WEEKEND_GAP_FADE':'Monday weekend gap fade',
 }
 
 STRAT_SESSION = {
@@ -231,6 +250,9 @@ STRAT_SESSION = {
     'ALL_MACD_DIV':'All','ALL_STOCH_PIVOT':'All',
     'TOK_STOCH':'Tokyo','TOK_TRIX':'Tokyo','LON_STOCH':'London','NY_ELDER':'New York',
     'AVWAP_RECLAIM':'All','BOS_FVG':'All','FLAG_BRK':'All','EXH_GAP':'All',
+    'KAMA_CROSS':'All','ZSCORE_MR':'All','CONNORS_RSI2':'All','VWAP_DEV':'All',
+    'TTM_SQUEEZE':'All','ORB_PREMARKET':'London','MTF_TREND_PB':'All',
+    'MTF_DAILY_BIAS':'All','HURST_TREND':'All','WEEKEND_GAP_FADE':'All',
 }
 
 def sim_exit(cdf, pos, entry, d, atr, check_entry_candle=False):
@@ -554,6 +576,72 @@ def compute_indicators(candles):
             n = len(x); xs = np.arange(n)
             return (n * np.dot(xs, x) - xs.sum() * x.sum()) / (n * (xs**2).sum() - xs.sum()**2 + 1e-10)
         c['lr_slope'] = c['close'].rolling(20).apply(_lr_slope, raw=True)
+    # v9 indicators for lab P1 strats
+    # RSI 2 (Connors)
+    if 'rsi2' not in c.columns:
+        delta = c['close'].diff()
+        gain = delta.clip(lower=0); loss = (-delta).clip(lower=0)
+        ag = gain.ewm(alpha=1.0/2, min_periods=2, adjust=False).mean()
+        al = loss.ewm(alpha=1.0/2, min_periods=2, adjust=False).mean()
+        c['rsi2'] = 100 - 100/(1 + ag/(al + 1e-10))
+    # Z-score 20-period on close
+    if 'zscore20' not in c.columns:
+        roll_mean = c['close'].rolling(20).mean()
+        roll_std = c['close'].rolling(20).std()
+        c['zscore20'] = (c['close'] - roll_mean) / (roll_std + 1e-10)
+    # Efficiency Ratio (Kaufman) 10-period
+    if 'er10' not in c.columns:
+        change = (c['close'] - c['close'].shift(10)).abs()
+        volatility = c['close'].diff().abs().rolling(10).sum()
+        c['er10'] = change / (volatility + 1e-10)
+    # KAMA (Kaufman Adaptive MA) - fast=2, slow=30, er lookback=10
+    if 'kama' not in c.columns:
+        fast_sc = 2.0 / (2 + 1)
+        slow_sc = 2.0 / (30 + 1)
+        sc = (c['er10'] * (fast_sc - slow_sc) + slow_sc) ** 2
+        kama = np.zeros(len(c))
+        closes = c['close'].values
+        sc_vals = sc.values
+        kama[:10] = closes[:10]  # seed
+        for i in range(10, len(c)):
+            if np.isnan(sc_vals[i]):
+                kama[i] = kama[i-1]
+            else:
+                kama[i] = kama[i-1] + sc_vals[i] * (closes[i] - kama[i-1])
+        c['kama'] = kama
+    # Session VWAP (reset each day in UTC) + 1SD/2SD bands
+    if 'svwap' not in c.columns and 'date' in c.columns:
+        hlc3 = (c['high'] + c['low'] + c['close']) / 3
+        if 'tick_volume' in c.columns:
+            vol = c['tick_volume'].astype(float)
+        elif 'volume' in c.columns:
+            vol = c['volume'].astype(float)
+        else:
+            vol = pd.Series(1.0, index=c.index)
+        # Cumsum reset par date
+        tpv = hlc3 * vol
+        svwap = np.zeros(len(c))
+        svwap_sd = np.zeros(len(c))
+        dates = c['date'].values
+        cum_tpv = 0.0; cum_v = 0.0; cum_sqdev = 0.0; n_bars = 0
+        tpv_vals = tpv.values; vol_vals = vol.values; hlc3_vals = hlc3.values
+        prev_date = None
+        for i in range(len(c)):
+            if dates[i] != prev_date:
+                cum_tpv = 0.0; cum_v = 0.0; cum_sqdev = 0.0; n_bars = 0
+                prev_date = dates[i]
+            cum_tpv += tpv_vals[i]
+            cum_v += vol_vals[i]
+            n_bars += 1
+            if cum_v > 0:
+                mean = cum_tpv / cum_v
+                cum_sqdev += (hlc3_vals[i] - mean) ** 2
+                svwap[i] = mean
+                svwap_sd[i] = (cum_sqdev / n_bars) ** 0.5 if n_bars > 1 else 0
+            else:
+                svwap[i] = hlc3_vals[i]; svwap_sd[i] = 0
+        c['svwap'] = svwap
+        c['svwap_sd'] = svwap_sd
     return c
 
 def detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_day_data, add, prev2_day_data=None):
@@ -1368,3 +1456,103 @@ def detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_
             # Gap down but bullish candle closing above prev close: fade long
             elif gap < 0 and body > 0 and row['close'] > prev['close']:
                 add('EXH_GAP','long',row['close']); trig['EXH_GAP']=True
+
+    # ── V9 LAB P1 STRATS ──
+
+    # KAMA_CROSS: close cross KAMA avec confirmation body
+    if 'KAMA_CROSS' not in trig and 'kama' in row.index and pd.notna(row.get('kama')):
+        if prev['close'] < prev['kama'] and row['close'] > row['kama'] and (row['close']-row['open']) >= 0.3*atr:
+            add('KAMA_CROSS','long',row['close']); trig['KAMA_CROSS']=True
+        elif prev['close'] > prev['kama'] and row['close'] < row['kama'] and (row['open']-row['close']) >= 0.3*atr:
+            add('KAMA_CROSS','short',row['close']); trig['KAMA_CROSS']=True
+
+    # ZSCORE_MR: z-score 20 > |2| mean reversion (fade)
+    if 'ZSCORE_MR' not in trig and 'zscore20' in row.index and pd.notna(row.get('zscore20')):
+        z = row['zscore20']
+        if z <= -2.0 and row['close'] > row['open']:  # oversold + bullish candle
+            add('ZSCORE_MR','long',row['close']); trig['ZSCORE_MR']=True
+        elif z >= 2.0 and row['close'] < row['open']:  # overbought + bearish candle
+            add('ZSCORE_MR','short',row['close']); trig['ZSCORE_MR']=True
+
+    # CONNORS_RSI2: RSI(2) extremes
+    if 'CONNORS_RSI2' not in trig and 'rsi2' in row.index and pd.notna(row.get('rsi2')):
+        if row['rsi2'] < 10 and row['close'] > row['open']:
+            add('CONNORS_RSI2','long',row['close']); trig['CONNORS_RSI2']=True
+        elif row['rsi2'] > 90 and row['close'] < row['open']:
+            add('CONNORS_RSI2','short',row['close']); trig['CONNORS_RSI2']=True
+
+    # VWAP_DEV: session VWAP +/- 2 SD mean reversion
+    if 'VWAP_DEV' not in trig and 'svwap' in row.index and pd.notna(row.get('svwap')) and pd.notna(row.get('svwap_sd')):
+        sd = row['svwap_sd']
+        if sd > 0:
+            upper = row['svwap'] + 2.0 * sd
+            lower = row['svwap'] - 2.0 * sd
+            if row['close'] <= lower and row['close'] > row['open']:
+                add('VWAP_DEV','long',row['close']); trig['VWAP_DEV']=True
+            elif row['close'] >= upper and row['close'] < row['open']:
+                add('VWAP_DEV','short',row['close']); trig['VWAP_DEV']=True
+
+    # TTM_SQUEEZE: squeeze release (BB was inside KC, now expands) + LR slope direction
+    if 'TTM_SQUEEZE' not in trig and 'kb_squeeze' in row.index and 'lr_slope' in row.index and ci >= 2:
+        prev2 = candles.iloc[ci-2]
+        # Squeeze was ON (or was recent), now OFF
+        if prev.get('kb_squeeze', 0) == 1 and row.get('kb_squeeze', 0) == 0 and pd.notna(row['lr_slope']):
+            body = row['close'] - row['open']
+            if row['lr_slope'] > 0 and body > 0.2*atr:
+                add('TTM_SQUEEZE','long',row['close']); trig['TTM_SQUEEZE']=True
+            elif row['lr_slope'] < 0 and body < -0.2*atr:
+                add('TTM_SQUEEZE','short',row['close']); trig['TTM_SQUEEZE']=True
+
+    # ORB_PREMARKET: first 15m London bar (8:00-8:15 UTC) high/low breakout during session
+    # On stocke le range de la premiere bougie London via trig dict (un state)
+    if 8.0 <= hour < 14.5 and 'ORB_PREMARKET' not in trig:
+        # Bougie 1ere de London = bougie dont hour est entre 8.0 et 8.25 (elle se ferme a 8.15)
+        # On a besoin de chercher cette bougie dans la journee
+        if '_orb_range' not in trig:
+            # Trouver la bougie London open (hour exactement 8.0)
+            london_candles = tv[(tv['ts_dt'] >= ls) & (tv['ts_dt'] < ls + pd.Timedelta(minutes=15))]
+            if len(london_candles) >= 1:
+                lc = london_candles.iloc[-1]
+                trig['_orb_range'] = (float(lc['high']), float(lc['low']))
+        if '_orb_range' in trig and hour >= 8.25:  # apres la 1ere bougie
+            orb_h, orb_l = trig['_orb_range']
+            if row['close'] > orb_h and row['close'] > row['open']:
+                add('ORB_PREMARKET','long',row['close']); trig['ORB_PREMARKET']=True
+            elif row['close'] < orb_l and row['close'] < row['open']:
+                add('ORB_PREMARKET','short',row['close']); trig['ORB_PREMARKET']=True
+
+    # MTF_TREND_PB: EMA50 > EMA200 (trend long) + RSI cross 50 from <40 + bullish candle
+    if 'MTF_TREND_PB' not in trig and 'ema50' in row.index and 'ema200' in row.index and 'rsi14' in row.index and pd.notna(row.get('ema200')):
+        if row['ema50'] > row['ema200'] and prev['rsi14'] < 40 and row['rsi14'] >= 50 and row['close'] > row['open']:
+            add('MTF_TREND_PB','long',row['close']); trig['MTF_TREND_PB']=True
+        elif row['ema50'] < row['ema200'] and prev['rsi14'] > 60 and row['rsi14'] <= 50 and row['close'] < row['open']:
+            add('MTF_TREND_PB','short',row['close']); trig['MTF_TREND_PB']=True
+
+    # MTF_DAILY_BIAS: previous day bullish/bearish + EMA21 cross today
+    if 'MTF_DAILY_BIAS' not in trig and 'ema21' in row.index and pd.notna(row.get('ema21')) and prev_day_data is not None:
+        prev_bullish = prev_day_data['close'] > prev_day_data['open']
+        if prev_bullish and prev['close'] < prev['ema21'] and row['close'] > row['ema21'] and row['close'] > row['open']:
+            add('MTF_DAILY_BIAS','long',row['close']); trig['MTF_DAILY_BIAS']=True
+        elif not prev_bullish and prev['close'] > prev['ema21'] and row['close'] < row['ema21'] and row['close'] < row['open']:
+            add('MTF_DAILY_BIAS','short',row['close']); trig['MTF_DAILY_BIAS']=True
+
+    # HURST_TREND: efficiency ratio (proxy Hurst) > 0.5 + price vs EMA21 cross
+    if 'HURST_TREND' not in trig and 'er10' in row.index and 'ema21' in row.index and pd.notna(row.get('er10')) and pd.notna(row.get('ema21')):
+        if row['er10'] > 0.5:
+            if prev['close'] < prev['ema21'] and row['close'] > row['ema21'] and row['close'] > row['open']:
+                add('HURST_TREND','long',row['close']); trig['HURST_TREND']=True
+            elif prev['close'] > prev['ema21'] and row['close'] < row['ema21'] and row['close'] < row['open']:
+                add('HURST_TREND','short',row['close']); trig['HURST_TREND']=True
+
+    # WEEKEND_GAP_FADE: Monday first candle with gap > 0.5 ATR vs prev close, fade
+    if 'WEEKEND_GAP_FADE' not in trig and ct.weekday() == 0:  # Monday UTC
+        # Detecter premiere bougie du lundi (hour proche 0 dans la journee)
+        # On check si la 1ere bougie du jour: ci juste apres un changement de jour
+        if ci >= 1 and candles.iloc[ci-1]['ts_dt'].date() != today:
+            gap = row['open'] - prev['close']
+            if abs(gap) >= 0.5 * atr:
+                # Fade le gap
+                if gap > 0 and row['close'] < row['open']:  # gap up + bougie baissiere
+                    add('WEEKEND_GAP_FADE','short',row['close']); trig['WEEKEND_GAP_FADE']=True
+                elif gap < 0 and row['close'] > row['open']:  # gap down + bougie haussiere
+                    add('WEEKEND_GAP_FADE','long',row['close']); trig['WEEKEND_GAP_FADE']=True
