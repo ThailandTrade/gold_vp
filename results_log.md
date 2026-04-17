@@ -2,6 +2,27 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-17 — TEST: multi-trigger par jour v2 — pipeline complet (branche annulee)
+
+Pipeline complet (optimize + combos) avec multi-trigger sur FTMO 15m.
+
+| Instrument | | PF | WR | DD | Rend | M+ |
+|---|---|---|---|---|---|---|
+| XAUUSD | 1/jour | 1.65 | 76% | -1.0% | +15% | 13/13 |
+| | multi | 1.47 | 71% | -2.3% | +17% | 9/13 |
+| GER40 | 1/jour | 1.53 | 74% | -0.5% | +8% | 13/13 |
+| | multi | 1.38 | 71% | -1.8% | +4% | 9/13 |
+| US500 | 1/jour | 1.54 | 68% | -1.2% | +12% | 13/13 |
+| | multi | 1.36 | 67% | -0.6% | +2% | 9/13 |
+| US100 | 1/jour | 1.53 | 72% | -1.1% | +10% | 11/13 |
+| | multi | 1.95 | 79% | -0.2% | +2% | 13/13 |
+| US30 | 1/jour | 1.52 | 69% | -0.6% | +5% | 12/13 |
+| | multi | 1.43 | 63% | -0.6% | +4% | 10/13 |
+| JP225 | 1/jour | 1.61 | 77% | -0.5% | +2% | 11/13 |
+| | multi | 1.63 | 74% | -1.1% | +8% | 11/13 |
+
+Multi-trigger degrade la qualite sur 5/6 instruments (PF plus bas, M+ pire). Seul US100 s'ameliore. Non retenu.
+
 ## 2026-04-15 — TEST: multi-trigger par jour (branche annulee)
 
 FTMO 15m agrege, sans restriction 1 trigger/jour/strat.
