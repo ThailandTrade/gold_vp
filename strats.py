@@ -57,6 +57,8 @@ _ALL_STRATS_RAW = [
     'ALL_KB_SQUEEZE','ALL_LR_BREAK','ALL_ADX_RSI50',
     'ALL_MACD_DIV','ALL_STOCH_PIVOT',
     'TOK_STOCH','TOK_TRIX','LON_STOCH','NY_ELDER',
+    # New strats v8 (structure / ICT / price action)
+    'AVWAP_RECLAIM','BOS_FVG','FLAG_BRK','EXH_GAP',
 ]
 ALL_STRATS = [s for s in _ALL_STRATS_RAW if s not in REMOVED_STRATS]
 
@@ -181,6 +183,10 @@ STRAT_NAMES = {
     'TOK_TRIX':'TRIX cross Tokyo',
     'LON_STOCH':'Stochastic reversal London',
     'NY_ELDER':'Elder Ray reversal NY',
+    'AVWAP_RECLAIM':'Anchored VWAP reclaim from swing',
+    'BOS_FVG':'Break of structure + FVG retrace',
+    'FLAG_BRK':'Flag breakout (impulsion + consolidation)',
+    'EXH_GAP':'Exhaustion gap fade',
 }
 
 STRAT_SESSION = {
@@ -224,6 +230,7 @@ STRAT_SESSION = {
     'ALL_KB_SQUEEZE':'All','ALL_LR_BREAK':'All','ALL_ADX_RSI50':'All',
     'ALL_MACD_DIV':'All','ALL_STOCH_PIVOT':'All',
     'TOK_STOCH':'Tokyo','TOK_TRIX':'Tokyo','LON_STOCH':'London','NY_ELDER':'New York',
+    'AVWAP_RECLAIM':'All','BOS_FVG':'All','FLAG_BRK':'All','EXH_GAP':'All',
 }
 
 def sim_exit(cdf, pos, entry, d, atr, check_entry_candle=False):
@@ -1299,3 +1306,65 @@ def detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_
             add('NY_ELDER','long',row['close']); trig['NY_ELDER']=True
         elif prev['bear_power']>0 and row['bear_power']<=0 and row['close']<row['open']:
             add('NY_ELDER','short',row['close']); trig['NY_ELDER']=True
+
+    # ── V8 STRUCTURE / ICT / PRICE ACTION ──
+
+    # AVWAP_RECLAIM: anchored VWAP from swing high/low, entry on reclaim
+    if 'AVWAP_RECLAIM' not in trig and ci >= 20:
+        window = candles.iloc[ci-20:ci+1]
+        lows = window['low'].values; highs = window['high'].values
+        idx_lo = int(np.argmin(lows)); idx_hi = int(np.argmax(highs))
+        # Long: anchor at swing low, require 3-15 bars since anchor
+        if 3 <= (20 - idx_lo) <= 15:
+            seg = candles.iloc[ci-20+idx_lo:ci+1]
+            hlc3 = (seg['high']+seg['low']+seg['close'])/3
+            vol = seg['tick_volume'] if 'tick_volume' in seg.columns else pd.Series(1.0, index=seg.index)
+            if vol.sum() > 0:
+                avwap_l = float((hlc3*vol).sum() / vol.sum())
+                if prev['close'] < avwap_l and row['close'] > avwap_l and row['close'] > row['open'] and abs(row['close']-row['open']) >= 0.2*atr:
+                    add('AVWAP_RECLAIM','long',row['close']); trig['AVWAP_RECLAIM']=True
+        # Short: anchor at swing high
+        if 'AVWAP_RECLAIM' not in trig and 3 <= (20 - idx_hi) <= 15:
+            seg = candles.iloc[ci-20+idx_hi:ci+1]
+            hlc3 = (seg['high']+seg['low']+seg['close'])/3
+            vol = seg['tick_volume'] if 'tick_volume' in seg.columns else pd.Series(1.0, index=seg.index)
+            if vol.sum() > 0:
+                avwap_h = float((hlc3*vol).sum() / vol.sum())
+                if prev['close'] > avwap_h and row['close'] < avwap_h and row['close'] < row['open'] and abs(row['close']-row['open']) >= 0.2*atr:
+                    add('AVWAP_RECLAIM','short',row['close']); trig['AVWAP_RECLAIM']=True
+
+    # BOS_FVG: break of structure (17-bar swing) + 3-candle FVG
+    if 'BOS_FVG' not in trig and ci >= 20:
+        structure = candles.iloc[ci-20:ci-3]  # 17 bars, exclude last 3
+        swing_h = float(structure['high'].max()); swing_l = float(structure['low'].min())
+        bar_m3 = candles.iloc[ci-3]
+        body = row['close'] - row['open']
+        if row['close'] > swing_h and bar_m3['high'] < row['low'] and body >= 0.3*atr:
+            add('BOS_FVG','long',row['close']); trig['BOS_FVG']=True
+        elif row['close'] < swing_l and bar_m3['low'] > row['high'] and -body >= 0.3*atr:
+            add('BOS_FVG','short',row['close']); trig['BOS_FVG']=True
+
+    # FLAG_BRK: impulsion (5 bars) + consolidation (3 bars) + breakout
+    if 'FLAG_BRK' not in trig and ci >= 8:
+        imp = candles.iloc[ci-8:ci-3]
+        cons = candles.iloc[ci-3:ci]
+        imp_move = float(imp.iloc[-1]['close'] - imp.iloc[0]['open'])
+        cons_range = float(cons['high'].max() - cons['low'].min())
+        if abs(imp_move) >= 1.0*atr and cons_range <= 0.5*atr and cons_range > 0:
+            cons_hi = float(cons['high'].max()); cons_lo = float(cons['low'].min())
+            if imp_move > 0 and row['close'] > cons_hi and row['close'] > row['open']:
+                add('FLAG_BRK','long',row['close']); trig['FLAG_BRK']=True
+            elif imp_move < 0 and row['close'] < cons_lo and row['close'] < row['open']:
+                add('FLAG_BRK','short',row['close']); trig['FLAG_BRK']=True
+
+    # EXH_GAP: exhaustion gap fade (gap > 0.5 ATR + close opposite direction)
+    if 'EXH_GAP' not in trig and ci >= 1:
+        gap = float(row['open'] - prev['close'])
+        body = row['close'] - row['open']
+        if abs(gap) >= 0.5*atr:
+            # Gap up but bearish candle closing below prev close: fade short
+            if gap > 0 and body < 0 and row['close'] < prev['close']:
+                add('EXH_GAP','short',row['close']); trig['EXH_GAP']=True
+            # Gap down but bullish candle closing above prev close: fade long
+            elif gap < 0 and body > 0 and row['close'] > prev['close']:
+                add('EXH_GAP','long',row['close']); trig['EXH_GAP']=True
