@@ -2,6 +2,31 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-17 — cleanup-v2 P7: plan bootstrap significativite edge
+
+**Motivation:** Challenge honnete de l'user — "comment distinguer edge de chance?"
+
+**Probleme statistique:** 89 strats x 128 configs = ~11 000 combinaisons testees sur 13 mois. Par chance pure, ~15 strats passent les filtres sans avoir de vrai edge. Les 40 validees WF+6m+12m contiennent **forcement des faux positifs**.
+
+**Clarification user (important):**
+- Plus de data historique pas possible (limite broker)
+- Le mutex LONG/SHORT etait une contrainte prop firm mais en fait autorise - donc pas une raison de revert P3. On garde BT sans mutex, live tel quel (a traiter plus tard).
+- Focus: identifier les VRAIS edges parmi les 40 candidates
+
+**Outils a appliquer:**
+1. **Block bootstrap mensuel** sur les pnls de chaque strat (1000 resamples avec remplacement par mois entier pour preserver autocorrelation)
+2. Calcul 95% CI du PF. Filtre: **CI[lower] > 1.20** (edge robuste a 95%)
+3. **Correction multiple tests** (Benjamini-Hochberg FDR 5%) pour les 89 strats testees
+4. Investigation des doublons stats (ALL_MOM_14 == ALL_CMO_14_ZERO, ALL_RSI_EXTREME == IDX_RSI_REV)
+5. Analyse de stabilite des parametres (varier SL/TP de +/- 20%, voir impact)
+
+**Plan:**
+- Script `temp/bootstrap_edge.py` qui bootstrappe chaque strat
+- Applique sur les 40 validees FTMO 15m
+- Sortie: strats avec edge significatif (CI bas > 1.20 + survit correction multiple)
+- Investigation doublons en parallele
+- Logger chaque etape
+
 ## 2026-04-17 — cleanup-v2 P5c: validation double periode 6m + 12m
 
 **Changement:**
