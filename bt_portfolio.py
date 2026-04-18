@@ -93,7 +93,7 @@ for sym, icfg in INSTRUMENTS.items():
     all_sym_trades.append({'sym': sym, 'accepted': trades, 'risk': risk})
 
 # ── AGGREGATE ──
-if len(all_sym_trades) > 1:
+if len(all_sym_trades) >= 1:
     print(f"\n{'='*W}")
     print(f"  AGREGE — {len(all_sym_trades)} instruments — ${CAPITAL:,.0f}")
     print(f"{'='*W}")
