@@ -21,7 +21,7 @@ import requests
 # ── CONFIG ──
 parser = argparse.ArgumentParser()
 parser.add_argument('account', choices=['icm', 'ftmo', '5ers'])
-parser.add_argument('--url', default='https://unprolongable-nonexternalized-elizabet.ngrok-free.dev')
+parser.add_argument('--url', default='https://dashboard.glorytavern.world')
 parser.add_argument('--interval', type=float, default=1.0)
 parser.add_argument('--tf', default='5m', help='Timeframe: 5m or 15m')
 args = parser.parse_args()
