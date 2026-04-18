@@ -9,8 +9,9 @@ ALL_INSTRUMENTS = {
         'risk_pct': 0.0005,
         'portfolio': [
             'ALL_MACD_RSI','IDX_TREND_DAY','ALL_BB_TIGHT','IDX_3SOLDIERS',
-            'ALL_ELDER_BEAR','ALL_ROC_ZERO','ALL_KC_BRK','ALL_MACD_HIST','IDX_KC_BRK',
+            'ALL_ELDER_BEAR','ALL_ROC_ZERO','ALL_KC_BRK','ALL_MACD_HIST',
         ],
+        # IDX_KC_BRK retire (doublon exact de ALL_KC_BRK, meme code)
         # PF 9: PF 1.68 | WR 76% | DD -0.2% | Rend +3% | 13/13
     },
     'GER40.cash': {
