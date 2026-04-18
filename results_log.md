@@ -2,6 +2,41 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-18 — Fix live_mt5 mutex LONG/SHORT aligne sur BT strict
+
+Implementation tracking interne des positions fermees pour bloquer les opposes
+sur la bougie precedente (identique BT axi >= ci).
+
+Fichier: live_mt5.py (37 insertions, 1 suppression)
+
+Modifications:
+  1. new_state(): ajout cles closed_this_bar, closed_prev_bar, _tracked_tickets
+  2. load_state(): setdefault les nouvelles cles + conversion lists -> sets
+  3. _state_for_json(): helper pour serialisation (sets -> lists) avant save
+  4. save_state(): utilise _state_for_json
+  5. Boucle principale:
+     - Tracking a chaque tick: positions disparues depuis dernier tick ajoutees a closed_this_bar
+     - Au nouveau bar (is_new=True): swap closed_this_bar -> closed_prev_bar, reset
+     - Conflict check: open_dirs inclut closed_prev_bar[sym]
+
+Pas de suppression de code existant:
+  - history_deals_get reste en fallback double securite
+  - Logique trail/open_position/detect_close_strats inchangee
+
+Test verifie:
+  - Serialization JSON sets -> lists OK
+  - Load JSON lists -> sets OK
+  - Tracking diff logic OK
+
+Compatibilite:
+  - state.json existants: cles absentes, setdefault cree vides
+  - Premier bar apres restart: closed_prev_bar vide -> pas de regression
+
+Reste a faire:
+  - Commit + push
+  - git pull sur VPS
+  - restart live_mt5 (break infini + restart)
+
 ## 2026-04-18 — Diagnostic divergence BT vs live 5ers + plan fix mutex
 
 Compare today 5ers (17 avril) a montre 4 divergences NAS100:

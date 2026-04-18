@@ -190,6 +190,7 @@ def get_yesterday_atr(candles_df, today):
 def new_state():
     return {'broker': BROKER, 'instruments': list(INSTRUMENTS.keys()),
             'daily_cache': {}, 'trail': {},
+            'closed_this_bar': {}, 'closed_prev_bar': {}, '_tracked_tickets': {},
             'per_symbol': {sym: {'_triggered_open': {}, '_triggered_close': {},
                                   '_prev_day_data': None, '_prev2_day_data': None,
                                   '_prev_day_date': None,
@@ -201,6 +202,15 @@ def load_state():
             state = json.load(f)
             state.setdefault('trail', {})
             state.setdefault('per_symbol', {})
+            # Nouvelles cles pour mutex LONG/SHORT aligne sur BT (tracking interne)
+            state.setdefault('closed_this_bar', {})
+            state.setdefault('closed_prev_bar', {})
+            state.setdefault('_tracked_tickets', {})
+            # Conversion lists -> sets au load (JSON ne supporte pas sets)
+            for key in ('closed_this_bar', 'closed_prev_bar'):
+                for sym, v in list(state[key].items()):
+                    if isinstance(v, list):
+                        state[key][sym] = set(v)
             for sym in INSTRUMENTS:
                 state['per_symbol'].setdefault(sym, {
                     '_triggered_open': {}, '_triggered_close': {},
@@ -210,8 +220,18 @@ def load_state():
             return state
     return new_state()
 
+def _state_for_json(state):
+    """Convertit les sets en lists pour serialisation JSON."""
+    out = {}
+    for k, v in state.items():
+        if k in ('closed_this_bar', 'closed_prev_bar'):
+            out[k] = {sym: list(dirs) if isinstance(dirs, set) else dirs for sym, dirs in v.items()}
+        else:
+            out[k] = v
+    return out
+
 def save_state(state):
-    with open(STATE_FILE, 'w') as f: json.dump(state, f, indent=2, default=str)
+    with open(STATE_FILE, 'w') as f: json.dump(_state_for_json(state), f, indent=2, default=str)
 
 def reset_state():
     if os.path.exists(STATE_FILE): os.remove(STATE_FILE)
@@ -452,6 +472,14 @@ def main():
                 # (identique au BT: un trade sorti au meme candle bloque encore)
                 our_pos = mt5_our_positions(sym)
                 open_dirs = set('long' if p.type == 0 else 'short' for p in our_pos)
+                # Tracking interne: detecter positions disparues depuis dernier tick
+                # (fermees entre 2 ticks = fermetures physiques MT5 a capter)
+                current_tickets_map = {str(p.ticket): ('long' if p.type == 0 else 'short') for p in our_pos}
+                prev_tickets_map = state.get('_tracked_tickets', {}).get(sym, {})
+                for ticket_str, direction in prev_tickets_map.items():
+                    if ticket_str not in current_tickets_map:
+                        state.setdefault('closed_this_bar', {}).setdefault(sym, set()).add(direction)
+                state.setdefault('_tracked_tickets', {})[sym] = current_tickets_map
                 # Ajouter les directions des deals ouverts OU fermes sur la bougie courante
                 # En BT, un trade sorti a candle N est encore actif a candle N (>=)
                 try:
@@ -472,6 +500,11 @@ def main():
                 is_new = current_ts != last_ts.get(sym, 0)
                 if not is_new: continue
 
+                # Nouveau bar: swap closed_this_bar -> closed_prev_bar
+                # Ces directions bloqueront les opposes sur le bar courant (identique BT axi>=ci)
+                state.setdefault('closed_prev_bar', {})[sym] = set(state.get('closed_this_bar', {}).get(sym, set()))
+                state.setdefault('closed_this_bar', {})[sym] = set()
+
                 # Heartbeat
                 bal = mt5_balance()
                 log.info("~ {} {} C={:.2f} ATR={:.2f} {}pos ${:,.0f}".format(
@@ -489,6 +522,8 @@ def main():
                 our_pos = mt5_our_positions(sym)
                 for p in our_pos:
                     open_dirs.add('long' if p.type == 0 else 'short')
+                # Directions des positions fermees sur la bougie precedente (tracking interne)
+                open_dirs.update(state.get('closed_prev_bar', {}).get(sym, set()))
                 for sig in sorted(detect_close_strats(candles, ss, atr, candle_time_utc, today, portfolio), key=lambda s: s['strat']):
                     if sig['dir'] == 'long' and 'short' in open_dirs: continue
                     if sig['dir'] == 'short' and 'long' in open_dirs: continue
