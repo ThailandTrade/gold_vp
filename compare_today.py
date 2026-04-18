@@ -136,7 +136,7 @@ for sym, icfg in INSTRUMENTS.items():
         risk_1r = sl_atr * atr_t  # 1R = distance du stop en points
         bt_trades.append({
             'strat': sn, 'dir': d_dir, 'entry': entry, 'exit': ex,
-            'pnl_pts': pnl_oz, 'pnl_r': pnl_oz / risk_1r - 0.1 if risk_1r > 0 else 0,
+            'pnl_pts': pnl_oz, 'pnl_r': pnl_oz / risk_1r if risk_1r > 0 else 0,
             'risk_1r': risk_1r, 'bars': xi - ci,
             'entry_time': str(candles.iloc[ci]['ts_dt']),
             'exit_time': str(candles.iloc[min(xi, len(candles)-1)]['ts_dt']),

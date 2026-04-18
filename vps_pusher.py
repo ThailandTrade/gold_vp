@@ -191,7 +191,7 @@ def compute_compare_today():
                 'dir': 'long' if di == 1 else 'short',
                 'entry': round(entry, 2),
                 'exit': round(entry + pnl_oz if di == 1 else entry - pnl_oz, 2),
-                'pnl_r': round(pnl_oz / risk_1r - 0.1, 2) if risk_1r > 0 else 0,
+                'pnl_r': round(pnl_oz / risk_1r, 2) if risk_1r > 0 else 0,
                 'risk_1r': round(risk_1r, 4),
             }
         # LV par strat
