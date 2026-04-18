@@ -123,9 +123,11 @@ if len(all_sym_trades) > 1:
             dd = (cap - peak) / peak * 100
             if dd < max_dd: max_dd = dd
 
-            # Period key
+            # Period key: semaine (lundi) si --weekly, sinon mois
             if args.weekly and ref_candles is not None and xi < len(ref_candles):
-                period = ref_candles.iloc[xi]['ts_dt'].strftime('%Y-W%V')
+                from datetime import timedelta
+                ts = ref_candles.iloc[xi]['ts_dt']
+                period = (ts - timedelta(days=ts.weekday())).strftime('%Y-%m-%d')
             else:
                 period = mo
 
