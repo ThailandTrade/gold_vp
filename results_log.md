@@ -2,6 +2,85 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-18 — Main propre + Cloudflare Tunnel (ngrok epuise)
+
+**Contexte:** Branche cleanup-v2 mise de cote (travail approfondi XAUUSD + WF + bootstrap conserve pour plus tard). Retour sur main pour fixer infra + verifications sur config prod actuelle.
+
+### Main - commits du jour (4)
+
+1. **3e13e03 — main aligne sur prod + bt_portfolio weekly lundi format**
+   - config_ftmo.py: XAUUSD desactive (reflet prod actuel)
+   - bt_portfolio.py: --weekly affiche 1er jour (lundi) au lieu de ISO W34
+   - pairs_ftmo.txt: ajout JP225.cash
+   - timeframes.txt: 5m -> 15m
+
+2. **b82b84e — retrait spread -0.1R hardcode**
+   - compare_today.py et vps_pusher.py: retrait de -0.1R hardcode
+   - Trop pessimiste vs mesures reelles FTMO (0.01-0.05R)
+   - Le garder cachait les vrais gaps BT/live
+   - Recalibrer plus tard avec plus de trades live
+
+3. **7e2dfa8 — retrait doublon IDX_KC_BRK XAUUSD**
+   - IDX_KC_BRK et ALL_KC_BRK = meme code (2 noms)
+   - En prod XAUUSD, les 2 se declenchaient sur chaque signal KC_BRK
+   - Double risque/exposition non voulu
+   - XAUUSD portfolio: 9 -> 8 strats
+
+4. **5b37efb — bt_portfolio affiche agrege meme avec 1 instrument**
+   - `if len(all_sym_trades) > 1` -> `>= 1`
+   - Permet d'analyser un instrument isole
+
+5. **9c04c34 — vps_pusher: switch URL par defaut vers Cloudflare tunnel**
+   - default --url: `https://dashboard.glorytavern.world` (etait ngrok)
+   - Sur chaque VPS: git pull + relance vps_pusher (sans --url)
+
+### Diagnostics effectues
+
+**BT weekly config prod (52 semaines):**
+- PF 1.50, Max DD -1.21%, Rend +56.2% sur $50k @ 0.05%
+- **46 semaines positives / 52 = 88%**
+- **6 semaines negatives:** 2025-06-16 (-$67), 2025-06-30 (-$80), 2025-09-01 (-$8), 2025-12-01 (-$177), 2026-04-06 (-$104), **2026-04-13 (-$315)**
+- Pire semaine = celle qu'on vit actuellement, mais dans la marge prevue
+
+**Compare BT vs live semaine 14-17 avril:**
+- Live: 72 trades, WR 51%, PnL -$465 (=-1.01% sur $45.9k)
+- BT: ~90 trades, WR 62%, PnL -$315 (=-0.40% sur $78k)
+- **Gap ~0.6%** explicable par spread reel + slippage + absence XAUUSD
+- XAUUSD etait desactive en live (erreur: perte de ~0.15%-0.25% de contribution positive estimee)
+
+**Edge decay analysis (38 strats prod 6 instruments):**
+- 11 strats avec CHUTE 1m (PF<0.8 alors que full>1.2)
+- Cluster US100 alarmant: 5/8 strats en chute (probable changement de regime)
+- Reco: attendre 2-3 semaines avant decisions, 1m = peu de trades donc bruit statistique eleve
+- Acceleratrices detectees: XAUUSD IDX_3SOLDIERS, GER40 ALL_CCI_100/ALL_TRIX, US100 TOK_TRIX, US30 TOK_2BAR/TOK_TRIX, JP225 ALL_PSAR_EMA
+
+### Cloudflare Named Tunnel (remplace ngrok)
+
+**Probleme:** ngrok free quota mensuel epuise (ERR_NGROK_725), dashboard inaccessible depuis VPS.
+
+**Solution:** Cloudflare Named Tunnel via domaine perso glorytavern.world (deja sur Cloudflare).
+
+**Setup effectue:**
+1. `winget install Cloudflare.cloudflared` -> v2025.8.1
+2. `cloudflared tunnel login` -> cert.pem
+3. `cloudflared tunnel create hydra-dashboard` -> UUID b5b1dba2-...
+4. `cloudflared tunnel route dns hydra-dashboard dashboard.glorytavern.world`
+5. config.yml dans `C:\ProgramData\cloudflared\` (pour acces service)
+6. `cloudflared service install` (Admin) -> service Windows Automatic
+7. **sc.exe config cloudflared binPath= ...** pour ajouter args au service
+8. Restart service -> tunnel OK
+
+**URL finale (stable, illimitee, gratuite):**
+`https://dashboard.glorytavern.world`
+
+VPS a updater via `git pull` + relance vps_pusher.
+
+### A faire plus tard
+- Recalibrer spread avec plus de trades live (objectif: plusieurs semaines)
+- Reconsiderer activation XAUUSD quand stabilite mentale revenue
+- Surveiller le cluster US100 sur 2-3 semaines
+- Possiblement merger cleanup-v2 (ou cherry-pick) une fois a froid
+
 ## 2026-04-17 — Phase C: resultats 4 nouvelles strats FTMO 15m
 
 Pkl FTMO 15m regenerees (6 instruments) avec 4 nouvelles strats + nouvelles candles.
