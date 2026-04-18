@@ -2,6 +2,51 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-18 — Diagnostic divergence BT vs live 5ers + plan fix mutex
+
+Compare today 5ers (17 avril) a montre 4 divergences NAS100:
+  - ALL_CMO_9: entry 2.5 pts et 15 min plus tard en live
+  - ALL_DC10_EMA: LV ONLY (long 00:30 UTC, BT l'a skippe par mutex CMO_9 vient de fermer meme bougie)
+  - ALL_ICHI_TK: LV ONLY (long 07:15 UTC, BT l'a skippe par mutex EMA_921 actif)
+  - ALL_EMA_921: BT ONLY (short 03:00 UTC, live ne l'a pas pris car DC10_EMA long actif)
+
+Cascade initiale: divergence a 00:15 UTC (CMO_9 ferme sur meme bougie).
+BT bloque DC10_EMA long (mutex strict axi >= ci).
+Live prend DC10_EMA long (conflict check avec history_deals_get n'a pas bloque).
+
+### Test BT avec mutex relaxe (axi > ci au lieu de >=)
+Baseline 5ers: 3928 trades, PF 1.64, DD -0.47%, Rend +12.9%, 13/13 M+
+Relaxe 5ers:   4191 trades, PF 1.63, DD -0.61%, Rend +13.5%, 13/13 M+
+Delta: +263 trades (+6.7%), PF identique, DD +30% plus profond, rend +0.6%
+Conclusion: trade-off pas interessant. On garde mutex strict BT.
+
+### Historique fix live_mt5 (trouve dans logs)
+Deja 3 fixes du conflict filter live:
+  - 27caf42 (31/03): premier fix history_deals_get pour inclure deals fermes
+  - 3e84230 (02/04): ajout DEAL_ENTRY_OUT (SL/TP exits)
+  - be12a29 (03/04): fix crash MT5 naive datetime (pas tzinfo)
+  - 2973137 (13/04): fix broker UTC+3 offset
+Fix en place ligne 457-470 de live_mt5.py.
+
+### Plan pour fixer live (sans dependre de MT5 history_deals_get)
+Tracking interne des positions ouvertes/fermees:
+  1. A chaque tick: snapshot des tickets ouverts, detecter disparitions -> note direction dans state closed_this_bar
+  2. Au nouveau bar: closed_prev_bar = closed_this_bar, reset closed_this_bar
+  3. Conflict check: open_dirs = positions_get() + closed_prev_bar[sym]
+  4. Garder history_deals_get en fallback double securite
+
+Plus robuste, deterministe, pas dependant du fuseau ni de timings MT5.
+
+### Divers
+- Detection doublon IDX_KC_BRK sur XAUUSD (commit 7e2dfa8 sur main)
+- bt_portfolio.py: affiche agrege meme avec 1 instrument (5b37efb)
+- bt_portfolio.py: --weekly affiche 1er jour semaine (lundi) au lieu de ISO W34 (3e13e03)
+- compare_today.py + vps_pusher.py: retire spread -0.1R hardcode (b82b84e)
+- vps_pusher.py: default URL -> dashboard.glorytavern.world (9c04c34)
+- Revert modif temporaire backtest_engine.py (mutex relaxe teste, puis remis strict)
+
+Status: ready a coder le tracking live, en attente validation user.
+
 ## 2026-04-18 — Main propre + Cloudflare Tunnel (ngrok epuise)
 
 **Contexte:** Branche cleanup-v2 mise de cote (travail approfondi XAUUSD + WF + bootstrap conserve pour plus tard). Retour sur main pour fixer infra + verifications sur config prod actuelle.
