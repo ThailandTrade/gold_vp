@@ -2,6 +2,12 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-19 — FTMO: reactivation XAUUSD
+
+LIVE_INSTRUMENTS passe de 5 a 6 instruments sur FTMO.
+XAUUSD reactive avec 8 strats (IDX_KC_BRK deja retire 7e2dfa8 comme doublon).
+Total strats FTMO: 29 -> 37.
+
 ## 2026-04-18 — Fix live_mt5 mutex LONG/SHORT aligne sur BT strict
 
 Implementation tracking interne des positions fermees pour bloquer les opposes
