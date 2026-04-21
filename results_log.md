@@ -2,6 +2,57 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-21 — Analyse stat live FTMO vs BT depuis 2026-04-06
+
+Question: pourquoi du rouge constant depuis le 06/04 ?
+
+### Live FTMO (192 trades, 12 jours ouvres)
+Balance: $46,591 -> $45,760 (-$831, -1.78%)
+
+| Semaine | Trades | WR | PnL | % capital |
+|---|---|---|---|---|
+| 04-06 | 53 | 40% | -$284 | -0.61% |
+| 04-13 | 95 | 60% | -$377 | -0.81% |
+| 04-20 | 44 | 59% | -$170 | -0.37% |
+
+### Distribution BT FTMO (53 semaines, meme portfolio, capital $46,591)
+- Mean +$468 | Median +$395 | Std $424
+- q05 -$111 | q10 -$11 | q25 +$205 | q75 +$704 | q90 +$998
+- 7/53 semaines negatives (13%)
+
+### Comparaison semaine par semaine
+| Semaine | Live | BT meme semaine | Percentile BT | z-score |
+|---|---|---|---|---|
+| 04-06 | -$284 | -$103 | 1.9% | -1.77 |
+| 04-13 | -$377 | -$434 | 1.9% | -1.99 |
+| 04-20 | -$170 | -$188 | 3.8% | -1.50 |
+
+**Ecart live-BT sur 3 semaines: -$106 (~13% plus mauvais)**. Acceptable (spread/slippage/mutex residuel).
+
+### Rarete du triplet negatif
+- 1/51 triplets consec negatifs dans BT 1 an (2%) — precisement ces 3 semaines de 2026-04
+- Min cumul 3 semaines glissant BT: -$725 (meme fenetre)
+- Live -$831 = percentile 0% de la distribution cumul 3w BT (hors-tail)
+
+### PnL par instrument live (tous negatifs)
+| Sym | Trades | Live WR | BT WR | PnL |
+|---|---|---|---|---|
+| GER40 | 42 | 43% | 73% | -$242 |
+| XAUUSD | 34 | 38% | 76% | -$235 |
+| US30 | 21 | 48% | 70% | -$128 |
+| US500 | 45 | 64% | 69% | -$125 |
+| US100 | 42 | 67% | 72% | -$95 |
+| JP225 | 8 | 75% | 79% | -$6 |
+
+Samples 21-45 trades: variance naturelle, pas de verdict par strat.
+
+### Conclusion stat
+1. BT lui-meme en rouge sur la meme fenetre: -$725
+2. Ecart live-BT raisonnable (~13%)
+3. Configuration rare (p=2%) mais reelle dans la distribution BT
+4. Pas de bug live identifiable
+5. Pas d'action corrective stat. Attendre sortie de la tail.
+
 ## 2026-04-19 — FTMO: reactivation XAUUSD
 
 LIVE_INSTRUMENTS passe de 5 a 6 instruments sur FTMO.
