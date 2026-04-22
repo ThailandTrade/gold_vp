@@ -189,7 +189,7 @@ def get_yesterday_atr(candles_df, today):
 
 def new_state():
     return {'broker': BROKER, 'instruments': list(INSTRUMENTS.keys()),
-            'daily_cache': {}, 'trail': {},
+            'daily_cache': {}, 'trail': {}, 'be_tp': {},
             'closed_this_bar': {}, 'closed_prev_bar': {}, '_tracked_tickets': {},
             'per_symbol': {sym: {'_triggered_open': {}, '_triggered_close': {},
                                   '_prev_day_data': None, '_prev2_day_data': None,
@@ -201,6 +201,7 @@ def load_state():
         with open(STATE_FILE, 'r') as f:
             state = json.load(f)
             state.setdefault('trail', {})
+            state.setdefault('be_tp', {})
             state.setdefault('per_symbol', {})
             # Nouvelles cles pour mutex LONG/SHORT aligne sur BT (tracking interne)
             state.setdefault('closed_this_bar', {})
@@ -308,6 +309,9 @@ def open_position(state, symbol, sig, atr, risk_pct):
     tp = 0.0
     if exit_type == 'TPSL':
         tp = signal_close + exit_cfg[2] * atr if d == 'long' else signal_close - exit_cfg[2] * atr
+    elif exit_type == 'BE_TP':
+        # p2=be_act (R), p3=tp (R). TP envoye a l'ordre, SL bougera a BE quand be_act atteint.
+        tp = signal_close + exit_cfg[3] * atr if d == 'long' else signal_close - exit_cfg[3] * atr
     result = mt5_send_order(symbol, sn, d, stop, tp, lots)
     if not result: return
     if exit_type == 'TRAIL':
@@ -315,6 +319,12 @@ def open_position(state, symbol, sig, atr, risk_pct):
             'symbol': symbol, 'strat': sn, 'dir': d, 'entry': signal_close,
             'best': signal_close, 'trail_active': False,
             'atr': atr, 'act_val': exit_cfg[2], 'trail_val': exit_cfg[3], 'stop': stop,
+        }
+    elif exit_type == 'BE_TP':
+        state['be_tp'][str(result['ticket'])] = {
+            'symbol': symbol, 'strat': sn, 'dir': d, 'entry': signal_close,
+            'be_active': False,
+            'atr': atr, 'be_val': exit_cfg[2], 'tp_val': exit_cfg[3], 'stop': stop,
         }
     log.info("    Cap=${:,.0f} Risk=${:.0f} ({:.1f}%)".format(capital, risk, risk_pct*100))
     save_state(state)
@@ -356,16 +366,44 @@ def manage_trailing(state, symbol, candles):
         log.info("TRAIL cleanup #{} {} {} (fermee)".format(t, symbol, sn))
         del state['trail'][t]
 
+# ── BE_TP MANAGEMENT ─────────────────────────────────
+
+def manage_be_tp(state, symbol, candles):
+    """Move SL to break-even quand prix atteint be_val*atr favorable. TP envoye a l'ordre."""
+    last = candles.iloc[-1]
+    mt5_pos = {p.ticket: p for p in mt5_our_positions(symbol)}
+    closed_tickets = []
+    for ticket_str, info in state['be_tp'].items():
+        if info.get('symbol') != symbol: continue
+        ticket = int(ticket_str)
+        if ticket not in mt5_pos:
+            closed_tickets.append(ticket_str); continue
+        if info['be_active']: continue  # deja move a BE
+        d = info['dir']; atr = info['atr']; be_val = info['be_val']
+        px = last['close']
+        fav = (px - info['entry']) if d == 'long' else (info['entry'] - px)
+        if fav >= be_val * atr:
+            new_sl = info['entry']  # move SL a entry = break-even
+            log.info("BE_TP ACTIVE {} {} {} SL {:.2f}->{:.2f} (BE)".format(
+                symbol, info['strat'], d, info['stop'], new_sl))
+            if mt5_modify_sl(ticket, new_sl, symbol):
+                info['stop'] = new_sl; info['be_active'] = True
+    for t in closed_tickets:
+        sn = state['be_tp'][t].get('strat', '?')
+        log.info("BE_TP cleanup #{} {} {} (fermee)".format(t, symbol, sn))
+        del state['be_tp'][t]
+
 # ── MAIN ─────────────────────────────────────────────
 
 def main():
     if not mt5_init(): log.error("MT5 init failed."); return
 
     if args.reset:
-        def _is_trail(p):
+        def _is_managed(p):
             sym, sn = ALL_MAGICS.get(p.magic, ('',''))
-            return STRAT_EXITS.get((_account, sym), {}).get(sn, DEFAULT_EXIT)[0] == 'TRAIL'
-        open_trail = [p for p in mt5_our_positions() if _is_trail(p)]
+            et = STRAT_EXITS.get((_account, sym), {}).get(sn, DEFAULT_EXIT)[0]
+            return et in ('TRAIL', 'BE_TP')
+        open_trail = [p for p in mt5_our_positions() if _is_managed(p)]
         if open_trail:
             log.warning("!!! RESET avec {} TRAIL ouvertes !!!".format(len(open_trail)))
         state = reset_state()
@@ -515,6 +553,11 @@ def main():
                 trail_syms = [t for t, info in state['trail'].items() if info.get('symbol') == sym]
                 if trail_syms:
                     manage_trailing(state, sym, candles)
+
+                # BE_TP (move SL to break-even)
+                be_tp_syms = [t for t, info in state['be_tp'].items() if info.get('symbol') == sym]
+                if be_tp_syms:
+                    manage_be_tp(state, sym, candles)
 
                 last_ts[sym] = current_ts
 

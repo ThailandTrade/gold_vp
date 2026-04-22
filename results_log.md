@@ -46,10 +46,27 @@
 - IDX_KC_BRK = ALL_KC_BRK
 - IDX_ENGULF = ALL_ENGULF (seuil 0.3*atr identique)
 
-### Pipeline restant
-1. Audit (a faire)
-2. Decision deploiement live (en attente)
-3. Eventuel walk-forward supplementaire
+### live_mt5.py patche pour supporter BE_TP
+5 strats du nouveau portfolio FTMO sont en BE_TP (MACD_RSI XAUUSD, ENGULF/TRIX/MSTAR/CMO_14_ZERO US500).
+Ajouts:
+- new_state(): ajout slot 'be_tp'
+- load_state(): setdefault('be_tp')
+- place_order: TP envoye a l'ordre comme TPSL, state['be_tp'][ticket] initialise
+- manage_be_tp(): move SL a BE quand prix atteint be_val*atr favorable
+- Appel dans main loop apres manage_trailing
+- _is_managed check inclut maintenant BE_TP (pour warning reset)
+
+### Verification magic numbers (17 strats, 3 instruments)
+Aucun STRAT_ID manquant. Tous les magics uniques. Pipeline FTMO pret pour deploiement live 2026-04-23.
+
+### Pipeline FTMO: complet
+- optimize: done (scoring robustesse)
+- strat_exits: done (17 entries sur 3 syms)
+- combos: done (validation user par combo)
+- config: done (3 instruments, US100/US30/JP225 retires)
+- bt: done (PF 1.61 DD -0.58% Calmar 41)
+- audit: magic check + BE_TP live support ajoute
+- live: ready pour 2026-04-23
 
 ## 2026-04-22 — Refonte optimize_all: scoring robustesse, zero dependance outliers
 
