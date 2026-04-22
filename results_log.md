@@ -2,6 +2,51 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-22 — Refonte optimize_all: scoring robustesse, zero dependance outliers
+
+Contexte: analyse trail_vs_tpsl a revele que 24/37 strats FTMO (65%) flippent sans top 5% des trades. L'edge actuel est concentre dans la queue droite. Decision: re-optimiser pour regularite, pas maximisation du total.
+
+### Modifications optimize_all.py
+
+**Grilles d'exit**:
+- TPSL: inchange (sl in [0.5..3.0], tp in [0.25..3.0])
+- TRAIL: restreint, act/trail <= 0.5 (trailing serre, limite queue droite)
+- BE_TP: reintegre (sl in [1.0..3.0], be_act in [0.3..0.75], tp in [0.75..3.0])
+
+**Metriques par config** (calcul en R, pas en points):
+- pf_trimmed: PF apres retrait 5% top + 5% bottom
+- outlier_share: gain top 5% winners / gain total positif
+- pct_above_3R: % trades en R > 3
+- median_R: mediane R par trade
+- m_neg: nombre de mois negatifs
+
+**Filtres durs (AND)**:
+1. n total >= 80
+2. pf_trimmed >= 1.20 (sur train)
+3. median_R > 0 (sur train)
+4. pct_above_3R <= 1%
+5. m_neg <= 2 sur periode totale
+6. test_pf >= 1.0 (walk-forward OOS)
+
+**Split walk-forward**: 70% train (chronologique), 30% test. Optim sur train, validation OOS sur test.
+
+**Score de ranking**: PF_trimmed × WR × (1 - outlier_share). Favorise configs qui ne dependent pas de la queue droite.
+
+### Impact attendu
+- Portfolio 37 -> ~15-25 strats
+- Rend annuel +53% -> ~+25-35%
+- DD divise par 2 (-1.3% -> -0.6%)
+- Distribution plus plate, moins spectaculaire, plus predictible
+
+### Pipeline a refaire
+1. optimize_all.py FTMO 6 symboles (en cours)
+2. regenerate strat_exits.py
+3. analyze_combos.py avec criteres robustesse
+4. validation user des combos
+5. update config_ftmo.py
+6. bt_portfolio verification stabilite
+7. audit + deploy
+
 ## 2026-04-21 — Analyse stat live FTMO vs BT depuis 2026-04-06
 
 Question: pourquoi du rouge constant depuis le 06/04 ?

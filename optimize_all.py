@@ -383,125 +383,153 @@ print(f"Done. {len(SIG)} strats, {sum(len(v) for v in SIG.values())} signaux tot
 # ── EXIT OPTIMIZATION GRID ──
 print("\nOptimisation exits...", flush=True)
 
-# Grid configs
+# Grid configs — version ROBUSTE (2026-04-22)
+# Objectif: distribution reguliere, zero dependance aux outliers, walk-forward valide
 TPSL_GRID = [(sl, tp) for sl in [0.5, 1.0, 1.5, 2.0, 2.5, 3.0] for tp in [0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0]]
+# TRAIL restreint: act/trail <= 0.5 (trailing serre, limite expo queue droite)
 TRAIL_GRID = [(sl, act, trail) for sl in [0.5, 1.0, 1.5, 2.0, 3.0]
-              for act in [0.3, 0.5, 0.75, 1.0] for trail in [0.3, 0.5, 0.75, 1.0]]
-# BE_TP_GRID retire: teste sur XAUUSD 15m, seulement 2/88 strats l'ont choisi (PF faible)
-# Code BE_TP conserve dans sim_exit_custom si besoin futur
+              for act in [0.3, 0.5] for trail in [0.3, 0.5]]
+# BE_TP reintegre: move SL to BE a be_act (R), TP a p3 (R)
+BE_TP_GRID = [(sl, be_act, tp) for sl in [1.0, 1.5, 2.0, 2.5, 3.0]
+              for be_act in [0.3, 0.5, 0.75] for tp in [0.75, 1.0, 1.5, 2.0, 3.0]
+              if be_act < tp]
 
-def eval_config(signals, etype, p1, p2, p3):
-    """Evaluate one exit config on all signals for a strat."""
-    pnls = []
+# Filtres de robustesse
+MIN_N = 80                 # echantillon minimum
+MIN_PF_TRIMMED = 1.20      # PF sans 5% top + 5% bottom
+MAX_PCT_ABOVE_3R = 1.0     # max 1% des trades au-dessus de 3R
+MAX_NEG_MONTHS = 2         # max 2 mois negatifs sur la periode totale
+MIN_TEST_PF = 1.0          # walk-forward OOS sanity
+
+def _compute_pnls_R(signals, etype, p1, p2, p3):
+    """Retourne (pnls_R numpy, dates list)."""
+    pnls = []; dates = []
     for ci, di, entry, atr, date, sp in signals:
-        is_open = False  # will be set per-strat later
-        d_str = 'long' if di == 1 else 'short'
-        b, ex = sim_exit_unified(ci, entry, di, atr, etype, p1, p2, p3, is_open)
-        pnl = (ex - entry) if di == 1 else (entry - ex)
-        pnls.append(pnl - sp - SPREAD_R * p1 * atr)
-    n = len(pnls)
+        b, ex = sim_exit_unified(ci, entry, di, atr, etype, p1, p2, p3, False)
+        pnl_price = ((ex - entry) if di == 1 else (entry - ex)) - sp - SPREAD_R * p1 * atr
+        risk = p1 * atr if (p1 * atr) > 0 else 1.0
+        pnls.append(pnl_price / risk); dates.append(date)
+    return np.array(pnls), dates
+
+def _metrics(pnls_R, dates):
+    n = len(pnls_R)
     if n < 10: return None
-    gp = sum(p for p in pnls if p > 0); gl = abs(sum(p for p in pnls if p < 0)) + 0.001
-    pf = gp / gl; wr = sum(1 for p in pnls if p > 0) / n * 100
-    mid = n // 2; f1 = np.mean(pnls[:mid]); f2 = np.mean(pnls[mid:])
-    split = f1 > 0 and f2 > 0
-    avg_pnl = np.mean(pnls)
-    return {'pf': pf, 'wr': wr, 'n': n, 'split': split, 'avg': avg_pnl, 'pnls': pnls}
+    wins = pnls_R[pnls_R > 0]; losses = pnls_R[pnls_R < 0]
+    gp = float(wins.sum()); gl = abs(float(losses.sum())) + 1e-6
+    pf = gp / gl
+    wr = float((pnls_R > 0).mean() * 100)
+    # Trimmed PF (5% top + 5% bottom)
+    srt = np.sort(pnls_R); k5 = int(n * 0.05)
+    trimmed = srt[k5:n-k5] if k5 > 0 and n > 2*k5 else srt
+    tw = float(trimmed[trimmed > 0].sum()); tl = abs(float(trimmed[trimmed < 0].sum())) + 1e-6
+    pf_trimmed = tw / tl
+    # Outlier share: part du gain total venant du top 5% des winners
+    pos_srt = np.sort(wins)[::-1] if len(wins) > 0 else np.array([])
+    kp = max(1, int(len(pos_srt) * 0.05)) if len(pos_srt) > 0 else 0
+    outlier_share = float(pos_srt[:kp].sum() / gp) if gp > 0 and kp > 0 else 1.0
+    # % trades > 3R
+    pct_above_3R = float((pnls_R > 3.0).mean() * 100)
+    # Median
+    median_R = float(np.median(pnls_R))
+    # PnL mensuel
+    months = {}
+    for pn, d in zip(pnls_R, dates):
+        mk = f"{d.year}-{d.month:02d}"
+        months[mk] = months.get(mk, 0.0) + float(pn)
+    m_neg = sum(1 for v in months.values() if v < 0)
+    m_total = len(months)
+    m_pos = sum(1 for v in months.values() if v > 0)
+    return {'n': n, 'pf': pf, 'wr': wr, 'pf_trimmed': pf_trimmed,
+            'outlier_share': outlier_share, 'pct_above_3R': pct_above_3R,
+            'median_R': median_R, 'm_neg': m_neg, 'm_pos': m_pos, 'm_total': m_total,
+            'pnls_R': pnls_R}
+
+def _eval_full_and_split(signals, etype, p1, p2, p3):
+    """Retourne (full_m, train_m, test_m). Split 70/30 par date."""
+    sigs_sorted = sorted(signals, key=lambda s: s[4])
+    k = int(len(sigs_sorted) * 0.70)
+    train = sigs_sorted[:k]; test = sigs_sorted[k:]
+    pnls_full, dates_full = _compute_pnls_R(sigs_sorted, etype, p1, p2, p3)
+    pnls_train, dates_train = _compute_pnls_R(train, etype, p1, p2, p3)
+    pnls_test, dates_test = _compute_pnls_R(test, etype, p1, p2, p3)
+    return (_metrics(pnls_full, dates_full),
+            _metrics(pnls_train, dates_train),
+            _metrics(pnls_test, dates_test))
+
+def _passes(full_m, train_m, test_m):
+    if train_m is None: return False, 'train_none'
+    if train_m['n'] < int(MIN_N * 0.7): return False, f"train_n={train_m['n']}"
+    if full_m is None or full_m['n'] < MIN_N: return False, f"n={full_m['n'] if full_m else 0}<{MIN_N}"
+    if train_m['pf_trimmed'] < MIN_PF_TRIMMED: return False, f"pf_trim={train_m['pf_trimmed']:.2f}"
+    if train_m['median_R'] <= 0: return False, f"med_R={train_m['median_R']:.3f}"
+    if train_m['pct_above_3R'] > MAX_PCT_ABOVE_3R: return False, f">3R={train_m['pct_above_3R']:.1f}%"
+    if full_m['m_neg'] > MAX_NEG_MONTHS: return False, f"m_neg={full_m['m_neg']}"
+    if test_m is None or test_m['pf'] < MIN_TEST_PF: return False, f"test_pf={test_m['pf']:.2f}" if test_m else 'test_none'
+    return True, 'OK'
+
+def _score(m):
+    """Score = PF_trimmed × WR × (1 - outlier_share). Penalise la dependance aux outliers."""
+    return m['pf_trimmed'] * (m['wr'] / 100.0) * max(0.0, 1.0 - m['outlier_share'])
 
 best_configs = {}
+rejected_reasons = {}
 for sn in sorted(SIG.keys()):
-    # Skip open strats (timing non reproductible en live, jamais dans les portfolios)
     if sn in OPEN_STRATS:
         print(f"  {sn:22s} --- SKIP (open strat) ---")
         continue
     sigs = SIG[sn]
-    is_open = False
-    sigs_adj = sigs
+    if len(sigs) < MIN_N:
+        print(f"  {sn:22s} --- SKIP n<{MIN_N} ({len(sigs)} signals) ---")
+        continue
 
-    best = None; best_score = -1e9
-    # Test TPSL
-    for sl, tp in TPSL_GRID:
-        results = []
-        for ci, di, entry, atr, date, sp in sigs_adj:
-            b, ex = sim_exit_unified(ci, entry, di, atr, 0, sl, tp, 0, is_open)
-            pnl = ((ex - entry) if di == 1 else (entry - ex)) - sp - SPREAD_R * sl * atr
-            results.append((pnl, date))
-        n = len(results)
-        if n < 10: continue
-        pnls = [r[0] for r in results]
-        gp = sum(p for p in pnls if p > 0); gl = abs(sum(p for p in pnls if p < 0)) + 0.001
-        pf = gp / gl; wr = sum(1 for p in pnls if p > 0) / n * 100
-        mid = n // 2; split = np.mean(pnls[:mid]) > 0 and np.mean(pnls[mid:]) > 0
-        if not split or pf < 1.05: continue
-        score = pf * (wr / 100)  # PF * WR balance
-        if score > best_score:
-            best_score = score; best = ('TPSL', sl, tp, 0, pf, wr, n, split, pnls)
-
-    # Test TRAIL
-    for sl, act, trail in TRAIL_GRID:
-        results = []
-        for ci, di, entry, atr, date, sp in sigs_adj:
-            b, ex = sim_exit_unified(ci, entry, di, atr, 1, sl, act, trail, is_open)
-            pnl = ((ex - entry) if di == 1 else (entry - ex)) - sp - SPREAD_R * sl * atr
-            results.append((pnl, date))
-        n = len(results)
-        if n < 10: continue
-        pnls = [r[0] for r in results]
-        gp = sum(p for p in pnls if p > 0); gl = abs(sum(p for p in pnls if p < 0)) + 0.001
-        pf = gp / gl; wr = sum(1 for p in pnls if p > 0) / n * 100
-        mid = n // 2; split = np.mean(pnls[:mid]) > 0 and np.mean(pnls[mid:]) > 0
-        if not split or pf < 1.05: continue
-        score = pf * (wr / 100)
-        if score > best_score:
-            best_score = score; best = ('TRAIL', sl, act, trail, pf, wr, n, split, pnls)
+    best = None; best_score = -1e9; best_reason = 'none'
+    # Grille combinee: (etype_int, etype_str, params_tuple)
+    all_configs = ([(0, 'TPSL', (sl, tp, 0)) for sl, tp in TPSL_GRID]
+                 + [(1, 'TRAIL', (sl, act, trail)) for sl, act, trail in TRAIL_GRID]
+                 + [(2, 'BE_TP', (sl, be_act, tp)) for sl, be_act, tp in BE_TP_GRID])
+    for etype_int, etype_str, params in all_configs:
+        p1, p2, p3 = params
+        full_m, train_m, test_m = _eval_full_and_split(sigs, etype_int, p1, p2, p3)
+        ok, reason = _passes(full_m, train_m, test_m)
+        if not ok:
+            if best is None: best_reason = reason
+            continue
+        s = _score(train_m)
+        if s > best_score:
+            best_score = s; best = (etype_str, p1, p2, p3, full_m, train_m, test_m)
 
     if best:
-        etype, p1, p2, p3, pf, wr, n, split, pnls = best
-        best_configs[sn] = {'type': etype, 'p1': p1, 'p2': p2, 'p3': p3,
-                            'pf': pf, 'wr': wr, 'n': n, 'split': split}
-        p2_label = 'TP' if etype=='TPSL' else 'ACT'
-        p3_label = '   ' if etype=='TPSL' else f'TR={p3:.2f}'
-        print(f"  {sn:22s} {etype:5s} SL={p1:.1f} {p2_label}={p2:.2f} {p3_label} PF={pf:.2f} WR={wr:.0f}% n={n:4d} split={'Y' if split else 'N'}")
+        etype_str, p1, p2, p3, fm, trm, tem = best
+        best_configs[sn] = {'type': etype_str, 'p1': p1, 'p2': p2, 'p3': p3,
+                            'pf': fm['pf'], 'wr': fm['wr'], 'n': fm['n'],
+                            'pf_trimmed': fm['pf_trimmed'], 'outlier_share': fm['outlier_share'],
+                            'pct_above_3R': fm['pct_above_3R'], 'median_R': fm['median_R'],
+                            'm_pos': fm['m_pos'], 'm_neg': fm['m_neg'], 'm_total': fm['m_total'],
+                            'test_pf': tem['pf'] if tem else None,
+                            'split': True}
+        p2_label = 'TP' if etype_str=='TPSL' else ('ACT' if etype_str=='TRAIL' else 'BE')
+        p3_label = '   ' if etype_str=='TPSL' else (f'TR={p3:.2f}' if etype_str=='TRAIL' else f'TP={p3:.2f}')
+        print(f"  {sn:22s} {etype_str:5s} SL={p1:.1f} {p2_label}={p2:.2f} {p3_label} "
+              f"PF={fm['pf']:.2f} PFt={fm['pf_trimmed']:.2f} WR={fm['wr']:.0f}% "
+              f"OS={fm['outlier_share']*100:.0f}% >3R={fm['pct_above_3R']:.1f}% "
+              f"M-={fm['m_neg']}/{fm['m_total']} tPF={tem['pf']:.2f} n={fm['n']}")
     else:
-        print(f"  {sn:22s} --- AUCUNE CONFIG VIABLE ---")
+        rejected_reasons[sn] = best_reason
+        print(f"  {sn:22s} --- REJETE ({best_reason}) ---")
 
-print(f"\n  {len(best_configs)}/{len(SIG)} strats avec config viable")
-
-# ── FILTRE MARGE WR (strats rentables en live) ──
-print("\nFiltre marge WR > 8%...", flush=True)
-MIN_MARGIN = 5.0
-safe_configs = {}
-for sn, cfg in best_configs.items():
-    etype = 0 if cfg['type'] == 'TPSL' else 1
-    is_open = sn in OPEN_STRATS
-    pnls = []
-    for ci, di, entry, atr, date, sp in SIG[sn]:
-        b, ex = sim_exit_unified(ci, entry, di, atr, etype, cfg['p1'], cfg['p2'], cfg['p3'], is_open)
-        pnl = ((ex - entry) if di == 1 else (entry - ex)) - sp - SPREAD_R * cfg['p1'] * atr
-        pnls.append(pnl)
-    wins = [p for p in pnls if p > 0]
-    losses = [p for p in pnls if p <= 0]
-    if not wins or not losses: continue
-    wr = len(wins) / len(pnls) * 100
-    avg_w = sum(wins) / len(wins)
-    avg_l = abs(sum(losses) / len(losses))
-    rr = avg_w / avg_l if avg_l > 0 else 0
-    wr_min = 1 / (1 + rr) * 100 if rr > 0 else 100
-    marge = wr - wr_min
-    tag = "OK" if marge > MIN_MARGIN else "SKIP"
-    print(f"  {sn:22s} WR={wr:.0f}% RR={rr:.2f} WRmin={wr_min:.0f}% marge={marge:+.1f}% {tag}")
-    if marge > MIN_MARGIN:
-        safe_configs[sn] = cfg
-
-print(f"\n  {len(safe_configs)}/{len(best_configs)} strats safe (marge>{MIN_MARGIN}%)")
-best_configs = safe_configs
+print(f"\n  {len(best_configs)}/{len(SIG)} strats avec config robuste")
+print(f"\n  Top raisons de rejet:")
+from collections import Counter
+cnt = Counter(rejected_reasons.values())
+for r, n in cnt.most_common(10):
+    print(f"    {r:25s} {n}")
 
 # ── BUILD TRADE ARRAYS WITH BEST CONFIGS ──
 print("\nConstruction arrays trades...", flush=True)
 strat_arrays = {}
 for sn in best_configs:
     cfg = best_configs[sn]
-    etype = 0 if cfg['type'] == 'TPSL' else 1
+    etype = {'TPSL': 0, 'TRAIL': 1, 'BE_TP': 2}[cfg['type']]
     is_open = sn in OPEN_STRATS
     rows = []
     for ci, di, entry, atr, date, sp in SIG[sn]:
@@ -619,8 +647,13 @@ for sz in [5, 8, 10, 12, 15]:
         print(f"\n  Composition Greedy {sz}:")
         for sn in checkpoints[sz]['combo']:
             cfg = best_configs[sn]
-            tp_str = f"TP={cfg['p2']:.2f}" if cfg['type'] == 'TPSL' else f"ACT={cfg['p2']:.2f} TR={cfg['p3']:.2f}"
-            print(f"    {sn:22s} {cfg['type']:5s} SL={cfg['p1']:.1f} {tp_str:16s} PF={cfg['pf']:.2f} WR={cfg['wr']:.0f}%")
+            if cfg['type'] == 'TPSL':
+                tp_str = f"TP={cfg['p2']:.2f}"
+            elif cfg['type'] == 'TRAIL':
+                tp_str = f"ACT={cfg['p2']:.2f} TR={cfg['p3']:.2f}"
+            else:  # BE_TP
+                tp_str = f"BE={cfg['p2']:.2f} TP={cfg['p3']:.2f}"
+            print(f"    {sn:22s} {cfg['type']:5s} SL={cfg['p1']:.1f} {tp_str:20s} PF={cfg['pf']:.2f} WR={cfg['wr']:.0f}%")
 
 print(f"\n{'='*130}")
 
