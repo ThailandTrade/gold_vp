@@ -2,6 +2,55 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-22 — Portfolio FTMO robuste: 17 strats, 3 instruments
+
+### Validation combo par combo (en accord avec utilisateur)
+
+**XAUUSD — Combo 4** (4 strats):
+- ALL_MACD_RSI: BE_TP SL=2.5 BE=0.30 TP=1.50
+- BOS_FVG: TPSL SL=3.0 TP=1.50
+- ALL_BB_TIGHT: TRAIL SL=3.0 ACT=0.50 TR=0.30
+- ALL_KC_BRK: TPSL SL=3.0 TP=1.50
+- DD FTMO -0.55%, Rend +10.2%, M+ 11/13
+
+**GER40.cash — Combo 3** (3 strats):
+- ALL_LR_BREAK: TRAIL SL=3.0 ACT=0.30 TR=0.30
+- ALL_TRIX: TRAIL SL=3.0 ACT=0.50 TR=0.50
+- TOK_TRIX: TPSL SL=3.0 TP=0.50
+- DD FTMO -0.39%, Rend +4.5%, M+ 13/13
+
+**US500.cash — Combo 10** (10 strats):
+- TOK_2BAR, ALL_MACD_STD_SIG, ALL_PIVOT_BOUNCE, ALL_ENGULF, ALL_TRIX,
+  ALL_FVG_BULL, ALL_MSTAR, ALL_CMO_14_ZERO, ALL_AROON_CROSS, LON_STOCH
+- DD FTMO -0.39%, Rend +50.2%, M+ 13/13
+
+**Retires**: US100, US30 (trop correles avec US500), JP225 (seulement 2 strats passent le filtre, +1-2% rend marginal).
+
+### BT portfolio agrege (3 instruments, capital $45,760)
+| Metrique | Ancien (37 strats) | Nouveau (17 strats) |
+|---|---|---|
+| Trades | 6,256 | 3,434 |
+| WR | 72% | 75% |
+| PF | 1.49 | 1.61 |
+| MaxDD | -1.31% | -0.58% |
+| Rend annuel | +53.2% | +23.9% |
+| Calmar | 40.6 | 41.2 |
+| Semaines+ | 46/53 | 47/53 |
+
+### Test critique periode 2026-04 (regime news-binaire)
+- Ancien BT: -$725 cumul 3 semaines
+- Nouveau BT: **-$221** cumul (3.3x mieux)
+- Live actuel (ancien portfolio): -$831
+
+### Doublons retires
+- IDX_KC_BRK = ALL_KC_BRK
+- IDX_ENGULF = ALL_ENGULF (seuil 0.3*atr identique)
+
+### Pipeline restant
+1. Audit (a faire)
+2. Decision deploiement live (en attente)
+3. Eventuel walk-forward supplementaire
+
 ## 2026-04-22 — Refonte optimize_all: scoring robustesse, zero dependance outliers
 
 Contexte: analyse trail_vs_tpsl a revele que 24/37 strats FTMO (65%) flippent sans top 5% des trades. L'edge actuel est concentre dans la queue droite. Decision: re-optimiser pour regularite, pas maximisation du total.
