@@ -2,6 +2,13 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-22 — Ajustement risque: FTMO 0.05→0.04%, 5ers 0.02→0.01%
+
+Reduction risque par compte pour marge de securite.
+
+FTMO r=0.04%: DD estime -0.46%, Rend +19.1% (scaling lineaire depuis r=0.05%: DD -0.58% Rend +23.9%)
+5ers r=0.01%: BT partiel DD -0.22% Rend +5.2% (scaling depuis r=0.02%: DD -0.44% Rend +10.4%)
+
 ## 2026-04-22 — Portfolio 5ers robuste: 25 strats, 3 instruments
 
 ### Validation combo par combo

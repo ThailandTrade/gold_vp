@@ -9,14 +9,14 @@ BROKER = '5ers'
 
 ALL_INSTRUMENTS = {
     'DAX40': {
-        'risk_pct': 0.0002,
+        'risk_pct': 0.0001,
         'portfolio': [
             'ALL_MOM_10', 'TOK_NR4', 'ALL_ELDER_BULL', 'TOK_FISHER',
         ],
         # Combo 4: PF 1.36 | WR 78% | DD -0.21% | Rend +1.6% | 12/13
     },
     'NAS100': {
-        'risk_pct': 0.0002,
+        'risk_pct': 0.0001,
         'portfolio': [
             'ALL_LR_BREAK', 'ALL_MACD_STD_SIG', 'BOS_FVG', 'ALL_MSTAR',
             'ALL_AROON_CROSS', 'ALL_FVG_BULL', 'TOK_2BAR', 'ALL_TRIX',
@@ -25,7 +25,7 @@ ALL_INSTRUMENTS = {
         # Combo 11: PF 1.47 | WR 74% | DD -0.35% | Rend +11.8% | 12/13
     },
     'SP500': {
-        'risk_pct': 0.0002,
+        'risk_pct': 0.0001,
         'portfolio': [
             'TOK_2BAR', 'ALL_MACD_STD_SIG', 'ALL_PIVOT_BOUNCE', 'ALL_MACD_ADX',
             'TOK_TRIX', 'LON_STOCH', 'ALL_TRIX', 'ALL_EMA_921',

@@ -9,21 +9,21 @@ BROKER = 'FTMO'
 
 ALL_INSTRUMENTS = {
     'XAUUSD': {
-        'risk_pct': 0.0005,
+        'risk_pct': 0.0004,
         'portfolio': [
             'ALL_MACD_RSI', 'BOS_FVG', 'ALL_BB_TIGHT', 'ALL_KC_BRK',
         ],
         # Combo 4: PF 1.50 | WR 70% | DD -0.55% | Rend +10.2% | 11/13
     },
     'GER40.cash': {
-        'risk_pct': 0.0005,
+        'risk_pct': 0.0004,
         'portfolio': [
             'ALL_LR_BREAK', 'ALL_TRIX', 'TOK_TRIX',
         ],
         # Combo 3: PF 1.50 | WR 82% | DD -0.39% | Rend +4.5% | 13/13
     },
     'US500.cash': {
-        'risk_pct': 0.0005,
+        'risk_pct': 0.0004,
         'portfolio': [
             'TOK_2BAR', 'ALL_MACD_STD_SIG', 'ALL_PIVOT_BOUNCE', 'ALL_ENGULF',
             'ALL_TRIX', 'ALL_FVG_BULL', 'ALL_MSTAR', 'ALL_CMO_14_ZERO',
