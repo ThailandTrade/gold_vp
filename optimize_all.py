@@ -38,6 +38,9 @@ def prev_day(day):
 OPEN_STRATS = {'TOK_FADE','TOK_PREVEXT','LON_GAP','LON_BIGGAP','LON_KZ','LON_TOKEND','LON_PREV',
                'NY_GAP','NY_LONEND','NY_LONMOM','NY_DAYMOM'}
 
+# Strats doublonnees (meme code, noms differents) — exclure pour eviter double exposition
+DUPLICATE_STRATS = {'IDX_KC_BRK'}  # doublon exact de ALL_KC_BRK
+
 # ── PRECALCUL INDICATEURS ──
 print("Precalcul indicateurs...", flush=True)
 c = candles.copy()
@@ -476,6 +479,9 @@ rejected_reasons = {}
 for sn in sorted(SIG.keys()):
     if sn in OPEN_STRATS:
         print(f"  {sn:22s} --- SKIP (open strat) ---")
+        continue
+    if sn in DUPLICATE_STRATS:
+        print(f"  {sn:22s} --- SKIP (duplicate) ---")
         continue
     sigs = SIG[sn]
     if len(sigs) < MIN_N:
