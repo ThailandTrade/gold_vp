@@ -40,8 +40,9 @@ OPEN_STRATS = {'TOK_FADE','TOK_PREVEXT','LON_GAP','LON_BIGGAP','LON_KZ','LON_TOK
 
 # Strats doublonnees (meme code, noms differents) — exclure pour eviter double exposition
 DUPLICATE_STRATS = {
-    'IDX_KC_BRK',   # doublon exact de ALL_KC_BRK
-    'IDX_ENGULF',   # doublon exact de ALL_ENGULF (seuil 0.3*atr identique)
+    'IDX_KC_BRK',    # doublon exact de ALL_KC_BRK
+    'IDX_ENGULF',    # doublon exact de ALL_ENGULF (seuil 0.3*atr identique)
+    'ALL_ROC_ZERO',  # doublon mathematique de ALL_MOM_10 (meme formule: (close/close[-10]-1)*100)
 }
 
 # ── PRECALCUL INDICATEURS ──
