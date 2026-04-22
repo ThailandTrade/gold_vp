@@ -43,6 +43,7 @@ DUPLICATE_STRATS = {
     'IDX_KC_BRK',    # doublon exact de ALL_KC_BRK
     'IDX_ENGULF',    # doublon exact de ALL_ENGULF (seuil 0.3*atr identique)
     'ALL_ROC_ZERO',  # doublon mathematique de ALL_MOM_10 (meme formule: (close/close[-10]-1)*100)
+    'IDX_NR4',       # doublon exact de ALL_NR4 (range == candle_range, meme seuil 0.1*atr)
 }
 
 # ── PRECALCUL INDICATEURS ──
