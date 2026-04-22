@@ -2,6 +2,42 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-22 — Portfolio 5ers robuste: 25 strats, 3 instruments
+
+### Validation combo par combo
+
+**DAX40 — Combo 4** (4 strats, M+ 12/13):
+- ALL_MOM_10: TRAIL SL=3.0 ACT=0.30 TR=0.30
+- TOK_NR4: TPSL SL=3.0 TP=1.50
+- ALL_ELDER_BULL: TPSL SL=2.5 TP=1.00
+- TOK_FISHER: TPSL SL=3.0 TP=1.00
+
+**NAS100 — Combo 11** (11 strats, M+ 12/13):
+ALL_LR_BREAK, ALL_MACD_STD_SIG, BOS_FVG, ALL_MSTAR, ALL_AROON_CROSS,
+ALL_FVG_BULL, TOK_2BAR, ALL_TRIX, ALL_KC_BRK, ALL_NR4, ALL_BB_TIGHT
+
+**SP500 — Combo 10** (10 strats, M+ 12/13):
+TOK_2BAR, ALL_MACD_STD_SIG, ALL_PIVOT_BOUNCE, ALL_MACD_ADX, TOK_TRIX,
+LON_STOCH, ALL_TRIX, ALL_EMA_921, ALL_DC10_EMA, ALL_FVG_BULL
+
+**Skippes**: XAUUSD (lot min), US30 (correlation SP500), UK100 (marginal), JPN225 (thin).
+
+### BT portfolio agrege 5ers (capital $96,149, risk 0.02%)
+- Trades: 4,496 | WR: 75% | PF: 1.50 | MaxDD: -0.44% | Rend: +10.4%
+- Semaines+ 44/53 | M+ 12/13 sur chaque instrument
+
+### Correlation NAS100 vs SP500 analysee
+- Prix daily: 0.965 (quasi-identique en prix brut)
+- PnL trades journalier: **0.43** (diversification reelle)
+- 28% des jours: directions opposees
+- DD combine: -$298 vs -$434 si parfaite correlation (31% reduction)
+- Verdict: garder les 2, diversification effective malgre correlation prix
+
+### Nouveau doublon detecte
+- ALL_ROC_ZERO = ALL_MOM_10 (meme formule mathematique)
+- IDX_NR4 = ALL_NR4 (meme test min(ranges) + body >= 0.1*atr)
+Ajoutes a DUPLICATE_STRATS.
+
 ## 2026-04-22 — Portfolio FTMO robuste: 17 strats, 3 instruments
 
 ### Validation combo par combo (en accord avec utilisateur)
