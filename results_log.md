@@ -2,6 +2,48 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-23 — Test multi-trigger abandonne (DD degradation)
+
+Exploration sur branche `multi-trigger` (commit 9a38b1f) : permettre a certaines
+strats de trigger plusieurs fois par jour (reset trig par bar au lieu de par jour).
+
+### Implementation
+- optimize_all.py: collecte SIG_MULTI (trig reset par bar) + derive SIG_SINGLE
+  (filtre 1er signal par jour). Pour chaque strat, optimise les 2 modes et garde
+  celui avec le meilleur score robustesse.
+
+### Resultats 3 instruments FTMO (tous symboles testes)
+
+| Instrument | Strats [MULTI] | Strats [single] | % multi |
+|---|---|---|---|
+| XAUUSD | 3 | 4 | 43% |
+| US500 | 2 | 13 | 13% |
+| GER40 | 0 | 4 | 0% |
+| Total | 5 | 21 | 19% |
+
+### Comparaison portfolio (risk 1%)
+
+| Instrument | Main DD | Multi DD | Main Rend | Multi Rend | M+ |
+|---|---|---|---|---|---|
+| XAUUSD | -10.9% | -30.5% | +204% | +632% | 11→12 |
+| GER40 | -7.7% | -11.5% | +90% | +138% | 13→11 |
+| US500 | -7.8% | -17.5% | +1003% | +2414% | 13=13 |
+
+### Verdict
+- **DD ~2x pire** en multi pour gain rendement ~2.5x
+- **PF 1.40 vs 1.61** : systeme moins robuste
+- **GER40 perd le M+ 13/13** en multi (degradation regularite)
+- Calmar ameliore de ~39% mais au prix d'une exposition double
+
+### Decision
+**Abandon multi-trigger.** Degradation DD trop importante.
+Le seul cas head-to-head clairement gagnant etait TOK_2BAR US500 (score 2.10→3.23).
+Branche `multi-trigger` gardee en reference mais non mergee.
+
+Leçon: l'edge captee par le multi-trigger vient de tail trades additionnels qui
+augmentent le risque concurrent (plus de positions simultanees) sans ameliorer la
+distribution de base.
+
 ## 2026-04-23 — Constat: delai cascade ordres live MT5
 
 Observe sur FTMO GER40.cash a 02:15 broker (23:15 UTC):
