@@ -2,6 +2,30 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-23 — Constat: delai cascade ordres live MT5
+
+Observe sur FTMO GER40.cash a 02:15 broker (23:15 UTC):
+- ALL_TRIX (TRAIL) send -> reject 10006 apres 31s d'attente broker
+- TOK_TRIX send juste apres -> fill apres 28s
+- Total delai pour les 2 trades: ~59s depuis la detection candle
+
+Cause: mt5.order_send() est bloquant. Le loop enchaine strats sequentiellement
+et attend la reponse de chaque ordre avant d'envoyer le suivant. Si le broker
+est lent (hors-heures principales, faible liquidite), toutes les strats de la
+meme bougie sont decalees.
+
+Impact:
+- Entry price = tick courant au send (pas signal_close) donc slippage cumulee
+- Divergence potentielle BT/live quand plusieurs signaux simultanes
+- BT pretend tous les trades entrent instantanement au signal_close
+
+A surveiller en live. Si recurrent, options:
+- Threading pour envoyer les ordres en parallele avec timeout
+- Skip si le send > X secondes
+- Retry avec backoff pour 10006
+
+Pour l'instant: juste constat, on laisse tourner et on voit si ca se reproduit.
+
 ## 2026-04-22 — Ajustement risque: FTMO 0.05→0.04%, 5ers 0.02→0.01%
 
 Reduction risque par compte pour marge de securite.
