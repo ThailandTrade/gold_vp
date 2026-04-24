@@ -1,8 +1,8 @@
 """
-Config FTMO 15m — REFONTE ROBUSTESSE 2026-04-22
-Portfolio refait apres decouverte de l'edge concentre dans la queue droite.
-Scoring nouveau: PF_trimmed x WR x (1 - outlier_share), walk-forward 70/30 valide.
-3 instruments decorreles: XAUUSD (matiere), GER40 (Europe), US500 (USA).
+Config FTMO 15m — REFONTE COST MODEL 2026-04-24
+Portfolio refait avec cost-r 0.05R par trade (modele spread+slippage live mesure).
+Tous les strats survivants conservees par instrument (pas de greedy filtering).
+12 instruments testes -> 4 instruments retenus -> 9 strats au total.
 Max DD FTMO: 10%
 """
 BROKER = 'FTMO'
@@ -11,29 +11,34 @@ ALL_INSTRUMENTS = {
     'XAUUSD': {
         'risk_pct': 0.0004,
         'portfolio': [
-            'ALL_MACD_RSI', 'BOS_FVG', 'ALL_BB_TIGHT', 'ALL_KC_BRK',
+            'IDX_TREND_DAY', 'ALL_KC_BRK', 'BOS_FVG',
         ],
-        # Combo 4: PF 1.50 | WR 70% | DD -0.55% | Rend +10.2% | 11/13
+        # 3 strats validees cost 0.05R
     },
-    'GER40.cash': {
+    'AUS200.cash': {
         'risk_pct': 0.0004,
         'portfolio': [
-            'ALL_LR_BREAK', 'ALL_TRIX', 'TOK_TRIX',
+            'IDX_BB_REV', 'ALL_PIVOT_BRK', 'TOK_WILLR', 'ALL_CCI_100',
         ],
-        # Combo 3: PF 1.50 | WR 82% | DD -0.39% | Rend +4.5% | 13/13
+        # 4 strats validees cost 0.05R
     },
-    'US500.cash': {
+    'US100.cash': {
         'risk_pct': 0.0004,
         'portfolio': [
-            'TOK_2BAR', 'ALL_MACD_STD_SIG', 'ALL_PIVOT_BOUNCE', 'ALL_ENGULF',
-            'ALL_TRIX', 'ALL_FVG_BULL', 'ALL_MSTAR', 'ALL_CMO_14_ZERO',
-            'ALL_AROON_CROSS', 'LON_STOCH',
+            'ALL_MACD_STD_SIG',
         ],
-        # Combo 10: PF 1.70 | WR 75% | DD -0.39% | Rend +50.2% | 13/13
+        # 1 strat solo validee
+    },
+    'UK100.cash': {
+        'risk_pct': 0.0004,
+        'portfolio': [
+            'TOK_TRIX',
+        ],
+        # 1 strat solo validee (marge +4.4% borderline)
     },
 }
 
-LIVE_INSTRUMENTS = ['XAUUSD', 'GER40.cash', 'US500.cash']
+LIVE_INSTRUMENTS = ['XAUUSD', 'AUS200.cash', 'US100.cash', 'UK100.cash']
 
 INSTRUMENTS = {k: v for k, v in ALL_INSTRUMENTS.items() if k in LIVE_INSTRUMENTS}
 

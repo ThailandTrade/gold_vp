@@ -48,36 +48,33 @@ STRAT_EXITS[('5ers', 'SP500')] = {
     'ALL_FVG_BULL': ('TRAIL', 3.00, 0.50, 0.30),
 }
 
-# FTMO 15m — REFONTE ROBUSTESSE 2026-04-22
-# Scoring: PF_trimmed x WR x (1 - outlier_share)
-# Filtres: PF_trim>=1.20, median_R>0, pct>3R<=1%, m_neg<=2, test_pf>=1.0 (walk-forward 70/30)
-# US100, US30, JP225 retires (US correles avec US500, JP225 trop peu de strats robustes)
+# FTMO 15m — REFONTE COST MODEL 2026-04-24
+# Cost-r 0.05R par trade modelise spread+slippage live mesure.
+# Filtres: PF_trim>=1.20, median_R>0, pct>3R<=1%, m_neg<=2, test_pf>=1.0, marge_wr>0
+# 12 instruments testes: seuls XAUUSD, AUS200, US100, UK100 ont des strats survivant cost 0.05R
+# Retires: GER40/US500/US30/JP225/EU50/HK50/US2000/XAGUSD (edge BT erodee par cost)
 
 STRAT_EXITS[('ftmo', 'XAUUSD')] = {
-    # Combo 4 — DD FTMO -0.55%, Rend +10.2%, M+ 11/13
-    'ALL_MACD_RSI': ('BE_TP', 2.50, 0.30, 1.50),
-    'BOS_FVG': ('TPSL', 3.00, 1.50, 0.00),
-    'ALL_BB_TIGHT': ('TRAIL', 3.00, 0.50, 0.30),
-    'ALL_KC_BRK': ('TPSL', 3.00, 1.50, 0.00),
+    # 3 strats validees cost 0.05R
+    'IDX_TREND_DAY': ('TPSL', 3.00, 5.00, 0.00),
+    'ALL_KC_BRK': ('TPSL', 2.50, 3.00, 0.00),
+    'BOS_FVG': ('BE_TP', 2.50, 0.75, 2.00),
 }
 
-STRAT_EXITS[('ftmo', 'GER40.cash')] = {
-    # Combo 3 — DD FTMO -0.39%, Rend +4.5%, M+ 13/13
-    'ALL_LR_BREAK': ('TRAIL', 3.00, 0.30, 0.30),
-    'ALL_TRIX': ('TRAIL', 3.00, 0.50, 0.50),
-    'TOK_TRIX': ('TPSL', 3.00, 0.50, 0.00),
+STRAT_EXITS[('ftmo', 'AUS200.cash')] = {
+    # 4 strats validees cost 0.05R
+    'IDX_BB_REV': ('TPSL', 2.00, 2.00, 0.00),
+    'ALL_PIVOT_BRK': ('BE_TP', 2.00, 0.30, 1.00),
+    'TOK_WILLR': ('TPSL', 2.00, 1.50, 0.00),
+    'ALL_CCI_100': ('TPSL', 2.50, 1.00, 0.00),
 }
 
-STRAT_EXITS[('ftmo', 'US500.cash')] = {
-    # Combo 10 — DD FTMO -0.39%, Rend +50.2%, M+ 13/13
-    'TOK_2BAR': ('TPSL', 2.50, 0.75, 0.00),
-    'ALL_MACD_STD_SIG': ('TPSL', 3.00, 3.00, 0.00),
-    'ALL_PIVOT_BOUNCE': ('TPSL', 3.00, 1.50, 0.00),
-    'ALL_ENGULF': ('BE_TP', 1.50, 0.50, 1.00),
-    'ALL_TRIX': ('BE_TP', 3.00, 0.50, 0.75),
-    'ALL_FVG_BULL': ('TRAIL', 3.00, 0.50, 0.30),
-    'ALL_MSTAR': ('BE_TP', 3.00, 0.75, 1.50),
-    'ALL_CMO_14_ZERO': ('BE_TP', 3.00, 0.50, 1.00),
-    'ALL_AROON_CROSS': ('TPSL', 2.00, 0.75, 0.00),
-    'LON_STOCH': ('TRAIL', 3.00, 0.50, 0.30),
+STRAT_EXITS[('ftmo', 'US100.cash')] = {
+    # 1 strat solo validee cost 0.05R
+    'ALL_MACD_STD_SIG': ('TPSL', 3.00, 4.00, 0.00),
+}
+
+STRAT_EXITS[('ftmo', 'UK100.cash')] = {
+    # 1 strat solo validee cost 0.05R
+    'TOK_TRIX': ('TPSL', 2.50, 1.00, 0.00),
 }

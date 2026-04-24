@@ -2,6 +2,53 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-24 — Tests 6 nouveaux instruments + portfolio FTMO final
+
+### Tests 6 nouveaux instruments en DB sous cost 0.05R
+| Instrument | Strats | Notes |
+|---|---|---|
+| XAGUSD (Silver) | 0 | Trop bruite meme avec cost realiste |
+| UK100.cash | 1 | TOK_TRIX TPSL 2.5/1.0 RR=0.33 marge +4.4% borderline |
+| EU50.cash | 0 | Eurostoxx 50, sample plus court (14k bars) |
+| HK50.cash | 0 | Hang Seng |
+| AUS200.cash | **4** | IDX_BB_REV, ALL_PIVOT_BRK, TOK_WILLR, ALL_CCI_100 |
+| US2000.cash | 0 | Russell 2000, trop bruite |
+
+### Decision: prendre TOUTES les strats validees (pas de greedy filtering)
+User confirme: pour chaque instrument, on conserve TOUS les strats qui passent les filtres (pas de selection greedy).
+
+### Portfolio FTMO final 2026-04-24
+
+**9 strats sur 4 instruments**:
+
+| Sym | Strat | Exit | Config | RR | WR | Marge | tPF OOS | n |
+|---|---|---|---|---|---|---|---|---|
+| XAUUSD | IDX_TREND_DAY | TPSL | SL=3.0 TP=5.00 | 1.52 | 50% | +10% | 1.31 | 129 |
+| XAUUSD | ALL_KC_BRK | TPSL | SL=2.5 TP=3.00 | 1.09 | 53% | +5% | 1.14 | 295 |
+| XAUUSD | BOS_FVG | BE_TP | SL=2.5 BE=0.75 TP=2.00 | 1.20 | 50% | +4.5% | 1.26 | 292 |
+| AUS200 | IDX_BB_REV | TPSL | SL=2.0 TP=2.00 | 0.90 | 59% | +6.9% | 1.24 | 276 |
+| AUS200 | ALL_PIVOT_BRK | BE_TP | SL=2.0 BE=0.30 TP=1.00 | 0.77 | 62% | +5.8% | 1.72 | 209 |
+| AUS200 | TOK_WILLR | TPSL | SL=2.0 TP=1.50 | 0.67 | 66% | +5.9% | 1.54 | 252 |
+| AUS200 | ALL_CCI_100 | TPSL | SL=2.5 TP=1.00 | 0.34 | 77% | +2.6% | 1.10 | 275 |
+| US100 | ALL_MACD_STD_SIG | TPSL | SL=3.0 TP=4.00 | 1.21 | 52% | +7% | 1.21 | 287 |
+| UK100 | TOK_TRIX | TPSL | SL=2.5 TP=1.00 | 0.33 | 79% | +4.4% | 1.52 | 165 |
+
+### SYMBOL_ID mis a jour
+Ajouts dans strats.py:
+- AUS200.cash: 13
+- EU50.cash: 14
+- HK50.cash: 15
+- US2000.cash: 16
+- XAGUSD: 17
+
+### Diversification atteinte
+- Metaux: XAUUSD (Or)
+- US tech: US100
+- UK index: UK100
+- Pacifique: AUS200 (Australie, decorrele US/EU)
+
+Vs portfolio precedent (4 strats / 2 instruments): **+5 strats, +2 instruments, vraie diversification**.
+
 ## 2026-04-24 — Refonte cost model + revue complete portfolio FTMO
 
 ### Contexte / declencheur

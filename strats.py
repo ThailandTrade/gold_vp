@@ -71,6 +71,8 @@ SYMBOL_ID = {
     'XAUUSD': 0, 'JPN225': 1, 'DAX40': 2, 'NAS100': 3, 'SP500': 4, 'UK100': 5,
     'BTCUSD': 6, 'GER40.cash': 7, 'UK100.cash': 8, 'US100.cash': 9,
     'US500.cash': 10, 'US30.cash': 11, 'JP225.cash': 12,
+    'AUS200.cash': 13, 'EU50.cash': 14, 'HK50.cash': 15, 'US2000.cash': 16,
+    'XAGUSD': 17,
 }
 
 MAGIC_BASES = {'icm': 240000, 'ftmo': 250000, '5ers': 260000}
