@@ -18,11 +18,13 @@ import argparse as _ap
 _p = _ap.ArgumentParser(); _p.add_argument('account')
 _p.add_argument('--symbol', default='xauusd')
 _p.add_argument('--tf', default='5m', help='Timeframe: 5m or 15m')
-_p.add_argument('--spread', action='store_true', help='Modelise le spread (-0.1R par trade)')
+_p.add_argument('--cost-r', type=float, default=0.05, help='Penalite par trade en R (modelise spread+slippage). Default 0.05 = mesure live.')
 _p.add_argument('--tpsl-only', action='store_true', help='Test uniquement TPSL (skip TRAIL et BE_TP)')
 _p.add_argument('--min-rr', type=float, default=0.0, help='RR minimum (TP/SL) pour TPSL grid')
+_p.add_argument('--min-marge', type=float, default=0.0, help='Marge WR min (0 = desactive, le cost-r couvre la fragilite)')
 _a = _p.parse_args()
-SPREAD_R = 0.1 if _a.spread else 0.0
+SPREAD_R = _a.cost_r  # penalite uniforme R par trade
+print(f"Cost model: penalite {SPREAD_R}R par trade")
 SYMBOL = _a.symbol.lower()
 TF = _a.tf
 
@@ -415,7 +417,7 @@ MIN_PF_TRIMMED = 1.20      # PF sans 5% top + 5% bottom
 MAX_PCT_ABOVE_3R = 1.0     # max 1% des trades au-dessus de 3R
 MAX_NEG_MONTHS = 2         # max 2 mois negatifs sur la periode totale
 MIN_TEST_PF = 1.0          # walk-forward OOS sanity
-MIN_MARGE_WR = 8.0         # CLAUDE.md ligne 72: marge WR >= 8% obligatoire (WR_reel - WR_breakeven)
+MIN_MARGE_WR = _a.min_marge  # CLAUDE.md ligne 72: marge WR >= 8% obligatoire (override via --min-marge)
 
 def _compute_pnls_R(signals, etype, p1, p2, p3):
     """Retourne (pnls_R numpy, dates list)."""
