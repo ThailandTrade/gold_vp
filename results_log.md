@@ -2,6 +2,35 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-24 — Validation empirique cost-r 0.05R (21 trades live 2 jours)
+
+Verification sur 21 deals live FTMO du 23-24/04 (toutes strats prod confondues).
+
+### Methode
+Script temp/spread_prod.py:
+- Fetch mt5.history_deals_get sur 48h
+- Pour chaque deal IN: extrait live_entry_price + magic → (sym, strat)
+- Query DB pour bar dont le close a declenche le signal (ts <= entry_utc - 15min - 1s)
+- gap = live_entry - signal_close
+- cost_R = -gap/(sl*atr) pour short, +gap/(sl*atr) pour long (signe = defavorable)
+
+### Resultats
+- **Moyenne ABSOLUE: 0.052R** par trade
+- **Moyenne SIGNEE: +0.034R** (defavorable cumul)
+- n = 21 trades (3 brokers XAU+GER40+US500, strats prod)
+
+Outlier notable: TOK_TRIX 23/04 GER40 cost +0.384R = trade rejete 10006 puis refill 30s plus tard (voir commit d8b9337).
+
+Hors outlier (20 trades): moyenne abs 0.035R, signee +0.017R.
+
+### Conclusion
+Le 0.05R choisi pour optimize_all est **parfaitement calibre**:
+- Match exact moyenne absolue reelle (0.052R incl outliers)
+- Marge de securite +43% hors outliers (0.035R reel vs 0.05R modele)
+- Couvre worst-case days (gap 23/04)
+
+Portfolio FTMO 9 strats reste valide. Pas de re-optim necessaire.
+
 ## 2026-04-24 — Tests 6 nouveaux instruments + portfolio FTMO final
 
 ### Tests 6 nouveaux instruments en DB sous cost 0.05R
