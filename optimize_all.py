@@ -19,6 +19,8 @@ _p = _ap.ArgumentParser(); _p.add_argument('account')
 _p.add_argument('--symbol', default='xauusd')
 _p.add_argument('--tf', default='5m', help='Timeframe: 5m or 15m')
 _p.add_argument('--spread', action='store_true', help='Modelise le spread (-0.1R par trade)')
+_p.add_argument('--tpsl-only', action='store_true', help='Test uniquement TPSL (skip TRAIL et BE_TP)')
+_p.add_argument('--min-rr', type=float, default=0.0, help='RR minimum (TP/SL) pour TPSL grid')
 _a = _p.parse_args()
 SPREAD_R = 0.1 if _a.spread else 0.0
 SYMBOL = _a.symbol.lower()
@@ -393,14 +395,19 @@ print("\nOptimisation exits...", flush=True)
 
 # Grid configs — version ROBUSTE (2026-04-22)
 # Objectif: distribution reguliere, zero dependance aux outliers, walk-forward valide
-TPSL_GRID = [(sl, tp) for sl in [0.5, 1.0, 1.5, 2.0, 2.5, 3.0] for tp in [0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0]]
+# Grille TPSL elargie pour permettre RR >= 1 avec finesse SL (utile avec --min-rr 1.0)
+TPSL_SL_GRID = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0]
+TPSL_TP_GRID = [0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0]
+TPSL_GRID = [(sl, tp) for sl in TPSL_SL_GRID for tp in TPSL_TP_GRID
+             if (tp / sl) >= _a.min_rr]
 # TRAIL restreint: act/trail <= 0.5 (trailing serre, limite expo queue droite)
-TRAIL_GRID = [(sl, act, trail) for sl in [0.5, 1.0, 1.5, 2.0, 3.0]
+TRAIL_GRID = [] if _a.tpsl_only else [(sl, act, trail) for sl in [0.5, 1.0, 1.5, 2.0, 3.0]
               for act in [0.3, 0.5] for trail in [0.3, 0.5]]
 # BE_TP reintegre: move SL to BE a be_act (R), TP a p3 (R)
-BE_TP_GRID = [(sl, be_act, tp) for sl in [1.0, 1.5, 2.0, 2.5, 3.0]
+BE_TP_GRID = [] if _a.tpsl_only else [(sl, be_act, tp) for sl in [1.0, 1.5, 2.0, 2.5, 3.0]
               for be_act in [0.3, 0.5, 0.75] for tp in [0.75, 1.0, 1.5, 2.0, 3.0]
               if be_act < tp]
+print(f"Grilles: TPSL={len(TPSL_GRID)} (RR>={_a.min_rr}) | TRAIL={len(TRAIL_GRID)} | BE_TP={len(BE_TP_GRID)}")
 
 # Filtres de robustesse
 MIN_N = 80                 # echantillon minimum
