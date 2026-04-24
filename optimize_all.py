@@ -408,6 +408,7 @@ MIN_PF_TRIMMED = 1.20      # PF sans 5% top + 5% bottom
 MAX_PCT_ABOVE_3R = 1.0     # max 1% des trades au-dessus de 3R
 MAX_NEG_MONTHS = 2         # max 2 mois negatifs sur la periode totale
 MIN_TEST_PF = 1.0          # walk-forward OOS sanity
+MIN_MARGE_WR = 8.0         # CLAUDE.md ligne 72: marge WR >= 8% obligatoire (WR_reel - WR_breakeven)
 
 def _compute_pnls_R(signals, etype, p1, p2, p3):
     """Retourne (pnls_R numpy, dates list)."""
@@ -439,6 +440,13 @@ def _metrics(pnls_R, dates):
     pct_above_3R = float((pnls_R > 3.0).mean() * 100)
     # Median
     median_R = float(np.median(pnls_R))
+    # Marge WR — REGLE CLAUDE.md: marge >= 8% obligatoire (filtre re-introduit 2026-04-24)
+    # marge = WR_reel - WR_breakeven_theorique. WR_break = 1 / (1 + RR) ou RR = avg_win / avg_loss.
+    avg_w = float(wins.mean()) if len(wins) > 0 else 0.0
+    avg_l = abs(float(losses.mean())) if len(losses) > 0 else 1e-6
+    rr = avg_w / avg_l if avg_l > 0 else 0.0
+    wr_breakeven = 100.0 / (1.0 + rr) if rr > 0 else 100.0
+    marge_wr = wr - wr_breakeven
     # PnL mensuel
     months = {}
     for pn, d in zip(pnls_R, dates):
@@ -450,6 +458,7 @@ def _metrics(pnls_R, dates):
     return {'n': n, 'pf': pf, 'wr': wr, 'pf_trimmed': pf_trimmed,
             'outlier_share': outlier_share, 'pct_above_3R': pct_above_3R,
             'median_R': median_R, 'm_neg': m_neg, 'm_pos': m_pos, 'm_total': m_total,
+            'rr': rr, 'wr_breakeven': wr_breakeven, 'marge_wr': marge_wr,
             'pnls_R': pnls_R}
 
 def _eval_full_and_split(signals, etype, p1, p2, p3):
@@ -473,6 +482,7 @@ def _passes(full_m, train_m, test_m):
     if train_m['pct_above_3R'] > MAX_PCT_ABOVE_3R: return False, f">3R={train_m['pct_above_3R']:.1f}%"
     if full_m['m_neg'] > MAX_NEG_MONTHS: return False, f"m_neg={full_m['m_neg']}"
     if test_m is None or test_m['pf'] < MIN_TEST_PF: return False, f"test_pf={test_m['pf']:.2f}" if test_m else 'test_none'
+    if full_m['marge_wr'] < MIN_MARGE_WR: return False, f"marge_wr={full_m['marge_wr']:.1f}%"
     return True, 'OK'
 
 def _score(m):
@@ -522,6 +532,7 @@ for sn in sorted(SIG.keys()):
         p3_label = '   ' if etype_str=='TPSL' else (f'TR={p3:.2f}' if etype_str=='TRAIL' else f'TP={p3:.2f}')
         print(f"  {sn:22s} {etype_str:5s} SL={p1:.1f} {p2_label}={p2:.2f} {p3_label} "
               f"PF={fm['pf']:.2f} PFt={fm['pf_trimmed']:.2f} WR={fm['wr']:.0f}% "
+              f"RR={fm['rr']:.2f} marge={fm['marge_wr']:+.1f}% "
               f"OS={fm['outlier_share']*100:.0f}% >3R={fm['pct_above_3R']:.1f}% "
               f"M-={fm['m_neg']}/{fm['m_total']} tPF={tem['pf']:.2f} n={fm['n']}")
     else:
