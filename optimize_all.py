@@ -23,8 +23,9 @@ _p.add_argument('--tpsl-only', action='store_true', help='Test uniquement TPSL (
 _p.add_argument('--min-rr', type=float, default=0.0, help='RR minimum (TP/SL) pour TPSL grid')
 _p.add_argument('--min-marge', type=float, default=0.0, help='Marge WR min (0 = desactive, le cost-r couvre la fragilite)')
 _a = _p.parse_args()
-SPREAD_R = _a.cost_r  # penalite uniforme R par trade
-print(f"Cost model: penalite {SPREAD_R}R par trade")
+COMBO_COST_R = _a.cost_r  # Applique uniquement au niveau COMBO (pas par strat)
+SPREAD_R = 0.0  # Niveau strat: pas de cost, edge RAW
+print(f"Cost model: niveau strat = 0 (edge RAW) | niveau combo = {COMBO_COST_R}R par trade")
 SYMBOL = _a.symbol.lower()
 TF = _a.tf
 
@@ -597,6 +598,9 @@ def eval_combo(strats, capital=1000.0, risk=0.01):
             entry_caps[idx] = cap
         else:
             ei, xi, di, pnl_oz, sl_atr, atr, mo, _sn = accepted[idx]
+            # Cost applique au niveau COMBO (pas par strat)
+            if COMBO_COST_R > 0:
+                pnl_oz -= COMBO_COST_R * sl_atr * atr
             pnl = pnl_oz * (entry_caps[idx] * risk) / (sl_atr * atr)
             cap += pnl; pnl_by_entry.append((ei, pnl))
             if cap > peak: peak = cap

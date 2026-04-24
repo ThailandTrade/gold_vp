@@ -2,6 +2,37 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-24 — Redesign: cost-r a l'etape combo, pas individuelle
+
+### Constat
+BT prod dacc528 (17 strats) sous cost 0.05R tient bien:
+- PF 1.32 | WR 73% | DD -1.15% | Rend +12.8% | 12/13 mois positifs
+- Capital $100k -> $112,847
+
+Mais optimize_all sous cost 0.05R applique individuel -> seulement 9 strats passent.
+
+### Insight
+Le cost penalty applique strat-par-strat (isolation) est **sur-penalisant** car:
+1. Ignore le conflict filter qui reduit 30-40% des trades en portfolio
+2. Ignore la diversification temporelle entre strats
+3. Rejette des edges faibles qui s'additionnent bien en portfolio
+
+### Redesign propose et implemente
+1. optimize_all.py: cost-r NE PLUS appliquer au niveau strat (edge RAW)
+2. Filtres pf_trim >= 1.20 etc. evaluent la qualite intrinseque sans cost
+3. Cost applique au niveau COMBO dans eval_combo / greedy builder
+4. bt_portfolio.py: --cost-r deja disponible pour validation finale
+
+### Avantages
+- Plus de strats valides au niveau individuel (edges RAW detectes)
+- Combo builder choisit la meilleure combinaison sous cost reel
+- Coherent avec realite live (strats trade en portfolio)
+- Meilleur rendement attendu pour meme DD
+
+### Action
+Implementation en cours: --cost-r default 0.05 mais applique uniquement au
+niveau combo dans optimize_all.
+
 ## 2026-04-24 — Mesure spread ancien portfolio 06-22 avril (199 trades)
 
 ### Etendu de la mesure: 2 derniers jours -> 2 semaines et demi
