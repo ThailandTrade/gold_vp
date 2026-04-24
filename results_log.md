@@ -2,6 +2,68 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-24 — Resultats redesign cost combo-only (12 instruments FTMO)
+
+Commit implementation: 131ba60 (cost-r deplace niveau combo).
+
+### Strats passantes filtres individuels (cost=0 niveau strat)
+
+| Instrument | Strats validees | vs ancien design (cost=0.05 par strat) |
+|---|---|---|
+| XAUUSD | 5 | +2 (3 avant) |
+| GER40 | 4 | +4 (0 avant) |
+| US500 | 12 | +12 (0 avant) |
+| US100 | 11 | +10 (1 avant) |
+| US30 | 6 | +6 (0 avant) |
+| JP225 | 3 | +3 (0 avant) |
+| AUS200 | 19 | +15 (4 avant) |
+| EU50 | 3 | +3 (0 avant) |
+| HK50 | 1 | +1 (0 avant) |
+| UK100 | 5 | +4 (1 avant) |
+| US2000 | 3 | +3 (0 avant) |
+| XAGUSD | 6 | +6 (0 avant) |
+| **Total** | **78** | **vs 9 avant (+69)** |
+
+### Meilleurs combos greedy par instrument (sous cost 0.05R niveau combo)
+
+| Sym | Combo | n | PF | DD (1%) | Rend (1%) | M+ | DD FTMO 0.04% | Rend FTMO |
+|---|---|---|---|---|---|---|---|---|
+| XAUUSD | Greedy 5 | 1075 | 1.22 | -19.9% | +121% | 10/13 | -0.80% | +4.8% |
+| GER40 | Greedy 3 | 646 | 1.46 | -10.8% | +80% | **11/13** | -0.43% | +3.2% |
+| US500 | Greedy 6 | 1091 | 1.41 | -8.1% | +201% | 10/13 | -0.32% | +8.0% |
+| US100 | Greedy 5 | 730 | 1.43 | -8.4% | +133% | **12/13** | -0.34% | +5.3% |
+| US30 | Greedy 3 | 464 | 1.20 | -6.7% | +20% | 10/13 | -0.27% | +0.8% |
+| AUS200 | Greedy 7 | 1465 | 1.25 | -15.4% | +135% | 10/13 | -0.62% | +5.4% |
+| UK100 | Greedy 3 | 593 | 1.30 | -6.9% | +40% | 10/13 | -0.28% | +1.6% |
+| XAGUSD | Greedy 5 | 1087 | 1.26 | -12.2% | +110% | 10/13 | -0.49% | +4.4% |
+
+Skip: JP225 M+ 9/13, EU50 M+ 7/13, HK50 1 seule strat, US2000 pas de combo.
+
+### Portfolio cumule estime
+- 8 instruments, 37 strats
+- DD agrege ~3.5% (somme individuelles, marge FTMO 10%)
+- Rend annuel ~+33% (FTMO 0.04% risk)
+
+### Comparaison vs precedents portfolios
+
+| Portfolio | Design | Strats | Instruments | Rend FTMO | DD FTMO |
+|---|---|---|---|---|---|
+| 8c79306 (prod historique) | cost=0 partout | 37 | 6 | ~+24% | -1.3% |
+| dacc528 (prod courante) | cost=0 partout | 17 | 3 | +12.8% | -1.15% |
+| 0a3adff (lab strict) | cost=0.05 strat | 9 | 4 | ~+5% | -0.8% |
+| **Nouveau design** | cost=0.05 combo | **37** | **8** | **~+33%** | **~-3.5%** |
+
+### Insight valide
+Le cost applique au niveau combo seulement laisse passer l'edge individuel RAW,
+et la selection combo optimise sous cout realiste. **Portfolio plus large, mieux
+diversifie, rendement superieur, DD gere.**
+
+### Pipeline restant
+1. Composer portfolio final (config_ftmo.py + strat_exits.py)
+2. BT de verification sur config finale
+3. Walk-forward combo (optionnel)
+4. Validation user puis deploy
+
 ## 2026-04-24 — Redesign: cost-r a l'etape combo, pas individuelle
 
 ### Constat
