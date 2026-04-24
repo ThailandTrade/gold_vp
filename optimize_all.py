@@ -396,7 +396,7 @@ print("\nOptimisation exits...", flush=True)
 # Grid configs — version ROBUSTE (2026-04-22)
 # Objectif: distribution reguliere, zero dependance aux outliers, walk-forward valide
 # Grille TPSL elargie pour permettre RR >= 1 avec finesse SL (utile avec --min-rr 1.0)
-TPSL_SL_GRID = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0]
+TPSL_SL_GRID = [0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0]
 TPSL_TP_GRID = [0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0]
 TPSL_GRID = [(sl, tp) for sl in TPSL_SL_GRID for tp in TPSL_TP_GRID
              if (tp / sl) >= _a.min_rr]
