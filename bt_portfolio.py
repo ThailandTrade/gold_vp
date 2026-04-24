@@ -22,7 +22,8 @@ parser.add_argument('-r', '--risk', type=float, default=None)
 parser.add_argument('--symbol', default=None, help='Single instrument (default: all)')
 parser.add_argument('--tf', default='5m', help='Timeframe: 5m or 15m')
 parser.add_argument('--weekly', action='store_true', help='Affichage hebdomadaire au lieu de mensuel')
-parser.add_argument('--spread', action='store_true', help='Modelise le spread (-0.1R par trade)')
+parser.add_argument('--spread', action='store_true', help='Modelise le spread (-0.1R par trade, legacy)')
+parser.add_argument('--cost-r', type=float, default=0.0, help='Penalite R par trade (ex: 0.05 pour modeliser spread+slippage)')
 args = parser.parse_args()
 
 cfg = importlib.import_module(f'config_{args.account}')
@@ -41,8 +42,10 @@ CAPITAL = args.capital or 100000.0
 W = 100
 
 print(f"\n{'='*W}")
-spread_tag = ' — SPREAD -0.1R' if args.spread else ''
-print(f"  BACKTEST {BROKER} — ${CAPITAL:,.0f} — {'hebdo' if args.weekly else 'mensuel'}{spread_tag}")
+# Cost effective: --cost-r prioritaire si >0, sinon --spread (0.1R legacy), sinon 0
+COST_R = args.cost_r if args.cost_r > 0 else (0.1 if args.spread else 0.0)
+cost_tag = f' — COST -{COST_R}R/trade' if COST_R > 0 else ''
+print(f"  BACKTEST {BROKER} — ${CAPITAL:,.0f} — {'hebdo' if args.weekly else 'mensuel'}{cost_tag}")
 print(f"{'='*W}")
 
 conn = get_conn()
@@ -68,7 +71,7 @@ for sym, icfg in INSTRUMENTS.items():
         ref_candles = candles
 
     trades = collect_trades(candles, daily_atr, global_atr, trading_days, portfolio, sym_exits)
-    r = eval_portfolio(trades, risk, CAPITAL, spread=args.spread)
+    r = eval_portfolio(trades, risk, CAPITAL, spread=(COST_R > 0), cost_r=COST_R)
     if not r:
         print(f"  {sym}: 0 trades"); continue
 
@@ -115,8 +118,8 @@ if len(all_sym_trades) >= 1:
             entry_caps[idx] = cap
         else:
             ei, xi, di, pnl_oz, sl_atr, atr, mo, sn, risk, sym = filtered[idx]
-            if args.spread:
-                pnl_oz -= 0.1 * sl_atr * atr  # -0.1R par trade (spread)
+            if COST_R > 0:
+                pnl_oz -= COST_R * sl_atr * atr  # -cost_r par trade (modele spread+slippage)
             pnl = pnl_oz * (entry_caps[idx] * risk) / (sl_atr * atr)
             cap += pnl
             if cap > peak: peak = cap
