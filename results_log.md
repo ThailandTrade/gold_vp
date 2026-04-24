@@ -2,6 +2,49 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-24 — Mesure spread ancien portfolio 06-22 avril (199 trades)
+
+### Etendu de la mesure: 2 derniers jours -> 2 semaines et demi
+
+Script temp/spread_prod.py modifie pour accepter DATE_FROM/DATE_TO via env.
+Lance sur MT5 history_deals 2026-04-06 → 2026-04-22.
+
+### Resultats 199 trades (ancien portfolio, 6 instruments)
+
+- **Moyenne ABSOLUE: 0.074R** par trade (|cost|)
+- **Moyenne SIGNEE: +0.048R** (defavorable cumul)
+- 199 deals IN, 6 instruments (XAU, GER40, US500, US100, US30, JP225)
+
+### Comparaison portfolios
+
+| Portfolio | Trades | Moy abs | Moy signee |
+|---|---|---|---|
+| Ancien 06-22/04 | 199 | **0.074R** | +0.048R |
+| Recent 23-24/04 | 21 | 0.052R | +0.034R |
+
+### Interpretation
+
+Le **0.05R modele etait OPTIMISTE de ~30%** pour l'ancien portfolio.
+Cause probable: ancien portfolio avait beaucoup de strats RR < 0.5 avec SL 1.0-2.0 ATR
+-> gaps en pts relativement plus grands rapportes au SL -> cost R plus eleve.
+
+Le nouveau portfolio a SL 2.5-3.0 ATR -> gaps normalises plus petits.
+Mais echantillon 21 trades insuffisant pour conclure.
+
+### Decision utilisateur
+
+**Laisser l'ANCIEN portfolio tourner la semaine prochaine** (pas deployer le nouveau
+9-strat portfolio immediatement). Objectif: collecter 200-400 trades supplementaires
+pour une mesure cost-r plus robuste avant de basculer.
+
+Le nouveau portfolio 9-strat est committe (commit 0a3adff) mais reste non-deploye
+sur VPS. Deployment differe apres analyse semaine prochaine.
+
+### Action suivante
+- Semaine prochaine: relancer spread_prod.py avec DATE_FROM=2026-04-25
+- Comparer si cost reel converge vers 0.05R ou 0.07-0.08R
+- Si 0.07R+: re-optimiser avec cost-r=0.07R avant deployment nouveau portfolio
+
 ## 2026-04-24 — Validation empirique cost-r 0.05R (21 trades live 2 jours)
 
 Verification sur 21 deals live FTMO du 23-24/04 (toutes strats prod confondues).
