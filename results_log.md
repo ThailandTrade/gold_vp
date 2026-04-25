@@ -2,6 +2,14 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-25 — FTMO risk: 0.03 -> 0.04%, XAUUSD reactive
+
+A 0.04% target $18.32:
+- XAUUSD $14 < $18.32 -> reactive (3 strats)
+- XAGUSD $21.92 > $18.32 -> reste off
+
+Live FTMO: 33 strats / 9 instruments (XAU + 8 indices).
+
 ## 2026-04-25 — pairs_ftmo + pairs_5ers commit (oubli accumule)
 
 Commit 677e38c. Fichiers pairs_*.txt jamais committes depuis plusieurs sessions.
