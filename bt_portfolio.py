@@ -146,16 +146,20 @@ if len(all_sym_trades) >= 1:
     sorted_periods = sorted(period_stats.keys())
     label = 'Semaine' if args.weekly else 'Mois'
 
-    print(f"\n  {label:>10s}  {'Trades':>6s}  {'Wins':>5s}  {'WR':>5s}  {'PF':>5s}  {'PnL':>10s}  {'Capital':>12s}  {'Rend':>8s}  {'DD':>7s}  {'MaxDD':>7s}")
-    print(f"  {'-'*92}")
+    print(f"\n  {label:>10s}  {'Trades':>6s}  {'Wins':>5s}  {'WR':>5s}  {'PF':>5s}  {'PnL':>10s}  {'Rend P':>7s}  {'Capital':>12s}  {'Rend':>8s}  {'DD':>7s}  {'MaxDD':>7s}")
+    print(f"  {'-'*100}")
+    prev_cap = CAPITAL
     for p in sorted_periods:
         ps = period_stats[p]
         wr = ps['w'] / ps['n'] * 100 if ps['n'] > 0 else 0
         pf = ps['gp'] / (ps['gl'] + 0.01)
         rend = (ps['cap'] - CAPITAL) / CAPITAL * 100
+        # Rendement de la periode (vs cap au debut de periode)
+        rend_period = (ps['cap'] - prev_cap) / prev_cap * 100 if prev_cap > 0 else 0
+        prev_cap = ps['cap']
         p_dd = dd_per_period.get(p, 0)
         pnl_sign = '+' if ps['pnl'] >= 0 else ''
-        print(f"  {p:>10s}  {ps['n']:>6d}  {ps['w']:>5d}  {wr:>4.0f}%  {pf:>4.1f}  ${ps['pnl']:>+9,.0f}  ${ps['cap']:>11,.0f}  {rend:>+7.1f}%  {p_dd:>+6.2f}%  {ps['max_dd']:>+6.2f}%")
+        print(f"  {p:>10s}  {ps['n']:>6d}  {ps['w']:>5d}  {wr:>4.0f}%  {pf:>4.1f}  ${ps['pnl']:>+9,.0f}  {rend_period:>+6.2f}%  ${ps['cap']:>11,.0f}  {rend:>+7.1f}%  {p_dd:>+6.2f}%  {ps['max_dd']:>+6.2f}%")
 
     tot_n = sum(ps['n'] for ps in period_stats.values())
     tot_w = sum(ps['w'] for ps in period_stats.values())
