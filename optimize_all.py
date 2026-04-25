@@ -619,11 +619,109 @@ def eval_combo(strats, capital=1000.0, risk=0.01):
             'pf': gp / (gl + 0.01), 'wr': wins / n * 100, 'capital': cap,
             'split': p1 > 0 and p2 > 0, 'both': has_s and has_l, 'pm': pm, 'tm': len(months)}
 
-# ── GREEDY COMBO BUILDER ──
-valid = list(best_configs.keys())
-ranked = sorted(valid, key=lambda sn: best_configs[sn]['pf'], reverse=True)
+# ── EVAL COMBO DETAILED (avec PnL par strat) ──
+def eval_combo_detailed(strats, capital=1000.0, risk=0.01):
+    """Comme eval_combo mais retourne aussi PnL par strat dans le combo."""
+    combined = []
+    for sn in strats:
+        if sn in strat_arrays: combined.extend(strat_arrays[sn])
+    if len(combined) < 50: return None
+    combined.sort(key=lambda x: (x[0], x[7]))
+    active = []; accepted = []
+    for ei, xi, di, pnl_oz, sl_atr, atr, mo, _sn in combined:
+        active = [(axi, ad) for axi, ad in active if axi >= ei]
+        if any(ad != di for _, ad in active): continue
+        accepted.append((ei, xi, di, pnl_oz, sl_atr, atr, mo, _sn))
+        active.append((xi, di))
+    n = len(accepted)
+    if n < 50: return None
+    events = [(ei, 0, idx) for idx, (ei, *_) in enumerate(accepted)] + [(xi, 1, idx) for idx, (_, xi, *__) in enumerate(accepted)]
+    events.sort()
+    cap = capital; entry_caps = {}; per_strat = {}
+    for bar, evt, idx in events:
+        if evt == 0:
+            entry_caps[idx] = cap
+        else:
+            ei, xi, di, pnl_oz, sl_atr, atr, mo, _sn = accepted[idx]
+            if COMBO_COST_R > 0: pnl_oz -= COMBO_COST_R * sl_atr * atr
+            pnl = pnl_oz * (entry_caps[idx] * risk) / (sl_atr * atr)
+            cap += pnl
+            ps = per_strat.setdefault(_sn, {'n': 0, 'pnl': 0.0, 'wins': 0})
+            ps['n'] += 1; ps['pnl'] += pnl
+            if pnl > 0: ps['wins'] += 1
+    return per_strat
 
-if len(ranked) == 0:
+# ── BEAM SEARCH TOP-K ──
+def beam_search(pool, K=3, max_steps=30, min_cal_improve=0.0):
+    """Top-K beam search. Stop quand aucun ajout n'ameliore le Calmar du beam."""
+    if not pool: return None, None
+    # Init: K meilleurs starts par PF individuel
+    starts = sorted(pool, key=lambda s: -best_configs[s]['pf'])[:K]
+    beams = []
+    for s in starts:
+        r = eval_combo([s])
+        if r and r['split'] and r['both']:
+            beams.append({'combo': [s], 'cal': r['cal'], 'r': r})
+    if not beams:
+        # Fallback: take any first valid
+        for s in starts:
+            r = eval_combo([s])
+            if r:
+                beams.append({'combo': [s], 'cal': r.get('cal', 0), 'r': r})
+                break
+    if not beams: return None, None
+
+    history = []  # all beams seen for size tracking
+    for b in beams: history.append({'combo': list(b['combo']), 'r': dict(b['r'])})
+
+    for step in range(max_steps):
+        prev_best_cal = max(b['cal'] for b in beams)
+        candidates = []
+        for beam in beams:
+            for sn in pool:
+                if sn in beam['combo']: continue
+                test = beam['combo'] + [sn]
+                r = eval_combo(test)
+                if r and r['split'] and r['both']:
+                    candidates.append({'combo': test, 'cal': r['cal'], 'r': r})
+        if not candidates: break
+        # Dedup combos (memes ensembles meme ordre different)
+        seen = set()
+        unique = []
+        for c in candidates:
+            key = tuple(sorted(c['combo']))
+            if key in seen: continue
+            seen.add(key); unique.append(c)
+        unique.sort(key=lambda c: -c['cal'])
+        new_beams = unique[:K]
+        new_best_cal = new_beams[0]['cal']
+        # Stop si aucune amelioration
+        if new_best_cal <= prev_best_cal + min_cal_improve: break
+        beams = new_beams
+        for b in beams: history.append({'combo': list(b['combo']), 'r': dict(b['r'])})
+
+    # Best beam
+    best = max(beams, key=lambda b: b['cal'])
+    return best, history
+
+# ── REVERSE CLEANUP (retrait perdants iteratif) ──
+def reverse_cleanup(combo, max_iters=5):
+    """Retire iterativement les strats avec PnL<0 dans le combo. Stop quand stable."""
+    current = list(combo)
+    for it in range(max_iters):
+        per_strat = eval_combo_detailed(current)
+        if per_strat is None: break
+        losers = [sn for sn, ps in per_strat.items() if ps['pnl'] < 0]
+        if not losers: break
+        # Retirer tous les perdants en une fois
+        current = [sn for sn in current if sn not in losers]
+        print(f"    Cleanup iter {it+1}: retire {len(losers)} perdantes ({losers}). Combo: {len(current)} strats")
+        if len(current) < 1: break
+    return current
+
+# ── MAIN COMBO BUILDER ──
+valid = list(best_configs.keys())
+if len(valid) == 0:
     print("\nAucune strat safe. Arret.")
     import pickle, os
     import re
@@ -637,33 +735,37 @@ if len(ranked) == 0:
     sys.exit(0)
 
 print(f"\n{'='*130}")
-print(f"GREEDY COMBO BUILDER ({len(valid)} strats)")
+print(f"BEAM SEARCH TOP-3 + REVERSE CLEANUP ({len(valid)} strats pool)")
 print(f"{'='*130}")
 
-combo = [ranked[0]]; remaining = set(ranked[1:])
-r = eval_combo(combo)
-if r:
-    print(f"\n  Start: {combo[0]}")
-    print(f"    n={r['n']} PF={r['pf']:.2f} WR={r['wr']:.0f}% DD={r['mdd']:+.1f}% Rend={r['ret']:+.0f}% M+={r['pm']}/{r['tm']}")
-
-# Track best combos at different sizes
+best_beam, beam_history = beam_search(valid, K=3, max_steps=30)
 checkpoints = {}
-for step in range(min(30, len(remaining))):
-    best_add = None; best_cal = -1e9
-    for sn in remaining:
-        test = combo + [sn]
-        r = eval_combo(test)
-        if r and r['split'] and r['both']:
-            if r['cal'] > best_cal:
-                best_cal = r['cal']; best_add = sn; best_r = r
-    if best_add is None: break
-    combo.append(best_add); remaining.remove(best_add)
-    r = best_r
-    cfg = best_configs[best_add]
-    print(f"\n  +{best_add:22s} ({len(combo):2d}) n={r['n']:5d} PF={r['pf']:.2f} WR={r['wr']:.0f}% "
-          f"DD={r['mdd']:+.1f}% Rend={r['ret']:+.0f}% M+={r['pm']}/{r['tm']} "
-          f"[{cfg['type']} SL={cfg['p1']:.1f} {cfg['p2']:.2f}/{cfg['p3']:.2f}]")
-    checkpoints[len(combo)] = {'combo': list(combo), 'r': dict(r)}
+if best_beam:
+    print(f"\n  Beam search resultat: {len(best_beam['combo'])} strats, Calmar {best_beam['cal']:.2f}")
+    print(f"  Combo: {best_beam['combo']}")
+    r = best_beam['r']
+    print(f"    n={r['n']} PF={r['pf']:.2f} WR={r['wr']:.0f}% DD={r['mdd']:+.1f}% Rend={r['ret']:+.0f}% M+={r['pm']}/{r['tm']}")
+    checkpoints['beam_raw'] = {'combo': list(best_beam['combo']), 'r': dict(r)}
+
+    # Reverse cleanup
+    print(f"\n  Reverse cleanup (retire perdants iteratif)...")
+    cleaned = reverse_cleanup(best_beam['combo'])
+    if len(cleaned) >= 1:
+        r_clean = eval_combo(cleaned)
+        if r_clean:
+            print(f"\n  Combo final apres cleanup: {len(cleaned)} strats")
+            print(f"    n={r_clean['n']} PF={r_clean['pf']:.2f} WR={r_clean['wr']:.0f}% DD={r_clean['mdd']:+.1f}% Rend={r_clean['ret']:+.0f}% M+={r_clean['pm']}/{r_clean['tm']}")
+            checkpoints['beam_cleaned'] = {'combo': list(cleaned), 'r': dict(r_clean)}
+
+    # Aussi snapshots des beams a differentes tailles (pour comparer aux greedy size 2,3,...)
+    by_size = {}
+    for h in beam_history:
+        sz = len(h['combo'])
+        if sz not in by_size or h['r']['cal'] > by_size[sz]['r']['cal']:
+            by_size[sz] = h
+    for sz, h in sorted(by_size.items()):
+        checkpoints[f'beam_{sz}'] = h
+combo = best_beam['combo'] if best_beam else []
 
 # ── FINAL REPORT ──
 print(f"\n{'='*130}")
@@ -672,15 +774,22 @@ print(f"{'='*130}")
 
 print(f"\n  {'Combo':>20s}  {'Trades':>7s}  {'PF':>5s}  {'WR':>5s}  {'DD 1%':>8s}  {'Rend 1%':>12s}  {'M+':>6s}")
 print(f"  {'-'*20}  {'-'*7}  {'-'*5}  {'-'*5}  {'-'*8}  {'-'*12}  {'-'*6}")
-for sz in sorted(checkpoints.keys()):
+# Sort: numeric first then named keys
+def _sort_key(k):
+    if isinstance(k, str) and k.startswith('beam_'):
+        suffix = k.split('_', 1)[1]
+        return (0, int(suffix)) if suffix.isdigit() else (1, suffix)
+    return (2, str(k))
+for sz in sorted(checkpoints.keys(), key=_sort_key):
     r = checkpoints[sz]['r']
-    print(f"  {'Greedy '+str(sz):>20s}  {r['n']:7d}  {r['pf']:5.2f}  {r['wr']:4.0f}%  {r['mdd']:+7.1f}%  {r['ret']:+11.0f}%  {r['pm']:2d}/{r['tm']}")
+    label = str(sz) if isinstance(sz, str) else f'Greedy {sz}'
+    print(f"  {label:>20s}  {r['n']:7d}  {r['pf']:5.2f}  {r['wr']:4.0f}%  {r['mdd']:+7.1f}%  {r['ret']:+11.0f}%  {r['pm']:2d}/{r['tm']}")
 
-# Print best configs for top combos
-for sz in [5, 8, 10, 12, 15]:
-    if sz in checkpoints:
-        print(f"\n  Composition Greedy {sz}:")
-        for sn in checkpoints[sz]['combo']:
+# Print compositions cles
+for key in ['beam_cleaned', 'beam_raw']:
+    if key in checkpoints:
+        print(f"\n  Composition {key}:")
+        for sn in checkpoints[key]['combo']:
             cfg = best_configs[sn]
             if cfg['type'] == 'TPSL':
                 tp_str = f"TP={cfg['p2']:.2f}"

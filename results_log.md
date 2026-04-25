@@ -2,6 +2,57 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-25 — Beam search top-3 + reverse cleanup vs baseline
+
+Implementation sur branche `beam-search` (commit 779f2c7).
+
+### Algorithme
+1. Beam search top-3: a chaque etape, conserve les 3 meilleurs combos par Calmar.
+   Stop quand aucune amelioration. Explore plusieurs chemins simultanes.
+2. Reverse cleanup: retire iterativement strats avec PnL<0 dans le combo final.
+
+### Resultats par instrument FTMO (cost 0.05R combo)
+
+| Sym | Strats | PF | WR | DD (1%) | Rend (1%) | M+ |
+|---|---|---|---|---|---|---|
+| XAUUSD | 3 | 1.24 | 62% | -14.6% | +84% | 9/13 |
+| GER40 | 2 | 1.53 | 71% | -6.2% | +48% | 10/13 |
+| US500 | 6 | 1.41 | 71% | -8.1% | +201% | 10/13 |
+| US100 | 7 | 1.35 | 77% | -9.7% | +185% | 11/13 |
+| US30 | 3 | 1.22 | 74% | -11.3% | +40% | 10/13 |
+| AUS200 | 7 | 1.32 | 69% | -17.5% | +205% | 10/13 |
+| HK50 | 1 | 1.27 | 76% | -10.4% | +14% | 10/13 |
+| UK100 | 3 | 1.30 | 81% | -6.9% | +40% | 10/13 |
+| US2000 | 1 | 1.29 | 87% | -4.4% | +4% | 10/12 |
+| XAGUSD | 4 | 1.25 | 70% | -11.7% | +90% | 10/13 |
+
+Skip JP225 (M+ 8/13), EU50 (M+ 7/13).
+
+### BT portfolio agrege (cost 0.05R, capital $100k, risk 0.04%)
+
+| Metric | Baseline (55 strats/8 inst) | Beam search (37 strats/10 inst) | Delta |
+|---|---|---|---|
+| Trades | 10,379 | 7,139 | -31% |
+| PF | 1.24 | 1.32 | +0.08 |
+| WR | 69% | 72% | +3pt |
+| MaxDD | -2.30% | -0.90% | -61% |
+| Rend | +34.2% | +27.4% | -6.8pt |
+| Mois+ | 12/13 | **13/13** | +1 |
+| Calmar | 14.9 | **30.4** | +104% |
+
+### Verdict
+**Beam search domine la baseline** :
+- DD divise par 2.5
+- Calmar double
+- Mois+ parfait 13/13
+- Rend modere mais robuste
+- 33% moins de strats = simplicite operationnelle
+
+Le beam search explore plusieurs branches alors que greedy en suit une seule.
+Convergence sur combos plus selectifs et complementaires (diversification efficace).
+
+Branche beam-search a merger sur main si le portfolio convient.
+
 ## 2026-04-25 — Baseline: greedy + iterer retrait perdants (55 strats)
 
 ### Run 1: 68 strats (toutes validees individuellement)
