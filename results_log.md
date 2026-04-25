@@ -2,6 +2,11 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-25 — FTMO risk: 0.02 -> 0.03%
+
+Compromise entre conservatisme et performance. Metaux toujours desactives
+(XAU $14 > target $13.74 a 0.03%, XAG $21.92 toujours trop eleve).
+
 ## 2026-04-25 — FTMO: risk 0.04 -> 0.02%, desactive XAUUSD + XAGUSD
 
 Reduction risk pour conservatisme + retrait metaux (cout 0.01 lot trop eleve a 0.02%).
