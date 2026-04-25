@@ -2,6 +2,19 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-25 — 5ers: desactive XAUUSD + XAGUSD (cout lot min)
+
+Commit f6051ae. Metaux desactives car cout 0.01 lot depasse risk target.
+
+| Sym | Cout 0.01 lot | Risk target $9.5 | Verdict |
+|---|---|---|---|
+| XAUUSD | $14.28 (SL 2.5 ATR × $1/pt × 100 oz) | $9.5 (0.01% × $95k) | DEPASSE → off |
+| XAGUSD | $22.41 (SL 2.5 ATR × $0.05/pt × 5000 oz) | $9.5 | DEPASSE → off |
+| DAX40, SP500, NAS100, US30, UK100, JPN225 | $0.01-$0.74 | $9.5 | OK |
+
+Live 5ers: 22 strats / 6 indices (DAX40, SP500, NAS100, US30, UK100, JPN225).
+XAUUSD/XAGUSD restent dans ALL_INSTRUMENTS et strat_exits, mais hors LIVE_INSTRUMENTS.
+
 ## 2026-04-25 — Tag v2.0-beam-search (prod)
 
 Commit cabe24a. Marque la nouvelle version prod beam search apres validation FTMO + 5ers.
