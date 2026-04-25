@@ -74,6 +74,7 @@ SYMBOL_ID = {
     'AUS200.cash': 13, 'EU50.cash': 14, 'HK50.cash': 15, 'US2000.cash': 16,
     'XAGUSD': 17,
 }
+# (HK50.cash already in SYMBOL_ID at 15, US2000.cash at 16)
 
 MAGIC_BASES = {'icm': 240000, 'ftmo': 250000, '5ers': 260000}
 

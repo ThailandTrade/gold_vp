@@ -130,7 +130,7 @@ STRAT_EXITS[('5ers', 'SP500')] = {
     'TOK_BIG': ('TPSL', 2.00, 3.00, 0.00),
 }
 
-# FTMO 15m — REDESIGN 2026-04-24
+# FTMO 15m — BEAM SEARCH 2026-04-25 (top-3 + reverse cleanup)
 # Cost-r 0.05R applique au COMBO uniquement. Strats selectionnees sans cost individuel.
 # 8 instruments, 68 strats. Tous les strats passant les filtres robustesse sont gardes.
 
@@ -224,4 +224,12 @@ STRAT_EXITS[('ftmo', 'XAGUSD')] = {
     'TOK_TRIX': ('TPSL', 2.00, 1.50, 0.00),
     'ALL_ADX_FAST': ('TPSL', 3.00, 1.00, 0.00),
     'ALL_MACD_STD_SIG': ('TPSL', 3.00, 0.50, 0.00),
+}
+
+STRAT_EXITS[('ftmo', 'HK50.cash')] = {
+    'ALL_ICHI_TK': ('TPSL', 3.00, 1.50, 0.00),
+}
+
+STRAT_EXITS[('ftmo', 'US2000.cash')] = {
+    'ALL_MSTAR': ('TPSL', 2.00, 0.50, 0.00),
 }
