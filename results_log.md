@@ -2,6 +2,43 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-25 — Tag v2.0-beam-search (prod)
+
+Commit cabe24a. Marque la nouvelle version prod beam search apres validation FTMO + 5ers.
+
+## 2026-04-25 — 5ers: portfolio beam search 28 strats / 8 instruments
+
+Meme methodologie que FTMO. Cost-r 0.05R combo, 8 instruments (DAX40, SP500, NAS100, US30, UK100, JPN225, XAUUSD, XAGUSD).
+
+### Resultats par instrument
+
+| Sym | Strats | n | PF | WR | DD (1%) | Rend (1%) | M+ |
+|---|---|---|---|---|---|---|---|
+| XAUUSD | 2 | 385 | 1.21 | 55% | -10.5% | +50% | 9/13 |
+| DAX40 | 3 | 645 | 1.18 | 70% | -7.9% | +33% | 10/13 |
+| SP500 | 7 | 1320 | 1.30 | 68% | -13.2% | +218% | 11/13 |
+| NAS100 | 5 | 789 | 1.39 | 75% | -10.4% | +130% | 10/13 |
+| US30 | 3 | 556 | 1.32 | 68% | -8.4% | +88% | 8/13 |
+| UK100 | 1 | 166 | 1.22 | 82% | -4.4% | +7% | 8/12 |
+| JPN225 | 3 | 663 | 1.16 | 65% | -11.5% | +48% | 9/13 |
+| XAGUSD | 4 | 845 | 1.35 | 79% | -8.5% | +85% | 12/13 |
+
+### Compositions
+- XAUUSD: IDX_TREND_DAY TPSL 3.0/4.0, ALL_BB_TIGHT TPSL 2.5/2.5
+- DAX40: ALL_MOM_10 TRAIL 3.0/0.3/0.3, ALL_FIB_618 TPSL 2.5/2.5, ALL_ELDER_BULL TPSL 3.0/1.0
+- SP500: TOK_TRIX BE_TP 2.0/0.5/0.75, ALL_MACD_STD_SIG TPSL 2.5/2.5, ALL_PIVOT_BOUNCE TRAIL 3.0/0.3/0.3, ALL_MACD_ADX TPSL 2.5/3.0, ALL_MTF_BRK TPSL 1.0/0.75, ALL_TRIX TPSL 2.0/0.75, TOK_2BAR TPSL 2.5/0.75
+- NAS100: ALL_AROON_CROSS BE_TP 3.0/0.75/1.0, ALL_LR_BREAK TPSL 3.0/2.0, ALL_MACD_STD_SIG TPSL 3.0/3.0, ALL_MSTAR TPSL 2.5/0.75, TOK_2BAR TPSL 2.5/0.5
+- US30: ALL_ADX_FAST TRAIL 3.0/0.5/0.3, TOK_NR4 TPSL 1.0/1.5, TOK_TRIX TPSL 1.2/0.75
+- UK100: TOK_TRIX TPSL 3.0/1.0
+- JPN225: ALL_3SOLDIERS TRAIL 3.0/0.5/0.3, ALL_FVG_BULL TPSL 3.0/2.5, TOK_BIG TPSL 3.0/3.0
+- XAGUSD: ALL_KC_BRK TRAIL 3.0/0.5/0.3, ALL_FVG_BULL TPSL 3.0/1.5, TOK_STOCH BE_TP 2.5/0.5/0.75, ALL_STOCH_OB BE_TP 2.5/0.5/0.75
+
+### SYMBOL_ID etendu
+Ajout 'US30' (id 18) pour le naming 5ers (sans .cash suffix).
+
+### Decision user
+Garder TOUS les instruments (correlation FTMO/5ers consideree comme amplification souhaitee, pas un risque).
+
 ## 2026-04-25 — Stress-test FTMO portfolio cost 0.1R
 
 | Metric | cost 0.05R (calibre) | cost 0.1R (stress) | Delta |
