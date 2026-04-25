@@ -2,6 +2,14 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-25 — FTMO: risk 0.04 -> 0.02%, desactive XAUUSD + XAGUSD
+
+Reduction risk pour conservatisme + retrait metaux (cout 0.01 lot trop eleve a 0.02%).
+- XAUUSD 0.01 lot = $14.00 (risk target a 0.02% = $9.16 → DEPASSE)
+- XAGUSD 0.01 lot = $21.92 (DEPASSE largement)
+
+Live FTMO: 30 strats / 8 indices (GER40, US500, US100, US30, AUS200, HK50, UK100, US2000).
+
 ## 2026-04-25 — 5ers: desactive XAUUSD + XAGUSD (cout lot min)
 
 Commit f6051ae. Metaux desactives car cout 0.01 lot depasse risk target.
