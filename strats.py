@@ -72,7 +72,7 @@ SYMBOL_ID = {
     'BTCUSD': 6, 'GER40.cash': 7, 'UK100.cash': 8, 'US100.cash': 9,
     'US500.cash': 10, 'US30.cash': 11, 'JP225.cash': 12,
     'AUS200.cash': 13, 'EU50.cash': 14, 'HK50.cash': 15, 'US2000.cash': 16,
-    'XAGUSD': 17,
+    'XAGUSD': 17, 'US30': 18,
 }
 # (HK50.cash already in SYMBOL_ID at 15, US2000.cash at 16)
 
