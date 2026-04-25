@@ -2,6 +2,12 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-25 — bt_portfolio: ajout 'Rend P' (rendement par periode)
+
+Commit 3ca868c. Nouvelle colonne entre PnL et Capital. Affiche % de gain/perte
+de la periode (mois ou semaine) calcule sur cap_debut_periode -> cap_fin_periode.
+Distinct du 'Rend' cumulatif depuis CAPITAL initial.
+
 ## 2026-04-25 — FTMO risk: 0.03 -> 0.04%, XAUUSD reactive
 
 A 0.04% target $18.32:
