@@ -2,6 +2,19 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-25 — pairs_ftmo + pairs_5ers commit (oubli accumule)
+
+Commit 677e38c. Fichiers pairs_*.txt jamais committes depuis plusieurs sessions.
+
+FTMO 12 instruments en DB: XAU, XAG, GER40, AUS200, EU50, HK50, UK100, US100, US2000, US30, US500, JP225
+5ers 8 instruments en DB: XAU, XAG, NAS100, SP500, UK100, JPN225, US30, DAX40
+
+### Checklist a appliquer pour chaque nouvel instrument
+1. pairs_<broker>.txt (data loader DB)
+2. strats.py SYMBOL_ID (magic numbers)
+3. strat_exits.py (configs exits)
+4. config_<broker>.py (portfolio actif)
+
 ## 2026-04-25 — FTMO risk: 0.02 -> 0.03%
 
 Compromise entre conservatisme et performance. Metaux toujours desactives
