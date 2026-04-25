@@ -47,7 +47,8 @@ ALL_INSTRUMENTS = {
     },
 }
 
-LIVE_INSTRUMENTS = list(ALL_INSTRUMENTS.keys())
+# Metaux desactives (XAUUSD/XAGUSD): cout min lot 0.01 depasse le risk target 0.01%
+LIVE_INSTRUMENTS = [k for k in ALL_INSTRUMENTS.keys() if k not in ('XAUUSD', 'XAGUSD')]
 INSTRUMENTS = {k: v for k, v in ALL_INSTRUMENTS.items() if k in LIVE_INSTRUMENTS}
 
 RISK_PCT = ALL_INSTRUMENTS['XAUUSD']['risk_pct']
