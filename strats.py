@@ -73,6 +73,10 @@ SYMBOL_ID = {
     'US500.cash': 10, 'US30.cash': 11, 'JP225.cash': 12,
     'AUS200.cash': 13, 'EU50.cash': 14, 'HK50.cash': 15, 'US2000.cash': 16,
     'XAGUSD': 17, 'US30': 18,
+    # ICM naming
+    'EURUSD': 19, 'GBPUSD': 20, 'USDCHF': 21, 'USDJPY': 22, 'USDCAD': 23, 'AUDUSD': 24,
+    'DE40': 25, 'F40': 26, 'STOXX50': 27, 'USTEC': 28,
+    'AUS200': 29, 'JP225': 30, 'US500': 31,
 }
 # (HK50.cash already in SYMBOL_ID at 15, US2000.cash at 16)
 

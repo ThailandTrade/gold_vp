@@ -2,6 +2,32 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-25 — ICM: portfolio beam search 50 strats / 13 instruments
+
+Methode beam search top-3 + reverse cleanup (cost-r 0.05R combo).
+Risk 1% (compte personnel).
+
+### Resultats par instrument
+
+| Sym | Strats | n | PF | WR | DD (1%) | Rend (1%) | M+ |
+|---|---|---|---|---|---|---|---|
+| EURUSD | 6 | 1321 | 1.25 | 68% | -19.1% | +187% | 11/13 |
+| GBPUSD | 5 | 1147 | 1.18 | 71% | -14.6% | +83% | 10/13 |
+| USDCHF | 2 | 574 | 1.21 | 68% | -9.7% | +41% | 9/13 |
+| USDJPY | 1 | 151 | 1.35 | 69% | -3.9% | +14% | 9/13 |
+| USDCAD | 3 | 722 | 1.15 | 69% | -8.7% | +42% | 11/13 |
+| AUDUSD | 3 | 719 | 1.12 | 77% | -8.4% | +20% | 7/13 |
+| AUS200 | 7 | 1279 | 1.27 | 68% | -12.1% | +199% | 12/13 |
+| DE40 | 3 | 565 | 1.25 | 77% | -8.1% | +44% | 9/13 |
+| JP225 | 4 | 780 | 1.29 | 70% | -13.1% | +94% | 9/13 |
+| UK100 | 2 | 275 | 1.33 | 75% | -4.9% | +26% | 8/9 |
+| US30 | 5 | 884 | 1.16 | 64% | -9.8% | +58% | 8/13 |
+| US500 | 3 | 660 | 1.62 | 69% | -11.3% | +228% | 11/13 |
+| USTEC | 6 | 1232 | 1.32 | 71% | -10.4% | +242% | 10/13 |
+
+Skip: F40 et STOXX50 (0 strats robustes).
+SYMBOL_ID etendu: EURUSD, GBPUSD, USDCHF, USDJPY, USDCAD, AUDUSD, DE40, F40, STOXX50, USTEC, AUS200, JP225, US500.
+
 ## 2026-04-25 — bt_portfolio: ajout 'Rend P' (rendement par periode)
 
 Commit 3ca868c. Nouvelle colonne entre PnL et Capital. Affiche % de gain/perte
