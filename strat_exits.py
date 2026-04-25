@@ -130,36 +130,98 @@ STRAT_EXITS[('5ers', 'SP500')] = {
     'TOK_BIG': ('TPSL', 2.00, 3.00, 0.00),
 }
 
-# FTMO 15m — REFONTE ROBUSTESSE 2026-04-22
-# Scoring: PF_trimmed x WR x (1 - outlier_share)
-# Filtres: PF_trim>=1.20, median_R>0, pct>3R<=1%, m_neg<=2, test_pf>=1.0 (walk-forward 70/30)
-# US100, US30, JP225 retires (US correles avec US500, JP225 trop peu de strats robustes)
+# FTMO 15m — REDESIGN 2026-04-24
+# Cost-r 0.05R applique au COMBO uniquement. Strats selectionnees sans cost individuel.
+# 8 instruments, 68 strats. Tous les strats passant les filtres robustesse sont gardes.
 
 STRAT_EXITS[('ftmo', 'XAUUSD')] = {
-    # Combo 4 — DD FTMO -0.55%, Rend +10.2%, M+ 11/13
-    'ALL_MACD_RSI': ('BE_TP', 2.50, 0.30, 1.50),
-    'BOS_FVG': ('TPSL', 3.00, 1.50, 0.00),
-    'ALL_BB_TIGHT': ('TRAIL', 3.00, 0.50, 0.30),
+    'IDX_TREND_DAY': ('TPSL', 3.00, 5.00, 0.00),
     'ALL_KC_BRK': ('TPSL', 3.00, 1.50, 0.00),
+    'BOS_FVG': ('TPSL', 2.50, 2.00, 0.00),
+    'ALL_MACD_RSI': ('TRAIL', 2.00, 0.50, 0.30),
+    'ALL_INSIDE_BRK': ('TRAIL', 3.00, 0.30, 0.30),
 }
 
 STRAT_EXITS[('ftmo', 'GER40.cash')] = {
-    # Combo 3 — DD FTMO -0.39%, Rend +4.5%, M+ 13/13
-    'ALL_LR_BREAK': ('TRAIL', 3.00, 0.30, 0.30),
+    'TOK_TRIX': ('TRAIL', 3.00, 0.50, 0.50),
+    'ALL_CCI_100': ('TRAIL', 3.00, 0.30, 0.30),
     'ALL_TRIX': ('TRAIL', 3.00, 0.50, 0.50),
-    'TOK_TRIX': ('TPSL', 3.00, 0.50, 0.00),
+    'ALL_ELDER_BULL': ('TPSL', 3.00, 0.75, 0.00),
 }
 
 STRAT_EXITS[('ftmo', 'US500.cash')] = {
-    # Combo 10 — DD FTMO -0.39%, Rend +50.2%, M+ 13/13
     'TOK_2BAR': ('TPSL', 2.50, 0.75, 0.00),
     'ALL_MACD_STD_SIG': ('TPSL', 3.00, 3.00, 0.00),
     'ALL_PIVOT_BOUNCE': ('TPSL', 3.00, 1.50, 0.00),
-    'ALL_ENGULF': ('BE_TP', 1.50, 0.50, 1.00),
-    'ALL_TRIX': ('BE_TP', 3.00, 0.50, 0.75),
-    'ALL_FVG_BULL': ('TRAIL', 3.00, 0.50, 0.30),
-    'ALL_MSTAR': ('BE_TP', 3.00, 0.75, 1.50),
-    'ALL_CMO_14_ZERO': ('BE_TP', 3.00, 0.50, 1.00),
+    'ALL_ENGULF': ('TPSL', 1.50, 1.00, 0.00),
+    'ALL_FVG_BULL': ('TRAIL', 3.00, 0.50, 0.50),
+    'ALL_TRIX': ('TRAIL', 2.00, 0.30, 0.30),
+    'TOK_TRIX': ('BE_TP', 2.00, 0.50, 0.75),
     'ALL_AROON_CROSS': ('TPSL', 2.00, 0.75, 0.00),
     'LON_STOCH': ('TRAIL', 3.00, 0.50, 0.30),
+    'ALL_EMA_921': ('TRAIL', 3.00, 0.50, 0.50),
+    'ALL_3SOLDIERS': ('TPSL', 2.00, 2.00, 0.00),
+    'ALL_MACD_ADX': ('TPSL', 3.00, 3.00, 0.00),
+}
+
+STRAT_EXITS[('ftmo', 'US100.cash')] = {
+    'ALL_AROON_CROSS': ('TRAIL', 3.00, 0.50, 0.30),
+    'ALL_LR_BREAK': ('TPSL', 3.00, 2.00, 0.00),
+    'ALL_MACD_RSI': ('TPSL', 3.00, 2.50, 0.00),
+    'ALL_MSTAR': ('TPSL', 2.50, 0.75, 0.00),
+    'TOK_2BAR': ('TPSL', 2.50, 1.00, 0.00),
+    'ALL_BB_TIGHT': ('TRAIL', 3.00, 0.30, 0.30),
+    'ALL_FVG_BULL': ('TPSL', 3.00, 0.50, 0.00),
+    'ALL_MACD_ADX': ('TPSL', 2.50, 3.00, 0.00),
+    'ALL_MACD_STD_SIG': ('TPSL', 3.00, 3.00, 0.00),
+    'ALL_NR4': ('TPSL', 2.00, 1.50, 0.00),
+    'TOK_NR4': ('TPSL', 2.00, 2.50, 0.00),
+}
+
+STRAT_EXITS[('ftmo', 'US30.cash')] = {
+    'ALL_MSTAR': ('TPSL', 3.00, 0.25, 0.00),
+    'TOK_TRIX': ('TPSL', 1.20, 0.75, 0.00),
+    'TOK_NR4': ('TPSL', 3.00, 1.00, 0.00),
+    'ALL_MOM_10': ('TPSL', 2.50, 1.50, 0.00),
+    'ALL_NR4': ('BE_TP', 2.00, 0.75, 1.00),
+    'ALL_ADX_FAST': ('BE_TP', 3.00, 0.75, 1.00),
+}
+
+STRAT_EXITS[('ftmo', 'AUS200.cash')] = {
+    'ALL_CMO_14': ('TPSL', 2.50, 1.50, 0.00),
+    'ALL_WILLR_14': ('TPSL', 2.50, 1.50, 0.00),
+    'ALL_CCI_20_ZERO': ('TPSL', 2.50, 1.50, 0.00),
+    'ALL_CONSEC_REV': ('TPSL', 1.50, 1.00, 0.00),
+    'ALL_STOCH_OB': ('TRAIL', 3.00, 0.30, 0.30),
+    'TOK_WILLR': ('TPSL', 2.50, 1.50, 0.00),
+    'ALL_MOM_10': ('TPSL', 2.00, 1.50, 0.00),
+    'ALL_CCI_100': ('TPSL', 3.00, 0.50, 0.00),
+    'NY_HMA_CROSS': ('TPSL', 3.00, 0.25, 0.00),
+    'ALL_RSI_DIV': ('TRAIL', 2.00, 0.30, 0.30),
+    'ALL_MACD_DIV': ('TRAIL', 2.00, 0.30, 0.30),
+    'IDX_3SOLDIERS': ('TRAIL', 1.50, 0.50, 0.30),
+    'IDX_BB_REV': ('TPSL', 2.50, 0.75, 0.00),
+    'ALL_PIVOT_BRK': ('TPSL', 3.00, 0.25, 0.00),
+    'ALL_MACD_HIST': ('TPSL', 3.00, 2.00, 0.00),
+    'ALL_CCI_14_ZERO': ('TPSL', 2.00, 2.00, 0.00),
+    'ALL_FVG_BULL': ('BE_TP', 2.50, 0.50, 0.75),
+    'ALL_HMA_CROSS': ('TPSL', 1.50, 1.50, 0.00),
+    'TOK_BIG': ('TPSL', 2.50, 0.75, 0.00),
+}
+
+STRAT_EXITS[('ftmo', 'UK100.cash')] = {
+    'ALL_HAMMER': ('TRAIL', 3.00, 0.50, 0.30),
+    'TOK_TRIX': ('TPSL', 2.50, 0.50, 0.00),
+    'ALL_LR_BREAK': ('BE_TP', 2.50, 0.75, 1.00),
+    'ALL_TRIX': ('TPSL', 2.50, 0.75, 0.00),
+    'LON_ASIAN_BRK': ('TPSL', 3.00, 0.25, 0.00),
+}
+
+STRAT_EXITS[('ftmo', 'XAGUSD')] = {
+    'ALL_NR4': ('TRAIL', 2.00, 0.30, 0.30),
+    'TOK_NR4': ('TRAIL', 2.00, 0.30, 0.30),
+    'ALL_AROON_CROSS': ('TRAIL', 3.00, 0.50, 0.50),
+    'TOK_TRIX': ('TPSL', 2.00, 1.50, 0.00),
+    'ALL_ADX_FAST': ('TPSL', 3.00, 1.00, 0.00),
+    'ALL_MACD_STD_SIG': ('TPSL', 3.00, 0.50, 0.00),
 }

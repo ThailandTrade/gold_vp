@@ -2,6 +2,44 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-25 — Baseline: greedy + iterer retrait perdants (55 strats)
+
+### Run 1: 68 strats (toutes validees individuellement)
+- Trades: 12,485 | PF 1.21 | WR 72% | MaxDD -2.57% | Rend +32.5%
+- 13 strats avec PnL < 0 detectees:
+  - GER40: ALL_ELDER_BULL
+  - US100: ALL_FVG_BULL
+  - US30: ALL_MSTAR, ALL_ADX_FAST
+  - AUS200: ALL_CCI_100, NY_HMA_CROSS, ALL_RSI_DIV, IDX_BB_REV, ALL_PIVOT_BRK, ALL_FVG_BULL, TOK_BIG
+  - UK100: LON_ASIAN_BRK
+  - XAGUSD: ALL_MACD_STD_SIG
+
+### Run 2: 55 strats (apres retrait des 13 perdantes)
+- Trades: 10,379 (-17%) | PF 1.24 (+0.03) | MaxDD -2.30% (-10%) | Rend +34.2% (+1.7pt)
+- **0 nouvelle perdante** apres retrait → portfolio stable
+- Capital: $100k -> $134,201
+
+### Conclusion
+- Greedy ne stoppe pas quand l'ajout degrade -> ajoute des perdants
+- Iterer retrait des perdants converge en 1 iteration
+- Aucune diversification "soutenant les perdants" detectee
+- Baseline = greedy + 1x retrait = 55 strats / 8 instruments
+
+### Pourquoi greedy ne trouve pas l'optimal
+- O(n²) ~190 evals au lieu de O(2^n) ~524k pour AUS200 alone
+- Path-dependent: choisit "moins pire" addition a chaque etape
+- Premier choix verrouille l'exploration ulterieure
+- Ne deteste jamais ajouter une strat = peut depasser l'optimum
+
+### Pourquoi MILP exact n'est pas viable
+- Calmar = ratio = non-lineaire
+- Conflict filter sequentiel = milliers de contraintes binaires
+- DD path-dependent = explosion taille modele
+- Cout/benefice negatif (1-2 jours codage, risque bugs)
+
+### Prochaine etape
+Implementer beam search top-3 dans branche beam-search. Comparer a baseline.
+
 ## 2026-04-24 — Resultats redesign cost combo-only (12 instruments FTMO)
 
 Commit implementation: 131ba60 (cost-r deplace niveau combo).
