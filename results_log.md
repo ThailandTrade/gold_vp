@@ -2,6 +2,21 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-25 — Stress-test FTMO portfolio cost 0.1R
+
+| Metric | cost 0.05R (calibre) | cost 0.1R (stress) | Delta |
+|---|---|---|---|
+| PF | 1.32 | 1.12 | -0.20 |
+| MaxDD | -0.90% | -2.06% | +129% |
+| Rend | +27.4% | +13.2% | -52% |
+| Mois+ | 13/13 | 9/13 | -4 |
+| Calmar | 30.4 | 6.4 | -79% |
+| Capital | $127,393 | $113,205 | -$14k |
+
+Portfolio survit a 0.1R (PF > 1.0, capital positif) mais regularite cassee.
+Marge de securite reelle: ~+50% au-dessus du cost calibre 0.05R.
+Si cost reel converge vers 0.07-0.08R, portfolio reste viable mais agressive.
+
 ## 2026-04-25 — Beam search top-3 + reverse cleanup vs baseline
 
 Implementation sur branche `beam-search` (commit 779f2c7).
