@@ -2,6 +2,14 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-26 — bt_portfolio: fix crosses_weekend (false positives Sun reopen)
+
+Premiere version comptait tous les trades dont entry OU exit OU date intermediaire est Sat/Sun. Resultat: trades qui entrent Sun 22:00-23:45 UTC (forex reopen) flagges "weekend cross" a tort.
+
+User a vu sur EURUSD: Multi-day (>=24h) = 3 (0.2%) mais Weekend cross = 135 (10.2%). Incoherent.
+
+Fix: detecter uniquement les trades dont la duree contient au moins un samedi strictement apres entry.date(). Cas Sun 22:00 -> Mon 02:00 = pas weekend cross. Cas Fri 21:00 -> Sun 22:30 = weekend cross (samedi entre).
+
 ## 2026-04-26 — bt_portfolio: ajout stats duree trades + weekend cross
 
 Ajout per-instrument et dans section AGREGE:

@@ -40,10 +40,14 @@ def is_crypto(sym):
 
 
 def crosses_weekend(entry_ts, exit_ts):
+    """True si le trade traverse un weekend (samedi entre entry+1j et exit_date inclus).
+    Exclut les trades qui entrent dimanche soir (forex reouvre Sun 22h UTC) ou
+    sortent vendredi soir sans tenir le weekend."""
     from datetime import timedelta as _td
-    d = entry_ts.date(); end = exit_ts.date()
+    d = entry_ts.date() + _td(days=1)
+    end = exit_ts.date()
     while d <= end:
-        if d.weekday() >= 5:
+        if d.weekday() == 5:
             return True
         d += _td(days=1)
     return False
