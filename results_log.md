@@ -2,6 +2,14 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-26 — bt_portfolio: ajout stats duree trades
+
+Ajout per-instrument et dans section AGREGE:
+- Duree moyenne (heures)
+- Nombre + % de trades >= 24h ("multi-day")
+
+Affichage: `Duree avg: 2.3h  Multi-day (>=24h): 156 (1.0%)`
+
 ## 2026-04-26 — BUG CRITIQUE bt_portfolio.py: events.sort() melangeait les chronologies cross-instrument
 
 ### Symptome decouvert

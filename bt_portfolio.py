@@ -75,6 +75,17 @@ for sym, icfg in INSTRUMENTS.items():
     print(f"  {sym} — {len(portfolio)} strats @ {risk*100:.2f}%")
     print(f"  Trades: {r['n']:,d}  PF: {r['pf']:.2f}  WR: {r['wr']:.0f}%  DD: {r['mdd']:+.1f}%  Rend: {r['ret']:+,.0f}%  M+: {r['pm']}/{r['tm']}")
 
+    durations_h = []
+    multi_day = 0
+    for ci, xi, *_ in trades:
+        xi_safe = min(xi, len(candles) - 1)
+        dur_h = (candles.iloc[xi_safe]['ts_dt'] - candles.iloc[ci]['ts_dt']).total_seconds() / 3600
+        durations_h.append(dur_h)
+        if dur_h >= 24: multi_day += 1
+    avg_dur = sum(durations_h) / len(durations_h) if durations_h else 0
+    md_pct = multi_day / len(trades) * 100 if trades else 0
+    print(f"  Duree avg: {avg_dur:.1f}h  Multi-day (>=24h): {multi_day} ({md_pct:.1f}%)")
+
     print(f"\n  {'Strat':>22s} {'n':>5s} {'WR':>5s} {'PF':>6s} {'PnL':>10s}")
     for sn in portfolio:
         ss = r['strat_stats'].get(sn, {'n': 0, 'w': 0, 'gp': 0, 'gl': 0})
@@ -180,7 +191,17 @@ if len(all_sym_trades) >= 1:
     pos_periods = sum(1 for ps in period_stats.values() if ps['pnl'] > 0)
     neg_periods = len(sorted_periods) - pos_periods
 
+    total_durations_h = []
+    total_multi_day = 0
+    for entry_ts, exit_ts, *_ in filtered:
+        dh = (exit_ts - entry_ts).total_seconds() / 3600
+        total_durations_h.append(dh)
+        if dh >= 24: total_multi_day += 1
+    avg_dur_total = sum(total_durations_h) / len(total_durations_h) if total_durations_h else 0
+    md_pct_total = total_multi_day / len(filtered) * 100 if filtered else 0
+
     print(f"\n  TOTAL: Trades {tot_n:,d}  WR {tot_w/tot_n*100:.0f}%  PF {tot_gp/(tot_gl+0.01):.2f}  MaxDD {max_dd:+.2f}%  Rend {(cap-CAPITAL)/CAPITAL*100:+.1f}%")
+    print(f"  Duree avg: {avg_dur_total:.1f}h  Multi-day (>=24h): {total_multi_day} ({md_pct_total:.1f}%)")
     print(f"  {label}+ {pos_periods}/{len(sorted_periods)}  {label}- {neg_periods}/{len(sorted_periods)}")
     print(f"  ${CAPITAL:,.0f} -> ${cap:,.0f}")
 
