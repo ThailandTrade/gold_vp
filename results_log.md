@@ -2,6 +2,94 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-26 — BUG CRITIQUE bt_portfolio.py: events.sort() melangeait les chronologies cross-instrument
+
+### Symptome decouvert
+Table AGREGE bt_portfolio --account icm -c 200 affichait des incoherences massives:
+- 2026-02: PnL +$7,346, mais Cap delta seulement +$3,144
+- 2026-03: PnL +$64,999, mais Cap delta seulement +$3,144 ($141k -> $144k)
+- 2026-01: PnL +$24,400, Cap droppait de $146k a $137k
+- Cap final $200 -> $68M (33M%) absurde
+
+### Diagnostic (2 diags temp/diag_*.py)
+
+**Diag 1 (PnL vs Cap delta par period):**
+```
+Period   N      PnL_sum      Cap_at_last  Diff_PnL_vs_Delta
+2026-01  1316  $+11,232,804  $58,890,023  $+19,674,514
+2026-03  1418  $+42,411,971  $64,818,629  $+39,736,068
+```
+Sum total PnL = Delta total Cap (math globale OK), mais attribution per-period cassee.
+
+**Diag 2 (duree des trades par sym/strat):**
+- Median: 4 bars, P95: 31 bars, **MAX absolu: 584 bars (6 jours)**
+- Aucun trade ne dure des semaines/mois.
+
+**ALORS comment Last_xi=26737 sur period 2026-01 ?**
+
+### Le VRAI bug
+
+Dans bt_portfolio.py:109-111:
+```python
+events = [(ei, 0, idx) for ...] + [(xi, 1, idx) for ...]
+events.sort()
+```
+
+`ei`/`xi` sont des **indices dans le DataFrame de l'instrument**. Chaque sym a sa propre serie:
+- EURUSD: 24,812 bars
+- SA40: 8,958 bars
+- SOLUSD: 34,791 bars
+- NOR25: 7,428 bars
+
+Bar 8958 sur EURUSD = ~oct 2025. Bar 8958 sur SA40 = derniere candle (avril 2026). `events.sort()` les compare comme s'ils etaient sur le meme axe temporel. **Inversion temporelle massive cross-instrument.**
+
+Consequences:
+1. `entry_caps[idx] = cap` capte un cap qui inclut deja des trades futurs en temps reel
+2. `cap += pnl` cumule dans un ordre non-chronologique
+3. Compounding totalement faux -> $68M absurde
+4. Attribution per-period detruite
+
+### Audit complet events.sort() dans le repo
+| Fichier | Multi-inst | Bug |
+|---|---|---|
+| bt_portfolio.py:111 | OUI | **OUI** |
+| bt_portfolio_crypto.py:146 | OUI | **OUI (non corrige)** |
+| backtest_engine.eval_portfolio:261 | NON | NON |
+| optimize_all.py:593,639 | NON | NON |
+| analyze_combos.py:84 | NON | NON |
+| build_combo_*.py | NON | NON |
+| find_combo_greedy.py:384 | NON | NON |
+| optimize_indices.py, optimize_crypto.py | NON | NON |
+
+**Tous les combos commits dans config_*.py sont sains** (construction per-instrument).
+
+### Pourquoi pas vu avant
+- `bt_portfolio.py --symbol XAUUSD` (1 sym) = OK, indices chronologiques
+- Section AGREGE multi-sym n'etait visible qu'avec compte multi-instruments
+- Avec ICM 20 instruments + capital faible ($200) + 1% risk, distorsion explose
+
+### Fix applique
+
+bt_portfolio.py: convertit `ei`/`xi` en `entry_ts`/`exit_ts` (timestamps reels) via `candles_by_sym[sym].iloc[ei]['ts_dt']`. Trie events par timestamp. Period bucket base sur `exit_ts` (cap snapshot coherent avec borne calendaire).
+
+### Verification post-fix
+
+Table AGREGE icm -c 200 --cost-r 0.05:
+
+| Mois | PnL | Cap delta calc | Match |
+|---|---|---|---|
+| 2026-01 | +$3,387,264 | +$3,387,265 | OK |
+| 2026-02 | +$4,754,302 | +$4,754,302 | OK |
+| 2026-03 | +$39,873,254 | +$39,873,253 | OK |
+| 2026-04 | +$15,513,278 | +$15,513,278 | OK |
+
+PnL = Cap delta sur toutes les lignes. Bug elimine.
+
+Total: 15,868 trades, PF 1.16, MaxDD -28.36%, M+ 13/13. Cap final $66.9M absurde mais coherent avec compounding $200 + 1% risk + 13 mois. Avec capital realistique, chiffres normaux.
+
+### Restant a corriger
+- bt_portfolio_crypto.py:144-146 (meme bug, attente permission user)
+
 ## 2026-04-26 — ICM Vague 2 validation user: A + ES35 + NETH25
 
 User a retire 5 instruments du commit c063dda:

@@ -50,10 +50,8 @@ print(f"{'='*W}")
 
 conn = get_conn()
 
-# ── Load reference candles (for weekly date mapping) ──
-ref_candles = None
-
 all_sym_trades = []
+candles_by_sym = {}
 
 for sym, icfg in INSTRUMENTS.items():
     portfolio = icfg['portfolio']
@@ -66,9 +64,7 @@ for sym, icfg in INSTRUMENTS.items():
     print(f"\n  Loading {sym}...", end='', flush=True)
     candles, daily_atr, global_atr, trading_days = load_data(conn, sym, tf=args.tf)
     print(f" {len(candles)} bars, {len(trading_days)} days", flush=True)
-
-    if ref_candles is None or len(candles) > len(ref_candles):
-        ref_candles = candles
+    candles_by_sym[sym] = candles
 
     trades = collect_trades(candles, daily_atr, global_atr, trading_days, portfolio, sym_exits)
     r = eval_portfolio(trades, risk, CAPITAL, spread=(COST_R > 0), cost_r=COST_R)
@@ -101,38 +97,48 @@ if len(all_sym_trades) >= 1:
     print(f"  AGREGE — {len(all_sym_trades)} instruments — ${CAPITAL:,.0f}")
     print(f"{'='*W}")
 
+    # Convertit ei/xi (indices DataFrame par sym) en timestamps reels.
+    # Indispensable: chaque sym a son propre DataFrame avec longueur differente,
+    # donc trier sur les indices melange la chronologie globale.
+    from datetime import timedelta
     filtered = []
     for st in all_sym_trades:
+        sym = st['sym']
+        cd = candles_by_sym[sym]
+        n_bars = len(cd)
         for t in st['accepted']:
-            filtered.append((*t, st['risk'], st['sym']))
+            ei, xi, di, pnl_oz, sl_atr, atr, mo, sn = t
+            xi_safe = min(xi, n_bars - 1)
+            entry_ts = cd.iloc[ei]['ts_dt']
+            exit_ts = cd.iloc[xi_safe]['ts_dt']
+            filtered.append((entry_ts, exit_ts, di, pnl_oz, sl_atr, atr, sn, st['risk'], sym))
 
-    events = [(ei, 0, idx) for idx, (ei, *_) in enumerate(filtered)] + \
-             [(xi, 1, idx) for idx, (_, xi, *__) in enumerate(filtered)]
+    events = [(t[0], 0, idx) for idx, t in enumerate(filtered)] + \
+             [(t[1], 1, idx) for idx, t in enumerate(filtered)]
     events.sort()
 
     cap = CAPITAL; peak = cap; max_dd = 0
     entry_caps = {}; period_stats = {}; dd_per_period = {}
 
-    for bar, evt, idx in events:
+    for ts, evt, idx in events:
         if evt == 0:
             entry_caps[idx] = cap
         else:
-            ei, xi, di, pnl_oz, sl_atr, atr, mo, sn, risk, sym = filtered[idx]
+            entry_ts, exit_ts, di, pnl_oz, sl_atr, atr, sn, risk, sym = filtered[idx]
             if COST_R > 0:
-                pnl_oz -= COST_R * sl_atr * atr  # -cost_r par trade (modele spread+slippage)
+                pnl_oz -= COST_R * sl_atr * atr
             pnl = pnl_oz * (entry_caps[idx] * risk) / (sl_atr * atr)
             cap += pnl
             if cap > peak: peak = cap
             dd = (cap - peak) / peak * 100
             if dd < max_dd: max_dd = dd
 
-            # Period key: semaine (lundi) si --weekly, sinon mois
-            if args.weekly and ref_candles is not None and xi < len(ref_candles):
-                from datetime import timedelta
-                ts = ref_candles.iloc[xi]['ts_dt']
-                period = (ts - timedelta(days=ts.weekday())).strftime('%Y-%m-%d')
+            # Period bucket base sur exit_ts: ps['cap'] est ainsi cap au dernier
+            # exit du calendaire, coherent avec PnL agrege du calendaire.
+            if args.weekly:
+                period = (exit_ts - timedelta(days=exit_ts.weekday())).strftime('%Y-%m-%d')
             else:
-                period = mo
+                period = exit_ts.strftime('%Y-%m')
 
             if period not in dd_per_period or dd < dd_per_period[period]:
                 dd_per_period[period] = dd
