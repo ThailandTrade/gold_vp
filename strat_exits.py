@@ -254,3 +254,83 @@ STRAT_EXITS[('icm', 'USTEC')] = {
     'ALL_ICHI_TK': ('TPSL', 3.00, 1.00, 0.00),
     'ALL_FVG_BULL': ('TRAIL', 3.00, 0.30, 0.30),
 }
+
+# ICM Vague 2 — nouveaux instruments 2026-04-26 (beam search)
+
+STRAT_EXITS[('icm', 'ETHUSD')] = {
+    'ALL_HAMMER': ('TPSL', 2.00, 2.00, 0.00),
+}
+
+STRAT_EXITS[('icm', 'SOLUSD')] = {
+    'ALL_STOCH_PIVOT': ('TPSL', 1.50, 1.50, 0.00),
+    'NY_ELDER': ('TPSL', 3.00, 3.00, 0.00),
+    'ALL_ELDER_BEAR': ('TPSL', 2.00, 1.00, 0.00),
+    'ALL_WILLR_7': ('TPSL', 2.00, 0.75, 0.00),
+}
+
+STRAT_EXITS[('icm', 'BNBUSD')] = {
+    'ALL_MSTAR': ('TRAIL', 2.00, 0.30, 0.30),
+    'ALL_HAMMER': ('TPSL', 3.00, 3.00, 0.00),
+    'ALL_ADX_RSI50': ('TRAIL', 2.00, 0.30, 0.50),
+}
+
+STRAT_EXITS[('icm', 'HK50')] = {
+    'ALL_ICHI_TK': ('TPSL', 2.50, 2.50, 0.00),
+    'NY_HMA_CROSS': ('TPSL', 1.50, 0.50, 0.00),
+    'ALL_KB_SQUEEZE': ('TPSL', 3.00, 2.50, 0.00),
+    'TOK_BIG': ('TPSL', 3.00, 3.00, 0.00),
+}
+
+STRAT_EXITS[('icm', 'ES35')] = {
+    'ALL_CCI_14_ZERO': ('TRAIL', 3.00, 0.30, 0.50),
+    'ALL_FIB_618': ('TPSL', 3.00, 2.00, 0.00),
+    'ALL_DOJI_REV': ('TPSL', 3.00, 4.00, 0.00),
+}
+
+STRAT_EXITS[('icm', 'IT40')] = {
+    'ALL_ENGULF': ('TPSL', 2.50, 2.00, 0.00),
+    'ALL_KC_BRK': ('TPSL', 3.00, 4.00, 0.00),
+}
+
+STRAT_EXITS[('icm', 'CA60')] = {
+    'ALL_CCI_20_ZERO': ('TPSL', 3.00, 4.00, 0.00),
+    'ALL_WILLR_14': ('TPSL', 3.00, 1.50, 0.00),
+}
+
+STRAT_EXITS[('icm', 'NETH25')] = {
+    'NY_HMA_CROSS': ('TPSL', 3.00, 1.50, 0.00),
+    'ALL_WILLR_7': ('TPSL', 3.00, 2.50, 0.00),
+    'ALL_STOCH_OB': ('BE_TP', 2.00, 0.75, 1.50),
+}
+
+STRAT_EXITS[('icm', 'SE30')] = {
+    'ALL_INSIDE_BRK': ('TRAIL', 2.00, 0.30, 0.30),
+    'ALL_DC50': ('TPSL', 1.00, 1.50, 0.00),
+}
+
+STRAT_EXITS[('icm', 'SWI20')] = {
+    'ALL_RSI_EXTREME': ('TRAIL', 3.00, 0.50, 0.30),
+    'ALL_MACD_HIST': ('TPSL', 2.50, 3.00, 0.00),
+    'IDX_RSI_REV': ('TRAIL', 3.00, 0.50, 0.30),
+    'LON_STOCH': ('TPSL', 3.00, 0.75, 0.00),
+}
+
+STRAT_EXITS[('icm', 'SA40')] = {
+    'ALL_ADX_FAST': ('TPSL', 2.50, 0.50, 0.00),
+    'IDX_BB_REV': ('TPSL', 2.00, 3.00, 0.00),
+    'LON_DC10': ('TRAIL', 1.00, 0.30, 0.30),
+    'ALL_PIVOT_BRK': ('TRAIL', 1.50, 0.50, 0.30),
+    'ALL_3SOLDIERS': ('TRAIL', 3.00, 0.30, 0.30),
+    'ALL_DOJI_REV': ('TRAIL', 2.00, 0.50, 0.50),
+    'ALL_FVG_BULL': ('TRAIL', 3.00, 0.50, 0.50),
+    'ALL_FISHER_9': ('TRAIL', 2.00, 0.50, 0.30),
+    'ALL_STOCH_OB': ('TPSL', 0.80, 0.50, 0.00),
+    'LON_DC10_MOM': ('TRAIL', 1.00, 0.30, 0.30),
+    'IDX_3SOLDIERS': ('BE_TP', 2.50, 0.50, 0.75),
+    'ALL_CCI_100': ('BE_TP', 1.00, 0.50, 1.00),
+}
+
+STRAT_EXITS[('icm', 'NOR25')] = {
+    'IDX_3SOLDIERS': ('TRAIL', 3.00, 0.30, 0.30),
+    'ALL_3SOLDIERS': ('TRAIL', 2.00, 0.50, 0.50),
+}

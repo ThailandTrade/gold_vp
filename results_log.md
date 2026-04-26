@@ -2,6 +2,30 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-26 — ICM Vague 2: +12 instruments (cryptos + indices europeens)
+
+Beam search top-3 + reverse cleanup sur 14 nouveaux. 12 valides, 2 echecs (BTC/US2000 PF<1).
+
+| Sym | Strats | PF | DD | Rend | M+ |
+|---|---|---|---|---|---|
+| ETHUSD | 1 | 1.16 | -18.3% | +32% | 10/13 |
+| SOLUSD | 4 | 1.22 | -11.0% | +127% | 11/13 |
+| BNBUSD | 3 | 1.16 | -10.7% | +48% | 9/13 |
+| HK50 | 4 | 1.17 | -17.7% | +56% | 10/12 |
+| ES35 | 3 | 1.27 | -11.6% | +68% | 9/12 |
+| IT40 | 2 | 1.16 | -12.8% | +41% | 9/12 |
+| CA60 | 2 | 1.08 | -11.4% | +14% | 7/12 |
+| NETH25 | 3 | 1.17 | -8.6% | +53% | 10/12 |
+| SE30 | 2 | 1.30 | -9.5% | +61% | 9/12 |
+| SWI20 | 4 | 1.28 | -13.2% | +69% | 9/12 |
+| SA40 | 12 | 1.27 | -15.0% | **+579%** | 9/12 |
+| NOR25 | 2 | 1.32 | -7.2% | +40% | 9/12 |
+
+Skip: BTCUSD (PF 0.56), US2000 (0 strats robust).
+
+ICM total: **92 strats / 25 instruments** (vague 1: 50/13 + vague 2: 42/12).
+SYMBOL_ID etendu pour ETH, SOL, BNB, HK50, US2000, ES35, IT40, CA60, NETH25, SE30, SWI20, SA40, NOR25.
+
 ## 2026-04-26 — bt_portfolio: AGREGE en PrettyTable
 
 Commit 2ad09c4. Affichage tableau formate avec borders + alignement, plus lisible.

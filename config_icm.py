@@ -77,6 +77,59 @@ ALL_INSTRUMENTS = {
             'ALL_NR4', 'ALL_ICHI_TK', 'ALL_FVG_BULL',
         ],
     },
+    # === Vague 2 — nouveaux instruments 2026-04-26 ===
+    'ETHUSD': {
+        'risk_pct': 0.01,
+        'portfolio': ['ALL_HAMMER'],
+    },
+    'SOLUSD': {
+        'risk_pct': 0.01,
+        'portfolio': ['ALL_STOCH_PIVOT', 'NY_ELDER', 'ALL_ELDER_BEAR', 'ALL_WILLR_7'],
+    },
+    'BNBUSD': {
+        'risk_pct': 0.01,
+        'portfolio': ['ALL_MSTAR', 'ALL_HAMMER', 'ALL_ADX_RSI50'],
+    },
+    'HK50': {
+        'risk_pct': 0.01,
+        'portfolio': ['ALL_ICHI_TK', 'NY_HMA_CROSS', 'ALL_KB_SQUEEZE', 'TOK_BIG'],
+    },
+    'ES35': {
+        'risk_pct': 0.01,
+        'portfolio': ['ALL_CCI_14_ZERO', 'ALL_FIB_618', 'ALL_DOJI_REV'],
+    },
+    'IT40': {
+        'risk_pct': 0.01,
+        'portfolio': ['ALL_ENGULF', 'ALL_KC_BRK'],
+    },
+    'CA60': {
+        'risk_pct': 0.01,
+        'portfolio': ['ALL_CCI_20_ZERO', 'ALL_WILLR_14'],
+    },
+    'NETH25': {
+        'risk_pct': 0.01,
+        'portfolio': ['NY_HMA_CROSS', 'ALL_WILLR_7', 'ALL_STOCH_OB'],
+    },
+    'SE30': {
+        'risk_pct': 0.01,
+        'portfolio': ['ALL_INSIDE_BRK', 'ALL_DC50'],
+    },
+    'SWI20': {
+        'risk_pct': 0.01,
+        'portfolio': ['ALL_RSI_EXTREME', 'ALL_MACD_HIST', 'IDX_RSI_REV', 'LON_STOCH'],
+    },
+    'SA40': {
+        'risk_pct': 0.01,
+        'portfolio': [
+            'ALL_ADX_FAST', 'IDX_BB_REV', 'LON_DC10', 'ALL_PIVOT_BRK',
+            'ALL_3SOLDIERS', 'ALL_DOJI_REV', 'ALL_FVG_BULL', 'ALL_FISHER_9',
+            'ALL_STOCH_OB', 'LON_DC10_MOM', 'IDX_3SOLDIERS', 'ALL_CCI_100',
+        ],
+    },
+    'NOR25': {
+        'risk_pct': 0.01,
+        'portfolio': ['IDX_3SOLDIERS', 'ALL_3SOLDIERS'],
+    },
 }
 
 LIVE_INSTRUMENTS = list(ALL_INSTRUMENTS.keys())

@@ -77,6 +77,10 @@ SYMBOL_ID = {
     'EURUSD': 19, 'GBPUSD': 20, 'USDCHF': 21, 'USDJPY': 22, 'USDCAD': 23, 'AUDUSD': 24,
     'DE40': 25, 'F40': 26, 'STOXX50': 27, 'USTEC': 28,
     'AUS200': 29, 'JP225': 30, 'US500': 31,
+    # ICM crypto + nouveaux indices 2026-04-26
+    'ETHUSD': 32, 'SOLUSD': 33, 'BNBUSD': 34,
+    'HK50': 35, 'US2000': 36,
+    'ES35': 37, 'IT40': 38, 'CA60': 39, 'NETH25': 40, 'SE30': 41, 'SWI20': 42, 'SA40': 43, 'NOR25': 44,
 }
 # (HK50.cash already in SYMBOL_ID at 15, US2000.cash at 16)
 
