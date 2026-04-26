@@ -30,10 +30,13 @@ cfg = importlib.import_module(f'config_{args.account}')
 BROKER = cfg.BROKER
 INSTRUMENTS = getattr(cfg, 'ALL_INSTRUMENTS', cfg.INSTRUMENTS)
 
-try:
-    CRYPTO_SYMS = set(importlib.import_module('config_crypto').ALL_INSTRUMENTS.keys())
-except Exception:
-    CRYPTO_SYMS = set()
+CRYPTO_BASES = ('BTC', 'ETH', 'SOL', 'BNB', 'XRP', 'ADA', 'DOT', 'AVAX',
+                'LINK', 'MATIC', 'DOGE', 'LTC', 'BCH', 'TRX', 'ATOM', 'SHIB',
+                'NEAR', 'UNI', 'XLM', 'APT', 'ARB', 'OP', 'INJ', 'SUI')
+
+
+def is_crypto(sym):
+    return sym.upper().startswith(CRYPTO_BASES)
 
 
 def crosses_weekend(entry_ts, exit_ts):
@@ -93,7 +96,7 @@ for sym, icfg in INSTRUMENTS.items():
     durations_h = []
     multi_day = 0
     weekend_cross = 0
-    is_crypto = sym in CRYPTO_SYMS
+    sym_is_crypto = is_crypto(sym)
     for ci, xi, *_ in trades:
         xi_safe = min(xi, len(candles) - 1)
         ets = candles.iloc[ci]['ts_dt']
@@ -101,12 +104,12 @@ for sym, icfg in INSTRUMENTS.items():
         dur_h = (xts - ets).total_seconds() / 3600
         durations_h.append(dur_h)
         if dur_h >= 24: multi_day += 1
-        if not is_crypto and crosses_weekend(ets, xts):
+        if not sym_is_crypto and crosses_weekend(ets, xts):
             weekend_cross += 1
     avg_dur = sum(durations_h) / len(durations_h) if durations_h else 0
     md_pct = multi_day / len(trades) * 100 if trades else 0
     line = f"  Duree avg: {avg_dur:.1f}h  Multi-day (>=24h): {multi_day} ({md_pct:.1f}%)"
-    if not is_crypto:
+    if not sym_is_crypto:
         wk_pct = weekend_cross / len(trades) * 100 if trades else 0
         line += f"  Weekend cross: {weekend_cross} ({wk_pct:.1f}%)"
     print(line)
@@ -224,7 +227,7 @@ if len(all_sym_trades) >= 1:
         dh = (exit_ts - entry_ts).total_seconds() / 3600
         total_durations_h.append(dh)
         if dh >= 24: total_multi_day += 1
-        if sym not in CRYPTO_SYMS:
+        if not is_crypto(sym):
             non_crypto_n += 1
             if crosses_weekend(entry_ts, exit_ts):
                 weekend_cross_total += 1

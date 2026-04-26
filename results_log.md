@@ -7,7 +7,7 @@
 Ajout per-instrument et dans section AGREGE:
 - Duree moyenne (heures)
 - Nombre + % de trades >= 24h ("multi-day")
-- Trades qui trainent pendant le weekend (Sat/Sun entre entry et exit). Skip cryptos (CRYPTO_SYMS importe depuis config_crypto).
+- Trades qui trainent pendant le weekend (Sat/Sun entre entry et exit). Skip cryptos via prefixe symbole (BTC, ETH, SOL, BNB, XRP, ADA, DOT, AVAX, LINK, MATIC, DOGE, LTC, BCH, TRX, ATOM, SHIB, NEAR, UNI, XLM, APT, ARB, OP, INJ, SUI). Pas de dependance config_crypto.
 
 Affichage:
 - per-sym non-crypto: `Duree avg: 2.3h  Multi-day (>=24h): 12 (0.9%)  Weekend cross: 5 (0.4%)`
