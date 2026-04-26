@@ -146,20 +146,26 @@ if len(all_sym_trades) >= 1:
     sorted_periods = sorted(period_stats.keys())
     label = 'Semaine' if args.weekly else 'Mois'
 
-    print(f"\n  {label:>10s}  {'Trades':>6s}  {'Wins':>5s}  {'WR':>5s}  {'PF':>5s}  {'PnL':>10s}  {'Rend P':>7s}  {'Capital':>12s}  {'Rend':>8s}  {'DD':>7s}  {'MaxDD':>7s}")
-    print(f"  {'-'*100}")
+    from prettytable import PrettyTable
+    tbl = PrettyTable()
+    tbl.field_names = [label, 'Trades', 'Wins', 'WR', 'PF', 'PnL', 'Rend P', 'Capital', 'Rend', 'DD', 'MaxDD']
+    tbl.align = 'r'
+    tbl.align[label] = 'l'
     prev_cap = CAPITAL
     for p in sorted_periods:
         ps = period_stats[p]
         wr = ps['w'] / ps['n'] * 100 if ps['n'] > 0 else 0
         pf = ps['gp'] / (ps['gl'] + 0.01)
         rend = (ps['cap'] - CAPITAL) / CAPITAL * 100
-        # Rendement de la periode (vs cap au debut de periode)
         rend_period = (ps['cap'] - prev_cap) / prev_cap * 100 if prev_cap > 0 else 0
         prev_cap = ps['cap']
         p_dd = dd_per_period.get(p, 0)
-        pnl_sign = '+' if ps['pnl'] >= 0 else ''
-        print(f"  {p:>10s}  {ps['n']:>6d}  {ps['w']:>5d}  {wr:>4.0f}%  {pf:>4.1f}  ${ps['pnl']:>+9,.0f}  {rend_period:>+6.2f}%  ${ps['cap']:>11,.0f}  {rend:>+7.1f}%  {p_dd:>+6.2f}%  {ps['max_dd']:>+6.2f}%")
+        tbl.add_row([p, f"{ps['n']:,d}", ps['w'], f"{wr:.0f}%", f"{pf:.2f}",
+                     f"${ps['pnl']:+,.0f}", f"{rend_period:+.2f}%",
+                     f"${ps['cap']:,.0f}", f"{rend:+.1f}%",
+                     f"{p_dd:+.2f}%", f"{ps['max_dd']:+.2f}%"])
+    print()
+    print(tbl)
 
     tot_n = sum(ps['n'] for ps in period_stats.values())
     tot_w = sum(ps['w'] for ps in period_stats.values())
@@ -168,8 +174,7 @@ if len(all_sym_trades) >= 1:
     pos_periods = sum(1 for ps in period_stats.values() if ps['pnl'] > 0)
     neg_periods = len(sorted_periods) - pos_periods
 
-    print(f"  {'-'*92}")
-    print(f"  Trades: {tot_n:,d}  WR: {tot_w/tot_n*100:.0f}%  PF: {tot_gp/(tot_gl+0.01):.2f}  MaxDD: {max_dd:+.2f}%  Rend: {(cap-CAPITAL)/CAPITAL*100:+.1f}%")
+    print(f"\n  TOTAL: Trades {tot_n:,d}  WR {tot_w/tot_n*100:.0f}%  PF {tot_gp/(tot_gl+0.01):.2f}  MaxDD {max_dd:+.2f}%  Rend {(cap-CAPITAL)/CAPITAL*100:+.1f}%")
     print(f"  {label}+ {pos_periods}/{len(sorted_periods)}  {label}- {neg_periods}/{len(sorted_periods)}")
     print(f"  ${CAPITAL:,.0f} -> ${cap:,.0f}")
 
