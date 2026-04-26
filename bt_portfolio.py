@@ -30,6 +30,21 @@ cfg = importlib.import_module(f'config_{args.account}')
 BROKER = cfg.BROKER
 INSTRUMENTS = getattr(cfg, 'ALL_INSTRUMENTS', cfg.INSTRUMENTS)
 
+try:
+    CRYPTO_SYMS = set(importlib.import_module('config_crypto').ALL_INSTRUMENTS.keys())
+except Exception:
+    CRYPTO_SYMS = set()
+
+
+def crosses_weekend(entry_ts, exit_ts):
+    from datetime import timedelta as _td
+    d = entry_ts.date(); end = exit_ts.date()
+    while d <= end:
+        if d.weekday() >= 5:
+            return True
+        d += _td(days=1)
+    return False
+
 if args.symbol:
     sym = args.symbol.upper()
     if sym in INSTRUMENTS:
@@ -77,14 +92,24 @@ for sym, icfg in INSTRUMENTS.items():
 
     durations_h = []
     multi_day = 0
+    weekend_cross = 0
+    is_crypto = sym in CRYPTO_SYMS
     for ci, xi, *_ in trades:
         xi_safe = min(xi, len(candles) - 1)
-        dur_h = (candles.iloc[xi_safe]['ts_dt'] - candles.iloc[ci]['ts_dt']).total_seconds() / 3600
+        ets = candles.iloc[ci]['ts_dt']
+        xts = candles.iloc[xi_safe]['ts_dt']
+        dur_h = (xts - ets).total_seconds() / 3600
         durations_h.append(dur_h)
         if dur_h >= 24: multi_day += 1
+        if not is_crypto and crosses_weekend(ets, xts):
+            weekend_cross += 1
     avg_dur = sum(durations_h) / len(durations_h) if durations_h else 0
     md_pct = multi_day / len(trades) * 100 if trades else 0
-    print(f"  Duree avg: {avg_dur:.1f}h  Multi-day (>=24h): {multi_day} ({md_pct:.1f}%)")
+    line = f"  Duree avg: {avg_dur:.1f}h  Multi-day (>=24h): {multi_day} ({md_pct:.1f}%)"
+    if not is_crypto:
+        wk_pct = weekend_cross / len(trades) * 100 if trades else 0
+        line += f"  Weekend cross: {weekend_cross} ({wk_pct:.1f}%)"
+    print(line)
 
     print(f"\n  {'Strat':>22s} {'n':>5s} {'WR':>5s} {'PF':>6s} {'PnL':>10s}")
     for sn in portfolio:
@@ -193,15 +218,22 @@ if len(all_sym_trades) >= 1:
 
     total_durations_h = []
     total_multi_day = 0
-    for entry_ts, exit_ts, *_ in filtered:
+    weekend_cross_total = 0
+    non_crypto_n = 0
+    for entry_ts, exit_ts, di, pnl_oz, sl_atr, atr, sn, risk, sym in filtered:
         dh = (exit_ts - entry_ts).total_seconds() / 3600
         total_durations_h.append(dh)
         if dh >= 24: total_multi_day += 1
+        if sym not in CRYPTO_SYMS:
+            non_crypto_n += 1
+            if crosses_weekend(entry_ts, exit_ts):
+                weekend_cross_total += 1
     avg_dur_total = sum(total_durations_h) / len(total_durations_h) if total_durations_h else 0
     md_pct_total = total_multi_day / len(filtered) * 100 if filtered else 0
+    wk_pct_total = weekend_cross_total / non_crypto_n * 100 if non_crypto_n else 0
 
     print(f"\n  TOTAL: Trades {tot_n:,d}  WR {tot_w/tot_n*100:.0f}%  PF {tot_gp/(tot_gl+0.01):.2f}  MaxDD {max_dd:+.2f}%  Rend {(cap-CAPITAL)/CAPITAL*100:+.1f}%")
-    print(f"  Duree avg: {avg_dur_total:.1f}h  Multi-day (>=24h): {total_multi_day} ({md_pct_total:.1f}%)")
+    print(f"  Duree avg: {avg_dur_total:.1f}h  Multi-day (>=24h): {total_multi_day} ({md_pct_total:.1f}%)  Weekend cross (non-crypto): {weekend_cross_total}/{non_crypto_n} ({wk_pct_total:.1f}%)")
     print(f"  {label}+ {pos_periods}/{len(sorted_periods)}  {label}- {neg_periods}/{len(sorted_periods)}")
     print(f"  ${CAPITAL:,.0f} -> ${cap:,.0f}")
 

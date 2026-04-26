@@ -2,13 +2,17 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
-## 2026-04-26 — bt_portfolio: ajout stats duree trades
+## 2026-04-26 — bt_portfolio: ajout stats duree trades + weekend cross
 
 Ajout per-instrument et dans section AGREGE:
 - Duree moyenne (heures)
 - Nombre + % de trades >= 24h ("multi-day")
+- Trades qui trainent pendant le weekend (Sat/Sun entre entry et exit). Skip cryptos (CRYPTO_SYMS importe depuis config_crypto).
 
-Affichage: `Duree avg: 2.3h  Multi-day (>=24h): 156 (1.0%)`
+Affichage:
+- per-sym non-crypto: `Duree avg: 2.3h  Multi-day (>=24h): 12 (0.9%)  Weekend cross: 5 (0.4%)`
+- per-sym crypto: line sans Weekend cross
+- AGREGE TOTAL: `Multi-day: 156 (1.0%)  Weekend cross (non-crypto): 89/14742 (0.6%)`
 
 ## 2026-04-26 — BUG CRITIQUE bt_portfolio.py: events.sort() melangeait les chronologies cross-instrument
 
