@@ -2,6 +2,10 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-26 — bt_portfolio: AGREGE en PrettyTable
+
+Commit 2ad09c4. Affichage tableau formate avec borders + alignement, plus lisible.
+
 ## 2026-04-25 — ICM: portfolio beam search 50 strats / 13 instruments
 
 Methode beam search top-3 + reverse cleanup (cost-r 0.05R combo).
