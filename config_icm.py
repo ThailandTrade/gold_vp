@@ -77,34 +77,14 @@ ALL_INSTRUMENTS = {
             'ALL_NR4', 'ALL_ICHI_TK', 'ALL_FVG_BULL',
         ],
     },
-    # === Vague 2 — nouveaux instruments 2026-04-26 ===
-    'ETHUSD': {
-        'risk_pct': 0.01,
-        'portfolio': ['ALL_HAMMER'],
-    },
+    # === Vague 2 — nouveaux instruments 2026-04-26 (validation user: A + ES35 + NETH25) ===
     'SOLUSD': {
         'risk_pct': 0.01,
         'portfolio': ['ALL_STOCH_PIVOT', 'NY_ELDER', 'ALL_ELDER_BEAR', 'ALL_WILLR_7'],
     },
-    'BNBUSD': {
-        'risk_pct': 0.01,
-        'portfolio': ['ALL_MSTAR', 'ALL_HAMMER', 'ALL_ADX_RSI50'],
-    },
-    'HK50': {
-        'risk_pct': 0.01,
-        'portfolio': ['ALL_ICHI_TK', 'NY_HMA_CROSS', 'ALL_KB_SQUEEZE', 'TOK_BIG'],
-    },
     'ES35': {
         'risk_pct': 0.01,
         'portfolio': ['ALL_CCI_14_ZERO', 'ALL_FIB_618', 'ALL_DOJI_REV'],
-    },
-    'IT40': {
-        'risk_pct': 0.01,
-        'portfolio': ['ALL_ENGULF', 'ALL_KC_BRK'],
-    },
-    'CA60': {
-        'risk_pct': 0.01,
-        'portfolio': ['ALL_CCI_20_ZERO', 'ALL_WILLR_14'],
     },
     'NETH25': {
         'risk_pct': 0.01,
@@ -130,6 +110,8 @@ ALL_INSTRUMENTS = {
         'risk_pct': 0.01,
         'portfolio': ['IDX_3SOLDIERS', 'ALL_3SOLDIERS'],
     },
+    # Skip user: ETHUSD, BNBUSD, HK50, IT40, CA60 (PF/DD/M+ insuffisants ou crypto trop volatile)
+    # Skip auto: BTCUSD (PF 0.56), US2000 (0 strats robustes)
 }
 
 LIVE_INSTRUMENTS = list(ALL_INSTRUMENTS.keys())

@@ -2,6 +2,17 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-26 — ICM Vague 2 validation user: A + ES35 + NETH25
+
+User a retire 5 instruments du commit c063dda:
+- ETHUSD (1 strat, DD -18%, sample crypto trop court)
+- BNBUSD (PF 1.16, M+ 9/13)
+- HK50 (DD -17.7% trop eleve)
+- IT40 (PF 1.16, M+ 9/12 borderline)
+- CA60 (PF 1.08 limite, M+ 7/12 trop bas)
+
+ICM final: **80 strats / 20 instruments**.
+
 ## 2026-04-26 — ICM Vague 2: +12 instruments (cryptos + indices europeens)
 
 Beam search top-3 + reverse cleanup sur 14 nouveaux. 12 valides, 2 echecs (BTC/US2000 PF<1).
