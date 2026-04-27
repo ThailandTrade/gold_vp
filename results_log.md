@@ -2,6 +2,52 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-27 — Retrait doublons TOK/ALL des portfolios
+
+Audit: 5 paires de strats avec logique strictement identique (TOK = ALL filtre Tokyo 0h-6h UTC):
+- TOK_WILLR ⊂ ALL_WILLR_14
+- TOK_NR4 ⊂ ALL_NR4
+- TOK_FISHER ⊂ ALL_FISHER_9
+- TOK_MACD_MED ⊂ ALL_MACD_MED_SIG
+- TOK_TRIX ⊂ ALL_TRIX
+
+Pendant Tokyo, le TOK declenche TOUJOURS en meme temps que le ALL. Conflict filter ne bloque que les directions opposees -> double exposition meme direction.
+
+**Doublons trouves dans configs actuelles:**
+- ICM EURUSD: TOK_WILLR + ALL_WILLR_14
+- 5ers SP500: TOK_TRIX + ALL_TRIX
+- FTMO: clean
+
+**Comparaison ICM EURUSD (cost 0.05R, capital $100k, risk 1%):**
+
+| Metric | TOK_WILLR (TRAIL 3.0/0.3/0.3) | ALL_WILLR_14 (TPSL 3.0/1.0) |
+|---|---|---|
+| Trades | 256 | 298 |
+| PF | 1.09 | 1.09 |
+| WR | 69% | **80%** |
+| DD | -6.1% | -5.9% |
+| Rend | +4% | +5% |
+| M+ | 7/13 | 8/13 |
+
+Overlap: 253/256 trades TOK_WILLR sont aussi des ALL_WILLR_14. ALL strictement meilleur. **Retire TOK_WILLR.**
+
+**Comparaison 5ers SP500 (cost 0.05R, capital $100k, risk 0.01%):**
+
+| Metric | TOK_TRIX (BE_TP 2.0/0.5/0.75) | ALL_TRIX (TPSL 2.0/0.75) |
+|---|---|---|
+| Trades | 177 | 276 |
+| PF | **1.21** | 1.10 |
+| WR | 75% | 78% |
+| M+ | **8/13** | 7/13 |
+
+Overlap: 176/177. Les 100 trades ALL hors Tokyo diluent le PF de 1.21 -> 1.10. L'edge TRIX sur SP500 est SPECIFIQUE Tokyo. **Retire ALL_TRIX.**
+
+**Decision finale:**
+- config_icm.py EURUSD: 6 strats -> 5 (retire TOK_WILLR)
+- config_5ers.py SP500: 7 strats -> 6 (retire ALL_TRIX)
+
+A surveiller: si optimize_all relance pour ces instruments, ajouter logique anti-doublon (DUPLICATE_STRATS pour les paires TOK/ALL identiques).
+
 ## 2026-04-26 — bt_portfolio: fix crosses_weekend (false positives Sun reopen)
 
 Premiere version comptait tous les trades dont entry OU exit OU date intermediaire est Sat/Sun. Resultat: trades qui entrent Sun 22:00-23:45 UTC (forex reopen) flagges "weekend cross" a tort.

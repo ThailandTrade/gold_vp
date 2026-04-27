@@ -10,7 +10,7 @@ ALL_INSTRUMENTS = {
     'EURUSD': {
         'risk_pct': 0.01,
         'portfolio': [
-            'TOK_WILLR', 'ALL_RSI_50', 'ALL_DOJI_REV', 'ALL_WILLR_14',
+            'ALL_RSI_50', 'ALL_DOJI_REV', 'ALL_WILLR_14',
             'ALL_STOCH_RSI', 'ALL_MACD_ADX',
         ],
     },

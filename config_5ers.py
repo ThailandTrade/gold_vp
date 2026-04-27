@@ -19,7 +19,7 @@ ALL_INSTRUMENTS = {
         'risk_pct': 0.0001,
         'portfolio': [
             'TOK_TRIX', 'ALL_MACD_STD_SIG', 'ALL_PIVOT_BOUNCE',
-            'ALL_MACD_ADX', 'ALL_MTF_BRK', 'ALL_TRIX', 'TOK_2BAR',
+            'ALL_MACD_ADX', 'ALL_MTF_BRK', 'TOK_2BAR',
         ],
     },
     'NAS100': {
