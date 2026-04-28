@@ -2,6 +2,34 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-28 — Dashboard: tab LIVE (vue agregee toutes props)
+
+User: voir le detail de tous les trades live toutes prop confondues dans un onglet dedie.
+
+### Implementation
+
+ACCOUNT_TABS = [...ACCOUNTS, 'live']. 'live' est un compte virtuel.
+
+Fonction buildMergedData(allData):
+- Aggregation account_info (somme balance/equity/margin/free_margin/profit)
+- Concat positions/today_trades/history avec tag _acc sur chaque element
+- Sum today_pnl, today_count
+- Concat bt_compare avec key 'acc:sym' pour eviter collisions
+- ts/last_push: max des comptes
+
+getAccData() helper: retourne buildMergedData(LAST) si SELECTED='live', sinon LAST[SELECTED].
+
+DD limit en LIVE: min des limites des sous-comptes (le plus restrictif = 4% 5ers).
+
+findBtMatch enrichi: en mode LIVE cherche par 'acc:sym' (acc fournie via t._acc/p._acc) ou fallback sur n'importe quelle key finissant par ':sym'.
+
+Affichage:
+- Cartes BT/LV: prefixent le sym par '[acc] sym' en mode LIVE
+- Tab Legacy: sections '[acc] sym'
+- Tabs Home/Trades/Open/Histo/Logs: les trades sont distinguables via leur _acc tag
+
+renderAccTabs: 3 chips - 5ers / FTMO / LIVE. LIVE affiche somme equity et somme PnL Jour.
+
 ## 2026-04-28 — Dashboard: vrai graphique equity (axes, grille, labels)
 
 User: les sparklines n'avaient pas d'info, voulait un graphique complet.

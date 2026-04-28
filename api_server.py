@@ -430,6 +430,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 <script>
 const API='';
 const ACCOUNTS=['5ers','ftmo'];
+const ACCOUNT_TABS=[...ACCOUNTS,'live']; // 'live' = vue agregee
 const MAX_DD={'5ers':4.0,'ftmo':10.0};
 const PERIODS=[
   {id:'today',label:'Jour'},
@@ -443,6 +444,36 @@ let TAB=localStorage.getItem('hydra-tab')||'home';
 let PERIOD=localStorage.getItem('hydra-period')||'today';
 let LAST={};
 let MODAL_STACK=[]; // pour bouton retour
+
+function buildMergedData(allData){
+  const merged={state:{account_info:{balance:0,equity:0,margin:0,free_margin:0,profit:0},positions:[],today_trades:[],today_pnl:0,today_count:0,candles:{},broker:'all',ts:null},history:[],bt_compare:{},last_push:null};
+  for(const acc of ACCOUNTS){
+    const d=allData[acc]||{};
+    if(!d.state)continue;
+    const s=d.state, a=s.account_info||{};
+    merged.state.account_info.balance += a.balance||0;
+    merged.state.account_info.equity += a.equity||0;
+    merged.state.account_info.margin += a.margin||0;
+    merged.state.account_info.free_margin += a.free_margin||0;
+    merged.state.account_info.profit += a.profit||0;
+    for(const p of (s.positions||[])) merged.state.positions.push({...p,_acc:acc});
+    for(const t of (s.today_trades||[])) merged.state.today_trades.push({...t,_acc:acc});
+    for(const t of (d.history||[])) merged.history.push({...t,_acc:acc});
+    merged.state.today_pnl += s.today_pnl||0;
+    merged.state.today_count += s.today_count||0;
+    for(const sym of Object.keys(d.bt_compare||{})){
+      const key=`${acc}:${sym}`;
+      merged.bt_compare[key]={...d.bt_compare[sym],_acc:acc,_sym:sym};
+    }
+    if(s.ts&&(!merged.state.ts||s.ts>merged.state.ts))merged.state.ts=s.ts;
+    if(d.last_push&&(!merged.last_push||d.last_push>merged.last_push))merged.last_push=d.last_push;
+  }
+  return merged;
+}
+
+function getAccData(){
+  return SELECTED==='live'?buildMergedData(LAST):(LAST[SELECTED]||{});
+}
 
 function nowDate(data){const ts=data?.state?.ts;return ts?new Date(ts):new Date();}
 function periodRange(periodId,data){
@@ -509,17 +540,23 @@ function modalBack(){
 }
 
 // === BT match for live trade ===
-function findBtMatch(sym,strat,data){
+function findBtMatch(sym,strat,data,acc){
   const btc=data?.bt_compare||{};
-  const info=btc[sym];
+  // En mode LIVE les cles sont 'acc:sym', sinon 'sym'
+  let info=btc[sym];
+  if(!info && acc) info=btc[acc+':'+sym];
+  if(!info){
+    // Fallback: chercher n'importe quelle cle qui finit par ':sym'
+    for(const k of Object.keys(btc)){if(k.endsWith(':'+sym)){info=btc[k];break;}}
+  }
   if(!info)return null;
   const row=(info.rows||[]).find(r=>r.strat===strat);
-  return row?{...row,atr:info.atr}:null;
+  return row?{...row,atr:info.atr,_acc:info._acc}:null;
 }
 
 // === Drill-down: trade ===
 function openTradeByKey(key,push){
-  const data=LAST[SELECTED]||{};
+  const data=getAccData();
   const [scope,...rest]=key.split('|');
   let title='',body='';
   if(scope==='lv'){
@@ -548,7 +585,7 @@ function tradeTitle(t){
 }
 
 function renderTradeDrill(t,data){
-  const m=findBtMatch(t.symbol,t.comment,data);
+  const m=findBtMatch(t.symbol,t.comment,data,t._acc);
   const pnl=t.pnl||0;
   const isLong=t.dir==='long';
   let h='';
@@ -615,7 +652,7 @@ function renderTradeDrill(t,data){
 }
 
 function renderPositionDrill(p,data){
-  const m=findBtMatch(p.symbol,p.comment,data);
+  const m=findBtMatch(p.symbol,p.comment,data,p._acc);
   const isLong=p.dir==='long';
   const elapsed=p.time_open?Math.round((Date.now()-new Date(p.time_open).getTime())/60000):0;
   const pnl=p.pnl||0;
@@ -689,7 +726,7 @@ function renderBtRowDrill(sym,strat,m,data){
 
 // === Drill-down: instrument ===
 function openInstrumentDrill(sym,push){
-  const data=LAST[SELECTED]||{};
+  const data=getAccData();
   const trades=getPeriodTrades(data).filter(t=>t.symbol===sym);
   const total=trades.reduce((s,t)=>s+(t.pnl||0),0);
   const wins=trades.filter(t=>(t.pnl||0)>0);
@@ -747,7 +784,7 @@ function openInstrumentDrill(sym,push){
 
 // === Drill-down: strat ===
 function openStratDrill(strat,push){
-  const data=LAST[SELECTED]||{};
+  const data=getAccData();
   const trades=getPeriodTrades(data).filter(t=>t.comment===strat);
   const total=trades.reduce((s,t)=>s+(t.pnl||0),0);
   const wins=trades.filter(t=>(t.pnl||0)>0);
@@ -829,14 +866,22 @@ function monthlyPnl(history){
 // === Render: account tabs ===
 function renderAccTabs(allData){
   let h='';
-  for(const acc of ACCOUNTS){
-    const d=allData[acc]||{};
-    const s=d.state||{};
-    const a=s.account_info||{};
-    const pnl=s.today_pnl||0;
+  for(const acc of ACCOUNT_TABS){
+    let a={},pnl=0,label=acc.toUpperCase();
+    if(acc==='live'){
+      const m=buildMergedData(allData);
+      a=m.state.account_info;
+      pnl=m.state.today_pnl||0;
+      label='LIVE';
+    } else {
+      const d=allData[acc]||{};
+      const s=d.state||{};
+      a=s.account_info||{};
+      pnl=s.today_pnl||0;
+    }
     const cls=pnl>=0?'green':'red';
     const active=acc===SELECTED?'active':'';
-    h+=`<button class="acc-tab ${active}" onclick="selectAcc('${acc}')">${acc.toUpperCase()}<span class="acc-pnl ${cls}">${a.equity?'$'+fmt(a.equity):'--'} &middot; ${fmtUsd(pnl,0)}</span></button>`;
+    h+=`<button class="acc-tab ${active}" onclick="selectAcc('${acc}')">${label}<span class="acc-pnl ${cls}">${a.equity?'$'+fmt(a.equity):'--'} &middot; ${fmtUsd(pnl,0)}</span></button>`;
   }
   document.getElementById('acc-tabs').innerHTML=h;
 }
@@ -867,7 +912,7 @@ function renderKpis(data){
   const eqInfo=buildEquity(hist,bal);
   const ddCur=Math.abs(eqInfo.curDd);
   const ddMax=eqInfo.maxDd;
-  const ddLimit=MAX_DD[SELECTED]||10;
+  const ddLimit=SELECTED==='live'?Math.min(...ACCOUNTS.map(a=>MAX_DD[a]||10)):(MAX_DD[SELECTED]||10);
   const ddPct=Math.min(100,ddCur/ddLimit*100);
   let pf=0,wr=0;
   if(trades.length>0){
@@ -1281,14 +1326,17 @@ function renderBT(data){
 
   // Score: count rows with both BT and LV, compute avg |delta|
   let matched=0,nLv=0,nBt=0,sumAbsDelta=0,topDiv=[];
-  for(const sym of syms){
-    const rows=btc[sym]?.rows||[];
+  for(const symKey of syms){
+    const info=btc[symKey];
+    const rows=info?.rows||[];
+    const realSym=info?._sym||symKey;
+    const realAcc=info?._acc;
     for(const row of rows){
       if(row.bt&&row.lv){
         matched++;
         const d=row.delta||0;
         sumAbsDelta+=Math.abs(d);
-        topDiv.push({sym,strat:row.strat,delta:d,bt:row.bt.pnl_r,lv:row.lv.pnl_r});
+        topDiv.push({sym:realSym,acc:realAcc,strat:row.strat,delta:d,bt:row.bt.pnl_r,lv:row.lv.pnl_r});
       }
       if(row.bt)nBt++;
       if(row.lv)nLv++;
@@ -1312,9 +1360,10 @@ function renderBT(data){
   if(top.length>0){
     h+=`<div class="card"><div class="card-title">Top divergences du jour</div><div class="list">`;
     for(const t of top){
+      const symLbl=t.acc?`[${t.acc}] ${t.sym}`:t.sym;
       h+=`<div class="tcard" onclick="openTradeByKey('bt|${escapeH(t.sym)}|${escapeH(t.strat)}',false)">
         <div class="tcard-head">
-          <div><span class="tcard-sym">${escapeH(t.sym)}</span> <span class="tcard-strat">${escapeH(t.strat)}</span></div>
+          <div><span class="tcard-sym">${escapeH(symLbl)}</span> <span class="tcard-strat">${escapeH(t.strat)}</span></div>
           <span class="badge-r ${t.delta>=0?'pos':'neg'}">${t.delta>=0?'+':''}${t.delta.toFixed(2)}R</span>
         </div>
         <div class="tcard-meta">
@@ -1328,17 +1377,21 @@ function renderBT(data){
 
   // Per-instrument summary
   h+='<div class="card"><div class="card-title">Detail par instrument</div><div class="list">';
-  for(const sym of syms.sort()){
-    const rows=btc[sym]?.rows||[];
+  for(const symKey of syms.sort()){
+    const info=btc[symKey];
+    const rows=info?.rows||[];
     const matchedRows=rows.filter(r=>r.bt&&r.lv);
     if(rows.length===0)continue;
     const sumBt=rows.reduce((s,r)=>s+(r.bt?.pnl_r||0),0);
     const sumLv=rows.reduce((s,r)=>s+(r.lv?.pnl_r||0),0);
     const sumDelta=matchedRows.reduce((s,r)=>s+(r.delta||0),0);
-    const atr=btc[sym].atr||0;
-    h+=`<div class="tcard" onclick="openInstrumentDrill('${escapeH(sym)}',false)">
+    const atr=info.atr||0;
+    const realSym=info._sym||symKey;
+    const realAcc=info._acc;
+    const symLbl=realAcc?`[${realAcc}] ${realSym}`:realSym;
+    h+=`<div class="tcard" onclick="openInstrumentDrill('${escapeH(realSym)}',false)">
       <div class="tcard-head">
-        <span class="tcard-sym">${escapeH(sym)}</span>
+        <span class="tcard-sym">${escapeH(symLbl)}</span>
         <span class="tcard-time">${rows.length} strats &middot; ATR ${fmt(atr,2)}</span>
       </div>
       <div class="tcard-meta">
@@ -1387,12 +1440,14 @@ function renderLegacy(data){
   // BT vs Live per instrument (full table)
   const btc=data.bt_compare||{};
   const btSyms=Object.keys(btc).sort();
-  for(const sym of btSyms){
-    const info=btc[sym]||{};
+  for(const symKey of btSyms){
+    const info=btc[symKey]||{};
     const rows=(info.rows||[]).filter(r=>r.bt||r.lv).sort((a,b)=>a.strat.localeCompare(b.strat));
     if(rows.length===0)continue;
+    const sym=info._sym||symKey;
+    const symLbl=info._acc?`[${info._acc}] ${sym}`:sym;
     let totalBtR=0,totalLvR=0,totalDelta=0,totalUsd=0;
-    h+=`<div class="legacy-section-title"><span class="sym">${escapeH(sym)}</span><span class="meta">${rows.length} strats &middot; ATR ${fmt(info.atr,2)}</span></div>`;
+    h+=`<div class="legacy-section-title"><span class="sym">${escapeH(symLbl)}</span><span class="meta">${rows.length} strats &middot; ATR ${fmt(info.atr,2)}</span></div>`;
     h+='<div class="legacy-wrap"><table class="legacy-tbl">';
     h+='<thead><tr>';
     h+='<th class="col-strat" rowspan="2">Strat</th>';
@@ -1535,7 +1590,7 @@ function render(){
   // Account tabs
   renderAccTabs(LAST);
   renderPeriodTabs();
-  const data=LAST[SELECTED]||{};
+  const data=getAccData();
   renderKpis(data);
   renderTabs(data);
   // Show active tab
