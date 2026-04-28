@@ -2,6 +2,92 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-28 — Anomalie sizing HK50 FTMO 1.83x (cause non determinee, attend logs VPS)
+
+User a observe que la perte HK50 du jour paraissait disproportionnee. Audit des trades closes FTMO du 28/04:
+
+| Sym | Trades | Total R | Total $ | Avg $/R real | Expected $/R | Ratio |
+|---|---|---|---|---|---|---|
+| AUS200.cash | 3 | -3.44R | -$61.19 | $17.77 | $18.28 | 0.97x |
+| **HK50.cash** | 1 | -0.74R | **-$24.70** | **$33.43** | $18.28 | **1.83x** |
+| UK100.cash | 2 | -2.20R | -$36.95 | $16.78 | $18.28 | 0.92x |
+| US100.cash | 4 | +2.14R | +$40.28 | $18.84 | $18.28 | 1.03x |
+| US30.cash | 1 | -1.02R | -$18.55 | $18.19 | $18.28 | 0.99x |
+| US500.cash | 3 | +0.19R | +$2.93 | $15.28 | $18.28 | 0.84x |
+| XAUUSD | 1 | -1.04R | -$18.42 | $17.68 | $18.28 | 0.97x |
+
+Account FTMO: $45,684.52, risk_pct: 0.04% → expected 1R = $18.28.
+
+### Investigations
+
+1. **Diag mt5.order_calc_profit vs tick_value direct**: Ratio_T = 1.00x partout (XAUUSD, GER40, US500, US100, US30, AUS200, **HK50**, UK100, US2000). Donc MT5 calcule correctement.
+
+2. **Repro lot HK50 ALL_ICHI_TK avec ATR 21.94 (jour 27/04)**: lots theoriques = 2.18. Mais 3.98 lots alloues en live. Ratio 1.83x.
+
+3. **Inversion: pour 3.98 lots avec risk $18.27, SL distance impliquee = 35.85 points** (= 1.63 × ATR au lieu de 3.0 × ATR).
+
+4. **ATR HK50 historique recent**: min 19.50, p10 32.98. ATR < 15 n'a JAMAIS existe. L'hypothese "ATR sous-estime au moment du trade" ne tient pas avec les donnees actuelles.
+
+### Cause non confirmee — attend live.log VPS
+
+Pour confirmer, recuperer du VPS FTMO les lignes:
+```
+>>> SELL HK50.cash ALL_ICHI_TK SHORT 3.98lots @ 25725.68 SL=XXXX.XX TP=...
+    Cap=$XX,XXX Risk=$XX (X.X%)
+```
+
+Donnent capital reel + risk_amount + SL exact → reverse-engineer cause exacte.
+
+Hypotheses cote code:
+- Racing condition au demarrage live (atr cache mal initialise)
+- DB VPS partielle au moment du sizing (bars HK50 du 27/04 pas tous syncs)
+- ATR EMA recompute differemment cote VPS
+
+Aucun fix code applique pour l'instant — diagnostic incomplet sans logs VPS.
+
+### Autres observations
+
+US500 ratio 0.84x (sous-dimensionne) — moins critique mais pareille classe d'investigation.
+
+## 2026-04-28 — Analyse FTMO portfolio + WR 1ere bougie 0h UTC
+
+### BT FTMO complet (capital $100k, risk 0.04%, cost 0.05R)
+Global: 7,113 trades, PF 1.31, WR 72%, MaxDD -0.81%, Rend +26.8%, M+ 12/13.
+
+Per instrument (Feb / Mar / Avril):
+
+| Sym | Trades | PF | WR | M+ | Feb | Mar | Apr |
+|---|---|---|---|---|---|---|---|
+| AUS200 | 1570 | 1.29 | 69% | 10/13 | +506 | +480 | **+895** TOP |
+| UK100 | 591 | 1.31 | 81% | 11/13 | +212 | +134 | +20 |
+| GER40 | 406 | 1.54 | 71% | 9/13 | -52 | +363 | -20 |
+| US500 | 1086 | 1.41 | 71% | 10/13 | +118 | +1138 | -172 |
+| US100 | 1105 | 1.39 | 77% | 11/13 | +396 | +98 | -232 |
+| US30 | 556 | 1.24 | 74% | 10/13 | +207 | +241 | **-256** |
+| HK50 | 171 | 1.20 | 74% | 9/12 | -239 | +174 | +31 |
+| XAGUSD | 882 | 1.27 | 69% | 9/13 | -70 | +473 | -24 |
+| **XAUUSD** | 642 | 1.23 | 62% | 9/13 | -5 | -3 | **-123** (3 mois - consecutifs) |
+| US2000 | 104 | 1.15 | 87% | 9/12 | -146 | +48 | -47 (volume faible) |
+
+**Conclusions**:
+- AUS200 = pilier actuel (+$895 avril, 3 mois ascendants)
+- UK100 = constant (faible volume, jamais de gros trou)
+- XAUUSD seul instrument avec degradation 3 mois consecutifs - a surveiller voire pauser
+- 1 mois mauvais sur 13 = scenario M- attendu, pas un signal d'arret
+
+User a clairement exprime la mefiance vis-a-vis du recency bias: on ne coupe rien d'un mauvais mois isole. Reconsiderer si Mai confirme.
+
+### WR sur 1ere bougie 0h UTC (FTMO portfolio, sans cost-r)
+
+670 trades sur 7113 (9.4%) declenches a 00:00 UTC. WR 71.3% (478W/192L). WR global toutes heures: 74.7%.
+
+Difference -3.4 pts. Pas un edge negatif statistiquement significatif. Pas de motif pour filtrer la 1ere bougie.
+
+Best WR 00:00 par strat: ALL_CCI_100 90.9%, ALL_FVG_BULL 89.5%, ALL_AROON_CROSS 87.0%.
+Worst WR 00:00 par strat: ALL_MACD_STD_SIG 44.4% (n=18 petit echantillon), ALL_WILLR_14 56% (n=50).
+
+Cause structurelle: `trig` se reset au changement de jour dans collect_trades, donc tout signal "pret" depuis la veille (via `prev`=23:45 UTC) declenche sur la 1ere bougie.
+
 ## 2026-04-28 — Fix divergence TRAIL live vs BT (cas SL invalide)
 
 Observe sur live FTMO AUS200.cash 02:45 UTC:
