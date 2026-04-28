@@ -2,6 +2,36 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-28 — Dashboard: selecteur de periode (Jour/Hier/7j/30j/Tout)
+
+User veut pouvoir choisir la periode pour chaque compte. Default = jour courant.
+
+### Implementation
+
+Period chips dans le header sous account tabs:
+- Jour (today UTC) - par defaut
+- Hier (yesterday UTC)
+- 7j (7 derniers jours)
+- 30j (30 derniers jours)
+- Tout (sans filtre)
+
+Selection persistee localStorage 'hydra-period'.
+
+### Filtrage applique a:
+
+- **KPI strip**: PnL [periode], PF [periode] avec count trades de la periode
+- **Tab Trades** (renomme depuis "Jour"): equity sparkline + cards trades de la periode
+- **Tab Logs**: events filtres par periode (positions OPEN visibles seulement si period=today)
+
+### NON affecte:
+- Open tab (toujours live, indep du period)
+- Histo tab (calendar + equity all-time)
+- BT vs LV (compare strictement aujourd'hui)
+
+### Helper getPeriodTrades(data)
+
+Merge `today_trades` (live) + `history` (closed) avec dedup par ticket, puis filtre par date_close (ou date_open si fermeture absente). Source de "now" = `state.ts` du dernier push pour eviter les decalages avec l'horloge laptop UTC+7.
+
 ## 2026-04-28 — Refonte complete dashboard (mobile-first + tabs + cards)
 
 User a valide l'installation PWA sur phone. Demande refonte du dashboard. 7 ideas validees (skip 8 dark mode + 9 ticker live).

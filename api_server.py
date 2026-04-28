@@ -154,6 +154,12 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .acc-tab .acc-pnl.red { color:#fca5a5; }
   .acc-tab.active .acc-pnl { color:#fff; opacity:0.85; }
 
+  /* Period selector */
+  .period-tabs { display:flex; gap:5px; margin-top:8px; flex-wrap:wrap; }
+  .period-chip { padding:5px 10px; border-radius:6px; background:#f5f6f8; border:1px solid #e8eaed; color:#6b7280; font-size:11px; font-weight:600; cursor:pointer; transition:all 0.15s; }
+  .period-chip:hover { background:#eef0f3; }
+  .period-chip.active { background:#2563eb; color:#fff; border-color:#2563eb; }
+
   /* Container */
   .main { padding:12px; max-width:1200px; margin:0 auto; }
 
@@ -284,6 +290,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     <div class="status" id="status">Connexion...</div>
   </div>
   <div class="acc-tabs" id="acc-tabs"></div>
+  <div class="period-tabs" id="period-tabs"></div>
 </div>
 
 <div class="main">
@@ -302,9 +309,51 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 const API='';
 const ACCOUNTS=['5ers','ftmo'];
 const MAX_DD={'5ers':4.0,'ftmo':10.0};
+const PERIODS=[
+  {id:'today',label:'Jour'},
+  {id:'yesterday',label:'Hier'},
+  {id:'7d',label:'7j'},
+  {id:'30d',label:'30j'},
+  {id:'all',label:'Tout'},
+];
 let SELECTED=localStorage.getItem('hydra-acc')||'ftmo';
 let TAB=localStorage.getItem('hydra-tab')||'today';
+let PERIOD=localStorage.getItem('hydra-period')||'today';
 let LAST={};
+
+function nowDate(data){const ts=data?.state?.ts;return ts?new Date(ts):new Date();}
+function periodRange(periodId,data){
+  const now=nowDate(data);
+  const today=now.toISOString().slice(0,10);
+  if(periodId==='today')return {from:today,to:today,label:'Jour'};
+  if(periodId==='yesterday'){
+    const d=new Date(now);d.setUTCDate(d.getUTCDate()-1);
+    const ds=d.toISOString().slice(0,10);
+    return {from:ds,to:ds,label:'Hier'};
+  }
+  if(periodId==='7d'){
+    const d=new Date(now);d.setUTCDate(d.getUTCDate()-6);
+    return {from:d.toISOString().slice(0,10),to:today,label:'7j'};
+  }
+  if(periodId==='30d'){
+    const d=new Date(now);d.setUTCDate(d.getUTCDate()-29);
+    return {from:d.toISOString().slice(0,10),to:today,label:'30j'};
+  }
+  return {from:null,to:null,label:'Tout'};
+}
+function getPeriodTrades(data){
+  const r=periodRange(PERIOD,data);
+  const tt=data?.state?.today_trades||[];
+  const hist=data?.history||[];
+  const seen=new Set(),all=[];
+  for(const t of [...tt,...hist]){
+    if(seen.has(t.ticket))continue;
+    seen.add(t.ticket);
+    all.push(t);
+  }
+  if(!r.from)return all;
+  return all.filter(t=>{const d=(t.time_close||t.time_open||'').slice(0,10);return d>=r.from&&d<=r.to;});
+}
 
 function fmt(n,d=0){if(n==null||isNaN(n))return'-';return Number(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});}
 function fmtUsd(v,d=0){const s=v>=0?'+':'-';return s+'$'+fmt(Math.abs(v),d);}
@@ -358,6 +407,15 @@ function renderAccTabs(allData){
 }
 function selectAcc(acc){SELECTED=acc;localStorage.setItem('hydra-acc',acc);render();}
 function selectTab(t){TAB=t;localStorage.setItem('hydra-tab',t);render();}
+function selectPeriod(p){PERIOD=p;localStorage.setItem('hydra-period',p);render();}
+
+function renderPeriodTabs(){
+  let h='';
+  for(const p of PERIODS){
+    h+=`<button class="period-chip ${p.id===PERIOD?'active':''}" onclick="selectPeriod('${p.id}')">${p.label}</button>`;
+  }
+  document.getElementById('period-tabs').innerHTML=h;
+}
 
 // === Render: KPI strip ===
 function renderKpis(data){
@@ -366,8 +424,9 @@ function renderKpis(data){
     return;
   }
   const s=data.state, a=s.account_info, pos=s.positions||[], hist=data.history||[];
-  const todayPnl=s.today_pnl||0;
-  const todayCnt=s.today_count||0;
+  const range=periodRange(PERIOD,data);
+  const trades=getPeriodTrades(data);
+  const periodPnl=trades.reduce((s,t)=>s+(t.pnl||0),0);
   const eq=a.equity||0, bal=a.balance||0;
   const flot=pos.reduce((s,p)=>s+(p.pnl||0),0);
   const eqInfo=buildEquity(hist,bal);
@@ -375,22 +434,20 @@ function renderKpis(data){
   const ddMax=eqInfo.maxDd;
   const ddLimit=MAX_DD[SELECTED]||10;
   const ddPct=Math.min(100,ddCur/ddLimit*100);
-  // PF/WR today
-  const tt=s.today_trades||[];
   let pf=0,wr=0;
-  if(tt.length>0){
-    const gp=tt.filter(t=>(t.pnl||0)>0).reduce((s,t)=>s+t.pnl,0);
-    const gl=tt.filter(t=>(t.pnl||0)<=0).reduce((s,t)=>s+Math.abs(t.pnl),0);
+  if(trades.length>0){
+    const gp=trades.filter(t=>(t.pnl||0)>0).reduce((s,t)=>s+t.pnl,0);
+    const gl=trades.filter(t=>(t.pnl||0)<=0).reduce((s,t)=>s+Math.abs(t.pnl),0);
     pf=gl>0?gp/gl:(gp>0?99.99:0);
-    wr=tt.filter(t=>(t.pnl||0)>0).length/tt.length*100;
+    wr=trades.filter(t=>(t.pnl||0)>0).length/trades.length*100;
   }
 
   let h='';
   h+=`<div class="kpi"><div class="lbl">Equity</div><div class="val">$${fmt(eq,0)}</div><div class="sub">Bal $${fmt(bal,0)}</div></div>`;
-  h+=`<div class="kpi"><div class="lbl">PnL Jour</div><div class="val ${todayPnl>=0?'green':'red'}">${fmtUsd(todayPnl,2)}</div><div class="sub">${todayCnt} trades</div></div>`;
+  h+=`<div class="kpi"><div class="lbl">PnL ${range.label}</div><div class="val ${periodPnl>=0?'green':'red'}">${fmtUsd(periodPnl,2)}</div><div class="sub">${trades.length} trades</div></div>`;
   h+=`<div class="kpi"><div class="lbl">Drawdown</div><div class="val ${ddCur>ddLimit*0.7?'red':''}">${ddCur.toFixed(2)}%</div><div class="dd-bar"><div class="dd-fill" style="width:${ddPct}%"></div></div><div class="sub">limite ${ddLimit}% &middot; max ${ddMax.toFixed(2)}%</div></div>`;
   h+=`<div class="kpi"><div class="lbl">Open</div><div class="val">${pos.length}</div><div class="sub ${flot>=0?'pnl-pos':'pnl-neg'}">${pos.length?fmtUsd(flot,2)+' flot':'-'}</div></div>`;
-  h+=`<div class="kpi"><div class="lbl">PF Jour</div><div class="val ${pf>=1.5?'green':pf<1?'red':''}">${pf.toFixed(2)}</div><div class="sub">WR ${wr.toFixed(0)}%</div></div>`;
+  h+=`<div class="kpi"><div class="lbl">PF ${range.label}</div><div class="val ${pf>=1.5?'green':pf<1?'red':''}">${pf.toFixed(2)}</div><div class="sub">WR ${wr.toFixed(0)}%</div></div>`;
   h+=`<div class="kpi"><div class="lbl">Total Hist</div><div class="val">${hist.length}</div><div class="sub">${eqInfo.peak>0?'peak $'+fmt(eqInfo.peak,0):'-'}</div></div>`;
   document.getElementById('kpis').innerHTML=h;
 }
@@ -399,16 +456,16 @@ function renderKpis(data){
 function renderTabs(data){
   const s=data?.state||{};
   const pos=s.positions||[];
-  const tt=s.today_trades||[];
+  const periodTrades=getPeriodTrades(data);
   const hist=data?.history||[];
   const btc=data?.bt_compare||{};
   let btCount=0; for(const k of Object.keys(btc))btCount+=(btc[k]?.rows||[]).length;
   const tabs=[
-    {id:'today',label:'Jour',n:tt.length},
+    {id:'today',label:'Trades',n:periodTrades.length},
     {id:'open',label:'Open',n:pos.length},
     {id:'history',label:'Histo',n:hist.length},
     {id:'bt',label:'BT vs LV',n:btCount},
-    {id:'logs',label:'Logs',n:pos.length+hist.length},
+    {id:'logs',label:'Logs',n:pos.length+periodTrades.length},
   ];
   let h='';
   for(const t of tabs){
@@ -437,21 +494,24 @@ function sparkline(points,key,height,colorLine,colorArea){
   return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">${grad}<path d="${a}" fill="url(#spark-grad)"/><path class="spark-line" d="${d}" stroke="${colorLine}"/></svg>`;
 }
 
-// === Render: TODAY ===
+// === Render: TRADES (period-filtered) ===
 function renderToday(data){
   const root=document.getElementById('tab-today');
   if(!data||!data.state){root.innerHTML='<div class="empty">Pas de donnees</div>';return;}
-  const s=data.state, tt=s.today_trades||[], hist=data.history||[], a=s.account_info||{};
+  const s=data.state, hist=data.history||[], a=s.account_info||{};
+  const range=periodRange(PERIOD,data);
+  const trades=getPeriodTrades(data);
+  const periodPnl=trades.reduce((s,t)=>s+(t.pnl||0),0);
   const eqInfo=buildEquity(hist,a.balance||0);
   const recent=eqInfo.points.slice(-100);
   let h='';
   h+=`<div class="card"><div class="card-title">Equity (${recent.length} pts)<span class="right">$${fmt(a.equity,0)}</span></div>`;
   h+=sparkline(recent,'e',null,'#2563eb');
   h+='</div>';
-  h+=`<div class="card"><div class="card-title">Trades aujourd'hui<span class="right">${tt.length} trades &middot; ${fmtUsd(s.today_pnl||0,2)}</span></div>`;
-  if(tt.length===0)h+='<div class="empty">Aucun trade aujourd\\'hui</div>';
+  h+=`<div class="card"><div class="card-title">Trades ${range.label}<span class="right">${trades.length} trades &middot; ${fmtUsd(periodPnl,2)}</span></div>`;
+  if(trades.length===0)h+='<div class="empty">Aucun trade sur la periode</div>';
   else{
-    const sorted=[...tt].sort((a,b)=>(b.time_open||'').localeCompare(a.time_open||''));
+    const sorted=[...trades].sort((a,b)=>(b.time_open||'').localeCompare(a.time_open||''));
     h+='<div class="list">';
     for(const t of sorted){
       const pnl=t.pnl||0;
@@ -464,7 +524,7 @@ function renderToday(data){
           <span class="${dirCls(t.dir)}">${(t.dir||'').toUpperCase()}</span>
           <span>${fmt(t.entry,2)} &rarr; ${fmt(t.exit,2)}</span>
           <span>${t.volume} lots</span>
-          <span class="tcard-time">${timeHM(t.time_open)}-${timeHM(t.time_close)}</span>
+          <span class="tcard-time">${dateD(t.time_open)} ${timeHM(t.time_open)}-${timeHM(t.time_close)}</span>
         </div>
       </div>`;
     }
@@ -674,27 +734,32 @@ function renderBT(data){
   root.innerHTML=h;
 }
 
-// === Render: LOGS (entries from positions + exits from history) ===
+// === Render: LOGS (entries from positions + exits from period trades) ===
 function renderLogs(data){
   const root=document.getElementById('tab-logs');
   if(!data||!data.state){root.innerHTML='<div class="empty">Pas de donnees</div>';return;}
+  const range=periodRange(PERIOD,data);
   const pos=data.state.positions||[];
-  const hist=data.history||[];
+  const periodTrades=getPeriodTrades(data);
   const events=[];
-  for(const p of pos){
-    events.push({t:p.time_open,type:'entry',sym:p.symbol,strat:p.comment,dir:p.dir,pnl:p.pnl,extra:'OPEN'});
+  // Open positions: only show if today period (they're current, not historical)
+  if(PERIOD==='today'){
+    for(const p of pos){
+      events.push({t:p.time_open,type:'entry',sym:p.symbol,strat:p.comment,dir:p.dir,pnl:p.pnl,extra:'OPEN'});
+    }
   }
-  for(const t of hist.slice(-100)){
+  for(const t of periodTrades){
     events.push({t:t.time_close,type:(t.pnl||0)>=0?'exit-w':'exit-l',sym:t.symbol,strat:t.comment,dir:t.dir,pnl:t.pnl,extra:(t.pnl>=0?'WIN ':'LOSS ')+fmtUsd(t.pnl,2)});
   }
   events.sort((a,b)=>(b.t||'').localeCompare(a.t||''));
-  let h='<div class="card"><div class="card-title">Evenements recents (' + events.length + ')</div>';
+  let h=`<div class="card"><div class="card-title">Evenements ${range.label} (${events.length})</div>`;
   if(events.length===0){h+='<div class="empty">Aucun evenement</div>';}
   else{
-    for(const e of events.slice(0,80)){
+    for(const e of events.slice(0,150)){
       const lbl=e.type==='entry'?'ENTRY':e.type==='exit-w'?'WIN':'LOSS';
+      const showDate=range.from!==range.to;
       h+=`<div class="log-row">
-        <span class="log-time">${timeHM(e.t)}</span>
+        <span class="log-time">${showDate?dateD(e.t).slice(5)+' ':''}${timeHM(e.t)}</span>
         <span class="log-tag ${e.type}">${lbl}</span>
         <span class="tcard-sym">${escapeH(e.sym)}</span>
         <span class="tcard-strat">${escapeH(e.strat)}</span>
@@ -711,6 +776,7 @@ function renderLogs(data){
 function render(){
   // Account tabs
   renderAccTabs(LAST);
+  renderPeriodTabs();
   const data=LAST[SELECTED]||{};
   renderKpis(data);
   renderTabs(data);
