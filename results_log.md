@@ -2,6 +2,35 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-28 — Fix divergence TRAIL live vs BT (cas SL invalide)
+
+Observe sur live FTMO AUS200.cash 02:45 UTC:
+```
+TRAIL AUS200.cash ALL_MACD_DIV SL 8709.90->8696.59
+Modify SL #145365827 failed: 10016
+```
+
+Erreur 10016 = TRADE_RETCODE_INVALID_STOPS. Position SHORT, current price 8705.80,
+old SL 8709.90 (au-dessus, OK), new SL voulu 8696.59 (EN-DESSOUS du prix). MT5 refuse.
+
+### Cause
+- Best (lowest seen) descend a 8694.99 → trail veut SL a best+0.30*5.30 = 8696.59
+- Prix rebondit a 8705.80 → new_sl est cote oppose
+- BT (sim_exit_custom TRAIL short ligne 335): `if cl[idx] > stop: return j, cl[idx]` → CLOTURE
+- Live: simple modify, MT5 refuse, position survit avec ancien SL → divergence
+
+### Fix
+1. Nouvelle fonction mt5_close_position(ticket, symbol) - close au marche.
+2. manage_trailing detecte le crossing (px > new_sl pour short, px < new_sl pour long)
+   avant de tenter le modify. Si crossing → close au marche (= comportement BT).
+
+Logs explicites: "TRAIL VIOLATED ... close @ X.XX (new_sl X.XX < px)".
+
+### Impact
+- Eliminer une source systematique de divergence BT/live (positions qui survivent
+  alors que le BT les a fermees).
+- Concerne uniquement TRAIL. BE_TP et TPSL ne souffrent pas du meme bug.
+
 ## 2026-04-27 — Retrait doublons TOK/ALL des portfolios
 
 Audit: 5 paires de strats avec logique strictement identique (TOK = ALL filtre Tokyo 0h-6h UTC):

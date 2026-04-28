@@ -158,6 +158,24 @@ def mt5_modify_sl(ticket, new_sl, symbol):
     log.error("    Modify SL #{} failed: {}".format(ticket, result.retcode if result else '?'))
     return False
 
+def mt5_close_position(ticket, symbol):
+    sym = mt5.symbol_info(symbol)
+    positions = mt5.positions_get(ticket=ticket)
+    if not sym or not positions: return False
+    p = positions[0]
+    order_type = mt5.ORDER_TYPE_SELL if p.type == mt5.POSITION_TYPE_BUY else mt5.ORDER_TYPE_BUY
+    price = sym.bid if p.type == mt5.POSITION_TYPE_BUY else sym.ask
+    req = {
+        'action': mt5.TRADE_ACTION_DEAL, 'symbol': symbol, 'volume': p.volume,
+        'type': order_type, 'price': price, 'position': ticket,
+        'deviation': 20, 'magic': p.magic, 'comment': 'TRAIL_VIOLATED',
+        'type_time': mt5.ORDER_TIME_GTC,
+    }
+    r = mt5.order_send(req)
+    if r and r.retcode == mt5.TRADE_RETCODE_DONE: return True
+    log.error("    Close #{} failed: {}".format(ticket, r.retcode if r else '?'))
+    return False
+
 # ── DB ────────────────────────────────────────────────
 
 def get_conn_autocommit():
@@ -354,13 +372,25 @@ def manage_trailing(state, symbol, candles):
             if d == 'long':
                 new_sl = info['best'] - trail_val * atr
                 if new_sl > info['stop']:
-                    log.info("TRAIL {} {} SL {:.2f}->{:.2f}".format(symbol, info['strat'], info['stop'], new_sl))
-                    if mt5_modify_sl(ticket, new_sl, symbol): info['stop'] = new_sl
+                    if px < new_sl:
+                        log.info("TRAIL VIOLATED {} {} long close @ {:.2f} (new_sl {:.2f} > px)".format(
+                            symbol, info['strat'], px, new_sl))
+                        if mt5_close_position(ticket, symbol):
+                            closed_tickets.append(ticket_str)
+                    else:
+                        log.info("TRAIL {} {} SL {:.2f}->{:.2f}".format(symbol, info['strat'], info['stop'], new_sl))
+                        if mt5_modify_sl(ticket, new_sl, symbol): info['stop'] = new_sl
             else:
                 new_sl = info['best'] + trail_val * atr
                 if new_sl < info['stop']:
-                    log.info("TRAIL {} {} SL {:.2f}->{:.2f}".format(symbol, info['strat'], info['stop'], new_sl))
-                    if mt5_modify_sl(ticket, new_sl, symbol): info['stop'] = new_sl
+                    if px > new_sl:
+                        log.info("TRAIL VIOLATED {} {} short close @ {:.2f} (new_sl {:.2f} < px)".format(
+                            symbol, info['strat'], px, new_sl))
+                        if mt5_close_position(ticket, symbol):
+                            closed_tickets.append(ticket_str)
+                    else:
+                        log.info("TRAIL {} {} SL {:.2f}->{:.2f}".format(symbol, info['strat'], info['stop'], new_sl))
+                        if mt5_modify_sl(ticket, new_sl, symbol): info['stop'] = new_sl
     for t in closed_tickets:
         sn = state['trail'][t].get('strat', '?')
         log.info("TRAIL cleanup #{} {} {} (fermee)".format(t, symbol, sn))
