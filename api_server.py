@@ -305,6 +305,32 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .toprow .stats { color:#6b7280; font-size:11px; display:flex; gap:8px; }
   .toprow .pnl { font-weight:700; min-width:70px; text-align:right; }
 
+  /* Legacy table polish */
+  .legacy-tbl { width:100%; border-collapse:separate; border-spacing:0; font-size:12px; min-width:900px; }
+  .legacy-tbl th { background:#f5f6f8; color:#4b5563; font-weight:700; font-size:10px; text-transform:uppercase; letter-spacing:0.4px; padding:8px 6px; border-bottom:2px solid #d1d5db; position:sticky; top:0; z-index:1; }
+  .legacy-tbl td { padding:8px 6px; border-bottom:1px solid #f0f1f3; vertical-align:middle; white-space:nowrap; }
+  .legacy-tbl tr:hover td { background:#f0f7ff; }
+  .legacy-tbl .col-bt { background:#faf5ff; }
+  .legacy-tbl .col-lv { background:#eff6ff; }
+  .legacy-tbl .col-delta { background:#fefce8; }
+  .legacy-tbl .col-strat { font-weight:700; color:#2563eb; position:sticky; left:0; background:#fff; z-index:1; box-shadow:1px 0 0 #e8eaed; }
+  .legacy-tbl tr:hover .col-strat { background:#f0f7ff; }
+  .legacy-tbl thead .col-bt { background:#ede9fe; color:#7c3aed; }
+  .legacy-tbl thead .col-lv { background:#dbeafe; color:#2563eb; }
+  .legacy-tbl thead .col-delta { background:#fef3c7; color:#a16207; }
+  .legacy-tbl tr.row-warn td { background:#fff7ed !important; }
+  .legacy-tbl tr.row-bad td { background:#fee2e2 !important; }
+  .legacy-tbl tr.row-good td { background:#dcfce7 !important; }
+  .legacy-tbl .col-strat-warn { background:#fff7ed !important; }
+  .legacy-tbl .col-strat-bad { background:#fee2e2 !important; }
+  .legacy-tbl .col-strat-good { background:#dcfce7 !important; }
+  .legacy-tbl tfoot td { font-weight:700; background:#1a1a2e; color:#fff; padding:10px 6px; border-top:2px solid #1a1a2e; }
+  .legacy-tbl tfoot .col-strat { background:#1a1a2e; color:#fff; box-shadow:none; }
+  .legacy-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; max-height:70vh; overflow-y:auto; border:1px solid #e8eaed; border-radius:8px; }
+  .legacy-section-title { display:flex; align-items:center; gap:10px; margin:18px 0 8px; padding-bottom:6px; border-bottom:2px solid #e8eaed; }
+  .legacy-section-title .sym { font-size:15px; font-weight:700; color:#1a1a2e; }
+  .legacy-section-title .meta { font-size:11px; color:#6b7280; margin-left:auto; }
+
   /* Compact list */
   .list { display:flex; flex-direction:column; gap:5px; }
   .footer { padding:10px 12px; text-align:center; font-size:10px; color:#9ca3af; }
@@ -1240,16 +1266,25 @@ function renderLegacy(data){
     const rows=(info.rows||[]).filter(r=>r.bt||r.lv).sort((a,b)=>a.strat.localeCompare(b.strat));
     if(rows.length===0)continue;
     let totalBtR=0,totalLvR=0,totalDelta=0,totalUsd=0;
-    h+=`<div class="drill-section"><h4>${escapeH(sym)} &mdash; BT vs Live (ATR=${fmt(info.atr,2)})</h4>`;
-    h+='<div style="overflow-x:auto"><table style="font-size:11px"><tr><th>Strat</th><th>BT Dir</th><th>BT Entry</th><th>BT Exit</th><th>BT R</th><th>BT In</th><th>BT Out</th><th>LV Dir</th><th>LV Entry</th><th>LV Exit</th><th>LV R</th><th>LV $</th><th>LV In</th><th>LV Out</th><th>Delta</th></tr>';
+    h+=`<div class="legacy-section-title"><span class="sym">${escapeH(sym)}</span><span class="meta">${rows.length} strats &middot; ATR ${fmt(info.atr,2)}</span></div>`;
+    h+='<div class="legacy-wrap"><table class="legacy-tbl">';
+    h+='<thead><tr>';
+    h+='<th class="col-strat" rowspan="2">Strat</th>';
+    h+='<th class="col-bt" colspan="6" style="text-align:center">BACKTEST</th>';
+    h+='<th class="col-lv" colspan="7" style="text-align:center">LIVE</th>';
+    h+='<th class="col-delta" rowspan="2">&Delta;R</th>';
+    h+='</tr><tr>';
+    h+='<th class="col-bt">Dir</th><th class="col-bt">Entry</th><th class="col-bt">Exit</th><th class="col-bt">R</th><th class="col-bt">In</th><th class="col-bt">Out</th>';
+    h+='<th class="col-lv">Dir</th><th class="col-lv">Entry</th><th class="col-lv">Exit</th><th class="col-lv">R</th><th class="col-lv">$</th><th class="col-lv">In</th><th class="col-lv">Out</th>';
+    h+='</tr></thead><tbody>';
     for(const row of rows){
       const bt=row.bt,lv=row.lv;
-      let bD='',bE='',bX='',bR='',bIn='',bOut='',lD='',lE='',lX='',lR='',lUsd='',lIn='',lOut='',dl='';
+      let bD='-',bE='-',bX='-',bR='-',bIn='-',bOut='-',lD='-',lE='-',lX='-',lR='-',lUsd='-',lIn='-',lOut='-',dl='-';
       if(bt){
         bD=`<span class="${dirCls(bt.dir)}">${(bt.dir||'').toUpperCase()}</span>`;
         bE=fmt(bt.entry,2); bX=fmt(bt.exit,2);
         const rv=bt.pnl_r||0; totalBtR+=rv;
-        bR=`<span class="${rv>=0?'pnl-pos':'pnl-neg'}">${(rv>=0?'+':'')+rv.toFixed(2)}R</span>`;
+        bR=`<span class="${rv>=0?'pnl-pos':'pnl-neg'}">${(rv>=0?'+':'')+rv.toFixed(2)}</span>`;
         bIn=bt.entry_time?timeHM(bt.entry_time):'-';
         bOut=bt.exit_time?timeHM(bt.exit_time):'-';
       }
@@ -1257,35 +1292,41 @@ function renderLegacy(data){
         lD=`<span class="${dirCls(lv.dir)}">${(lv.dir||'').toUpperCase()}</span>`;
         lE=fmt(lv.entry,2); lX=fmt(lv.exit,2);
         const rv=lv.pnl_r||0; totalLvR+=rv;
-        lR=`<span class="${rv>=0?'pnl-pos':'pnl-neg'}">${(rv>=0?'+':'')+rv.toFixed(2)}R</span>`;
+        lR=`<span class="${rv>=0?'pnl-pos':'pnl-neg'}">${(rv>=0?'+':'')+rv.toFixed(2)}</span>`;
         const usd=lv.pnl_usd||0; totalUsd+=usd;
-        lUsd=`<span class="${usd>=0?'pnl-pos':'pnl-neg'}">${fmtUsd(usd,2)}</span>`;
+        lUsd=`<span class="${usd>=0?'pnl-pos':'pnl-neg'}">${fmtUsd(usd,0)}</span>`;
         lIn=lv.entry_time?timeHM(lv.entry_time):'-';
         lOut=lv.exit_time?timeHM(lv.exit_time):'-';
       }
+      let rowCls='';
       if(row.delta!=null){
         const d=row.delta; totalDelta+=d;
-        dl=`<span class="${d>=0?'pnl-pos':'pnl-neg'}">${(d>=0?'+':'')+d.toFixed(2)}R</span>`;
+        dl=`<b class="${d>=0?'pnl-pos':'pnl-neg'}">${(d>=0?'+':'')+d.toFixed(2)}</b>`;
+        if(d<=-1.0)rowCls='row-bad';
+        else if(d<=-0.5)rowCls='row-warn';
+        else if(d>=0.5)rowCls='row-good';
       }
       const clickKey=lv&&lv.ticket?`lv|${lv.ticket}`:bt?`bt|${escapeH(sym)}|${escapeH(row.strat)}`:'';
       const onclick=clickKey?`onclick="openTradeByKey('${clickKey}',false)"`:'';
-      h+=`<tr ${onclick} ${clickKey?'class="clickable"':''}>
-        <td class="strat-name">${escapeH(row.strat)}</td>
-        <td>${bD}</td><td>${bE}</td><td>${bX}</td><td>${bR}</td><td>${bIn}</td><td>${bOut}</td>
-        <td>${lD}</td><td>${lE}</td><td>${lX}</td><td>${lR}</td><td>${lUsd}</td><td>${lIn}</td><td>${lOut}</td>
-        <td>${dl}</td>
+      const stratClsExtra=rowCls?'col-strat-'+(rowCls.split('-')[1]):'';
+      h+=`<tr ${onclick} ${clickKey?'class="clickable '+rowCls+'"':'class="'+rowCls+'"'}>
+        <td class="col-strat ${stratClsExtra}">${escapeH(row.strat)}</td>
+        <td class="col-bt">${bD}</td><td class="col-bt">${bE}</td><td class="col-bt">${bX}</td><td class="col-bt">${bR}</td><td class="col-bt">${bIn}</td><td class="col-bt">${bOut}</td>
+        <td class="col-lv">${lD}</td><td class="col-lv">${lE}</td><td class="col-lv">${lX}</td><td class="col-lv">${lR}</td><td class="col-lv">${lUsd}</td><td class="col-lv">${lIn}</td><td class="col-lv">${lOut}</td>
+        <td class="col-delta">${dl}</td>
       </tr>`;
     }
-    h+=`<tr style="font-weight:700;border-top:2px solid #e8eaed">
-      <td>TOTAL</td><td></td><td></td><td></td>
+    h+='</tbody><tfoot><tr>';
+    h+='<td class="col-strat">TOTAL</td>';
+    h+=`<td colspan="3"></td>
       <td><span class="${totalBtR>=0?'pnl-pos':'pnl-neg'}">${(totalBtR>=0?'+':'')+totalBtR.toFixed(2)}R</span></td>
-      <td></td><td></td><td></td><td></td><td></td>
+      <td colspan="2"></td>
+      <td colspan="3"></td>
       <td><span class="${totalLvR>=0?'pnl-pos':'pnl-neg'}">${(totalLvR>=0?'+':'')+totalLvR.toFixed(2)}R</span></td>
-      <td><span class="${totalUsd>=0?'pnl-pos':'pnl-neg'}">${fmtUsd(totalUsd,2)}</span></td>
-      <td></td><td></td>
-      <td><span class="${totalDelta>=0?'pnl-pos':'pnl-neg'}">${(totalDelta>=0?'+':'')+totalDelta.toFixed(2)}R</span></td>
-    </tr>`;
-    h+='</table></div></div>';
+      <td><span class="${totalUsd>=0?'pnl-pos':'pnl-neg'}">${fmtUsd(totalUsd,0)}</span></td>
+      <td colspan="2"></td>
+      <td><span class="${totalDelta>=0?'pnl-pos':'pnl-neg'}">${(totalDelta>=0?'+':'')+totalDelta.toFixed(2)}R</span></td>`;
+    h+='</tr></tfoot></table></div>';
   }
   // Candles
   const syms=Object.keys(candles).filter(sy=>candles[sy]&&candles[sy].close);

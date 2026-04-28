@@ -2,6 +2,24 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-28 — Dashboard Legacy: lisibilite amelioree
+
+User: tab Legacy illisible. Ameliorations:
+
+- Header table avec 2 niveaux: "BACKTEST" (6 cols) / "LIVE" (7 cols) en colspan + sous-headers Dir/Entry/Exit/R/In/Out etc.
+- Couleurs de fond par groupe: BT en mauve clair (#faf5ff), LV en bleu clair (#eff6ff), Delta en jaune clair
+- Headers thematiques mauve/bleu/jaune pour identification visuelle immediate
+- Colonne Strat sticky a gauche (reste visible pendant scroll horizontal)
+- Header sticky en haut (reste visible pendant scroll vertical)
+- Lignes colorees selon delta:
+  * row-bad (rouge clair) si delta <= -1.0R
+  * row-warn (orange clair) si delta <= -0.5R
+  * row-good (vert clair) si delta >= +0.5R
+- Footer TOTAL avec fond noir + texte blanc (separation visuelle nette)
+- Min-width 900px sur le tableau pour eviter la compression mobile (force le scroll horizontal)
+- Max-height 70vh sur le wrap avec scroll Y
+- Hover sur lignes pour highlight visual
+
 ## 2026-04-28 — Dashboard: heures BT/LV dans drill + tab Legacy (vue ancienne)
 
 User demande:
