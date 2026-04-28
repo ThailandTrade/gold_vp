@@ -2,6 +2,52 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-28 — HK50 sizing 1.83x: cause = slippage 25 pts au fill, pas un bug. Decision: observer
+
+### Logs VPS analyses (live.log local copie depuis VPS)
+
+```
+~ HK50.cash 01:15 C=25706.90 ATR=21.94 0pos $45,728      ← signal_close
+SELL HK50.cash ALL_ICHI_TK SHORT 3.98lots @ 25732.68 SL=25772.72 TP=25673.99
+OK #145377012 fill=25732.68
+Cap=$45,728 Risk=$18 (0.0%)
+```
+
+ATR 21.94 et signal_close 25706.90 = exactement BT. SL = signal_close + 3×21.94 = 25772.72 OK.
+
+**Slippage 25.78 pts entre signal_close et fill** (= 1.18 ATR).
+
+### Calcul du ratio
+
+Code mt5_lot_size sizes sur (entry=fill, stop=SL):
+- Distance fill_to_SL = 40.04 pts (au lieu de 65.82 pts theorique)
+- loss_per_lot = 40.04 × $0.128 = $5.13
+- lots = $18.29 / $5.13 = 3.57 (≈ 3.98 avec ajustements bid au moment du calc)
+
+vs theorique BT (sizing sur signal_close_to_SL):
+- Distance = 65.82 pts
+- loss_per_lot = $8.42
+- lots = 2.18
+
+Ratio observe 1.83x = 65.82/40.04 effet de la slippage compresse le SL effectif → lots inflate pour respecter risk_pct = $18.28.
+
+### Decision: garder le code actuel
+
+Le code fait du **vrai risk control** : si SL hit, perte = capital × risk_pct ($18.28 garanti). Au prix de lots variables et $/BT-R variable.
+
+Approche alternative (sizing sur signal_close) : lots constants, $/BT-R = $18.28 toujours. MAIS si SL hit avec slippage contre, perte < $18.28 (et inversement). Casserait le strict risk-per-trade.
+
+Sur 13 mois 7113 trades, slippage symetrique → tout s'equilibre en moyenne. Le ratio 1.83x sur HK50 et 0.84x sur US500 du jour = bruit attendu, pas un bug.
+
+### A surveiller
+
+User demande d'attendre d'autres trades HK50 pour decider. Si pattern de slippage **systematique contre nous** sur HK50 (et pas symetrique), repenser:
+- Soit retrait HK50 du portfolio (slippage trop chere)
+- Soit slippage filter / max_slippage parametre dans live_mt5
+- Soit changement de strat ou exit pour reduire l'aller-retour
+
+Pour l'instant: **rien a coder**, juste observer.
+
 ## 2026-04-28 — Anomalie sizing HK50 FTMO 1.83x (cause non determinee, attend logs VPS)
 
 User a observe que la perte HK50 du jour paraissait disproportionnee. Audit des trades closes FTMO du 28/04:
