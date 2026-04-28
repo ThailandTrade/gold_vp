@@ -2,6 +2,38 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-28 — Dashboard: drill aligne BT/LV + Legacy depouille
+
+User: drill non aligne (le $ live decale les lignes), Legacy moche avec footer noir.
+
+### Drill BT vs LV: nouvelle table .vs-tbl alignee
+
+Avant: 2 colonnes separees, chaque colonne avec sa liste de drill-row. Hauteurs differentes a cause des champs manquants/extra ($ uniquement live).
+
+Apres: table 3 colonnes (label / BT / LV), une ligne par metrique:
+| Entry | bt.entry | lv.entry |
+| Exit | bt.exit | lv.exit |
+| R | bt.pnl_r | lv.pnl_r |
+| Pts | btPts | lvPts |
+| $ | - | pnl |
+| In | bt.entry_time | lv.entry_time |
+| Out | bt.exit_time | lv.exit_time |
+
+Gris doux pour les valeurs absentes. Tabular-nums pour alignement parfait.
+
+Applique a renderTradeDrill et renderBtRowDrill.
+
+### Legacy: depouille
+
+Avant: footer noir, fonds mauve/bleu/jaune sur les groupes de colonnes, beaucoup de couleur.
+
+Apres:
+- Plus de fonds de groupe (just text color thematique mauve/bleu/jaune dans les headers)
+- Separateurs verticaux subtils (border-left 1px) entre BT / LV / Delta groups
+- Footer TOTAL en gris clair (#f5f6f8) au lieu de noir
+- Coloration des lignes selon delta gardee mais teintes plus douces (#fffbeb / #fef2f2 / #f0fdf4)
+- Tabular-nums pour alignement chiffres
+
 ## 2026-04-28 — Dashboard Legacy: lisibilite amelioree
 
 User: tab Legacy illisible. Ameliorations:

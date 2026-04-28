@@ -291,11 +291,16 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .drill-row:last-child { border-bottom:none; }
   .drill-row .k { color:#6b7280; }
   .drill-row .v { font-weight:600; color:#1a1a2e; }
-  .drill-vs { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
-  .drill-vs .col { background:#f9fafb; border-radius:8px; padding:10px; }
-  .drill-vs .col h5 { font-size:10px; color:#6b7280; text-transform:uppercase; margin-bottom:6px; font-weight:700; }
-  .drill-vs .col.bt h5 { color:#7c3aed; }
-  .drill-vs .col.lv h5 { color:#2563eb; }
+
+  /* BT vs LV aligned table */
+  .vs-tbl { width:100%; border-collapse:collapse; margin-bottom:14px; font-size:12px; }
+  .vs-tbl th, .vs-tbl td { padding:7px 10px; border-bottom:1px solid #f0f1f3; text-align:right; }
+  .vs-tbl thead th { background:#f9fafb; font-size:10px; text-transform:uppercase; letter-spacing:0.4px; color:#6b7280; font-weight:700; }
+  .vs-tbl thead th.h-bt { color:#7c3aed; }
+  .vs-tbl thead th.h-lv { color:#2563eb; }
+  .vs-tbl tbody th { text-align:left; font-weight:500; color:#6b7280; font-size:11px; background:#fafbfc; width:80px; }
+  .vs-tbl tbody td { font-weight:600; color:#1a1a2e; font-variant-numeric:tabular-nums; }
+  .vs-tbl tbody tr:last-child th, .vs-tbl tbody tr:last-child td { border-bottom:none; }
 
   /* Top lists (Home) */
   .toplist { display:flex; flex-direction:column; gap:4px; }
@@ -305,29 +310,30 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .toprow .stats { color:#6b7280; font-size:11px; display:flex; gap:8px; }
   .toprow .pnl { font-weight:700; min-width:70px; text-align:right; }
 
-  /* Legacy table polish */
-  .legacy-tbl { width:100%; border-collapse:separate; border-spacing:0; font-size:12px; min-width:900px; }
-  .legacy-tbl th { background:#f5f6f8; color:#4b5563; font-weight:700; font-size:10px; text-transform:uppercase; letter-spacing:0.4px; padding:8px 6px; border-bottom:2px solid #d1d5db; position:sticky; top:0; z-index:1; }
-  .legacy-tbl td { padding:8px 6px; border-bottom:1px solid #f0f1f3; vertical-align:middle; white-space:nowrap; }
-  .legacy-tbl tr:hover td { background:#f0f7ff; }
-  .legacy-tbl .col-bt { background:#faf5ff; }
-  .legacy-tbl .col-lv { background:#eff6ff; }
-  .legacy-tbl .col-delta { background:#fefce8; }
-  .legacy-tbl .col-strat { font-weight:700; color:#2563eb; position:sticky; left:0; background:#fff; z-index:1; box-shadow:1px 0 0 #e8eaed; }
-  .legacy-tbl tr:hover .col-strat { background:#f0f7ff; }
-  .legacy-tbl thead .col-bt { background:#ede9fe; color:#7c3aed; }
-  .legacy-tbl thead .col-lv { background:#dbeafe; color:#2563eb; }
-  .legacy-tbl thead .col-delta { background:#fef3c7; color:#a16207; }
-  .legacy-tbl tr.row-warn td { background:#fff7ed !important; }
-  .legacy-tbl tr.row-bad td { background:#fee2e2 !important; }
-  .legacy-tbl tr.row-good td { background:#dcfce7 !important; }
-  .legacy-tbl .col-strat-warn { background:#fff7ed !important; }
-  .legacy-tbl .col-strat-bad { background:#fee2e2 !important; }
-  .legacy-tbl .col-strat-good { background:#dcfce7 !important; }
-  .legacy-tbl tfoot td { font-weight:700; background:#1a1a2e; color:#fff; padding:10px 6px; border-top:2px solid #1a1a2e; }
-  .legacy-tbl tfoot .col-strat { background:#1a1a2e; color:#fff; box-shadow:none; }
+  /* Legacy table */
+  .legacy-tbl { width:100%; border-collapse:separate; border-spacing:0; font-size:12px; min-width:900px; background:#fff; }
+  .legacy-tbl th { background:#fafbfc; color:#6b7280; font-weight:600; font-size:10px; text-transform:uppercase; letter-spacing:0.4px; padding:9px 8px; border-bottom:1px solid #e8eaed; position:sticky; top:0; z-index:1; }
+  .legacy-tbl thead tr:first-child th { font-weight:700; color:#4b5563; padding-top:10px; }
+  .legacy-tbl thead .h-bt { color:#7c3aed; }
+  .legacy-tbl thead .h-lv { color:#2563eb; }
+  .legacy-tbl thead .h-delta { color:#9a7800; }
+  .legacy-tbl td { padding:8px; border-bottom:1px solid #f0f1f3; vertical-align:middle; white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .legacy-tbl tr:hover td { background:#f9fafb; }
+  .legacy-tbl tr:hover .col-strat { background:#f9fafb; }
+  .legacy-tbl .col-strat { font-weight:600; color:#2563eb; position:sticky; left:0; background:#fff; z-index:1; box-shadow:1px 0 0 #e8eaed; }
+  .legacy-tbl .sep-bt { border-left:1px solid #e8eaed; }
+  .legacy-tbl .sep-lv { border-left:1px solid #e8eaed; }
+  .legacy-tbl .sep-delta { border-left:1px solid #e8eaed; }
+  .legacy-tbl tr.row-warn td:not(.col-strat) { background:#fffbeb; }
+  .legacy-tbl tr.row-bad td:not(.col-strat) { background:#fef2f2; }
+  .legacy-tbl tr.row-good td:not(.col-strat) { background:#f0fdf4; }
+  .legacy-tbl tr.row-warn .col-strat { background:#fffbeb; }
+  .legacy-tbl tr.row-bad .col-strat { background:#fef2f2; }
+  .legacy-tbl tr.row-good .col-strat { background:#f0fdf4; }
+  .legacy-tbl tfoot td { font-weight:700; background:#f5f6f8; color:#1a1a2e; padding:11px 8px; border-top:2px solid #e8eaed; border-bottom:none; }
+  .legacy-tbl tfoot .col-strat { background:#f5f6f8; color:#1a1a2e; box-shadow:none; }
   .legacy-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; max-height:70vh; overflow-y:auto; border:1px solid #e8eaed; border-radius:8px; }
-  .legacy-section-title { display:flex; align-items:center; gap:10px; margin:18px 0 8px; padding-bottom:6px; border-bottom:2px solid #e8eaed; }
+  .legacy-section-title { display:flex; align-items:center; gap:10px; margin:18px 0 8px; padding-bottom:6px; border-bottom:1px solid #e8eaed; }
   .legacy-section-title .sym { font-size:15px; font-weight:700; color:#1a1a2e; }
   .legacy-section-title .meta { font-size:11px; color:#6b7280; margin-left:auto; }
 
@@ -531,24 +537,25 @@ function renderTradeDrill(t,data){
 
   // BT vs LV side-by-side if matched
   if(m&&m.bt){
-    h+='<div class="drill-vs">';
-    h+=`<div class="col bt"><h5>Backtest</h5>
-      <div class="drill-row"><span class="k">Entry</span><span class="v">${fmt(m.bt.entry,2)}</span></div>
-      <div class="drill-row"><span class="k">Exit</span><span class="v">${fmt(m.bt.exit,2)}</span></div>
-      <div class="drill-row"><span class="k">R</span><span class="v ${pnlCls(m.bt.pnl_r||0)}">${(m.bt.pnl_r>=0?'+':'')+(m.bt.pnl_r||0).toFixed(2)}R</span></div>
-      <div class="drill-row"><span class="k">Pts</span><span class="v">${fmt(((isLong?m.bt.exit-m.bt.entry:m.bt.entry-m.bt.exit)),2)}</span></div>
-      <div class="drill-row"><span class="k">In</span><span class="v">${m.bt.entry_time?dateD(m.bt.entry_time).slice(5)+' '+timeHM(m.bt.entry_time):'-'}</span></div>
-      <div class="drill-row"><span class="k">Out</span><span class="v">${m.bt.exit_time?dateD(m.bt.exit_time).slice(5)+' '+timeHM(m.bt.exit_time):'-'}</span></div>
-    </div>`;
-    h+=`<div class="col lv"><h5>Live</h5>
-      <div class="drill-row"><span class="k">Entry</span><span class="v">${fmt(t.entry,2)}</span></div>
-      <div class="drill-row"><span class="k">Exit</span><span class="v">${fmt(t.exit,2)}</span></div>
-      <div class="drill-row"><span class="k">R</span><span class="v ${pnlCls((m.lv||{}).pnl_r||0)}">${m.lv?(m.lv.pnl_r>=0?'+':'')+(m.lv.pnl_r||0).toFixed(2)+'R':'-'}</span></div>
-      <div class="drill-row"><span class="k">Pts</span><span class="v">${fmt(((isLong?t.exit-t.entry:t.entry-t.exit)),2)}</span></div>
-      <div class="drill-row"><span class="k">In</span><span class="v">${t.time_open?dateD(t.time_open).slice(5)+' '+timeHM(t.time_open):'-'}</span></div>
-      <div class="drill-row"><span class="k">Out</span><span class="v">${t.time_close?dateD(t.time_close).slice(5)+' '+timeHM(t.time_close):'-'}</span></div>
-    </div>`;
-    h+='</div>';
+    const bt=m.bt, lv=m.lv;
+    const btPts=isLong?bt.exit-bt.entry:bt.entry-bt.exit;
+    const lvPts=isLong?t.exit-t.entry:t.entry-t.exit;
+    const btIn=bt.entry_time?dateD(bt.entry_time).slice(5)+' '+timeHM(bt.entry_time):'-';
+    const btOut=bt.exit_time?dateD(bt.exit_time).slice(5)+' '+timeHM(bt.exit_time):'-';
+    const lvIn=t.time_open?dateD(t.time_open).slice(5)+' '+timeHM(t.time_open):'-';
+    const lvOut=t.time_close?dateD(t.time_close).slice(5)+' '+timeHM(t.time_close):'-';
+    h+=`<table class="vs-tbl">
+      <thead><tr><th></th><th class="h-bt">BACKTEST</th><th class="h-lv">LIVE</th></tr></thead>
+      <tbody>
+        <tr><th>Entry</th><td>${fmt(bt.entry,2)}</td><td>${fmt(t.entry,2)}</td></tr>
+        <tr><th>Exit</th><td>${fmt(bt.exit,2)}</td><td>${fmt(t.exit,2)}</td></tr>
+        <tr><th>R</th><td class="${pnlCls(bt.pnl_r||0)}">${(bt.pnl_r>=0?'+':'')+(bt.pnl_r||0).toFixed(2)}R</td><td class="${pnlCls((lv||{}).pnl_r||0)}">${lv?(lv.pnl_r>=0?'+':'')+(lv.pnl_r||0).toFixed(2)+'R':'-'}</td></tr>
+        <tr><th>Pts</th><td>${(btPts>=0?'+':'')+btPts.toFixed(2)}</td><td>${(lvPts>=0?'+':'')+lvPts.toFixed(2)}</td></tr>
+        <tr><th>$</th><td style="color:#9ca3af">-</td><td class="${pnlCls(pnl)}">${fmtUsd(pnl,2)}</td></tr>
+        <tr><th>In</th><td>${btIn}</td><td>${lvIn}</td></tr>
+        <tr><th>Out</th><td>${btOut}</td><td>${lvOut}</td></tr>
+      </tbody>
+    </table>`;
     // Slippage
     const slipEntry=isLong?(t.entry-m.bt.entry):(m.bt.entry-t.entry);
     const slipExit=isLong?(m.bt.exit-t.exit):(t.exit-m.bt.exit);
@@ -627,29 +634,24 @@ function renderPositionDrill(p,data){
 function renderBtRowDrill(sym,strat,m,data){
   const bt=m.bt,lv=m.lv;
   let h='';
-  h+='<div class="drill-vs">';
-  h+=`<div class="col bt"><h5>Backtest</h5>`;
-  if(bt){
-    h+=`<div class="drill-row"><span class="k">Dir</span><span class="v ${dirCls(bt.dir)}">${(bt.dir||'').toUpperCase()}</span></div>`;
-    h+=`<div class="drill-row"><span class="k">Entry</span><span class="v">${fmt(bt.entry,2)}</span></div>`;
-    h+=`<div class="drill-row"><span class="k">Exit</span><span class="v">${fmt(bt.exit,2)}</span></div>`;
-    h+=`<div class="drill-row"><span class="k">R</span><span class="v ${pnlCls(bt.pnl_r||0)}">${(bt.pnl_r>=0?'+':'')+(bt.pnl_r||0).toFixed(2)}R</span></div>`;
-    h+=`<div class="drill-row"><span class="k">In</span><span class="v">${bt.entry_time?dateD(bt.entry_time).slice(5)+' '+timeHM(bt.entry_time):'-'}</span></div>`;
-    h+=`<div class="drill-row"><span class="k">Out</span><span class="v">${bt.exit_time?dateD(bt.exit_time).slice(5)+' '+timeHM(bt.exit_time):'-'}</span></div>`;
-  }else{h+='<div class="empty" style="padding:6px 0">Pas de signal BT</div>';}
-  h+='</div>';
-  h+=`<div class="col lv"><h5>Live</h5>`;
-  if(lv){
-    h+=`<div class="drill-row"><span class="k">Dir</span><span class="v ${dirCls(lv.dir)}">${(lv.dir||'').toUpperCase()}</span></div>`;
-    h+=`<div class="drill-row"><span class="k">Entry</span><span class="v">${fmt(lv.entry,2)}</span></div>`;
-    h+=`<div class="drill-row"><span class="k">Exit</span><span class="v">${fmt(lv.exit,2)}</span></div>`;
-    h+=`<div class="drill-row"><span class="k">R</span><span class="v ${pnlCls(lv.pnl_r||0)}">${(lv.pnl_r>=0?'+':'')+(lv.pnl_r||0).toFixed(2)}R</span></div>`;
-    h+=`<div class="drill-row"><span class="k">$</span><span class="v ${pnlCls(lv.pnl_usd||0)}">${fmtUsd(lv.pnl_usd||0,2)}</span></div>`;
-    h+=`<div class="drill-row"><span class="k">In</span><span class="v">${lv.entry_time?dateD(lv.entry_time).slice(5)+' '+timeHM(lv.entry_time):'-'}</span></div>`;
-    h+=`<div class="drill-row"><span class="k">Out</span><span class="v">${lv.exit_time?dateD(lv.exit_time).slice(5)+' '+timeHM(lv.exit_time):'-'}</span></div>`;
-  }else{h+='<div class="empty" style="padding:6px 0">Pas de trade live</div>';}
-  h+='</div>';
-  h+='</div>';
+  const cellOr=v=>v||'<span style="color:#9ca3af">-</span>';
+  const dirCell=o=>o?`<span class="${dirCls(o.dir)}">${(o.dir||'').toUpperCase()}</span>`:'<span style="color:#9ca3af">-</span>';
+  const fmtCell=(o,k,d=2)=>o&&o[k]!=null?fmt(o[k],d):'<span style="color:#9ca3af">-</span>';
+  const rCell=o=>o&&o.pnl_r!=null?`<span class="${pnlCls(o.pnl_r)}">${(o.pnl_r>=0?'+':'')+o.pnl_r.toFixed(2)}R</span>`:'<span style="color:#9ca3af">-</span>';
+  const usdCell=o=>o&&o.pnl_usd!=null?`<span class="${pnlCls(o.pnl_usd)}">${fmtUsd(o.pnl_usd,2)}</span>`:'<span style="color:#9ca3af">-</span>';
+  const tCell=(o,k)=>o&&o[k]?dateD(o[k]).slice(5)+' '+timeHM(o[k]):'<span style="color:#9ca3af">-</span>';
+  h+=`<table class="vs-tbl">
+    <thead><tr><th></th><th class="h-bt">BACKTEST</th><th class="h-lv">LIVE</th></tr></thead>
+    <tbody>
+      <tr><th>Dir</th><td>${dirCell(bt)}</td><td>${dirCell(lv)}</td></tr>
+      <tr><th>Entry</th><td>${fmtCell(bt,'entry')}</td><td>${fmtCell(lv,'entry')}</td></tr>
+      <tr><th>Exit</th><td>${fmtCell(bt,'exit')}</td><td>${fmtCell(lv,'exit')}</td></tr>
+      <tr><th>R</th><td>${rCell(bt)}</td><td>${rCell(lv)}</td></tr>
+      <tr><th>$</th><td style="color:#9ca3af">-</td><td>${usdCell(lv)}</td></tr>
+      <tr><th>In</th><td>${tCell(bt,'entry_time')}</td><td>${tCell(lv,'entry_time')}</td></tr>
+      <tr><th>Out</th><td>${tCell(bt,'exit_time')}</td><td>${tCell(lv,'exit_time')}</td></tr>
+    </tbody>
+  </table>`;
 
   if(m.delta!=null){
     h+='<div class="drill-section"><h4>Delta</h4>';
@@ -1270,23 +1272,24 @@ function renderLegacy(data){
     h+='<div class="legacy-wrap"><table class="legacy-tbl">';
     h+='<thead><tr>';
     h+='<th class="col-strat" rowspan="2">Strat</th>';
-    h+='<th class="col-bt" colspan="6" style="text-align:center">BACKTEST</th>';
-    h+='<th class="col-lv" colspan="7" style="text-align:center">LIVE</th>';
-    h+='<th class="col-delta" rowspan="2">&Delta;R</th>';
+    h+='<th class="h-bt sep-bt" colspan="6" style="text-align:center;border-bottom:1px solid #e8eaed">BACKTEST</th>';
+    h+='<th class="h-lv sep-lv" colspan="7" style="text-align:center;border-bottom:1px solid #e8eaed">LIVE</th>';
+    h+='<th class="h-delta sep-delta" rowspan="2">&Delta;R</th>';
     h+='</tr><tr>';
-    h+='<th class="col-bt">Dir</th><th class="col-bt">Entry</th><th class="col-bt">Exit</th><th class="col-bt">R</th><th class="col-bt">In</th><th class="col-bt">Out</th>';
-    h+='<th class="col-lv">Dir</th><th class="col-lv">Entry</th><th class="col-lv">Exit</th><th class="col-lv">R</th><th class="col-lv">$</th><th class="col-lv">In</th><th class="col-lv">Out</th>';
+    h+='<th class="sep-bt">Dir</th><th>Entry</th><th>Exit</th><th>R</th><th>In</th><th>Out</th>';
+    h+='<th class="sep-lv">Dir</th><th>Entry</th><th>Exit</th><th>R</th><th>$</th><th>In</th><th>Out</th>';
     h+='</tr></thead><tbody>';
     for(const row of rows){
       const bt=row.bt,lv=row.lv;
-      let bD='-',bE='-',bX='-',bR='-',bIn='-',bOut='-',lD='-',lE='-',lX='-',lR='-',lUsd='-',lIn='-',lOut='-',dl='-';
+      const m='<span style="color:#9ca3af">-</span>';
+      let bD=m,bE=m,bX=m,bR=m,bIn=m,bOut=m,lD=m,lE=m,lX=m,lR=m,lUsd=m,lIn=m,lOut=m,dl=m;
       if(bt){
         bD=`<span class="${dirCls(bt.dir)}">${(bt.dir||'').toUpperCase()}</span>`;
         bE=fmt(bt.entry,2); bX=fmt(bt.exit,2);
         const rv=bt.pnl_r||0; totalBtR+=rv;
         bR=`<span class="${rv>=0?'pnl-pos':'pnl-neg'}">${(rv>=0?'+':'')+rv.toFixed(2)}</span>`;
-        bIn=bt.entry_time?timeHM(bt.entry_time):'-';
-        bOut=bt.exit_time?timeHM(bt.exit_time):'-';
+        bIn=bt.entry_time?timeHM(bt.entry_time):m;
+        bOut=bt.exit_time?timeHM(bt.exit_time):m;
       }
       if(lv){
         lD=`<span class="${dirCls(lv.dir)}">${(lv.dir||'').toUpperCase()}</span>`;
@@ -1295,8 +1298,8 @@ function renderLegacy(data){
         lR=`<span class="${rv>=0?'pnl-pos':'pnl-neg'}">${(rv>=0?'+':'')+rv.toFixed(2)}</span>`;
         const usd=lv.pnl_usd||0; totalUsd+=usd;
         lUsd=`<span class="${usd>=0?'pnl-pos':'pnl-neg'}">${fmtUsd(usd,0)}</span>`;
-        lIn=lv.entry_time?timeHM(lv.entry_time):'-';
-        lOut=lv.exit_time?timeHM(lv.exit_time):'-';
+        lIn=lv.entry_time?timeHM(lv.entry_time):m;
+        lOut=lv.exit_time?timeHM(lv.exit_time):m;
       }
       let rowCls='';
       if(row.delta!=null){
@@ -1308,24 +1311,23 @@ function renderLegacy(data){
       }
       const clickKey=lv&&lv.ticket?`lv|${lv.ticket}`:bt?`bt|${escapeH(sym)}|${escapeH(row.strat)}`:'';
       const onclick=clickKey?`onclick="openTradeByKey('${clickKey}',false)"`:'';
-      const stratClsExtra=rowCls?'col-strat-'+(rowCls.split('-')[1]):'';
       h+=`<tr ${onclick} ${clickKey?'class="clickable '+rowCls+'"':'class="'+rowCls+'"'}>
-        <td class="col-strat ${stratClsExtra}">${escapeH(row.strat)}</td>
-        <td class="col-bt">${bD}</td><td class="col-bt">${bE}</td><td class="col-bt">${bX}</td><td class="col-bt">${bR}</td><td class="col-bt">${bIn}</td><td class="col-bt">${bOut}</td>
-        <td class="col-lv">${lD}</td><td class="col-lv">${lE}</td><td class="col-lv">${lX}</td><td class="col-lv">${lR}</td><td class="col-lv">${lUsd}</td><td class="col-lv">${lIn}</td><td class="col-lv">${lOut}</td>
-        <td class="col-delta">${dl}</td>
+        <td class="col-strat">${escapeH(row.strat)}</td>
+        <td class="sep-bt">${bD}</td><td>${bE}</td><td>${bX}</td><td>${bR}</td><td>${bIn}</td><td>${bOut}</td>
+        <td class="sep-lv">${lD}</td><td>${lE}</td><td>${lX}</td><td>${lR}</td><td>${lUsd}</td><td>${lIn}</td><td>${lOut}</td>
+        <td class="sep-delta">${dl}</td>
       </tr>`;
     }
     h+='</tbody><tfoot><tr>';
     h+='<td class="col-strat">TOTAL</td>';
-    h+=`<td colspan="3"></td>
+    h+=`<td class="sep-bt" colspan="3"></td>
       <td><span class="${totalBtR>=0?'pnl-pos':'pnl-neg'}">${(totalBtR>=0?'+':'')+totalBtR.toFixed(2)}R</span></td>
       <td colspan="2"></td>
-      <td colspan="3"></td>
+      <td class="sep-lv" colspan="3"></td>
       <td><span class="${totalLvR>=0?'pnl-pos':'pnl-neg'}">${(totalLvR>=0?'+':'')+totalLvR.toFixed(2)}R</span></td>
       <td><span class="${totalUsd>=0?'pnl-pos':'pnl-neg'}">${fmtUsd(totalUsd,0)}</span></td>
       <td colspan="2"></td>
-      <td><span class="${totalDelta>=0?'pnl-pos':'pnl-neg'}">${(totalDelta>=0?'+':'')+totalDelta.toFixed(2)}R</span></td>`;
+      <td class="sep-delta"><span class="${totalDelta>=0?'pnl-pos':'pnl-neg'}">${(totalDelta>=0?'+':'')+totalDelta.toFixed(2)}R</span></td>`;
     h+='</tr></tfoot></table></div>';
   }
   // Candles
