@@ -2,6 +2,39 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-28 — PWA: dashboard.glorytavern.world installable comme app phone
+
+User veut une app phone pour suivre les trades comme le dashboard. 3 options envisagees:
+1. PWA (Progressive Web App) - le moins de boulot, le dashboard existant devient installable
+2. Bot Telegram - push notifications complementaires
+3. App native React Native/Flutter - overkill
+
+Decision: commencer par PWA, ajouter Telegram bot apres.
+
+### Changements api_server.py
+
+Ajout de 3 endpoints:
+- `/manifest.json` - metadata PWA (name, icons, theme_color, display:standalone, start_url, scope)
+- `/icon.svg` - icone "H" bleu sur fond dark, scalable 192/512
+- `/sw.js` - service worker minimal (network-first sur /state, cache-first sur shell)
+
+Modifications HTML <head>:
+- Ajout viewport meta + theme-color + apple-mobile-web-app-* (iOS standalone mode)
+- Ajout link rel="manifest", icon SVG, apple-touch-icon
+- Registration service worker en bas du body
+
+Modifications CSS:
+- Media query @max-width:768px : layout single column, padding reduit, tables compactes, metrics 3 colonnes au lieu de 6
+- Media query @max-width:380px : metrics 2 colonnes (telephones tres compacts)
+
+### Installation phone
+1. Ouvrir https://dashboard.glorytavern.world dans Chrome (Android) ou Safari (iOS)
+2. Menu -> "Ajouter a l'ecran d'accueil" / "Install app"
+3. App standalone, icone HydraTrader, plein ecran, pas de chrome navigateur
+4. Service worker cache la derniere reponse /state pour offline
+
+Pas d'impact desktop (le CSS responsive ne s'active qu'<= 768px).
+
 ## 2026-04-28 — HK50 sizing 1.83x: cause = slippage 25 pts au fill, pas un bug. Decision: observer
 
 ### Logs VPS analyses (live.log local copie depuis VPS)

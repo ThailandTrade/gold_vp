@@ -8,7 +8,7 @@ Usage:
   → Dashboard: http://localhost:8001/
 """
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 import threading, time
 from datetime import datetime, timezone
@@ -71,10 +71,63 @@ async def dashboard():
     return DASHBOARD_HTML
 
 
+@app.get("/manifest.json")
+async def manifest():
+    return JSONResponse({
+        "name": "HydraTrader Live",
+        "short_name": "HydraTrader",
+        "description": "Live trading dashboard MT5 multi-comptes",
+        "start_url": "/",
+        "scope": "/",
+        "display": "standalone",
+        "orientation": "any",
+        "background_color": "#f5f6f8",
+        "theme_color": "#1a1a2e",
+        "icons": [
+            {"src": "/icon.svg", "sizes": "192x192", "type": "image/svg+xml", "purpose": "any maskable"},
+            {"src": "/icon.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any maskable"},
+        ],
+    })
+
+
+@app.get("/icon.svg")
+async def icon_svg():
+    svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="96" fill="#1a1a2e"/><text x="256" y="340" text-anchor="middle" font-family="Inter,sans-serif" font-size="320" font-weight="700" fill="#2563eb">H</text></svg>'
+    return Response(content=svg, media_type="image/svg+xml")
+
+
+@app.get("/sw.js")
+async def service_worker():
+    sw = """const CACHE='hydra-v1';
+self.addEventListener('install',e=>{self.skipWaiting();});
+self.addEventListener('activate',e=>{e.waitUntil(self.clients.claim());});
+self.addEventListener('fetch',e=>{
+  const u=new URL(e.request.url);
+  if(u.pathname==='/state'||u.pathname.startsWith('/state/')||u.pathname==='/health'){
+    e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));
+    e.waitUntil(caches.open(CACHE).then(c=>fetch(e.request).then(r=>c.put(e.request,r.clone())).catch(()=>{})));
+    return;
+  }
+  e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(resp=>{
+    if(resp.ok)caches.open(CACHE).then(c=>c.put(e.request,resp.clone()));
+    return resp;
+  })));
+});"""
+    return Response(content=sw, media_type="application/javascript")
+
+
 DASHBOARD_HTML = """<!DOCTYPE html>
 <html><head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1a1a2e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="HydraTrader">
 <title>HydraTrader Live</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" type="image/svg+xml" href="/icon.svg">
+<link rel="apple-touch-icon" href="/icon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
@@ -142,6 +195,29 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
   /* Footer */
   .footer { padding:12px 32px; text-align:center; font-size:11px; color:#9ca3af; }
+
+  /* Mobile responsive */
+  @media (max-width: 768px) {
+    body { font-size:12px; }
+    .header { padding:12px 14px; flex-direction:column; align-items:flex-start; gap:8px; }
+    .header h1 { font-size:17px; }
+    .status-bar { font-size:11px; gap:10px; flex-wrap:wrap; }
+    .container { padding:12px; }
+    .grid { grid-template-columns:1fr; gap:14px; }
+    .card { padding:14px; border-radius:10px; }
+    .card-header h2 { font-size:14px; }
+    .metrics { grid-template-columns:repeat(3,1fr); gap:8px; }
+    .metric { padding:8px; }
+    .metric .label { font-size:10px; }
+    .metric .value { font-size:16px; }
+    table { font-size:11px; }
+    th, td { padding:6px 4px; }
+    .footer { padding:10px 12px; }
+    .expander-body { max-height:300px; }
+  }
+  @media (max-width: 380px) {
+    .metrics { grid-template-columns:repeat(2,1fr); }
+  }
 </style>
 </head><body>
 
@@ -322,5 +398,9 @@ async function refresh(){
 
 refresh();
 setInterval(refresh,1000);
+
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/sw.js').catch(e=>console.warn('SW reg failed',e));
+}
 </script>
 </body></html>"""
