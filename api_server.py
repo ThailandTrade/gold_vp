@@ -98,14 +98,20 @@ async def icon_svg():
 
 @app.get("/sw.js")
 async def service_worker():
-    sw = """const CACHE='hydra-v1';
+    sw = """const CACHE='hydra-v3';
 self.addEventListener('install',e=>{self.skipWaiting();});
-self.addEventListener('activate',e=>{e.waitUntil(self.clients.claim());});
+self.addEventListener('activate',e=>{
+  e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));
+});
 self.addEventListener('fetch',e=>{
   const u=new URL(e.request.url);
-  if(u.pathname==='/state'||u.pathname.startsWith('/state/')||u.pathname==='/health'){
-    e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));
-    e.waitUntil(caches.open(CACHE).then(c=>fetch(e.request).then(r=>c.put(e.request,r.clone())).catch(()=>{})));
+  // / and /state always network-first (HTML and live data)
+  if(u.pathname==='/'||u.pathname==='/state'||u.pathname.startsWith('/state/')||u.pathname==='/health'){
+    e.respondWith(fetch(e.request).then(r=>{
+      const c=r.clone();
+      caches.open(CACHE).then(ca=>ca.put(e.request,c)).catch(()=>{});
+      return r;
+    }).catch(()=>caches.match(e.request)));
     return;
   }
   e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(resp=>{
@@ -929,17 +935,19 @@ function sparkline(points,key,height,colorLine,colorArea){
 function renderEquityChart(points, opts){
   if(!points||points.length<2)return '<div class="empty">Pas assez de points</div>';
   const o=opts||{};
-  const baseline=o.baseline; // optional starting balance for baseline
+  const baseline=o.baseline;
   const W=800,H=300;
   const PAD_L=64,PAD_R=14,PAD_T=14,PAD_B=32;
   const innerW=W-PAD_L-PAD_R, innerH=H-PAD_T-PAD_B;
   const eqs=points.map(p=>p.e);
-  let eMin=Math.min(...eqs), eMax=Math.max(...eqs);
-  if(baseline!=null){eMin=Math.min(eMin,baseline);eMax=Math.max(eMax,baseline);}
+  let eMin=eqs[0], eMax=eqs[0];
+  for(const v of eqs){if(v<eMin)eMin=v; if(v>eMax)eMax=v;}
+  if(baseline!=null){if(baseline<eMin)eMin=baseline; if(baseline>eMax)eMax=baseline;}
   const ePad=(eMax-eMin)*0.08||1;
-  const yMin=eMin-ePad, yMax=eMax+ePad, ySpan=yMax-yMin;
-  const ts=points.map(p=>p.t?new Date(p.t).getTime():0);
-  const tMin=Math.min(...ts.filter(x=>x>0)), tMax=Math.max(...ts);
+  const yMin=eMin-ePad, yMax=eMax+ePad, ySpan=yMax-yMin||1;
+  const ts=points.map((p,i)=>p.t?new Date(p.t).getTime():(i?Date.now():Date.now()-3600000));
+  let tMin=ts[0],tMax=ts[0];
+  for(const v of ts){if(v<tMin)tMin=v; if(v>tMax)tMax=v;}
   const tSpan=tMax-tMin||1;
   const xOf=t=>PAD_L+((t-tMin)/tSpan)*innerW;
   const yOf=v=>PAD_T+(1-(v-yMin)/ySpan)*innerH;
@@ -969,7 +977,6 @@ function renderEquityChart(points, opts){
   // Equity line + area
   let path='', area='';
   for(let i=0;i<points.length;i++){
-    if(!ts[i])continue;
     const x=xOf(ts[i]), y=yOf(eqs[i]);
     if(!path){path=`M${x.toFixed(1)},${y.toFixed(1)}`; area=`M${x.toFixed(1)},${(H-PAD_B)} L${x.toFixed(1)},${y.toFixed(1)}`;}
     else { path+=` L${x.toFixed(1)},${y.toFixed(1)}`; area+=` L${x.toFixed(1)},${y.toFixed(1)}`; }
@@ -989,13 +996,12 @@ function renderEquityChart(points, opts){
   if(eqs.length>1){
     const yp=yOf(eqs[peakIdx]);
     peakLine=`<line class="chart-peak-line" x1="${PAD_L}" x2="${W-PAD_R}" y1="${yp}" y2="${yp}"/><text class="chart-axis-label" x="${W-PAD_R-3}" y="${yp+12}" text-anchor="end" fill="#059669">peak $${fmt(eqs[peakIdx],0)}</text>`;
-    if(ts[peakIdx])peakMarker=`<circle class="chart-marker peak" cx="${xOf(ts[peakIdx])}" cy="${yp}" r="3.5"/>`;
+    peakMarker=`<circle class="chart-marker peak" cx="${xOf(ts[peakIdx])}" cy="${yp}" r="3.5"/>`;
   }
 
   // Current marker
   const lastIdx=points.length-1;
-  let curMarker='';
-  if(ts[lastIdx])curMarker=`<circle class="chart-marker" cx="${xOf(ts[lastIdx])}" cy="${yOf(eqs[lastIdx])}" r="4"/>`;
+  const curMarker=`<circle class="chart-marker" cx="${xOf(ts[lastIdx])}" cy="${yOf(eqs[lastIdx])}" r="4"/>`;
 
   const grad=`<defs><linearGradient id="eq-grad" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#2563eb" stop-opacity="0.3"/><stop offset="100%" stop-color="#2563eb" stop-opacity="0.02"/></linearGradient></defs>`;
   const svg=`<svg class="chart-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">${grad}${yAxis}${xAxis}<path class="chart-area" d="${area}"/>${baselineLine}${peakLine}<path class="chart-line" d="${path}"/>${peakMarker}${curMarker}</svg>`;
