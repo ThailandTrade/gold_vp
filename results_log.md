@@ -2,6 +2,32 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-28 — Dashboard: tab LIVE refait (positions ouvertes only, style legacy)
+
+User: LIVE doit etre le 1er onglet et ne montrer QUE les trades ouverts dans une vue style Legacy.
+
+### Changements
+
+- ACCOUNT_TABS = ['live', '5ers', 'ftmo'] (LIVE en premier)
+- Default SELECTED = 'live' (etait 'ftmo')
+- Quand SELECTED='live':
+  * Hide period-tabs, inner tabs, KPI strip standard
+  * Affiche un seul tab dedie 'tab-live'
+  * Ne renvoie pas vers Home/Trades/etc - vue unique
+
+### renderLive()
+
+Single page avec:
+- 4 KPI cards top: Equity totale, PnL flottant, count par broker (5ers, ftmo)
+- Une seule table style legacy:
+  * Colonnes: Broker | Sym | Strat | Dir | Vol | Entry | Current | SL | TP | PnL $ | PnL R* | Open at | Elapsed
+  * 1 ligne par position ouverte, sortee par broker puis time_open
+  * Footer TOTAL: somme volumes + somme flot
+  * Lignes clickables -> drill position normal
+- Note: PnL R* = (current-entry)/|sl-entry|, calcul approximatif sur la base de la SL distance reelle de la position
+
+Pas d'inner tabs, pas de period selector, pas de Home/Trades/etc en mode LIVE. Juste les positions live des 2 props cote a cote.
+
 ## 2026-04-28 — Dashboard: tab LIVE (vue agregee toutes props)
 
 User: voir le detail de tous les trades live toutes prop confondues dans un onglet dedie.

@@ -411,6 +411,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <div id="tab-bt" class="tab-content"></div>
   <div id="tab-logs" class="tab-content"></div>
   <div id="tab-legacy" class="tab-content"></div>
+  <div id="tab-live" class="tab-content"></div>
 </div>
 
 <div id="modal" class="modal hidden">
@@ -430,7 +431,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 <script>
 const API='';
 const ACCOUNTS=['5ers','ftmo'];
-const ACCOUNT_TABS=[...ACCOUNTS,'live']; // 'live' = vue agregee
+const ACCOUNT_TABS=['live',...ACCOUNTS]; // 'live' en premier (vue agregee positions ouvertes)
 const MAX_DD={'5ers':4.0,'ftmo':10.0};
 const PERIODS=[
   {id:'today',label:'Jour'},
@@ -439,7 +440,7 @@ const PERIODS=[
   {id:'30d',label:'30j'},
   {id:'all',label:'Tout'},
 ];
-let SELECTED=localStorage.getItem('hydra-acc')||'ftmo';
+let SELECTED=localStorage.getItem('hydra-acc')||'live';
 let TAB=localStorage.getItem('hydra-tab')||'home';
 let PERIOD=localStorage.getItem('hydra-period')||'today';
 let LAST={};
@@ -1406,6 +1407,105 @@ function renderBT(data){
   root.innerHTML=h;
 }
 
+// === Render: LIVE (positions ouvertes toutes props, table style legacy) ===
+function renderLive(){
+  const root=document.getElementById('tab-live');
+  // Build merged positions across all accounts, sorted by account then by time_open
+  const positions=[];
+  for(const acc of ACCOUNTS){
+    const d=LAST[acc]||{};
+    if(!d.state)continue;
+    for(const p of (d.state.positions||[])){
+      const m=findBtMatch(p.symbol,p.comment,d,acc);
+      positions.push({...p,_acc:acc,_bt:m});
+    }
+  }
+  positions.sort((a,b)=>(a._acc||'').localeCompare(b._acc||'')||(a.time_open||'').localeCompare(b.time_open||''));
+
+  // KPI: total flot, count par broker, total equity courante
+  let totalFlot=0,totalEquity=0,totalBalance=0;
+  const byAcc={};
+  for(const acc of ACCOUNTS){
+    const d=LAST[acc]||{};
+    const a=d.state?.account_info||{};
+    const flot=(d.state?.positions||[]).reduce((s,p)=>s+(p.pnl||0),0);
+    byAcc[acc]={count:(d.state?.positions||[]).length,flot,equity:a.equity||0,balance:a.balance||0};
+    totalFlot+=flot;
+    totalEquity+=a.equity||0;
+    totalBalance+=a.balance||0;
+  }
+
+  let h='';
+  // KPI header
+  h+='<div class="kpis" style="margin-bottom:14px">';
+  h+=`<div class="kpi"><div class="lbl">Equity totale</div><div class="val">$${fmt(totalEquity,0)}</div><div class="sub">balance $${fmt(totalBalance,0)}</div></div>`;
+  h+=`<div class="kpi"><div class="lbl">PnL flottant</div><div class="val ${totalFlot>=0?'green':'red'}">${fmtUsd(totalFlot,2)}</div><div class="sub">${positions.length} positions</div></div>`;
+  for(const acc of ACCOUNTS){
+    const a=byAcc[acc];
+    h+=`<div class="kpi"><div class="lbl">${acc.toUpperCase()}</div><div class="val">${a.count}</div><div class="sub ${a.flot>=0?'pnl-pos':'pnl-neg'}">${fmtUsd(a.flot,2)} flot</div></div>`;
+  }
+  h+='</div>';
+
+  if(positions.length===0){
+    h+='<div class="card"><div class="empty">Aucune position ouverte sur aucune prop</div></div>';
+    root.innerHTML=h;
+    return;
+  }
+
+  // Legacy-style table avec broker col
+  h+='<div class="legacy-section-title"><span class="sym">Positions ouvertes</span><span class="meta">'+positions.length+' total</span></div>';
+  h+='<div class="legacy-wrap"><table class="legacy-tbl" style="min-width:1000px">';
+  h+='<thead><tr>';
+  h+='<th class="col-strat">Broker</th>';
+  h+='<th>Sym</th><th>Strat</th><th>Dir</th><th>Vol</th>';
+  h+='<th class="sep-bt">Entry</th><th>Current</th><th>SL</th><th>TP</th>';
+  h+='<th class="sep-lv">PnL $</th><th>PnL R*</th>';
+  h+='<th class="sep-delta">Open at</th><th>Elapsed</th>';
+  h+='</tr></thead><tbody>';
+  for(const p of positions){
+    const isLong=p.dir==='long';
+    const elapsed=p.time_open?Math.round((Date.now()-new Date(p.time_open).getTime())/60000):0;
+    const elapsedStr=elapsed>=60?`${Math.floor(elapsed/60)}h${(elapsed%60).toString().padStart(2,'0')}`:`${elapsed}m`;
+    const pnl=p.pnl||0;
+    // PnL en R: utilise sl_atr*atr depuis bt_compare match si dispo
+    let pnlR='-';
+    if(p._bt&&p._bt.atr){
+      const slDist=Math.abs(p.sl-p.entry);
+      if(slDist>0){
+        const ptsMove=isLong?(p.current-p.entry):(p.entry-p.current);
+        const r=ptsMove/slDist;
+        pnlR=`<span class="${r>=0?'pnl-pos':'pnl-neg'}">${(r>=0?'+':'')+r.toFixed(2)}R</span>`;
+      }
+    }
+    h+=`<tr onclick="openTradeByKey('op|${p.ticket}',false)" class="clickable">
+      <td class="col-strat">${p._acc.toUpperCase()}</td>
+      <td class="sym">${escapeH(p.symbol)}</td>
+      <td class="strat-name">${escapeH(p.comment)}</td>
+      <td class="${dirCls(p.dir)}">${(p.dir||'').toUpperCase()}</td>
+      <td>${fmt(p.volume,2)}</td>
+      <td class="sep-bt">${fmt(p.entry,2)}</td>
+      <td>${fmt(p.current,2)}</td>
+      <td style="color:#dc2626">${fmt(p.sl,2)}</td>
+      <td style="color:#059669">${p.tp?fmt(p.tp,2):'-'}</td>
+      <td class="sep-lv ${pnlCls(pnl)}">${fmtUsd(pnl,2)}</td>
+      <td>${pnlR}</td>
+      <td class="sep-delta">${dateD(p.time_open).slice(5)} ${timeHM(p.time_open)}</td>
+      <td>${elapsedStr}</td>
+    </tr>`;
+  }
+  h+=`</tbody><tfoot><tr>
+    <td class="col-strat">TOTAL</td>
+    <td colspan="3"></td>
+    <td>${positions.reduce((s,p)=>s+(p.volume||0),0).toFixed(2)}</td>
+    <td colspan="4" class="sep-bt"></td>
+    <td class="sep-lv ${totalFlot>=0?'pnl-pos':'pnl-neg'}">${fmtUsd(totalFlot,2)}</td>
+    <td colspan="3"></td>
+  </tr></tfoot></table></div>`;
+  h+='<div style="margin-top:8px;font-size:10px;color:#9ca3af">* PnL R calcule depuis (current - entry) / |sl - entry|</div>';
+
+  root.innerHTML=h;
+}
+
 // === Render: LEGACY (vue tableaux complete style ancien dashboard) ===
 function renderLegacy(data){
   const root=document.getElementById('tab-legacy');
@@ -1587,16 +1687,25 @@ function renderLogs(data){
 
 // === Main render ===
 function render(){
-  // Account tabs
   renderAccTabs(LAST);
+  // Show / hide controls based on account selection
+  document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
+  if(SELECTED==='live'){
+    document.getElementById('period-tabs').style.display='none';
+    document.getElementById('tabs').style.display='none';
+    document.getElementById('kpis').style.display='none';
+    document.getElementById('tab-live').classList.add('active');
+    renderLive();
+    return;
+  }
+  document.getElementById('period-tabs').style.display='';
+  document.getElementById('tabs').style.display='';
+  document.getElementById('kpis').style.display='';
   renderPeriodTabs();
   const data=getAccData();
   renderKpis(data);
   renderTabs(data);
-  // Show active tab
-  document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
   document.getElementById('tab-'+TAB).classList.add('active');
-  // Render selected tab
   if(TAB==='home')renderHome(data);
   else if(TAB==='today')renderToday(data);
   else if(TAB==='open')renderOpen(data);
