@@ -2,6 +2,57 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-28 — Refonte complete dashboard (mobile-first + tabs + cards)
+
+User a valide l'installation PWA sur phone. Demande refonte du dashboard. 7 ideas validees (skip 8 dark mode + 9 ticker live).
+
+### Nouvelle architecture
+
+**Header**:
+- Logo HydraTrader + status connexion par compte (dot color + secondes depuis last_push)
+- Account tabs (5ers / FTMO) avec mini KPI: Equity + PnL Jour
+- Selection persistee localStorage
+
+**KPI strip (4 sur mobile, 6 sur desktop)**:
+- Equity + Balance
+- PnL Jour + nb trades
+- Drawdown courant + barre de progression vers limite (4% 5ers, 10% FTMO)
+- Open positions + flottant
+- PF Jour + WR
+- Total Hist + peak equity
+
+**Tabs** (state persiste localStorage):
+- **Jour**: equity sparkline 100 derniers points + cards trades du jour
+- **Open**: cards positions avec barre de progression visuelle SL <- entry -> TP + position du current price + elapsed minutes
+- **Histo**: calendrier mensuel 13 mois (heatmap intensity), equity all-time, 40 trades recents en cards
+- **BT vs LV**: score banner (good/warn/bad selon avg |delta_R|), top 5 divergences, summary par instrument
+- **Logs**: events ENTRY (positions ouvertes) + EXIT WIN/LOSS (history) sorted by time DESC
+
+### Composants implementes
+
+- Sparkline SVG hand-coded (zero dep externe), gradient area + line
+- Position progress bar: zones loss/profit + marker current + labels SL/TP/Entry positionnes proportionnellement
+- Calendar heatmap: 13 cells gradient vert/rouge selon intensite PnL relative
+- Score banner: 3 etats (aligne <0.1R / surveille 0.1-0.3R / divergent >0.3R)
+- Trade cards mobile-first (header + meta), pas de tables sauf desktop
+
+### Mobile-first
+
+Defauts mobile, override @media min-width:768px puis 1024px:
+- KPI strip: 2 cols -> 4 cols -> 6 cols
+- Calendar: cells plus grosses sur desktop
+- Tabs scrollable horizontalement si depassement
+- Header sticky en haut
+
+### Aucun changement backend
+
+Toutes les donnees deja exposees par /state. Pas besoin de modifier vps_pusher ni live_mt5.
+
+### Constantes hardcodees
+- MAX_DD = {5ers: 4%, ftmo: 10%} pour la barre DD
+
+A faire sur laptop: redemarrer uvicorn pour servir le nouveau HTML.
+
 ## 2026-04-28 — PWA: dashboard.glorytavern.world installable comme app phone
 
 User veut une app phone pour suivre les trades comme le dashboard. 3 options envisagees:
