@@ -2,6 +2,38 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-28 — Dashboard: heures BT/LV dans drill + tab Legacy (vue ancienne)
+
+User demande:
+1. Afficher heures entry/exit BT et LV dans le detail des trades
+2. Tab Legacy pour retrouver l'affichage tableaux de l'ancien dashboard
+
+### Changements vps_pusher.py
+
+bt_compare.rows enrichi avec timestamps:
+- bt: ajout entry_time (candles.iloc[ci]['ts_dt'].isoformat()) et exit_time (candles.iloc[xi_safe]['ts_dt'].isoformat())
+- lv: ajout entry_time (lv['time_open']), exit_time (lv['time_close']), ticket
+
+Backward compat: dashboard verifie `bt.entry_time?...:'-'`. Si VPS pas encore deploye, affiche '-'.
+
+### Changements api_server.py - Drill enrichi
+
+renderTradeDrill et renderBtRowDrill: ajout 2 lignes dans chaque colonne BT/LV avec In/Out (date+heure format MM-DD HH:MM).
+
+### Tab Legacy (nouveau, dernier dans nav)
+
+Reproduit l'ancien dashboard tableau-centric:
+- Header avec broker + timestamp
+- Metrics grid (Balance, Equity, PnL, Trades)
+- Table positions ouvertes complete (clickable -> drill)
+- Pour chaque sym: table BT vs Live complete avec toutes colonnes (Strat, BT Dir/Entry/Exit/R/In/Out, LV Dir/Entry/Exit/R/$/In/Out, Delta, ligne TOTAL)
+- Section dernieres bougies (O/H/L/C + range)
+- Table historique 50 derniers trades (clickable -> drill)
+
+Toutes les lignes du tableau Legacy sont clickables (cursor pointer + hover) -> ouvre le modal de drill.
+
+A faire sur VPS: git pull + restart vps_pusher pour que les heures BT/LV soient pousseees.
+
 ## 2026-04-28 — Dashboard: page Home + drill-down (modal) sur trades/instruments/strats
 
 User: dashboard manquait de detail accessible. Ajout d'un onglet Home avec aggregats clickables et systeme de drill-down via modal sur tous les trade cards.

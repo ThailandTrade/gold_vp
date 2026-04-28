@@ -187,12 +187,17 @@ def compute_compare_today():
         for ci, xi, di, pnl_oz, sl_atr, atr_t, mo, sn in raw:
             entry = float(candles.iloc[ci]['close'])
             risk_1r = sl_atr * atr_t
+            xi_safe = min(xi, len(candles) - 1)
+            entry_time = candles.iloc[ci]['ts_dt'].isoformat() if ci < len(candles) else None
+            exit_time = candles.iloc[xi_safe]['ts_dt'].isoformat() if xi_safe < len(candles) else None
             bt_by_strat[sn] = {
                 'dir': 'long' if di == 1 else 'short',
                 'entry': round(entry, 2),
                 'exit': round(entry + pnl_oz if di == 1 else entry - pnl_oz, 2),
                 'pnl_r': round(pnl_oz / risk_1r, 2) if risk_1r > 0 else 0,
                 'risk_1r': round(risk_1r, 4),
+                'entry_time': entry_time,
+                'exit_time': exit_time,
             }
         # LV par strat
         lv_by_strat = {}
@@ -223,6 +228,9 @@ def compute_compare_today():
                     'exit': lv['exit'],
                     'pnl_r': lv_r,
                     'pnl_usd': lv['pnl'],
+                    'entry_time': lv.get('time_open'),
+                    'exit_time': lv.get('time_close'),
+                    'ticket': lv.get('ticket'),
                 }
             if bt and row['lv']:
                 row['delta'] = round(row['lv']['pnl_r'] - bt['pnl_r'], 2)

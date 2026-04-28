@@ -353,6 +353,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <div id="tab-history" class="tab-content"></div>
   <div id="tab-bt" class="tab-content"></div>
   <div id="tab-logs" class="tab-content"></div>
+  <div id="tab-legacy" class="tab-content"></div>
 </div>
 
 <div id="modal" class="modal hidden">
@@ -510,12 +511,16 @@ function renderTradeDrill(t,data){
       <div class="drill-row"><span class="k">Exit</span><span class="v">${fmt(m.bt.exit,2)}</span></div>
       <div class="drill-row"><span class="k">R</span><span class="v ${pnlCls(m.bt.pnl_r||0)}">${(m.bt.pnl_r>=0?'+':'')+(m.bt.pnl_r||0).toFixed(2)}R</span></div>
       <div class="drill-row"><span class="k">Pts</span><span class="v">${fmt(((isLong?m.bt.exit-m.bt.entry:m.bt.entry-m.bt.exit)),2)}</span></div>
+      <div class="drill-row"><span class="k">In</span><span class="v">${m.bt.entry_time?dateD(m.bt.entry_time).slice(5)+' '+timeHM(m.bt.entry_time):'-'}</span></div>
+      <div class="drill-row"><span class="k">Out</span><span class="v">${m.bt.exit_time?dateD(m.bt.exit_time).slice(5)+' '+timeHM(m.bt.exit_time):'-'}</span></div>
     </div>`;
     h+=`<div class="col lv"><h5>Live</h5>
       <div class="drill-row"><span class="k">Entry</span><span class="v">${fmt(t.entry,2)}</span></div>
       <div class="drill-row"><span class="k">Exit</span><span class="v">${fmt(t.exit,2)}</span></div>
       <div class="drill-row"><span class="k">R</span><span class="v ${pnlCls((m.lv||{}).pnl_r||0)}">${m.lv?(m.lv.pnl_r>=0?'+':'')+(m.lv.pnl_r||0).toFixed(2)+'R':'-'}</span></div>
       <div class="drill-row"><span class="k">Pts</span><span class="v">${fmt(((isLong?t.exit-t.entry:t.entry-t.exit)),2)}</span></div>
+      <div class="drill-row"><span class="k">In</span><span class="v">${t.time_open?dateD(t.time_open).slice(5)+' '+timeHM(t.time_open):'-'}</span></div>
+      <div class="drill-row"><span class="k">Out</span><span class="v">${t.time_close?dateD(t.time_close).slice(5)+' '+timeHM(t.time_close):'-'}</span></div>
     </div>`;
     h+='</div>';
     // Slippage
@@ -603,6 +608,8 @@ function renderBtRowDrill(sym,strat,m,data){
     h+=`<div class="drill-row"><span class="k">Entry</span><span class="v">${fmt(bt.entry,2)}</span></div>`;
     h+=`<div class="drill-row"><span class="k">Exit</span><span class="v">${fmt(bt.exit,2)}</span></div>`;
     h+=`<div class="drill-row"><span class="k">R</span><span class="v ${pnlCls(bt.pnl_r||0)}">${(bt.pnl_r>=0?'+':'')+(bt.pnl_r||0).toFixed(2)}R</span></div>`;
+    h+=`<div class="drill-row"><span class="k">In</span><span class="v">${bt.entry_time?dateD(bt.entry_time).slice(5)+' '+timeHM(bt.entry_time):'-'}</span></div>`;
+    h+=`<div class="drill-row"><span class="k">Out</span><span class="v">${bt.exit_time?dateD(bt.exit_time).slice(5)+' '+timeHM(bt.exit_time):'-'}</span></div>`;
   }else{h+='<div class="empty" style="padding:6px 0">Pas de signal BT</div>';}
   h+='</div>';
   h+=`<div class="col lv"><h5>Live</h5>`;
@@ -612,6 +619,8 @@ function renderBtRowDrill(sym,strat,m,data){
     h+=`<div class="drill-row"><span class="k">Exit</span><span class="v">${fmt(lv.exit,2)}</span></div>`;
     h+=`<div class="drill-row"><span class="k">R</span><span class="v ${pnlCls(lv.pnl_r||0)}">${(lv.pnl_r>=0?'+':'')+(lv.pnl_r||0).toFixed(2)}R</span></div>`;
     h+=`<div class="drill-row"><span class="k">$</span><span class="v ${pnlCls(lv.pnl_usd||0)}">${fmtUsd(lv.pnl_usd||0,2)}</span></div>`;
+    h+=`<div class="drill-row"><span class="k">In</span><span class="v">${lv.entry_time?dateD(lv.entry_time).slice(5)+' '+timeHM(lv.entry_time):'-'}</span></div>`;
+    h+=`<div class="drill-row"><span class="k">Out</span><span class="v">${lv.exit_time?dateD(lv.exit_time).slice(5)+' '+timeHM(lv.exit_time):'-'}</span></div>`;
   }else{h+='<div class="empty" style="padding:6px 0">Pas de trade live</div>';}
   h+='</div>';
   h+='</div>';
@@ -840,6 +849,7 @@ function renderTabs(data){
     {id:'history',label:'Histo',n:hist.length},
     {id:'bt',label:'BT/LV',n:btCount},
     {id:'logs',label:'Logs',n:pos.length+periodTrades.length},
+    {id:'legacy',label:'Legacy',n:0},
   ];
   let h='';
   for(const t of tabs){
@@ -1191,6 +1201,129 @@ function renderBT(data){
   root.innerHTML=h;
 }
 
+// === Render: LEGACY (vue tableaux complete style ancien dashboard) ===
+function renderLegacy(data){
+  const root=document.getElementById('tab-legacy');
+  if(!data||!data.state||!data.state.account_info){root.innerHTML='<div class="empty">Pas de donnees</div>';return;}
+  const s=data.state, a=s.account_info||{}, pos=s.positions||[], trades=s.today_trades||[], candles=s.candles||{}, hist=data.history||[];
+  let h='<div class="card">';
+  // Header
+  h+=`<div class="card-title">${SELECTED.toUpperCase()} <span class="right">${escapeH(s.broker||'')} &middot; ${timeHM(s.ts)} UTC</span></div>`;
+  // Metrics
+  h+=`<div class="drill-grid">
+    <div class="drill-cell"><div class="lbl">Balance</div><div class="val">$${fmt(a.balance)}</div></div>
+    <div class="drill-cell"><div class="lbl">Equity</div><div class="val">$${fmt(a.equity)}</div></div>
+    <div class="drill-cell"><div class="lbl">PnL Jour</div><div class="val ${(s.today_pnl||0)>=0?'pnl-pos':'pnl-neg'}">${fmtUsd(s.today_pnl||0,2)}</div></div>
+    <div class="drill-cell"><div class="lbl">Trades</div><div class="val">${s.today_count||0}</div></div>
+  </div>`;
+  // Positions table
+  h+='<div class="drill-section"><h4>Positions ouvertes ('+pos.length+')</h4>';
+  if(pos.length===0)h+='<div class="empty">Aucune position</div>';
+  else{
+    h+='<div style="overflow-x:auto"><table style="font-size:11px"><tr><th>Sym</th><th>Strat</th><th>Dir</th><th>Entry</th><th>Current</th><th>SL</th><th>TP</th><th>PnL</th><th>Lots</th></tr>';
+    for(const p of pos){
+      h+=`<tr onclick="openTradeByKey('op|${p.ticket}',false)" class="clickable">
+        <td class="sym">${escapeH(p.symbol)}</td><td class="strat-name">${escapeH(p.comment)}</td>
+        <td class="${dirCls(p.dir)}">${(p.dir||'').toUpperCase()}</td>
+        <td>${fmt(p.entry,2)}</td><td>${fmt(p.current,2)}</td><td>${fmt(p.sl,2)}</td><td>${p.tp?fmt(p.tp,2):'-'}</td>
+        <td class="${pnlCls(p.pnl||0)}">${fmtUsd(p.pnl||0,2)}</td><td>${fmt(p.volume,2)}</td>
+      </tr>`;
+    }
+    h+='</table></div>';
+  }
+  h+='</div>';
+  // BT vs Live per instrument (full table)
+  const btc=data.bt_compare||{};
+  const btSyms=Object.keys(btc).sort();
+  for(const sym of btSyms){
+    const info=btc[sym]||{};
+    const rows=(info.rows||[]).filter(r=>r.bt||r.lv).sort((a,b)=>a.strat.localeCompare(b.strat));
+    if(rows.length===0)continue;
+    let totalBtR=0,totalLvR=0,totalDelta=0,totalUsd=0;
+    h+=`<div class="drill-section"><h4>${escapeH(sym)} &mdash; BT vs Live (ATR=${fmt(info.atr,2)})</h4>`;
+    h+='<div style="overflow-x:auto"><table style="font-size:11px"><tr><th>Strat</th><th>BT Dir</th><th>BT Entry</th><th>BT Exit</th><th>BT R</th><th>BT In</th><th>BT Out</th><th>LV Dir</th><th>LV Entry</th><th>LV Exit</th><th>LV R</th><th>LV $</th><th>LV In</th><th>LV Out</th><th>Delta</th></tr>';
+    for(const row of rows){
+      const bt=row.bt,lv=row.lv;
+      let bD='',bE='',bX='',bR='',bIn='',bOut='',lD='',lE='',lX='',lR='',lUsd='',lIn='',lOut='',dl='';
+      if(bt){
+        bD=`<span class="${dirCls(bt.dir)}">${(bt.dir||'').toUpperCase()}</span>`;
+        bE=fmt(bt.entry,2); bX=fmt(bt.exit,2);
+        const rv=bt.pnl_r||0; totalBtR+=rv;
+        bR=`<span class="${rv>=0?'pnl-pos':'pnl-neg'}">${(rv>=0?'+':'')+rv.toFixed(2)}R</span>`;
+        bIn=bt.entry_time?timeHM(bt.entry_time):'-';
+        bOut=bt.exit_time?timeHM(bt.exit_time):'-';
+      }
+      if(lv){
+        lD=`<span class="${dirCls(lv.dir)}">${(lv.dir||'').toUpperCase()}</span>`;
+        lE=fmt(lv.entry,2); lX=fmt(lv.exit,2);
+        const rv=lv.pnl_r||0; totalLvR+=rv;
+        lR=`<span class="${rv>=0?'pnl-pos':'pnl-neg'}">${(rv>=0?'+':'')+rv.toFixed(2)}R</span>`;
+        const usd=lv.pnl_usd||0; totalUsd+=usd;
+        lUsd=`<span class="${usd>=0?'pnl-pos':'pnl-neg'}">${fmtUsd(usd,2)}</span>`;
+        lIn=lv.entry_time?timeHM(lv.entry_time):'-';
+        lOut=lv.exit_time?timeHM(lv.exit_time):'-';
+      }
+      if(row.delta!=null){
+        const d=row.delta; totalDelta+=d;
+        dl=`<span class="${d>=0?'pnl-pos':'pnl-neg'}">${(d>=0?'+':'')+d.toFixed(2)}R</span>`;
+      }
+      const clickKey=lv&&lv.ticket?`lv|${lv.ticket}`:bt?`bt|${escapeH(sym)}|${escapeH(row.strat)}`:'';
+      const onclick=clickKey?`onclick="openTradeByKey('${clickKey}',false)"`:'';
+      h+=`<tr ${onclick} ${clickKey?'class="clickable"':''}>
+        <td class="strat-name">${escapeH(row.strat)}</td>
+        <td>${bD}</td><td>${bE}</td><td>${bX}</td><td>${bR}</td><td>${bIn}</td><td>${bOut}</td>
+        <td>${lD}</td><td>${lE}</td><td>${lX}</td><td>${lR}</td><td>${lUsd}</td><td>${lIn}</td><td>${lOut}</td>
+        <td>${dl}</td>
+      </tr>`;
+    }
+    h+=`<tr style="font-weight:700;border-top:2px solid #e8eaed">
+      <td>TOTAL</td><td></td><td></td><td></td>
+      <td><span class="${totalBtR>=0?'pnl-pos':'pnl-neg'}">${(totalBtR>=0?'+':'')+totalBtR.toFixed(2)}R</span></td>
+      <td></td><td></td><td></td><td></td><td></td>
+      <td><span class="${totalLvR>=0?'pnl-pos':'pnl-neg'}">${(totalLvR>=0?'+':'')+totalLvR.toFixed(2)}R</span></td>
+      <td><span class="${totalUsd>=0?'pnl-pos':'pnl-neg'}">${fmtUsd(totalUsd,2)}</span></td>
+      <td></td><td></td>
+      <td><span class="${totalDelta>=0?'pnl-pos':'pnl-neg'}">${(totalDelta>=0?'+':'')+totalDelta.toFixed(2)}R</span></td>
+    </tr>`;
+    h+='</table></div></div>';
+  }
+  // Candles
+  const syms=Object.keys(candles).filter(sy=>candles[sy]&&candles[sy].close);
+  if(syms.length>0){
+    h+='<div class="drill-section"><h4>Dernieres bougies</h4>';
+    for(const sym of syms){
+      const c=candles[sym]; const rng=(c.high-c.low).toFixed(1);
+      h+=`<div class="candle-row" style="display:flex;justify-content:space-between;padding:4px 0;font-size:11px;color:#4b5563;border-bottom:1px solid #f9fafb">
+        <span style="font-weight:600;color:#1a1a2e;min-width:80px">${escapeH(sym)}</span>
+        <span>${timeHM(c.time)}</span>
+        <span>O ${fmt(c.open,1)}</span><span>H ${fmt(c.high,1)}</span><span>L ${fmt(c.low,1)}</span><span>C ${fmt(c.close,1)}</span>
+        <span style="font-weight:600">R ${rng}</span>
+      </div>`;
+    }
+    h+='</div>';
+  }
+  // History (last 50)
+  if(hist.length>0){
+    const tp=hist.reduce((s,t)=>s+(t.pnl||0),0);
+    const w=hist.filter(t=>(t.pnl||0)>0).length;
+    const wr=(w/hist.length*100).toFixed(0);
+    h+=`<div class="drill-section"><h4>Historique (${hist.length} trades) &mdash; WR ${wr}% &mdash; PnL ${fmtUsd(tp,2)}</h4>`;
+    h+='<div style="overflow-x:auto;max-height:400px"><table style="font-size:11px"><tr><th>Date</th><th>Sym</th><th>Strat</th><th>Dir</th><th>Entry</th><th>Exit</th><th>PnL</th></tr>';
+    for(const t of [...hist].sort((a,b)=>(b.time_close||'').localeCompare(a.time_close||'')).slice(0,50)){
+      h+=`<tr onclick="openTradeByKey('lv|${t.ticket}',false)" class="clickable">
+        <td>${dateD(t.time_close).slice(5)} ${timeHM(t.time_close)}</td>
+        <td class="sym">${escapeH(t.symbol)}</td><td class="strat-name">${escapeH(t.comment)}</td>
+        <td class="${dirCls(t.dir)}">${(t.dir||'').toUpperCase()}</td>
+        <td>${fmt(t.entry,2)}</td><td>${fmt(t.exit,2)}</td>
+        <td class="${pnlCls(t.pnl||0)}">${fmtUsd(t.pnl||0,2)}</td>
+      </tr>`;
+    }
+    h+='</table></div></div>';
+  }
+  h+='</div>';
+  root.innerHTML=h;
+}
+
 // === Render: LOGS (entries from positions + exits from period trades) ===
 function renderLogs(data){
   const root=document.getElementById('tab-logs');
@@ -1248,6 +1381,7 @@ function render(){
   else if(TAB==='history')renderHistory(data);
   else if(TAB==='bt')renderBT(data);
   else if(TAB==='logs')renderLogs(data);
+  else if(TAB==='legacy')renderLegacy(data);
 }
 
 async function refresh(){
