@@ -2,6 +2,32 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-28 — Dashboard: vrai graphique equity (axes, grille, labels)
+
+User: les sparklines n'avaient pas d'info, voulait un graphique complet.
+
+### Nouveau renderEquityChart()
+
+SVG hand-coded avec:
+- Axe Y (gauche): 5 ticks $ avec fmt(0)
+- Axe X (bas): 5 ticks dates MM-DD
+- Grille horizontale + verticale (gris tres clair)
+- Ligne equity bleu + area gradient
+- Baseline dashed gris (balance de depart) avec annotation
+- Peak line dashed vert avec annotation 'peak $X'
+- Marker peak (rond vert) + Marker current (rond bleu)
+- Resume sous le graphique: Current, Peak, Min, DD courant, Total %, nb pts
+
+Rendu SVG 800x300 viewBox, scale uniforme via xMidYMid meet. Min-width 680px sur mobile (overflow scroll horizontal). Hauteur 240px mobile, 280px desktop.
+
+### Application
+
+- Home tab (nouveau): Equity all-time avec baseline en haut
+- Trades tab: Equity 100 derniers points
+- Histo tab: Equity all-time avec baseline + max DD
+
+Sparkline gardee comme fallback (mais plus utilisee pour equity).
+
 ## 2026-04-28 — Dashboard: drill aligne BT/LV + Legacy depouille
 
 User: drill non aligne (le $ live decale les lignes), Legacy moche avec footer noir.

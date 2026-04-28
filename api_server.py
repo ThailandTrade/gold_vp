@@ -222,12 +222,31 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .pos-bar .label-tp { position:absolute; right:4px; top:50%; transform:translateY(-50%); font-size:10px; color:#059669; font-weight:600; }
   .pos-bar .label-entry { position:absolute; top:50%; transform:translate(-50%,-50%); font-size:10px; color:#6b7280; font-weight:500; background:rgba(255,255,255,0.9); padding:0 3px; border-radius:2px; }
 
-  /* Sparkline */
+  /* Sparkline (small) */
   .spark { width:100%; height:80px; }
   .spark-axis { stroke:#e8eaed; stroke-width:1; }
   .spark-line { fill:none; stroke:#2563eb; stroke-width:2; }
   .spark-area { fill:url(#spark-grad); }
   .spark-dd { fill:none; stroke:#dc2626; stroke-width:1.5; stroke-dasharray:3,2; }
+
+  /* Full chart */
+  .chart-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .chart-svg { width:100%; min-width:680px; height:240px; display:block; }
+  @media (min-width:768px) { .chart-svg { height:280px; min-width:0; } }
+  .chart-grid { stroke:#f0f1f3; stroke-width:1; }
+  .chart-axis-label { font-size:10px; fill:#6b7280; font-family:'Inter',sans-serif; }
+  .chart-line { fill:none; stroke:#2563eb; stroke-width:2; }
+  .chart-area { fill:url(#eq-grad); }
+  .chart-baseline { stroke:#9ca3af; stroke-width:1; stroke-dasharray:3,3; }
+  .chart-peak-line { stroke:#059669; stroke-width:1; stroke-dasharray:2,4; }
+  .chart-marker { fill:#2563eb; stroke:#fff; stroke-width:2; }
+  .chart-marker.peak { fill:#059669; }
+  .chart-marker.trough { fill:#dc2626; }
+  .chart-tooltip-label { font-size:11px; font-weight:600; }
+  .chart-summary { display:flex; gap:14px; margin-top:6px; flex-wrap:wrap; font-size:11px; color:#6b7280; }
+  .chart-summary span b { color:#1a1a2e; font-weight:700; }
+  .chart-summary .green b { color:#059669; }
+  .chart-summary .red b { color:#dc2626; }
 
   /* Calendar heatmap */
   .calendar { display:grid; grid-template-columns:repeat(13,1fr); gap:3px; margin:8px 0; }
@@ -906,6 +925,98 @@ function sparkline(points,key,height,colorLine,colorArea){
   return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">${grad}<path d="${a}" fill="url(#spark-grad)"/><path class="spark-line" d="${d}" stroke="${colorLine}"/></svg>`;
 }
 
+// === Full equity chart with axes, grid, labels ===
+function renderEquityChart(points, opts){
+  if(!points||points.length<2)return '<div class="empty">Pas assez de points</div>';
+  const o=opts||{};
+  const baseline=o.baseline; // optional starting balance for baseline
+  const W=800,H=300;
+  const PAD_L=64,PAD_R=14,PAD_T=14,PAD_B=32;
+  const innerW=W-PAD_L-PAD_R, innerH=H-PAD_T-PAD_B;
+  const eqs=points.map(p=>p.e);
+  let eMin=Math.min(...eqs), eMax=Math.max(...eqs);
+  if(baseline!=null){eMin=Math.min(eMin,baseline);eMax=Math.max(eMax,baseline);}
+  const ePad=(eMax-eMin)*0.08||1;
+  const yMin=eMin-ePad, yMax=eMax+ePad, ySpan=yMax-yMin;
+  const ts=points.map(p=>p.t?new Date(p.t).getTime():0);
+  const tMin=Math.min(...ts.filter(x=>x>0)), tMax=Math.max(...ts);
+  const tSpan=tMax-tMin||1;
+  const xOf=t=>PAD_L+((t-tMin)/tSpan)*innerW;
+  const yOf=v=>PAD_T+(1-(v-yMin)/ySpan)*innerH;
+
+  // Y ticks
+  const yTicks=5;
+  let yAxis='';
+  for(let i=0;i<yTicks;i++){
+    const v=yMin+(ySpan*i/(yTicks-1));
+    const y=yOf(v);
+    yAxis+=`<line class="chart-grid" x1="${PAD_L}" x2="${W-PAD_R}" y1="${y}" y2="${y}"/>`;
+    yAxis+=`<text class="chart-axis-label" x="${PAD_L-7}" y="${y+3}" text-anchor="end">$${fmt(v,0)}</text>`;
+  }
+
+  // X ticks (dates)
+  const xTicks=5;
+  let xAxis='';
+  for(let i=0;i<xTicks;i++){
+    const t=tMin+(tSpan*i/(xTicks-1));
+    const x=xOf(t);
+    xAxis+=`<line class="chart-grid" x1="${x}" x2="${x}" y1="${PAD_T}" y2="${H-PAD_B}"/>`;
+    const d=new Date(t);
+    const lbl=String(d.getUTCMonth()+1).padStart(2,'0')+'-'+String(d.getUTCDate()).padStart(2,'0');
+    xAxis+=`<text class="chart-axis-label" x="${x}" y="${H-PAD_B+15}" text-anchor="middle">${lbl}</text>`;
+  }
+
+  // Equity line + area
+  let path='', area='';
+  for(let i=0;i<points.length;i++){
+    if(!ts[i])continue;
+    const x=xOf(ts[i]), y=yOf(eqs[i]);
+    if(!path){path=`M${x.toFixed(1)},${y.toFixed(1)}`; area=`M${x.toFixed(1)},${(H-PAD_B)} L${x.toFixed(1)},${y.toFixed(1)}`;}
+    else { path+=` L${x.toFixed(1)},${y.toFixed(1)}`; area+=` L${x.toFixed(1)},${y.toFixed(1)}`; }
+  }
+  area+=` L${xOf(tMax).toFixed(1)},${(H-PAD_B)} Z`;
+
+  // Baseline line
+  let baselineLine='';
+  if(baseline!=null && baseline>=yMin && baseline<=yMax){
+    const yb=yOf(baseline);
+    baselineLine=`<line class="chart-baseline" x1="${PAD_L}" x2="${W-PAD_R}" y1="${yb}" y2="${yb}"/><text class="chart-axis-label" x="${W-PAD_R-3}" y="${yb-3}" text-anchor="end" fill="#9ca3af">start $${fmt(baseline,0)}</text>`;
+  }
+
+  // Peak line (max point)
+  let peakLine='', peakMarker='';
+  let peakIdx=0; for(let i=0;i<eqs.length;i++)if(eqs[i]>eqs[peakIdx])peakIdx=i;
+  if(eqs.length>1){
+    const yp=yOf(eqs[peakIdx]);
+    peakLine=`<line class="chart-peak-line" x1="${PAD_L}" x2="${W-PAD_R}" y1="${yp}" y2="${yp}"/><text class="chart-axis-label" x="${W-PAD_R-3}" y="${yp+12}" text-anchor="end" fill="#059669">peak $${fmt(eqs[peakIdx],0)}</text>`;
+    if(ts[peakIdx])peakMarker=`<circle class="chart-marker peak" cx="${xOf(ts[peakIdx])}" cy="${yp}" r="3.5"/>`;
+  }
+
+  // Current marker
+  const lastIdx=points.length-1;
+  let curMarker='';
+  if(ts[lastIdx])curMarker=`<circle class="chart-marker" cx="${xOf(ts[lastIdx])}" cy="${yOf(eqs[lastIdx])}" r="4"/>`;
+
+  const grad=`<defs><linearGradient id="eq-grad" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#2563eb" stop-opacity="0.3"/><stop offset="100%" stop-color="#2563eb" stop-opacity="0.02"/></linearGradient></defs>`;
+  const svg=`<svg class="chart-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">${grad}${yAxis}${xAxis}<path class="chart-area" d="${area}"/>${baselineLine}${peakLine}<path class="chart-line" d="${path}"/>${peakMarker}${curMarker}</svg>`;
+
+  // Summary line
+  const cur=eqs[lastIdx], peak=eqs[peakIdx];
+  const dd=peak>0?(cur-peak)/peak*100:0;
+  const startEq=baseline!=null?baseline:eqs[0];
+  const totalRet=startEq>0?(cur-startEq)/startEq*100:0;
+  const summary=`<div class="chart-summary">
+    <span>Current <b>$${fmt(cur,0)}</b></span>
+    <span>Peak <b class="green">$${fmt(peak,0)}</b></span>
+    <span>Min <b class="red">$${fmt(Math.min(...eqs),0)}</b></span>
+    <span>DD courant <b class="${dd<0?'red':'green'}">${dd.toFixed(2)}%</b></span>
+    <span>Total <b class="${totalRet>=0?'green':'red'}">${(totalRet>=0?'+':'')+totalRet.toFixed(1)}%</b></span>
+    <span>${points.length} pts</span>
+  </div>`;
+
+  return `<div class="chart-wrap">${svg}</div>${summary}`;
+}
+
 // === Render: HOME ===
 function renderHome(data){
   const root=document.getElementById('tab-home');
@@ -927,6 +1038,14 @@ function renderHome(data){
   const avgPnl=trades.length?total/trades.length:0;
 
   let h='';
+  // Equity chart
+  const hist=data.history||[];
+  const eqInfo=buildEquity(hist,a.balance||0);
+  if(eqInfo.points.length>=2){
+    const startBal=eqInfo.points[0].e;
+    h+=`<div class="card"><div class="card-title">Equity all-time</div>${renderEquityChart(eqInfo.points,{baseline:startBal})}</div>`;
+  }
+
   // Big summary card
   h+=`<div class="card">
     <div class="card-title">Vue ${range.label}<span class="right ${pnlCls(total)}">${fmtUsd(total,2)}</span></div>
@@ -999,11 +1118,11 @@ function renderToday(data){
   const trades=getPeriodTrades(data);
   const periodPnl=trades.reduce((s,t)=>s+(t.pnl||0),0);
   const eqInfo=buildEquity(hist,a.balance||0);
-  const recent=eqInfo.points.slice(-100);
+  const recent=eqInfo.points.slice(-Math.min(100,eqInfo.points.length));
   let h='';
-  h+=`<div class="card"><div class="card-title">Equity (${recent.length} pts)<span class="right">$${fmt(a.equity,0)}</span></div>`;
-  h+=sparkline(recent,'e',null,'#2563eb');
-  h+='</div>';
+  if(recent.length>=2){
+    h+=`<div class="card"><div class="card-title">Equity (${recent.length} derniers points)</div>${renderEquityChart(recent)}</div>`;
+  }
   h+=`<div class="card"><div class="card-title">Trades ${range.label}<span class="right">${trades.length} trades &middot; ${fmtUsd(periodPnl,2)}</span></div>`;
   if(trades.length===0)h+='<div class="empty">Aucun trade sur la periode</div>';
   else{
@@ -1115,11 +1234,10 @@ function renderHistory(data){
     h+='</div></div>';
   }
 
-  // Equity full + DD chart
+  // Equity full chart
   if(eqInfo.points.length>1){
-    h+=`<div class="card"><div class="card-title">Equity all-time<span class="right">peak $${fmt(eqInfo.peak,0)} &middot; max DD ${eqInfo.maxDd.toFixed(2)}%</span></div>`;
-    h+=sparkline(eqInfo.points,'e',null,'#2563eb');
-    h+='</div>';
+    const startBal=eqInfo.points[0].e;
+    h+=`<div class="card"><div class="card-title">Equity all-time<span class="right">max DD ${eqInfo.maxDd.toFixed(2)}%</span></div>${renderEquityChart(eqInfo.points,{baseline:startBal})}</div>`;
   }
 
   // Recent trades
