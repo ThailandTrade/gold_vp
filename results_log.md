@@ -2,6 +2,64 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-28 — Dashboard: page Home + drill-down (modal) sur trades/instruments/strats
+
+User: dashboard manquait de detail accessible. Ajout d'un onglet Home avec aggregats clickables et systeme de drill-down via modal sur tous les trade cards.
+
+### Onglet Home (nouveau, default)
+
+- Vue [periode]: total $, trades, WR, PF, avg/trade, best, worst
+- Positions ouvertes (clickable -> drill position)
+- Par instrument (sorted by total $, clickable -> drill instrument)
+- Par strategie (sorted by total $, clickable -> drill strat)
+
+### Systeme modal
+
+Modal full-screen sur mobile, centered card desktop. Header avec bouton Back (si stack) + titre + bouton Close. Backdrop blur + close on click.
+
+Stack de drill-down: depuis Home -> Instrument -> Trade -> back -> Instrument -> back -> Home.
+
+### Drill-down trade (lv ou bt)
+
+Affichage 3 sections:
+1. KPI grid: PnL $, PnL R, Volume, Direction
+2. BT vs LV side-by-side cards si match (depuis bt_compare.rows par strat)
+3. Slippage section: slippage entree pts, slippage sortie pts, delta R, ATR jour
+4. Detail: ticket, strat, open/close timestamps, duree
+
+Si pas de match BT (LV-only), section "Trade Live" simple. Si match BT mais pas LV (BT-only), affichage BT seul.
+
+Fonctions:
+- openTradeByKey(key, push) - dispatch sur scope lv/op/bt
+- renderTradeDrill(t, data) - trade ferme
+- renderPositionDrill(p, data) - position ouverte (avec slippage entry vs BT signal)
+- renderBtRowDrill(sym, strat, m, data) - BT vs LV row from bt_compare
+
+### Drill-down instrument
+
+- KPI: Total $, Trades, WR, PF, Best, Worst
+- Top par strat (clickable -> drill strat)
+- Liste trades de la periode (clickable -> drill trade)
+
+### Drill-down strat
+
+Symetrique: KPI + per-instrument breakdown + trades list.
+
+### Click handlers
+
+Tous les tcard sont maintenant clickables (cursor pointer + hover style):
+- Tab Trades: open trade drill
+- Tab Open: open position drill
+- Tab Histo: open trade drill
+- Tab BT vs LV top divergences: open BT row drill
+- Tab BT vs LV per-instrument: open instrument drill
+- Tab Logs: open trade or position drill selon type
+- Home: tous les rows de toplist clickables
+
+### Tabs reorganises
+
+Home / Trades / Open / Histo / BT/LV / Logs - 6 tabs, defaults Home. Persiste localStorage.
+
 ## 2026-04-28 — Dashboard: selecteur de periode (Jour/Hier/7j/30j/Tout)
 
 User veut pouvoir choisir la periode pour chaque compte. Default = jour courant.

@@ -246,13 +246,64 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .score-banner .big { font-size:24px; font-weight:700; }
 
   /* Logs */
-  .log-row { padding:6px 0; border-bottom:1px solid #f0f1f3; font-size:11px; display:flex; gap:8px; align-items:center; }
+  .log-row { padding:6px 0; border-bottom:1px solid #f0f1f3; font-size:11px; display:flex; gap:8px; align-items:center; cursor:pointer; }
+  .log-row:hover { background:#f9fafb; }
   .log-row:last-child { border-bottom:none; }
   .log-time { color:#9ca3af; min-width:42px; font-variant-numeric:tabular-nums; }
   .log-tag { padding:1px 6px; border-radius:3px; font-size:9px; font-weight:700; text-transform:uppercase; min-width:48px; text-align:center; }
   .log-tag.entry { background:#dbeafe; color:#1e40af; }
   .log-tag.exit-w { background:#d1fae5; color:#065f46; }
   .log-tag.exit-l { background:#fee2e2; color:#991b1b; }
+
+  /* Clickable */
+  .tcard { cursor:pointer; transition:transform 0.1s, box-shadow 0.1s; }
+  .tcard:hover { box-shadow:0 2px 8px rgba(37,99,235,0.12); border-color:#2563eb; }
+  .tcard:active { transform:scale(0.99); }
+  .clickable { cursor:pointer; }
+  .clickable:hover { background:#f9fafb; }
+
+  /* Modal / drill-down */
+  .modal { position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center; }
+  .modal.hidden { display:none; }
+  .modal-backdrop { position:absolute; inset:0; background:rgba(15,23,42,0.5); backdrop-filter:blur(2px); }
+  .modal-content { position:relative; background:#fff; border-radius:12px; max-width:640px; width:calc(100% - 20px); max-height:90vh; overflow-y:auto; box-shadow:0 10px 40px rgba(0,0,0,0.2); display:flex; flex-direction:column; }
+  .modal-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid #e8eaed; position:sticky; top:0; background:#fff; z-index:1; border-radius:12px 12px 0 0; }
+  .modal-title { font-size:14px; font-weight:700; color:#1a1a2e; }
+  .modal-title .sub { font-weight:400; color:#6b7280; font-size:11px; margin-left:6px; }
+  .modal-back { background:transparent; border:none; font-size:18px; cursor:pointer; color:#6b7280; padding:4px 8px; }
+  .modal-close { background:transparent; border:none; font-size:22px; cursor:pointer; color:#6b7280; padding:0 4px; line-height:1; }
+  .modal-close:hover { color:#1a1a2e; }
+  .modal-body { padding:14px 16px; }
+  @media (max-width: 600px) {
+    .modal { align-items:stretch; }
+    .modal-content { max-width:none; width:100%; max-height:none; border-radius:0; }
+    .modal-header { border-radius:0; }
+  }
+
+  /* Drill content */
+  .drill-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; }
+  .drill-cell { background:#f9fafb; border-radius:6px; padding:8px 10px; }
+  .drill-cell .lbl { font-size:9px; color:#6b7280; text-transform:uppercase; letter-spacing:0.4px; font-weight:600; }
+  .drill-cell .val { font-size:13px; font-weight:600; color:#1a1a2e; margin-top:2px; }
+  .drill-section { margin-bottom:14px; }
+  .drill-section h4 { font-size:11px; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; padding-bottom:4px; border-bottom:1px solid #e8eaed; }
+  .drill-row { display:flex; justify-content:space-between; padding:5px 0; font-size:12px; border-bottom:1px solid #f0f1f3; }
+  .drill-row:last-child { border-bottom:none; }
+  .drill-row .k { color:#6b7280; }
+  .drill-row .v { font-weight:600; color:#1a1a2e; }
+  .drill-vs { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
+  .drill-vs .col { background:#f9fafb; border-radius:8px; padding:10px; }
+  .drill-vs .col h5 { font-size:10px; color:#6b7280; text-transform:uppercase; margin-bottom:6px; font-weight:700; }
+  .drill-vs .col.bt h5 { color:#7c3aed; }
+  .drill-vs .col.lv h5 { color:#2563eb; }
+
+  /* Top lists (Home) */
+  .toplist { display:flex; flex-direction:column; gap:4px; }
+  .toprow { display:flex; align-items:center; gap:8px; padding:8px 10px; background:#fafbfc; border:1px solid #e8eaed; border-radius:6px; cursor:pointer; transition:all 0.1s; }
+  .toprow:hover { background:#f0f7ff; border-color:#2563eb; }
+  .toprow .name { flex:1; font-weight:600; }
+  .toprow .stats { color:#6b7280; font-size:11px; display:flex; gap:8px; }
+  .toprow .pnl { font-weight:700; min-width:70px; text-align:right; }
 
   /* Compact list */
   .list { display:flex; flex-direction:column; gap:5px; }
@@ -296,11 +347,24 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 <div class="main">
   <section class="kpis" id="kpis"></section>
   <nav class="tabs" id="tabs"></nav>
-  <div id="tab-today" class="tab-content active"></div>
+  <div id="tab-home" class="tab-content active"></div>
+  <div id="tab-today" class="tab-content"></div>
   <div id="tab-open" class="tab-content"></div>
   <div id="tab-history" class="tab-content"></div>
   <div id="tab-bt" class="tab-content"></div>
   <div id="tab-logs" class="tab-content"></div>
+</div>
+
+<div id="modal" class="modal hidden">
+  <div class="modal-backdrop" onclick="closeModal()"></div>
+  <div class="modal-content">
+    <div class="modal-header">
+      <span id="modal-back-wrap"></span>
+      <span class="modal-title" id="modal-title"></span>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
 </div>
 
 <div class="footer">HydraTrader &mdash; refresh 1s</div>
@@ -317,9 +381,10 @@ const PERIODS=[
   {id:'all',label:'Tout'},
 ];
 let SELECTED=localStorage.getItem('hydra-acc')||'ftmo';
-let TAB=localStorage.getItem('hydra-tab')||'today';
+let TAB=localStorage.getItem('hydra-tab')||'home';
 let PERIOD=localStorage.getItem('hydra-period')||'today';
 let LAST={};
+let MODAL_STACK=[]; // pour bouton retour
 
 function nowDate(data){const ts=data?.state?.ts;return ts?new Date(ts):new Date();}
 function periodRange(periodId,data){
@@ -362,6 +427,314 @@ function dirCls(d){return d==='long'?'dir-long':'dir-short';}
 function timeHM(s){return s?(s+'').slice(11,16):'';}
 function dateD(s){return s?(s+'').slice(0,10):'';}
 function escapeH(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+// === Modal system ===
+function openModal(title,html,push){
+  if(push)MODAL_STACK.push({title:document.getElementById('modal-title').innerHTML,body:document.getElementById('modal-body').innerHTML});
+  document.getElementById('modal-title').innerHTML=title;
+  document.getElementById('modal-body').innerHTML=html;
+  document.getElementById('modal-back-wrap').innerHTML=MODAL_STACK.length?'<button class="modal-back" onclick="modalBack()">&larr;</button>':'';
+  document.getElementById('modal').classList.remove('hidden');
+  document.body.style.overflow='hidden';
+}
+function closeModal(){
+  document.getElementById('modal').classList.add('hidden');
+  document.body.style.overflow='';
+  MODAL_STACK=[];
+}
+function modalBack(){
+  if(MODAL_STACK.length===0){closeModal();return;}
+  const prev=MODAL_STACK.pop();
+  document.getElementById('modal-title').innerHTML=prev.title;
+  document.getElementById('modal-body').innerHTML=prev.body;
+  document.getElementById('modal-back-wrap').innerHTML=MODAL_STACK.length?'<button class="modal-back" onclick="modalBack()">&larr;</button>':'';
+}
+
+// === BT match for live trade ===
+function findBtMatch(sym,strat,data){
+  const btc=data?.bt_compare||{};
+  const info=btc[sym];
+  if(!info)return null;
+  const row=(info.rows||[]).find(r=>r.strat===strat);
+  return row?{...row,atr:info.atr}:null;
+}
+
+// === Drill-down: trade ===
+function openTradeByKey(key,push){
+  const data=LAST[SELECTED]||{};
+  const [scope,...rest]=key.split('|');
+  let title='',body='';
+  if(scope==='lv'){
+    const ticket=parseInt(rest[0]);
+    const all=[...(data.state?.today_trades||[]),...(data.history||[])];
+    const t=all.find(x=>x.ticket===ticket);
+    if(!t){body='<div class="empty">Trade introuvable</div>';}
+    else{title=tradeTitle(t);body=renderTradeDrill(t,data);}
+  }else if(scope==='op'){
+    const ticket=parseInt(rest[0]);
+    const p=(data.state?.positions||[]).find(x=>x.ticket===ticket);
+    if(!p){body='<div class="empty">Position introuvable</div>';}
+    else{title=tradeTitle(p)+' <span class="sub">OPEN</span>';body=renderPositionDrill(p,data);}
+  }else if(scope==='bt'){
+    const sym=rest[0],strat=rest[1];
+    const m=findBtMatch(sym,strat,data);
+    if(!m){body='<div class="empty">BT introuvable</div>';}
+    else{title=`${escapeH(sym)} <span class="sub">${escapeH(strat)} (BT)</span>`;body=renderBtRowDrill(sym,strat,m,data);}
+  }
+  openModal(title,body,push);
+}
+
+function tradeTitle(t){
+  const d=(t.dir||'').toUpperCase();
+  return `${escapeH(t.symbol)} <span class="sub">${escapeH(t.comment)} ${d}</span>`;
+}
+
+function renderTradeDrill(t,data){
+  const m=findBtMatch(t.symbol,t.comment,data);
+  const pnl=t.pnl||0;
+  const isLong=t.dir==='long';
+  let h='';
+  // Top metrics
+  h+='<div class="drill-grid">';
+  h+=`<div class="drill-cell"><div class="lbl">PnL $</div><div class="val ${pnlCls(pnl)}">${fmtUsd(pnl,2)}</div></div>`;
+  if(m&&m.lv){h+=`<div class="drill-cell"><div class="lbl">PnL R</div><div class="val ${pnlCls(m.lv.pnl_r||0)}">${(m.lv.pnl_r>=0?'+':'')+(m.lv.pnl_r||0).toFixed(2)}R</div></div>`;}
+  h+=`<div class="drill-cell"><div class="lbl">Volume</div><div class="val">${t.volume} lots</div></div>`;
+  h+=`<div class="drill-cell"><div class="lbl">Direction</div><div class="val ${dirCls(t.dir)}">${(t.dir||'').toUpperCase()}</div></div>`;
+  h+='</div>';
+
+  // BT vs LV side-by-side if matched
+  if(m&&m.bt){
+    h+='<div class="drill-vs">';
+    h+=`<div class="col bt"><h5>Backtest</h5>
+      <div class="drill-row"><span class="k">Entry</span><span class="v">${fmt(m.bt.entry,2)}</span></div>
+      <div class="drill-row"><span class="k">Exit</span><span class="v">${fmt(m.bt.exit,2)}</span></div>
+      <div class="drill-row"><span class="k">R</span><span class="v ${pnlCls(m.bt.pnl_r||0)}">${(m.bt.pnl_r>=0?'+':'')+(m.bt.pnl_r||0).toFixed(2)}R</span></div>
+      <div class="drill-row"><span class="k">Pts</span><span class="v">${fmt(((isLong?m.bt.exit-m.bt.entry:m.bt.entry-m.bt.exit)),2)}</span></div>
+    </div>`;
+    h+=`<div class="col lv"><h5>Live</h5>
+      <div class="drill-row"><span class="k">Entry</span><span class="v">${fmt(t.entry,2)}</span></div>
+      <div class="drill-row"><span class="k">Exit</span><span class="v">${fmt(t.exit,2)}</span></div>
+      <div class="drill-row"><span class="k">R</span><span class="v ${pnlCls((m.lv||{}).pnl_r||0)}">${m.lv?(m.lv.pnl_r>=0?'+':'')+(m.lv.pnl_r||0).toFixed(2)+'R':'-'}</span></div>
+      <div class="drill-row"><span class="k">Pts</span><span class="v">${fmt(((isLong?t.exit-t.entry:t.entry-t.exit)),2)}</span></div>
+    </div>`;
+    h+='</div>';
+    // Slippage
+    const slipEntry=isLong?(t.entry-m.bt.entry):(m.bt.entry-t.entry);
+    const slipExit=isLong?(m.bt.exit-t.exit):(t.exit-m.bt.exit);
+    const delta=m.delta||0;
+    h+='<div class="drill-section"><h4>Slippage</h4>';
+    h+=`<div class="drill-row"><span class="k">Slippage entree</span><span class="v ${slipEntry<=0?'pnl-pos':'pnl-neg'}">${slipEntry>=0?'+':''}${slipEntry.toFixed(2)} pts</span></div>`;
+    h+=`<div class="drill-row"><span class="k">Slippage sortie</span><span class="v ${slipExit>=0?'pnl-pos':'pnl-neg'}">${slipExit>=0?'+':''}${slipExit.toFixed(2)} pts</span></div>`;
+    h+=`<div class="drill-row"><span class="k">Delta R (BT - LV)</span><span class="v ${pnlCls(delta)}">${delta>=0?'+':''}${delta.toFixed(2)}R</span></div>`;
+    h+=`<div class="drill-row"><span class="k">ATR du jour</span><span class="v">${fmt(m.atr,2)}</span></div>`;
+    h+='</div>';
+  }else{
+    h+='<div class="drill-section"><h4>Trade Live</h4>';
+    h+=`<div class="drill-row"><span class="k">Entry</span><span class="v">${fmt(t.entry,2)}</span></div>`;
+    h+=`<div class="drill-row"><span class="k">Exit</span><span class="v">${fmt(t.exit,2)}</span></div>`;
+    h+=`<div class="drill-row"><span class="k">Pts</span><span class="v">${fmt(((isLong?t.exit-t.entry:t.entry-t.exit)),2)}</span></div>`;
+    h+='<div class="drill-row"><span class="k">BT match</span><span class="v" style="color:#9ca3af">Aucun</span></div>';
+    h+='</div>';
+  }
+
+  // Meta
+  h+='<div class="drill-section"><h4>Detail</h4>';
+  h+=`<div class="drill-row"><span class="k">Ticket</span><span class="v">#${t.ticket||'-'}</span></div>`;
+  h+=`<div class="drill-row"><span class="k">Strat</span><span class="v" style="color:#2563eb">${escapeH(t.comment)}</span></div>`;
+  h+=`<div class="drill-row"><span class="k">Open</span><span class="v">${dateD(t.time_open)} ${timeHM(t.time_open)}</span></div>`;
+  h+=`<div class="drill-row"><span class="k">Close</span><span class="v">${dateD(t.time_close)} ${timeHM(t.time_close)}</span></div>`;
+  if(t.time_open&&t.time_close){
+    const dur=Math.round((new Date(t.time_close).getTime()-new Date(t.time_open).getTime())/60000);
+    h+=`<div class="drill-row"><span class="k">Duree</span><span class="v">${dur} min</span></div>`;
+  }
+  h+='</div>';
+  return h;
+}
+
+function renderPositionDrill(p,data){
+  const m=findBtMatch(p.symbol,p.comment,data);
+  const isLong=p.dir==='long';
+  const elapsed=p.time_open?Math.round((Date.now()-new Date(p.time_open).getTime())/60000):0;
+  const pnl=p.pnl||0;
+  let h='';
+  h+='<div class="drill-grid">';
+  h+=`<div class="drill-cell"><div class="lbl">PnL flot</div><div class="val ${pnlCls(pnl)}">${fmtUsd(pnl,2)}</div></div>`;
+  h+=`<div class="drill-cell"><div class="lbl">Direction</div><div class="val ${dirCls(p.dir)}">${(p.dir||'').toUpperCase()}</div></div>`;
+  h+=`<div class="drill-cell"><div class="lbl">Volume</div><div class="val">${p.volume} lots</div></div>`;
+  h+=`<div class="drill-cell"><div class="lbl">Elapsed</div><div class="val">${elapsed} min</div></div>`;
+  h+='</div>';
+
+  h+='<div class="drill-section"><h4>Position</h4>';
+  h+=`<div class="drill-row"><span class="k">Entry (fill)</span><span class="v">${fmt(p.entry,2)}</span></div>`;
+  h+=`<div class="drill-row"><span class="k">Current</span><span class="v">${fmt(p.current,2)}</span></div>`;
+  h+=`<div class="drill-row"><span class="k">SL</span><span class="v" style="color:#dc2626">${fmt(p.sl,2)}</span></div>`;
+  h+=`<div class="drill-row"><span class="k">TP</span><span class="v" style="color:#059669">${p.tp?fmt(p.tp,2):'-'}</span></div>`;
+  if(p.swap)h+=`<div class="drill-row"><span class="k">Swap</span><span class="v">${fmtUsd(p.swap,2)}</span></div>`;
+  h+='</div>';
+
+  if(m&&m.bt){
+    h+='<div class="drill-section"><h4>BT (signal)</h4>';
+    h+=`<div class="drill-row"><span class="k">BT Entry (close signal)</span><span class="v">${fmt(m.bt.entry,2)}</span></div>`;
+    const slip=isLong?(p.entry-m.bt.entry):(m.bt.entry-p.entry);
+    h+=`<div class="drill-row"><span class="k">Slippage entree</span><span class="v ${slip<=0?'pnl-pos':'pnl-neg'}">${slip>=0?'+':''}${slip.toFixed(2)} pts</span></div>`;
+    if(m.bt.exit&&m.bt.exit!==m.bt.entry){
+      h+=`<div class="drill-row"><span class="k">BT Exit (deja sorti)</span><span class="v">${fmt(m.bt.exit,2)}</span></div>`;
+      h+=`<div class="drill-row"><span class="k">BT R</span><span class="v ${pnlCls(m.bt.pnl_r||0)}">${(m.bt.pnl_r>=0?'+':'')+(m.bt.pnl_r||0).toFixed(2)}R</span></div>`;
+    }
+    h+=`<div class="drill-row"><span class="k">ATR jour</span><span class="v">${fmt(m.atr,2)}</span></div>`;
+    h+='</div>';
+  }
+
+  h+='<div class="drill-section"><h4>Detail</h4>';
+  h+=`<div class="drill-row"><span class="k">Ticket</span><span class="v">#${p.ticket}</span></div>`;
+  h+=`<div class="drill-row"><span class="k">Strat</span><span class="v" style="color:#2563eb">${escapeH(p.comment)}</span></div>`;
+  h+=`<div class="drill-row"><span class="k">Time open</span><span class="v">${dateD(p.time_open)} ${timeHM(p.time_open)}</span></div>`;
+  h+='</div>';
+  return h;
+}
+
+function renderBtRowDrill(sym,strat,m,data){
+  const bt=m.bt,lv=m.lv;
+  let h='';
+  h+='<div class="drill-vs">';
+  h+=`<div class="col bt"><h5>Backtest</h5>`;
+  if(bt){
+    h+=`<div class="drill-row"><span class="k">Dir</span><span class="v ${dirCls(bt.dir)}">${(bt.dir||'').toUpperCase()}</span></div>`;
+    h+=`<div class="drill-row"><span class="k">Entry</span><span class="v">${fmt(bt.entry,2)}</span></div>`;
+    h+=`<div class="drill-row"><span class="k">Exit</span><span class="v">${fmt(bt.exit,2)}</span></div>`;
+    h+=`<div class="drill-row"><span class="k">R</span><span class="v ${pnlCls(bt.pnl_r||0)}">${(bt.pnl_r>=0?'+':'')+(bt.pnl_r||0).toFixed(2)}R</span></div>`;
+  }else{h+='<div class="empty" style="padding:6px 0">Pas de signal BT</div>';}
+  h+='</div>';
+  h+=`<div class="col lv"><h5>Live</h5>`;
+  if(lv){
+    h+=`<div class="drill-row"><span class="k">Dir</span><span class="v ${dirCls(lv.dir)}">${(lv.dir||'').toUpperCase()}</span></div>`;
+    h+=`<div class="drill-row"><span class="k">Entry</span><span class="v">${fmt(lv.entry,2)}</span></div>`;
+    h+=`<div class="drill-row"><span class="k">Exit</span><span class="v">${fmt(lv.exit,2)}</span></div>`;
+    h+=`<div class="drill-row"><span class="k">R</span><span class="v ${pnlCls(lv.pnl_r||0)}">${(lv.pnl_r>=0?'+':'')+(lv.pnl_r||0).toFixed(2)}R</span></div>`;
+    h+=`<div class="drill-row"><span class="k">$</span><span class="v ${pnlCls(lv.pnl_usd||0)}">${fmtUsd(lv.pnl_usd||0,2)}</span></div>`;
+  }else{h+='<div class="empty" style="padding:6px 0">Pas de trade live</div>';}
+  h+='</div>';
+  h+='</div>';
+
+  if(m.delta!=null){
+    h+='<div class="drill-section"><h4>Delta</h4>';
+    h+=`<div class="drill-row"><span class="k">BT - LV</span><span class="v ${pnlCls(m.delta)}">${m.delta>=0?'+':''}${m.delta.toFixed(2)}R</span></div>`;
+    h+=`<div class="drill-row"><span class="k">ATR jour</span><span class="v">${fmt(m.atr,2)}</span></div>`;
+    h+='</div>';
+  }
+  return h;
+}
+
+// === Drill-down: instrument ===
+function openInstrumentDrill(sym,push){
+  const data=LAST[SELECTED]||{};
+  const trades=getPeriodTrades(data).filter(t=>t.symbol===sym);
+  const total=trades.reduce((s,t)=>s+(t.pnl||0),0);
+  const wins=trades.filter(t=>(t.pnl||0)>0);
+  const losses=trades.filter(t=>(t.pnl||0)<=0);
+  const wr=trades.length?wins.length/trades.length*100:0;
+  const gp=wins.reduce((s,t)=>s+t.pnl,0);
+  const gl=losses.reduce((s,t)=>s+Math.abs(t.pnl),0);
+  const pf=gl>0?gp/gl:(gp>0?99.99:0);
+  const maxWin=wins.reduce((m,t)=>Math.max(m,t.pnl),0);
+  const maxLoss=losses.reduce((m,t)=>Math.min(m,t.pnl),0);
+  let h='';
+  h+='<div class="drill-grid">';
+  h+=`<div class="drill-cell"><div class="lbl">Total $</div><div class="val ${pnlCls(total)}">${fmtUsd(total,2)}</div></div>`;
+  h+=`<div class="drill-cell"><div class="lbl">Trades</div><div class="val">${trades.length}</div></div>`;
+  h+=`<div class="drill-cell"><div class="lbl">WR</div><div class="val">${wr.toFixed(0)}%</div></div>`;
+  h+=`<div class="drill-cell"><div class="lbl">PF</div><div class="val ${pf>=1?'pnl-pos':'pnl-neg'}">${pf.toFixed(2)}</div></div>`;
+  h+=`<div class="drill-cell"><div class="lbl">Best</div><div class="val pnl-pos">${fmtUsd(maxWin,2)}</div></div>`;
+  h+=`<div class="drill-cell"><div class="lbl">Worst</div><div class="val pnl-neg">${fmtUsd(maxLoss,2)}</div></div>`;
+  h+='</div>';
+
+  // Per strat
+  const byStrat={};
+  for(const t of trades){const k=t.comment||'?';byStrat[k]=byStrat[k]||{n:0,$:0,w:0};byStrat[k].n++;byStrat[k].$+=(t.pnl||0);if((t.pnl||0)>0)byStrat[k].w++;}
+  const stratList=Object.entries(byStrat).sort((a,b)=>b[1].$-a[1].$);
+  if(stratList.length>0){
+    h+='<div class="drill-section"><h4>Par strategie</h4><div class="toplist">';
+    for(const [sn,st] of stratList){
+      h+=`<div class="toprow" onclick="openStratDrill('${escapeH(sn)}',true)">
+        <span class="name">${escapeH(sn)}</span>
+        <span class="stats">${st.n}t &middot; WR ${(st.w/st.n*100).toFixed(0)}%</span>
+        <span class="pnl ${pnlCls(st.$)}">${fmtUsd(st.$,2)}</span>
+      </div>`;
+    }
+    h+='</div></div>';
+  }
+
+  // Trades list
+  if(trades.length>0){
+    h+='<div class="drill-section"><h4>Trades</h4><div class="list">';
+    const sorted=[...trades].sort((a,b)=>(b.time_close||b.time_open||'').localeCompare(a.time_close||a.time_open||''));
+    for(const t of sorted){
+      const pnl=t.pnl||0;
+      h+=`<div class="tcard" onclick="openTradeByKey('lv|${t.ticket}',true)">
+        <div class="tcard-head">
+          <div><span class="tcard-strat">${escapeH(t.comment)}</span> <span class="${dirCls(t.dir)}">${(t.dir||'').toUpperCase()}</span></div>
+          <span class="tcard-pnl ${pnlCls(pnl)}">${fmtUsd(pnl,2)}</span>
+        </div>
+        <div class="tcard-meta"><span>${fmt(t.entry,2)}&rarr;${fmt(t.exit,2)}</span><span class="tcard-time">${dateD(t.time_close)} ${timeHM(t.time_close)}</span></div>
+      </div>`;
+    }
+    h+='</div></div>';
+  }
+  openModal(`${escapeH(sym)} <span class="sub">${periodRange(PERIOD,data).label}</span>`,h,push);
+}
+
+// === Drill-down: strat ===
+function openStratDrill(strat,push){
+  const data=LAST[SELECTED]||{};
+  const trades=getPeriodTrades(data).filter(t=>t.comment===strat);
+  const total=trades.reduce((s,t)=>s+(t.pnl||0),0);
+  const wins=trades.filter(t=>(t.pnl||0)>0);
+  const losses=trades.filter(t=>(t.pnl||0)<=0);
+  const wr=trades.length?wins.length/trades.length*100:0;
+  const gp=wins.reduce((s,t)=>s+t.pnl,0);
+  const gl=losses.reduce((s,t)=>s+Math.abs(t.pnl),0);
+  const pf=gl>0?gp/gl:(gp>0?99.99:0);
+  let h='';
+  h+='<div class="drill-grid">';
+  h+=`<div class="drill-cell"><div class="lbl">Total $</div><div class="val ${pnlCls(total)}">${fmtUsd(total,2)}</div></div>`;
+  h+=`<div class="drill-cell"><div class="lbl">Trades</div><div class="val">${trades.length}</div></div>`;
+  h+=`<div class="drill-cell"><div class="lbl">WR</div><div class="val">${wr.toFixed(0)}%</div></div>`;
+  h+=`<div class="drill-cell"><div class="lbl">PF</div><div class="val ${pf>=1?'pnl-pos':'pnl-neg'}">${pf.toFixed(2)}</div></div>`;
+  h+='</div>';
+
+  // Per sym
+  const bySym={};
+  for(const t of trades){const k=t.symbol||'?';bySym[k]=bySym[k]||{n:0,$:0,w:0};bySym[k].n++;bySym[k].$+=(t.pnl||0);if((t.pnl||0)>0)bySym[k].w++;}
+  const symList=Object.entries(bySym).sort((a,b)=>b[1].$-a[1].$);
+  if(symList.length>0){
+    h+='<div class="drill-section"><h4>Par instrument</h4><div class="toplist">';
+    for(const [sym,st] of symList){
+      h+=`<div class="toprow" onclick="openInstrumentDrill('${escapeH(sym)}',true)">
+        <span class="name">${escapeH(sym)}</span>
+        <span class="stats">${st.n}t &middot; WR ${(st.w/st.n*100).toFixed(0)}%</span>
+        <span class="pnl ${pnlCls(st.$)}">${fmtUsd(st.$,2)}</span>
+      </div>`;
+    }
+    h+='</div></div>';
+  }
+
+  if(trades.length>0){
+    h+='<div class="drill-section"><h4>Trades</h4><div class="list">';
+    const sorted=[...trades].sort((a,b)=>(b.time_close||b.time_open||'').localeCompare(a.time_close||a.time_open||''));
+    for(const t of sorted){
+      const pnl=t.pnl||0;
+      h+=`<div class="tcard" onclick="openTradeByKey('lv|${t.ticket}',true)">
+        <div class="tcard-head">
+          <div><span class="tcard-sym">${escapeH(t.symbol)}</span> <span class="${dirCls(t.dir)}">${(t.dir||'').toUpperCase()}</span></div>
+          <span class="tcard-pnl ${pnlCls(pnl)}">${fmtUsd(pnl,2)}</span>
+        </div>
+        <div class="tcard-meta"><span>${fmt(t.entry,2)}&rarr;${fmt(t.exit,2)}</span><span class="tcard-time">${dateD(t.time_close)} ${timeHM(t.time_close)}</span></div>
+      </div>`;
+    }
+    h+='</div></div>';
+  }
+  openModal(`${escapeH(strat)} <span class="sub">${periodRange(PERIOD,data).label}</span>`,h,push);
+}
 
 // === Calculs ===
 function buildEquity(history,balance){
@@ -461,10 +834,11 @@ function renderTabs(data){
   const btc=data?.bt_compare||{};
   let btCount=0; for(const k of Object.keys(btc))btCount+=(btc[k]?.rows||[]).length;
   const tabs=[
+    {id:'home',label:'Home',n:0},
     {id:'today',label:'Trades',n:periodTrades.length},
     {id:'open',label:'Open',n:pos.length},
     {id:'history',label:'Histo',n:hist.length},
-    {id:'bt',label:'BT vs LV',n:btCount},
+    {id:'bt',label:'BT/LV',n:btCount},
     {id:'logs',label:'Logs',n:pos.length+periodTrades.length},
   ];
   let h='';
@@ -494,6 +868,90 @@ function sparkline(points,key,height,colorLine,colorArea){
   return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">${grad}<path d="${a}" fill="url(#spark-grad)"/><path class="spark-line" d="${d}" stroke="${colorLine}"/></svg>`;
 }
 
+// === Render: HOME ===
+function renderHome(data){
+  const root=document.getElementById('tab-home');
+  if(!data||!data.state){root.innerHTML='<div class="empty">Pas de donnees</div>';return;}
+  const range=periodRange(PERIOD,data);
+  const trades=getPeriodTrades(data);
+  const a=data.state.account_info||{};
+  const pos=data.state.positions||[];
+  const flot=pos.reduce((s,p)=>s+(p.pnl||0),0);
+  const total=trades.reduce((s,t)=>s+(t.pnl||0),0);
+  const wins=trades.filter(t=>(t.pnl||0)>0);
+  const losses=trades.filter(t=>(t.pnl||0)<=0);
+  const gp=wins.reduce((s,t)=>s+t.pnl,0);
+  const gl=losses.reduce((s,t)=>s+Math.abs(t.pnl),0);
+  const pf=gl>0?gp/gl:(gp>0?99.99:0);
+  const wr=trades.length?wins.length/trades.length*100:0;
+  const maxWin=wins.reduce((m,t)=>Math.max(m,t.pnl),0);
+  const maxLoss=losses.reduce((m,t)=>Math.min(m,t.pnl),0);
+  const avgPnl=trades.length?total/trades.length:0;
+
+  let h='';
+  // Big summary card
+  h+=`<div class="card">
+    <div class="card-title">Vue ${range.label}<span class="right ${pnlCls(total)}">${fmtUsd(total,2)}</span></div>
+    <div class="drill-grid">
+      <div class="drill-cell"><div class="lbl">Trades</div><div class="val">${trades.length}</div></div>
+      <div class="drill-cell"><div class="lbl">WR</div><div class="val">${wr.toFixed(0)}%</div></div>
+      <div class="drill-cell"><div class="lbl">PF</div><div class="val ${pf>=1?'pnl-pos':'pnl-neg'}">${pf.toFixed(2)}</div></div>
+      <div class="drill-cell"><div class="lbl">Avg/trade</div><div class="val ${pnlCls(avgPnl)}">${fmtUsd(avgPnl,2)}</div></div>
+      <div class="drill-cell"><div class="lbl">Best</div><div class="val pnl-pos">${fmtUsd(maxWin,2)}</div></div>
+      <div class="drill-cell"><div class="lbl">Worst</div><div class="val pnl-neg">${fmtUsd(maxLoss,2)}</div></div>
+    </div>
+  </div>`;
+
+  // Open positions teaser
+  if(pos.length>0){
+    h+=`<div class="card"><div class="card-title">Positions ouvertes (${pos.length})<span class="right ${pnlCls(flot)}">${fmtUsd(flot,2)} flot</span></div><div class="toplist">`;
+    for(const p of pos){
+      h+=`<div class="toprow" onclick="openTradeByKey('op|${p.ticket}',false)">
+        <span class="name">${escapeH(p.symbol)}</span>
+        <span class="stats">${escapeH(p.comment)} &middot; <span class="${dirCls(p.dir)}">${(p.dir||'').toUpperCase()}</span></span>
+        <span class="pnl ${pnlCls(p.pnl||0)}">${fmtUsd(p.pnl||0,2)}</span>
+      </div>`;
+    }
+    h+='</div></div>';
+  }
+
+  // Per instrument
+  const bySym={};
+  for(const t of trades){const k=t.symbol||'?';bySym[k]=bySym[k]||{n:0,$:0,w:0};bySym[k].n++;bySym[k].$+=(t.pnl||0);if((t.pnl||0)>0)bySym[k].w++;}
+  const symList=Object.entries(bySym).sort((a,b)=>b[1].$-a[1].$);
+  if(symList.length>0){
+    h+='<div class="card"><div class="card-title">Par instrument<span class="right">'+symList.length+' sym</span></div><div class="toplist">';
+    for(const [sym,st] of symList){
+      h+=`<div class="toprow" onclick="openInstrumentDrill('${escapeH(sym)}',false)">
+        <span class="name">${escapeH(sym)}</span>
+        <span class="stats">${st.n}t &middot; WR ${(st.w/st.n*100).toFixed(0)}%</span>
+        <span class="pnl ${pnlCls(st.$)}">${fmtUsd(st.$,2)}</span>
+      </div>`;
+    }
+    h+='</div></div>';
+  }
+
+  // Per strat
+  const byStrat={};
+  for(const t of trades){const k=t.comment||'?';byStrat[k]=byStrat[k]||{n:0,$:0,w:0};byStrat[k].n++;byStrat[k].$+=(t.pnl||0);if((t.pnl||0)>0)byStrat[k].w++;}
+  const stratList=Object.entries(byStrat).sort((a,b)=>b[1].$-a[1].$);
+  if(stratList.length>0){
+    h+='<div class="card"><div class="card-title">Par strategie<span class="right">'+stratList.length+' strats</span></div><div class="toplist">';
+    for(const [sn,st] of stratList){
+      h+=`<div class="toprow" onclick="openStratDrill('${escapeH(sn)}',false)">
+        <span class="name">${escapeH(sn)}</span>
+        <span class="stats">${st.n}t &middot; WR ${(st.w/st.n*100).toFixed(0)}%</span>
+        <span class="pnl ${pnlCls(st.$)}">${fmtUsd(st.$,2)}</span>
+      </div>`;
+    }
+    h+='</div></div>';
+  }
+
+  if(trades.length===0&&pos.length===0)h+='<div class="empty">Aucune activite sur la periode</div>';
+
+  root.innerHTML=h;
+}
+
 // === Render: TRADES (period-filtered) ===
 function renderToday(data){
   const root=document.getElementById('tab-today');
@@ -515,7 +973,7 @@ function renderToday(data){
     h+='<div class="list">';
     for(const t of sorted){
       const pnl=t.pnl||0;
-      h+=`<div class="tcard">
+      h+=`<div class="tcard" onclick="openTradeByKey('lv|${t.ticket}',false)">
         <div class="tcard-head">
           <div><span class="tcard-sym">${escapeH(t.symbol)}</span> <span class="tcard-strat">${escapeH(t.comment)}</span></div>
           <span class="tcard-pnl ${pnlCls(pnl)}">${fmtUsd(pnl,2)}</span>
@@ -568,7 +1026,7 @@ function renderOpen(data){
       const pnl=p.pnl||0;
       const tOpen=p.time_open||'';
       const elapsed=tOpen?Math.round((Date.now()-new Date(tOpen).getTime())/60000):0;
-      h+=`<div class="tcard pos-card ${cls}">
+      h+=`<div class="tcard pos-card ${cls}" onclick="openTradeByKey('op|${p.ticket}',false)">
         <div class="tcard-head">
           <div><span class="tcard-sym">${escapeH(p.symbol)}</span> <span class="tcard-strat">${escapeH(p.comment)}</span> <span class="${dirCls(p.dir)}">${(p.dir||'').toUpperCase()}</span></div>
           <span class="tcard-pnl ${pnlCls(pnl)}">${fmtUsd(pnl,2)}</span>
@@ -634,7 +1092,7 @@ function renderHistory(data){
     h+='<div class="list">';
     for(const t of sorted){
       const pnl=t.pnl||0;
-      h+=`<div class="tcard">
+      h+=`<div class="tcard" onclick="openTradeByKey('lv|${t.ticket}',false)">
         <div class="tcard-head">
           <div><span class="tcard-sym">${escapeH(t.symbol)}</span> <span class="tcard-strat">${escapeH(t.comment)}</span></div>
           <span class="tcard-pnl ${pnlCls(pnl)}">${fmtUsd(pnl,2)}</span>
@@ -692,8 +1150,7 @@ function renderBT(data){
   if(top.length>0){
     h+=`<div class="card"><div class="card-title">Top divergences du jour</div><div class="list">`;
     for(const t of top){
-      const cls=t.delta>=0?'pnl-pos':'pnl-neg';
-      h+=`<div class="tcard">
+      h+=`<div class="tcard" onclick="openTradeByKey('bt|${escapeH(t.sym)}|${escapeH(t.strat)}',false)">
         <div class="tcard-head">
           <div><span class="tcard-sym">${escapeH(t.sym)}</span> <span class="tcard-strat">${escapeH(t.strat)}</span></div>
           <span class="badge-r ${t.delta>=0?'pos':'neg'}">${t.delta>=0?'+':''}${t.delta.toFixed(2)}R</span>
@@ -717,7 +1174,7 @@ function renderBT(data){
     const sumLv=rows.reduce((s,r)=>s+(r.lv?.pnl_r||0),0);
     const sumDelta=matchedRows.reduce((s,r)=>s+(r.delta||0),0);
     const atr=btc[sym].atr||0;
-    h+=`<div class="tcard">
+    h+=`<div class="tcard" onclick="openInstrumentDrill('${escapeH(sym)}',false)">
       <div class="tcard-head">
         <span class="tcard-sym">${escapeH(sym)}</span>
         <span class="tcard-time">${rows.length} strats &middot; ATR ${fmt(atr,2)}</span>
@@ -745,11 +1202,11 @@ function renderLogs(data){
   // Open positions: only show if today period (they're current, not historical)
   if(PERIOD==='today'){
     for(const p of pos){
-      events.push({t:p.time_open,type:'entry',sym:p.symbol,strat:p.comment,dir:p.dir,pnl:p.pnl,extra:'OPEN'});
+      events.push({t:p.time_open,type:'entry',sym:p.symbol,strat:p.comment,dir:p.dir,pnl:p.pnl,extra:'OPEN',ticket:p.ticket});
     }
   }
   for(const t of periodTrades){
-    events.push({t:t.time_close,type:(t.pnl||0)>=0?'exit-w':'exit-l',sym:t.symbol,strat:t.comment,dir:t.dir,pnl:t.pnl,extra:(t.pnl>=0?'WIN ':'LOSS ')+fmtUsd(t.pnl,2)});
+    events.push({t:t.time_close,type:(t.pnl||0)>=0?'exit-w':'exit-l',sym:t.symbol,strat:t.comment,dir:t.dir,pnl:t.pnl,extra:(t.pnl>=0?'WIN ':'LOSS ')+fmtUsd(t.pnl,2),ticket:t.ticket});
   }
   events.sort((a,b)=>(b.t||'').localeCompare(a.t||''));
   let h=`<div class="card"><div class="card-title">Evenements ${range.label} (${events.length})</div>`;
@@ -758,7 +1215,8 @@ function renderLogs(data){
     for(const e of events.slice(0,150)){
       const lbl=e.type==='entry'?'ENTRY':e.type==='exit-w'?'WIN':'LOSS';
       const showDate=range.from!==range.to;
-      h+=`<div class="log-row">
+      const key=e.type==='entry'?`op|${e.ticket}`:`lv|${e.ticket}`;
+      h+=`<div class="log-row" onclick="openTradeByKey('${key}',false)">
         <span class="log-time">${showDate?dateD(e.t).slice(5)+' ':''}${timeHM(e.t)}</span>
         <span class="log-tag ${e.type}">${lbl}</span>
         <span class="tcard-sym">${escapeH(e.sym)}</span>
@@ -784,7 +1242,8 @@ function render(){
   document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
   document.getElementById('tab-'+TAB).classList.add('active');
   // Render selected tab
-  if(TAB==='today')renderToday(data);
+  if(TAB==='home')renderHome(data);
+  else if(TAB==='today')renderToday(data);
   else if(TAB==='open')renderOpen(data);
   else if(TAB==='history')renderHistory(data);
   else if(TAB==='bt')renderBT(data);
