@@ -2,6 +2,41 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-29 — Pepperstone: portfolio construit (21 instruments, regularité-first)
+
+User: regularité = M+ ratio max (le plus de mois positifs). Pas DD min, pas Rend max.
+Combos extraits via cleaned (default beam search reverse cleanup) — alternatives notees pour iteration ulterieure.
+
+### Selection finale (par M+ ratio decroissant)
+
+**M+ 12/12 (parfait)**: AUS200, NAS100, GER40
+**M+ 10/12**: USDCAD (alt beam_3 pour M+10 au lieu cleaned 8/12), USDCHF (alt beam_3), US500, CHINAH, EUSTX50 (alt beam_3 au lieu cleaned 9/12), SPA35
+**M+ 9/12**: AUDUSD (9/13), USDJPY, US30, JPN225 (alt beam_1), HK50, UK100, FRA40
+**M+ 8/12**: US2000, NETH25, SWI20
+**M+ 7/12**: GBPUSD, SCI25
+
+### Alternatives notees pour iteration future (M+ supérieur disponible)
+
+| Sym | Cleaned actuel | Alternative regularité-first | Diff |
+|---|---|---|---|
+| USDCAD | 4 strats M+8/12 DD-11% | beam_3 (3 strats) M+10/12 DD-6.7% | +2 M+, -4.3% DD |
+| USDCHF | 5 strats M+9/12 DD-9.1% | beam_3 (3 strats) M+10/12 DD-7.1% | +1 M+ |
+| NAS100 | 10 strats M+10/12 DD-13.6% | beam_6/7 (6-7 strats) M+12/12 DD-11% | +2 M+ |
+| US30 | 5 strats M+9/12 DD-15.1% | beam_1 (1 strat) M+9/12 DD-6.1% | tied M+, -9% DD |
+| JPN225 | 2 strats M+7/12 DD-8.4% | beam_1 (1 strat) M+8/12 DD-8.3% | +1 M+ |
+| HK50 | 3 strats M+9/12 DD-8.3% | beam_1 (1 strat) M+10/12 DD-8.0% | +1 M+ (sample 106t) |
+| GER40 | 7 strats M+12/12 DD-16% | beam_2 (2 strats) M+10/12 DD-6.9% | -2 M+, -9% DD |
+| EUSTX50 | 8 strats M+9/12 DD-14.5% | beam_3 (3 strats) M+10/12 DD-9.2% | +1 M+ |
+| SPA35 | 3 strats M+10/12 DD-10% | beam_2 (2 strats) M+9/12 DD-8.8% | -1 M+ |
+
+### Files modifiees
+
+- `config_pepperstone.py`: 21 instruments avec portfolios + commentaires perf
+- `strat_exits.py`: ajout 21 entrees ('pepperstone', SYM)
+- Skip: EURUSD (cleanup vide), CN50 (0 strat robuste)
+
+A faire: bt_portfolio pepperstone --tf 15m --cost-r 0.05 pour valider l'agrege.
+
 ## 2026-04-29 — Pepperstone Round 2: 6 instruments (sample 12-15k bars)
 
 | Sym | Combo | n | PF | WR | DD | Rend | M+ |

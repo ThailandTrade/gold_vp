@@ -334,3 +334,143 @@ STRAT_EXITS[('icm', 'NOR25')] = {
     'IDX_3SOLDIERS': ('TRAIL', 3.00, 0.30, 0.30),
     'ALL_3SOLDIERS': ('TRAIL', 2.00, 0.50, 0.50),
 }
+
+# ==== Pepperstone (2026-04-29) ====
+
+STRAT_EXITS[('pepperstone', 'GBPUSD')] = {
+    'ALL_ELDER_BULL': ('TPSL', 3.0, 0.75, 0),
+}
+
+STRAT_EXITS[('pepperstone', 'AUDUSD')] = {
+    'ALL_MACD_HIST': ('TRAIL', 2.0, 0.3, 0.3),
+    'ALL_FVG_BULL': ('TRAIL', 3.0, 0.3, 0.3),
+    'ALL_CMO_9': ('TPSL', 3.0, 3.0, 0),
+}
+
+STRAT_EXITS[('pepperstone', 'USDCAD')] = {
+    'ALL_STOCH_PIVOT': ('TPSL', 3.0, 0.75, 0),
+    'IDX_GAP_CONT': ('TPSL', 3.0, 2.5, 0),
+    'ALL_ELDER_BEAR': ('TPSL', 2.0, 1.0, 0),
+    'TOK_STOCH': ('BE_TP', 2.0, 0.5, 0.75),
+}
+
+STRAT_EXITS[('pepperstone', 'USDCHF')] = {
+    'IDX_BB_REV': ('TRAIL', 3.0, 0.3, 0.3),
+    'TOK_NR4': ('TPSL', 3.0, 3.0, 0),
+    'ALL_FIB_618': ('TPSL', 3.0, 0.5, 0),
+    'ALL_RSI_EXTREME': ('TPSL', 0.75, 1.0, 0),
+    'TOK_TRIX': ('TPSL', 1.25, 1.0, 0),
+}
+
+STRAT_EXITS[('pepperstone', 'USDJPY')] = {
+    'ALL_MSTAR': ('TPSL', 3.0, 2.0, 0),
+    'ALL_ENGULF': ('TPSL', 3.0, 3.0, 0),
+}
+
+STRAT_EXITS[('pepperstone', 'NAS100')] = {
+    'ALL_AROON_CROSS': ('TRAIL', 3.0, 0.3, 0.3),
+    'ALL_DC10_EMA': ('TPSL', 1.0, 1.5, 0),
+    'ALL_EMA_821': ('TPSL', 1.25, 1.5, 0),
+    'ALL_MACD_RSI': ('TPSL', 3.0, 2.5, 0),
+    'ALL_LR_BREAK': ('TPSL', 3.0, 0.5, 0),
+    'ALL_EMA_921': ('TRAIL', 3.0, 0.3, 0.3),
+    'ALL_ICHI_TK': ('TPSL', 3.0, 0.75, 0),
+    'TOK_NR4': ('BE_TP', 2.0, 0.75, 1.0),
+    'TOK_2BAR': ('TPSL', 2.5, 1.0, 0),
+    'IDX_GAP_CONT': ('TPSL', 2.0, 2.0, 0),
+}
+
+STRAT_EXITS[('pepperstone', 'US500')] = {
+    'ALL_MACD_STD_SIG': ('TPSL', 2.5, 2.0, 0),
+    'ALL_MSTAR': ('TRAIL', 3.0, 0.5, 0.3),
+    'BOS_FVG': ('TPSL', 1.5, 0.5, 0),
+}
+
+STRAT_EXITS[('pepperstone', 'US30')] = {
+    'ALL_CMO_14_ZERO': ('TRAIL', 3.0, 0.5, 0.5),
+    'ALL_NR4': ('TPSL', 2.0, 1.5, 0),
+    'ALL_MSTAR': ('TPSL', 1.0, 0.5, 0),
+    'ALL_MOM_14': ('TRAIL', 3.0, 0.5, 0.5),
+    'TOK_NR4': ('TPSL', 3.0, 1.0, 0),
+}
+
+STRAT_EXITS[('pepperstone', 'US2000')] = {
+    'ALL_LR_BREAK': ('TPSL', 2.0, 0.75, 0),
+    'TOK_NR4': ('TPSL', 2.5, 1.0, 0),
+}
+
+STRAT_EXITS[('pepperstone', 'JPN225')] = {
+    'ALL_ENGULF': ('TPSL', 1.25, 1.5, 0),
+    'IDX_3SOLDIERS': ('BE_TP', 3.0, 0.75, 1.0),
+}
+
+STRAT_EXITS[('pepperstone', 'AUS200')] = {
+    'TOK_2BAR': ('TPSL', 1.5, 1.5, 0),
+    'ALL_DPO_14': ('TPSL', 2.5, 1.5, 0),
+    'ALL_MSTAR': ('BE_TP', 1.0, 0.75, 1.0),
+    'ALL_PIVOT_BOUNCE': ('TPSL', 1.0, 1.0, 0),
+    'ALL_MOM_10': ('TPSL', 2.5, 0.75, 0),
+}
+
+STRAT_EXITS[('pepperstone', 'CHINAH')] = {
+    'IDX_VWAP_BOUNCE': ('TPSL', 3.0, 2.0, 0),
+    'ALL_KB_SQUEEZE': ('TPSL', 2.5, 2.5, 0),
+    'ALL_STOCH_OB': ('BE_TP', 3.0, 0.75, 1.0),
+}
+
+STRAT_EXITS[('pepperstone', 'HK50')] = {
+    'IDX_VWAP_BOUNCE': ('TPSL', 3.0, 5.0, 0),
+    'IDX_3SOLDIERS': ('TPSL', 2.5, 1.5, 0),
+    'ALL_KB_SQUEEZE': ('TRAIL', 3.0, 0.3, 0.3),
+}
+
+STRAT_EXITS[('pepperstone', 'GER40')] = {
+    'TOK_FISHER': ('TRAIL', 3.0, 0.3, 0.3),
+    'ALL_EMA_513': ('TPSL', 3.0, 2.5, 0),
+    'ALL_FISHER_9': ('TRAIL', 3.0, 0.3, 0.3),
+    'ALL_MACD_HIST': ('TPSL', 3.0, 1.0, 0),
+    'ALL_HMA_CROSS': ('TPSL', 3.0, 3.0, 0),
+    'ALL_LR_BREAK': ('TPSL', 3.0, 1.0, 0),
+    'ALL_MACD_FAST_ZERO': ('TPSL', 3.0, 2.5, 0),
+}
+
+STRAT_EXITS[('pepperstone', 'EUSTX50')] = {
+    'ALL_PSAR_EMA': ('BE_TP', 2.0, 0.75, 1.5),
+    'ALL_ICHI_TK': ('TPSL', 1.25, 1.0, 0),
+    'ALL_PIVOT_BOUNCE': ('TPSL', 3.0, 2.5, 0),
+    'ALL_FISHER_9': ('TRAIL', 3.0, 0.3, 0.3),
+    'ALL_MACD_HIST': ('TRAIL', 3.0, 0.3, 0.3),
+    'ALL_KC_BRK': ('TPSL', 3.0, 1.5, 0),
+    'ALL_SUPERTREND': ('BE_TP', 2.0, 0.75, 1.5),
+    'ALL_DOJI_REV': ('TPSL', 3.0, 0.5, 0),
+}
+
+STRAT_EXITS[('pepperstone', 'UK100')] = {
+    'ALL_DOJI_REV': ('BE_TP', 2.5, 0.75, 1.0),
+    'TOK_NR4': ('TPSL', 2.0, 0.5, 0),
+    'ALL_CMO_14': ('BE_TP', 3.0, 0.75, 1.0),
+    'ALL_MSTAR': ('TPSL', 3.0, 0.5, 0),
+}
+
+STRAT_EXITS[('pepperstone', 'SCI25')] = {
+    'IDX_PREV_HL': ('TRAIL', 3.0, 0.3, 0.3),
+}
+
+STRAT_EXITS[('pepperstone', 'FRA40')] = {
+    'ALL_STOCH_OB': ('TPSL', 3.0, 3.0, 0),
+}
+
+STRAT_EXITS[('pepperstone', 'NETH25')] = {
+    'ALL_FISHER_9': ('TRAIL', 3.0, 0.3, 0.5),
+}
+
+STRAT_EXITS[('pepperstone', 'SPA35')] = {
+    'ALL_CCI_100': ('TPSL', 3.0, 3.0, 0),
+    'ALL_PSAR_EMA': ('TPSL', 2.5, 2.5, 0),
+    'ALL_ELDER_BULL': ('TPSL', 3.0, 2.0, 0),
+}
+
+STRAT_EXITS[('pepperstone', 'SWI20')] = {
+    'ALL_TRIX': ('BE_TP', 3.0, 0.5, 1.0),
+    'ALL_CMO_9': ('TPSL', 2.5, 2.0, 0),
+}
