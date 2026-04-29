@@ -2,6 +2,19 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-29 — Pepperstone Round 2: 6 instruments (sample 12-15k bars)
+
+| Sym | Combo | n | PF | WR | DD | Rend | M+ |
+|---|---|---|---|---|---|---|---|
+| CHINAH | VWAP_BOUNCE + KB_SQUEEZE + STOCH_OB | 388 | 1.28 | 73% | -9.2% | +32% | 10/12 |
+| HK50 | VWAP_BOUNCE + 3SOLDIERS + KB_SQUEEZE | 424 | 1.34 | 66% | -8.3% | +73% | 9/12 |
+| FRA40 | ALL_STOCH_OB | 238 | 1.21 | 58% | -13.0% | +25% | 9/12 |
+| NETH25 | ALL_FISHER_9 | 252 | 1.21 | 60% | -9.0% | +13% | 8/12 |
+| SWI20 | ALL_TRIX + ALL_CMO_9 | 457 | 1.26 | 70% | -8.8% | +38% | 8/12 |
+| SPA35 | CCI_100 + PSAR_EMA + ELDER_BULL | 535 | 1.21 | 62% | -10.0% | +61% | 10/12 |
+
+Tous tradeable (6/6). DD eleve sur FRA40 (-13%). NETH25 modeste (+13%).
+
 ## 2026-04-29 — Pepperstone Round 1: optimization 16 instruments terminee
 
 Capital $200, risk 0.5%, cost-r 0.05R. Beam search top-3 + reverse cleanup.
