@@ -2,6 +2,35 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-29 — Dashboard: LIVE en cards style Open + SL gauche / TP droite toujours
+
+User: dans LIVE on veut le meme rendu que Open (cards avec barre progression). En plus, sur la barre, le SL doit toujours etre a gauche et le TP a droite, peu importe LONG ou SHORT.
+
+### Refactor renderPositionCard(p, opts)
+
+Helper extract qui produit la HTML d'une card position. Utilise par:
+- renderOpen (Open tab compte selectionne)
+- renderLive (LIVE tab tous comptes, opts.showAcc=true ajoute un badge BROKER)
+
+### Logique inversee pour SHORT
+
+Avant: long → SL a gauche, TP a droite ; short → TP a gauche, SL a droite (suivait l'orientation des prix).
+
+Maintenant: SL toujours a gauche (0%), TP toujours a droite (100%), peu importe la direction.
+
+Pour SHORT, on inverse la mapping: SL price (haut) -> 0%, TP price (bas) -> 100%. Le marker current est positionne en consequence.
+
+Loss zone (rouge clair) = SL a entry (cote gauche).
+Profit zone (vert clair) = entry a TP (cote droit).
+Marker du current price entre.
+
+### LIVE simplifie
+
+Plus de table legacy. Juste:
+- 4 KPI cards (equity totale, flot total, par broker)
+- Liste de cards positions avec badge BROKER (5ERS / FTMO en pill noir) avant le sym
+- Click sur card -> drill detail position normal
+
 ## 2026-04-28 — Dashboard: tab LIVE refait (positions ouvertes only, style legacy)
 
 User: LIVE doit etre le 1er onglet et ne montrer QUE les trades ouverts dans une vue style Legacy.

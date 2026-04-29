@@ -1201,6 +1201,58 @@ function renderToday(data){
   root.innerHTML=h;
 }
 
+// Helper: rend une carte position (SL toujours a gauche, TP toujours a droite)
+function renderPositionCard(p,opts){
+  const o=opts||{};
+  const isLong=p.dir==='long';
+  const cls=isLong?'long':'short';
+  const sl=p.sl||p.entry;
+  const tp=p.tp||0;
+  const pnl=p.pnl||0;
+  // Mapping commun: gauche=SL, droite=TP. Loss zone gauche, profit zone droite.
+  // Pour long: bar low=SL (price), bar high=TP (price). Position lineaire normale.
+  // Pour short: SL>entry>TP en prix, mais visuellement on inverse pour avoir SL a gauche.
+  let curPos,entryPos;
+  if(isLong){
+    const lo=sl, hi=tp>0?tp:p.entry+(p.entry-sl);
+    curPos=hi>lo?(p.current-lo)/(hi-lo)*100:50;
+    entryPos=hi>lo?(p.entry-lo)/(hi-lo)*100:50;
+  } else {
+    const tpPx=tp>0?tp:p.entry-(sl-p.entry);
+    const lo=tpPx, hi=sl;
+    // Inverser: SL (hi) -> 0%, TP (lo) -> 100%
+    curPos=hi>lo?100-(p.current-lo)/(hi-lo)*100:50;
+    entryPos=hi>lo?100-(p.entry-lo)/(hi-lo)*100:50;
+  }
+  curPos=Math.max(2,Math.min(98,curPos));
+  // Loss zone: SL a entry (gauche), Profit zone: entry a TP (droite)
+  const lossWidth=entryPos;
+  const profitWidth=100-entryPos;
+  const tOpen=p.time_open||'';
+  const elapsed=tOpen?Math.round((Date.now()-new Date(tOpen).getTime())/60000):0;
+  const elapsedStr=elapsed>=60?`${Math.floor(elapsed/60)}h${(elapsed%60).toString().padStart(2,'0')}`:`${elapsed}m`;
+  const accBadge=o.showAcc&&p._acc?`<span class="tcard-time" style="background:#1a1a2e;color:#fff;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase">${p._acc}</span>`:'';
+  return `<div class="tcard pos-card ${cls}" onclick="openTradeByKey('op|${p.ticket}',false)">
+    <div class="tcard-head">
+      <div>${accBadge?accBadge+' ':''}<span class="tcard-sym">${escapeH(p.symbol)}</span> <span class="tcard-strat">${escapeH(p.comment)}</span> <span class="${dirCls(p.dir)}">${(p.dir||'').toUpperCase()}</span></div>
+      <span class="tcard-pnl ${pnlCls(pnl)}">${fmtUsd(pnl,2)}</span>
+    </div>
+    <div class="pos-bar">
+      <div class="zone-loss" style="left:0%;width:${lossWidth}%"></div>
+      <div class="zone-profit" style="left:${entryPos}%;width:${profitWidth}%"></div>
+      <div class="marker" style="left:${curPos}%"></div>
+      <span class="label-sl">SL ${fmt(sl,2)}</span>
+      <span class="label-entry" style="left:${entryPos}%">${fmt(p.entry,2)}</span>
+      ${tp>0?`<span class="label-tp">TP ${fmt(tp,2)}</span>`:''}
+    </div>
+    <div class="tcard-meta">
+      <span>Now ${fmt(p.current,2)}</span>
+      <span>${p.volume} lots</span>
+      <span class="tcard-time">${elapsedStr}</span>
+    </div>
+  </div>`;
+}
+
 // === Render: OPEN positions ===
 function renderOpen(data){
   const root=document.getElementById('tab-open');
@@ -1212,49 +1264,8 @@ function renderOpen(data){
     const flot=pos.reduce((s,p)=>s+(p.pnl||0),0);
     h+=`<div class="card"><div class="card-title">${pos.length} position(s) ouverte(s)<span class="right ${flot>=0?'pnl-pos':'pnl-neg'}">${fmtUsd(flot,2)} flot</span></div>`;
     h+='<div class="list">';
-    for(const p of pos){
-      const isLong=p.dir==='long';
-      const cls=isLong?'long':'short';
-      const sl=p.sl||p.entry;
-      const tp=p.tp||0;
-      // Range: SL ... entry ... TP (long) or TP ... entry ... SL (short)
-      let lo,hi,curPos;
-      if(isLong){
-        lo=sl; hi=tp>0?tp:p.entry+(p.entry-sl);
-        curPos=hi>lo?(p.current-lo)/(hi-lo)*100:50;
-      } else {
-        lo=tp>0?tp:p.entry-(sl-p.entry); hi=sl;
-        curPos=hi>lo?(p.current-lo)/(hi-lo)*100:50;
-      }
-      curPos=Math.max(2,Math.min(98,curPos));
-      const entryPos=hi>lo?((p.entry-lo)/(hi-lo))*100:50;
-      const lossSide=isLong?0:entryPos;
-      const lossWidth=isLong?entryPos:(100-entryPos);
-      const profitSide=isLong?entryPos:0;
-      const profitWidth=isLong?(100-entryPos):entryPos;
-      const pnl=p.pnl||0;
-      const tOpen=p.time_open||'';
-      const elapsed=tOpen?Math.round((Date.now()-new Date(tOpen).getTime())/60000):0;
-      h+=`<div class="tcard pos-card ${cls}" onclick="openTradeByKey('op|${p.ticket}',false)">
-        <div class="tcard-head">
-          <div><span class="tcard-sym">${escapeH(p.symbol)}</span> <span class="tcard-strat">${escapeH(p.comment)}</span> <span class="${dirCls(p.dir)}">${(p.dir||'').toUpperCase()}</span></div>
-          <span class="tcard-pnl ${pnlCls(pnl)}">${fmtUsd(pnl,2)}</span>
-        </div>
-        <div class="pos-bar">
-          <div class="zone-loss" style="left:${lossSide}%;width:${lossWidth}%"></div>
-          <div class="zone-profit" style="left:${profitSide}%;width:${profitWidth}%"></div>
-          <div class="marker" style="left:${curPos}%"></div>
-          <span class="label-sl">SL ${fmt(sl,2)}</span>
-          <span class="label-entry" style="left:${entryPos}%">${fmt(p.entry,2)}</span>
-          ${tp>0?`<span class="label-tp">TP ${fmt(tp,2)}</span>`:''}
-        </div>
-        <div class="tcard-meta">
-          <span>Now ${fmt(p.current,2)}</span>
-          <span>${p.volume} lots</span>
-          <span class="tcard-time">${elapsed}m elapsed</span>
-        </div>
-      </div>`;
-    }
+    const showAcc=SELECTED==='live';
+    for(const p of pos){h+=renderPositionCard(p,{showAcc});}
     h+='</div></div>';
   }
   root.innerHTML=h;
@@ -1407,22 +1418,19 @@ function renderBT(data){
   root.innerHTML=h;
 }
 
-// === Render: LIVE (positions ouvertes toutes props, table style legacy) ===
+// === Render: LIVE (positions ouvertes toutes props, presentation cards style Open) ===
 function renderLive(){
   const root=document.getElementById('tab-live');
-  // Build merged positions across all accounts, sorted by account then by time_open
   const positions=[];
   for(const acc of ACCOUNTS){
     const d=LAST[acc]||{};
     if(!d.state)continue;
     for(const p of (d.state.positions||[])){
-      const m=findBtMatch(p.symbol,p.comment,d,acc);
-      positions.push({...p,_acc:acc,_bt:m});
+      positions.push({...p,_acc:acc});
     }
   }
   positions.sort((a,b)=>(a._acc||'').localeCompare(b._acc||'')||(a.time_open||'').localeCompare(b.time_open||''));
 
-  // KPI: total flot, count par broker, total equity courante
   let totalFlot=0,totalEquity=0,totalBalance=0;
   const byAcc={};
   for(const acc of ACCOUNTS){
@@ -1436,7 +1444,6 @@ function renderLive(){
   }
 
   let h='';
-  // KPI header
   h+='<div class="kpis" style="margin-bottom:14px">';
   h+=`<div class="kpi"><div class="lbl">Equity totale</div><div class="val">$${fmt(totalEquity,0)}</div><div class="sub">balance $${fmt(totalBalance,0)}</div></div>`;
   h+=`<div class="kpi"><div class="lbl">PnL flottant</div><div class="val ${totalFlot>=0?'green':'red'}">${fmtUsd(totalFlot,2)}</div><div class="sub">${positions.length} positions</div></div>`;
@@ -1452,56 +1459,9 @@ function renderLive(){
     return;
   }
 
-  // Legacy-style table avec broker col
-  h+='<div class="legacy-section-title"><span class="sym">Positions ouvertes</span><span class="meta">'+positions.length+' total</span></div>';
-  h+='<div class="legacy-wrap"><table class="legacy-tbl" style="min-width:1000px">';
-  h+='<thead><tr>';
-  h+='<th class="col-strat">Broker</th>';
-  h+='<th>Sym</th><th>Strat</th><th>Dir</th><th>Vol</th>';
-  h+='<th class="sep-bt">Entry</th><th>Current</th><th>SL</th><th>TP</th>';
-  h+='<th class="sep-lv">PnL $</th><th>PnL R*</th>';
-  h+='<th class="sep-delta">Open at</th><th>Elapsed</th>';
-  h+='</tr></thead><tbody>';
-  for(const p of positions){
-    const isLong=p.dir==='long';
-    const elapsed=p.time_open?Math.round((Date.now()-new Date(p.time_open).getTime())/60000):0;
-    const elapsedStr=elapsed>=60?`${Math.floor(elapsed/60)}h${(elapsed%60).toString().padStart(2,'0')}`:`${elapsed}m`;
-    const pnl=p.pnl||0;
-    // PnL en R: utilise sl_atr*atr depuis bt_compare match si dispo
-    let pnlR='-';
-    if(p._bt&&p._bt.atr){
-      const slDist=Math.abs(p.sl-p.entry);
-      if(slDist>0){
-        const ptsMove=isLong?(p.current-p.entry):(p.entry-p.current);
-        const r=ptsMove/slDist;
-        pnlR=`<span class="${r>=0?'pnl-pos':'pnl-neg'}">${(r>=0?'+':'')+r.toFixed(2)}R</span>`;
-      }
-    }
-    h+=`<tr onclick="openTradeByKey('op|${p.ticket}',false)" class="clickable">
-      <td class="col-strat">${p._acc.toUpperCase()}</td>
-      <td class="sym">${escapeH(p.symbol)}</td>
-      <td class="strat-name">${escapeH(p.comment)}</td>
-      <td class="${dirCls(p.dir)}">${(p.dir||'').toUpperCase()}</td>
-      <td>${fmt(p.volume,2)}</td>
-      <td class="sep-bt">${fmt(p.entry,2)}</td>
-      <td>${fmt(p.current,2)}</td>
-      <td style="color:#dc2626">${fmt(p.sl,2)}</td>
-      <td style="color:#059669">${p.tp?fmt(p.tp,2):'-'}</td>
-      <td class="sep-lv ${pnlCls(pnl)}">${fmtUsd(pnl,2)}</td>
-      <td>${pnlR}</td>
-      <td class="sep-delta">${dateD(p.time_open).slice(5)} ${timeHM(p.time_open)}</td>
-      <td>${elapsedStr}</td>
-    </tr>`;
-  }
-  h+=`</tbody><tfoot><tr>
-    <td class="col-strat">TOTAL</td>
-    <td colspan="3"></td>
-    <td>${positions.reduce((s,p)=>s+(p.volume||0),0).toFixed(2)}</td>
-    <td colspan="4" class="sep-bt"></td>
-    <td class="sep-lv ${totalFlot>=0?'pnl-pos':'pnl-neg'}">${fmtUsd(totalFlot,2)}</td>
-    <td colspan="3"></td>
-  </tr></tfoot></table></div>`;
-  h+='<div style="margin-top:8px;font-size:10px;color:#9ca3af">* PnL R calcule depuis (current - entry) / |sl - entry|</div>';
+  h+=`<div class="card"><div class="card-title">${positions.length} position(s) ouverte(s)<span class="right ${totalFlot>=0?'pnl-pos':'pnl-neg'}">${fmtUsd(totalFlot,2)} flot</span></div><div class="list">`;
+  for(const p of positions){h+=renderPositionCard(p,{showAcc:true});}
+  h+='</div></div>';
 
   root.innerHTML=h;
 }
