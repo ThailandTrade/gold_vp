@@ -81,10 +81,13 @@ SYMBOL_ID = {
     'ETHUSD': 32, 'SOLUSD': 33, 'BNBUSD': 34,
     'HK50': 35, 'US2000': 36,
     'ES35': 37, 'IT40': 38, 'CA60': 39, 'NETH25': 40, 'SE30': 41, 'SWI20': 42, 'SA40': 43, 'NOR25': 44,
+    # Pepperstone (2026-04-29)
+    'US400': 45, 'CN50': 46, 'CHINAH': 47, 'HSTECH': 48, 'TWN': 49,
+    'GER40': 50, 'EUSTX50': 51, 'SCI25': 52, 'FRA40': 53, 'SPA35': 54,
 }
 # (HK50.cash already in SYMBOL_ID at 15, US2000.cash at 16)
 
-MAGIC_BASES = {'icm': 240000, 'ftmo': 250000, '5ers': 260000}
+MAGIC_BASES = {'icm': 240000, 'ftmo': 250000, '5ers': 260000, 'pepperstone': 270000}
 
 def make_magic(broker, symbol, strat):
     """Magic = broker_base + symbol_id * 200 + strat_id. Garanti unique."""

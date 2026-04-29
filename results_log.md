@@ -2,6 +2,37 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-29 — Pepperstone: SYMBOL_ID + MAGIC_BASES + verification fetch
+
+### Fetch DB verifie
+
+27 symboles charges. Forex EURUSD/GBPUSD avaient 30 bars apres 1er fetch (anomalie), corrige par user, maintenant 24,872 bars chacun.
+
+Inventaire Pepperstone:
+- 6 forex: eurusd, gbpusd, audusd, usdcad, usdchf, usdjpy (~25k bars chacun)
+- 5 indices US: nas100, us500, us30, us2000 (23k+) ; us400 (3.5k court)
+- Indices asia: jpn225, aus200, cn50 (20-23k) ; chinah, hk50 (14-15k) ; hstech, twn (3.3-3.5k courts)
+- Indices europe: ger40, eustx50, uk100, sci25 (20k+) ; fra40, neth25, swi20, spa35 (12-14k) ; ca60 (6.7k)
+
+Pas de XAUUSD/XAGUSD pour Pepperstone (decision user: cout lot min trop cher pour capital $200).
+
+### SYMBOL_ID etendu (strats.py)
+
+Ajout 10 nouveaux ids 45-54 pour les symboles Pepperstone manquants:
+- 45 US400, 46 CN50, 47 CHINAH, 48 HSTECH, 49 TWN
+- 50 GER40, 51 EUSTX50, 52 SCI25, 53 FRA40, 54 SPA35
+
+(Note: GER40 etait absent de SYMBOL_ID — ICM utilise DE40 id 32, FTMO utilise GER40.cash. Le nom Pepperstone est GER40 brut.)
+
+### MAGIC_BASES
+
+- icm: 240000
+- ftmo: 250000
+- 5ers: 260000
+- **pepperstone: 270000** (nouveau)
+
+Magic = base + sym_id*200 + strat_id. Avec sym_id max 54 et strat_id max ~110, plage = 0..21000. Marges OK entre brokers (10k de gap).
+
 ## 2026-04-29 — Pepperstone: preparation code (avant exploration data)
 
 User: nouveau broker Pepperstone, compte propre $200, risk 0.5%, pas de DD max, server UTC+3.
