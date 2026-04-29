@@ -2,6 +2,30 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-29 — Pepperstone: preparation code (avant exploration data)
+
+User: nouveau broker Pepperstone, compte propre $200, risk 0.5%, pas de DD max, server UTC+3.
+
+### Code prepare (avant chargement DB)
+
+- broker_offsets.json: ajout `"pepperstone": 3`
+- bt_portfolio.py / live_mt5.py / compare_today.py / vps_pusher.py: 'pepperstone' ajoute dans choices argparse
+- config_pepperstone.py cree (squelette: BROKER='pepperstone', ALL_INSTRUMENTS vide, RISK_PCT=0.005)
+- api_server.py: ACCOUNTS = [5ers, ftmo, pepperstone]. MAX_DD pepperstone = 100% (pas de limite)
+- data/pepperstone/ cree avec .gitkeep
+
+### Pipeline a faire apres chargement DB (user)
+
+1. Exploration symboles Pepperstone disponibles en DB (table candles_mt5_*_15m apres mt5_fetch_clean)
+2. pairs_pepperstone.txt selon naming Pepperstone reel (a verifier dans MT5)
+3. SYMBOL_ID dans strats.py si nouveaux noms (a verifier en fonction des symboles)
+4. optimize_all per instrument
+5. analyze_combos per instrument (validation user)
+6. Update config_pepperstone.ALL_INSTRUMENTS avec portfolios valides
+7. Update strat_exits.py avec configs gagnantes
+8. bt_portfolio pepperstone validation
+9. audit + deploy live
+
 ## 2026-04-29 — Dashboard: LIVE en cards style Open + SL gauche / TP droite toujours
 
 User: dans LIVE on veut le meme rendu que Open (cards avec barre progression). En plus, sur la barre, le SL doit toujours etre a gauche et le TP a droite, peu importe LONG ou SHORT.

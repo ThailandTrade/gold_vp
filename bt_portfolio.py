@@ -16,7 +16,7 @@ from strat_exits import STRAT_EXITS
 from backtest_engine import load_data, collect_trades, eval_portfolio
 
 parser = argparse.ArgumentParser(description='Backtest portfolio')
-parser.add_argument('account', choices=['icm', 'ftmo', '5ers'])
+parser.add_argument('account', choices=['icm', 'ftmo', '5ers', 'pepperstone'])
 parser.add_argument('-c', '--capital', type=float, default=None)
 parser.add_argument('-r', '--risk', type=float, default=None)
 parser.add_argument('--symbol', default=None, help='Single instrument (default: all)')

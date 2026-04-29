@@ -14,7 +14,7 @@ from datetime import datetime, timezone, timedelta
 from prettytable import PrettyTable
 
 parser = argparse.ArgumentParser()
-parser.add_argument('account', choices=['icm','ftmo','5ers'])
+parser.add_argument('account', choices=['icm','ftmo','5ers','pepperstone'])
 parser.add_argument('--tf', default='5m', help='Timeframe: 5m or 15m')
 args = parser.parse_args()
 
