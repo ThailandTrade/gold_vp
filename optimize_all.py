@@ -23,9 +23,9 @@ _p.add_argument('--tpsl-only', action='store_true', help='Test uniquement TPSL (
 _p.add_argument('--min-rr', type=float, default=0.0, help='RR minimum (TP/SL) pour TPSL grid')
 _p.add_argument('--min-marge', type=float, default=0.0, help='Marge WR min (0 = desactive, le cost-r couvre la fragilite)')
 _a = _p.parse_args()
-COMBO_COST_R = _a.cost_r  # Applique uniquement au niveau COMBO (pas par strat)
-SPREAD_R = 0.0  # Niveau strat: pas de cost, edge RAW
-print(f"Cost model: niveau strat = 0 (edge RAW) | niveau combo = {COMBO_COST_R}R par trade")
+COMBO_COST_R = 0.0  # plus utilise (cost applique au niveau strat directement)
+SPREAD_R = _a.cost_r  # Niveau strat: applique pendant le choix d'exit -> exits optimaux SOUS cost
+print(f"Cost model: niveau strat = {SPREAD_R}R par trade (exits optimaux sous cost)")
 SYMBOL = _a.symbol.lower()
 TF = _a.tf
 
