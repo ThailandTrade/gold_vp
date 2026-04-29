@@ -2,6 +2,42 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-29 — Suppression strats LON_/NY_ (16 strats retirees pour DST)
+
+User: "vire directement les strats NY et LON de notre dict". Raison: les sessions Londres/New York changent d'heure UTC entre l'ete (BST/EDT) et l'hiver (GMT/EST), introduisant un decalage qui complique le filtre horaire stable. Tokyo (Asie) ne fait pas de DST = horaire stable.
+
+### Strats retirees (16 total)
+
+LON_*: ASIAN_BRK, BIGGAP, DC10, DC10_MOM, GAP, KZ, PIN, PREV, STOCH, TOKEND
+NY_*: DAYMOM, ELDER, GAP, HMA_CROSS, LONEND, LONMOM
+
+### Code modifie
+
+- `strats.py REMOVED_STRATS`: ajout des 16. Tous les LON_/NY_ y sont desormais (certains etaient deja la pour cause d'open strats).
+- `strats.py STRAT_NAMES`: retire les 16 entrees (98 strats restants).
+- `strats.py STRAT_SESSION`: retire les 16 entrees (98 entries).
+- `strats.py _ALL_STRATS_RAW`: garde intact pour preserver STRAT_ID = stable mapping pour magic numbers.
+- `strats.py detect_all`: les blocks de detection LON_/NY_ restent (innocuous, jamais consommes).
+- `optimize_all.py`: ajoute filtre `sn in REMOVED_STRATS` au debut de la boucle de candidats. Print "SKIP (removed)" pour visibility.
+
+### Configs ICM nettoyes
+
+7 portfolios contenaient LON_/NY_:
+- USDJPY: ['LON_ASIAN_BRK'] -> [] (vide, a re-optim)
+- AUDUSD: retire NY_ELDER (reste 2 strats)
+- SOLUSD: retire NY_ELDER (reste 3 strats)
+- NETH25: retire NY_HMA_CROSS (reste 2 strats)
+- SWI20: retire LON_STOCH (reste 3 strats)
+- SA40: retire LON_DC10 et LON_DC10_MOM (reste 10 strats)
+
+Memoire feedback_no_lon_ny_strats.md cree pour future reference.
+
+### Pas affecte
+
+- 5ers, ftmo: aucun LON_/NY_ dans les configs (deja propres)
+- pepperstone: aucun (config encore vide)
+- STRAT_ID: ids inchanges grace a _ALL_STRATS_RAW intact -> magic numbers existants des positions live preserves
+
 ## 2026-04-29 — REGLE SUPPRIMEE: filtre conflit SHORT/LONG simultanes
 
 User (permission explicite): "On laisse tomber la regle d'exclusion mutuelle SHORT LONG. A partir de maintenant on la laisse totalement tomber."

@@ -5,7 +5,7 @@ Le portfolio actif est defini dans config_icm.py / config_ftmo.py / config_5ers.
 import pandas as pd
 import numpy as np
 
-# Strats retirees definitivement (open strats + jamais safe sur aucun instrument)
+# Strats retirees definitivement (open strats + jamais safe sur aucun instrument + LON_/NY_)
 REMOVED_STRATS = frozenset({
     # Open strats (timing non reproductible en live)
     'TOK_FADE', 'TOK_PREVEXT', 'LON_GAP', 'LON_BIGGAP', 'LON_KZ',
@@ -14,6 +14,9 @@ REMOVED_STRATS = frozenset({
     'ALL_AO_SAUCER', 'ALL_BB_SQUEEZE', 'ALL_EMA_TREND_PB', 'ALL_HMA_DIR',
     'ALL_MACD_MED_SIG', 'ALL_STOCH_CROSS', 'ALL_VOL_SPIKE',
     'IDX_GAP_FILL', 'IDX_ORB15', 'LON_PIN', 'TOK_MACD_MED',
+    # LON_/NY_ retires 2026-04-29 (DST: heures changent ete/hiver)
+    'LON_ASIAN_BRK', 'LON_DC10', 'LON_DC10_MOM', 'LON_STOCH',
+    'NY_ELDER', 'NY_HMA_CROSS',
 })
 
 _ALL_STRATS_RAW = [
@@ -96,11 +99,6 @@ def make_magic(broker, symbol, strat):
 STRAT_NAMES = {
     'TOK_2BAR':'2BAR reversal Tokyo','TOK_BIG':'Big candle Tokyo >1ATR',
     'TOK_FADE':'Fade prev day Tokyo','TOK_PREVEXT':'Prev day close extreme->Tokyo',
-    'LON_PIN':'Pin bar London','LON_GAP':'GAP Tokyo->London',
-    'LON_BIGGAP':'GAP Tokyo->London >1ATR','LON_KZ':'KZ London fade',
-    'LON_TOKEND':'TOKEND 3b->London','LON_PREV':'Prev day continuation London',
-    'NY_GAP':'GAP London->NY','NY_LONEND':'LONEND 3b->NY',
-    'NY_LONMOM':'LONEND 0.5ATR->NY','NY_DAYMOM':'Day move >1.5ATR->NY',
     'D8':'Inside day breakout London',
     'ALL_MACD_RSI':'MACD med cross + RSI>50',
     'ALL_FVG_BULL':'Fair Value Gap bullish',
@@ -117,7 +115,6 @@ STRAT_NAMES = {
     'ALL_HAMMER':'Hammer / shooting star',
     'ALL_DOJI_REV':'Doji after trend reversal',
     'ALL_MSTAR':'Morning star / evening star',
-    'LON_ASIAN_BRK':'Asian range breakout London',
     'ALL_INSIDE_BRK':'Inside bar breakout',
     'ALL_BB_SQUEEZE':'Bollinger squeeze breakout',
     'ALL_RSI_EXTREME':'RSI extreme reversal',
@@ -140,7 +137,6 @@ STRAT_NAMES = {
     'IDX_3SOLDIERS':'Three soldiers/crows (index)',
     'IDX_CONSEC_REV':'Consecutive exhaustion reversal (index)',
     'TOK_NR4':'Narrow range 4 Tokyo',
-    'LON_DC10_MOM':'Donchian 10 + momentum London',
     'ALL_RSI_50':'RSI 50 cross',
     'ALL_RSI_DIV':'RSI divergence',
     'ALL_FISHER_9':'Fisher transform 9 cross',
@@ -171,8 +167,6 @@ STRAT_NAMES = {
     'ALL_DC50':'Donchian 50 breakout',
     'TOK_FISHER':'Fisher transform Tokyo',
     'TOK_MACD_MED':'MACD med cross Tokyo',
-    'LON_DC10':'Donchian 10 London',
-    'NY_HMA_CROSS':'HMA 9/21 cross NY',
     'ALL_CMO_9':'CMO 9 reversal (-50/+50)',
     'ALL_CMO_14':'CMO 14 reversal (-50/+50)',
     'ALL_MACD_FAST_SIG':'MACD fast signal cross',
@@ -195,8 +189,6 @@ STRAT_NAMES = {
     'ALL_STOCH_PIVOT':'Stochastic + pivot bounce',
     'TOK_STOCH':'Stochastic reversal Tokyo',
     'TOK_TRIX':'TRIX cross Tokyo',
-    'LON_STOCH':'Stochastic reversal London',
-    'NY_ELDER':'Elder Ray reversal NY',
     'AVWAP_RECLAIM':'Anchored VWAP reclaim from swing',
     'BOS_FVG':'Break of structure + FVG retrace',
     'FLAG_BRK':'Flag breakout (impulsion + consolidation)',
@@ -205,9 +197,6 @@ STRAT_NAMES = {
 
 STRAT_SESSION = {
     'TOK_2BAR':'Tokyo','TOK_BIG':'Tokyo','TOK_FADE':'Tokyo','TOK_PREVEXT':'Tokyo',
-    'LON_PIN':'London','LON_GAP':'London','LON_BIGGAP':'London','LON_KZ':'London',
-    'LON_TOKEND':'London','LON_PREV':'London',
-    'NY_GAP':'New York','NY_LONEND':'New York','NY_LONMOM':'New York','NY_DAYMOM':'New York',
     'D8':'London',
     'ALL_MACD_RSI':'All','ALL_FVG_BULL':'All','ALL_CONSEC_REV':'All',
     'ALL_FIB_618':'All','ALL_3SOLDIERS':'All','ALL_PSAR_EMA':'All',
@@ -217,7 +206,6 @@ STRAT_SESSION = {
     'TOK_WILLR':'Tokyo',
     'PO3_SWEEP':'London',
     'ALL_ENGULF':'All','ALL_HAMMER':'All','ALL_DOJI_REV':'All','ALL_MSTAR':'All',
-    'LON_ASIAN_BRK':'London',
     'ALL_INSIDE_BRK':'All','ALL_BB_SQUEEZE':'All',
     'ALL_RSI_EXTREME':'All','ALL_MACD_HIST':'All','ALL_VOL_SPIKE':'All',
     'IDX_ORB15':'US','IDX_ORB30':'US','IDX_GAP_FILL':'US','IDX_GAP_CONT':'US',
@@ -225,7 +213,7 @@ STRAT_SESSION = {
     'IDX_VWAP_BOUNCE':'US','IDX_BB_REV':'All','IDX_RSI_REV':'All',
     'IDX_PREV_HL':'US','IDX_NR4':'All','IDX_KC_BRK':'All',
     'IDX_ENGULF':'All','IDX_3SOLDIERS':'All','IDX_CONSEC_REV':'All',
-    'TOK_NR4':'Tokyo','LON_DC10_MOM':'London',
+    'TOK_NR4':'Tokyo',
     'ALL_RSI_50':'All','ALL_RSI_DIV':'All','ALL_FISHER_9':'All','ALL_DPO_14':'All',
     'ALL_AO_SAUCER':'All','ALL_HMA_CROSS':'All','ALL_HMA_DIR':'All','ALL_DC10_EMA':'All',
     'ALL_CMO_14_ZERO':'All','ALL_ICHI_TK':'All','ALL_MACD_ADX':'All',
@@ -235,7 +223,6 @@ STRAT_SESSION = {
     'ALL_EMA_513':'All','ALL_EMA_821':'All','ALL_EMA_921':'All','ALL_EMA_TREND_PB':'All',
     'ALL_WILLR_14':'All','ALL_MOM_10':'All','ALL_MOM_14':'All','ALL_DC50':'All',
     'TOK_FISHER':'Tokyo','TOK_MACD_MED':'Tokyo',
-    'LON_DC10':'London','NY_HMA_CROSS':'New York',
     'ALL_CMO_9':'All','ALL_CMO_14':'All',
     'ALL_MACD_FAST_SIG':'All','ALL_MACD_MED_SIG':'All','ALL_WILLR_7':'All',
     'ALL_STOCH_CROSS':'All','ALL_STOCH_OB':'All','ALL_TRIX':'All','ALL_SUPERTREND':'All',
@@ -243,7 +230,7 @@ STRAT_SESSION = {
     'ALL_AROON_CROSS':'All','ALL_STOCH_RSI':'All','ALL_CCI_100':'All',
     'ALL_KB_SQUEEZE':'All','ALL_LR_BREAK':'All','ALL_ADX_RSI50':'All',
     'ALL_MACD_DIV':'All','ALL_STOCH_PIVOT':'All',
-    'TOK_STOCH':'Tokyo','TOK_TRIX':'Tokyo','LON_STOCH':'London','NY_ELDER':'New York',
+    'TOK_STOCH':'Tokyo','TOK_TRIX':'Tokyo',
     'AVWAP_RECLAIM':'All','BOS_FVG':'All','FLAG_BRK':'All','EXH_GAP':'All',
 }
 

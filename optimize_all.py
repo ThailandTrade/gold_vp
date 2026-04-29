@@ -501,7 +501,11 @@ def _score(m):
 
 best_configs = {}
 rejected_reasons = {}
+from strats import REMOVED_STRATS as _REMOVED
 for sn in sorted(SIG.keys()):
+    if sn in _REMOVED:
+        print(f"  {sn:22s} --- SKIP (removed: open/LON/NY/etc) ---")
+        continue
     if sn in OPEN_STRATS:
         print(f"  {sn:22s} --- SKIP (open strat) ---")
         continue

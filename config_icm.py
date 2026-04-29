@@ -27,7 +27,7 @@ ALL_INSTRUMENTS = {
     },
     'USDJPY': {
         'risk_pct': 0.01,
-        'portfolio': ['LON_ASIAN_BRK'],
+        'portfolio': [],  # LON_ASIAN_BRK retire 2026-04-29 (no LON/NY). A re-optim.
     },
     'USDCAD': {
         'risk_pct': 0.01,
@@ -35,7 +35,7 @@ ALL_INSTRUMENTS = {
     },
     'AUDUSD': {
         'risk_pct': 0.01,
-        'portfolio': ['ALL_PIVOT_BRK', 'ALL_MACD_ADX', 'NY_ELDER'],
+        'portfolio': ['ALL_PIVOT_BRK', 'ALL_MACD_ADX'],  # NY_ELDER retire 2026-04-29
     },
     'AUS200': {
         'risk_pct': 0.01,
@@ -80,7 +80,7 @@ ALL_INSTRUMENTS = {
     # === Vague 2 — nouveaux instruments 2026-04-26 (validation user: A + ES35 + NETH25) ===
     'SOLUSD': {
         'risk_pct': 0.01,
-        'portfolio': ['ALL_STOCH_PIVOT', 'NY_ELDER', 'ALL_ELDER_BEAR', 'ALL_WILLR_7'],
+        'portfolio': ['ALL_STOCH_PIVOT', 'ALL_ELDER_BEAR', 'ALL_WILLR_7'],  # NY_ELDER retire 2026-04-29
     },
     'ES35': {
         'risk_pct': 0.01,
@@ -88,7 +88,7 @@ ALL_INSTRUMENTS = {
     },
     'NETH25': {
         'risk_pct': 0.01,
-        'portfolio': ['NY_HMA_CROSS', 'ALL_WILLR_7', 'ALL_STOCH_OB'],
+        'portfolio': ['ALL_WILLR_7', 'ALL_STOCH_OB'],  # NY_HMA_CROSS retire 2026-04-29
     },
     'SE30': {
         'risk_pct': 0.01,
@@ -96,14 +96,15 @@ ALL_INSTRUMENTS = {
     },
     'SWI20': {
         'risk_pct': 0.01,
-        'portfolio': ['ALL_RSI_EXTREME', 'ALL_MACD_HIST', 'IDX_RSI_REV', 'LON_STOCH'],
+        'portfolio': ['ALL_RSI_EXTREME', 'ALL_MACD_HIST', 'IDX_RSI_REV'],  # LON_STOCH retire 2026-04-29
     },
     'SA40': {
         'risk_pct': 0.01,
         'portfolio': [
-            'ALL_ADX_FAST', 'IDX_BB_REV', 'LON_DC10', 'ALL_PIVOT_BRK',
+            # LON_DC10 et LON_DC10_MOM retires 2026-04-29
+            'ALL_ADX_FAST', 'IDX_BB_REV', 'ALL_PIVOT_BRK',
             'ALL_3SOLDIERS', 'ALL_DOJI_REV', 'ALL_FVG_BULL', 'ALL_FISHER_9',
-            'ALL_STOCH_OB', 'LON_DC10_MOM', 'IDX_3SOLDIERS', 'ALL_CCI_100',
+            'ALL_STOCH_OB', 'IDX_3SOLDIERS', 'ALL_CCI_100',
         ],
     },
     'NOR25': {
