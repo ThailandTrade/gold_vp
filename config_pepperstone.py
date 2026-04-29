@@ -34,28 +34,14 @@ ALL_INSTRUMENTS = {
         'portfolio': ['ALL_MSTAR', 'ALL_ENGULF'],
         # n=340 PF=1.22 WR=60% DD=-7.0% Rend=+37% M+=9/12
     },
-    # ==== US INDICES ====
+    # ==== US INDICES (1 seul pour eviter sur-exposition correlee) ====
     'NAS100': {
         'risk_pct': 0.005,
         'portfolio': ['ALL_AROON_CROSS', 'ALL_DC10_EMA', 'ALL_EMA_821', 'ALL_MACD_RSI',
-                      'ALL_LR_BREAK', 'ALL_EMA_921', 'ALL_ICHI_TK', 'TOK_NR4', 'TOK_2BAR', 'IDX_GAP_CONT'],
-        # n=1805 PF=1.29 WR=69% DD=-13.6% Rend=+462% M+=10/12
+                      'ALL_LR_BREAK', 'ALL_EMA_921', 'ALL_ICHI_TK'],
+        # beam_7: n=1390 PF=1.32 WR=69% DD=-11.5% Rend=+345% M+=12/12
     },
-    'US500': {
-        'risk_pct': 0.005,
-        'portfolio': ['ALL_MACD_STD_SIG', 'ALL_MSTAR', 'BOS_FVG'],
-        # n=591 PF=1.40 WR=76% DD=-6.3% Rend=+80% M+=10/12
-    },
-    'US30': {
-        'risk_pct': 0.005,
-        'portfolio': ['ALL_CMO_14_ZERO', 'ALL_NR4', 'ALL_MSTAR', 'ALL_MOM_14', 'TOK_NR4'],
-        # n=947 PF=1.25 WR=69% DD=-15.1% Rend=+78% M+=9/12
-    },
-    'US2000': {
-        'risk_pct': 0.005,
-        'portfolio': ['ALL_LR_BREAK', 'TOK_NR4'],
-        # n=473 PF=1.11 WR=78% DD=-6.0% Rend=+13% M+=8/12
-    },
+    # Skip 2026-04-29: US500 / US30 / US2000 (correlation 0.7-0.95 avec NAS100, sur-exposition US)
     # ==== ASIA ====
     'JPN225': {
         'risk_pct': 0.005,

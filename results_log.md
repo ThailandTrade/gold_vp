@@ -2,6 +2,23 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-29 — Pepperstone: NAS100 -> beam_7 + drop US500/US30/US2000 (anti-correlation)
+
+User: "ca vaut le coup de s'exposer autant sur les indices US ?"
+
+NAS100/US500/US30/US2000 sont fortement correles (0.7-0.95). En bear US, les 4 saignent ensemble = DD agrege bien plus mauvais que individuels.
+
+### Decision
+
+**Garder uniquement NAS100** (le meilleur des 4 selon M+ ratio).
+NAS100 passe de cleaned 10 strats M+10/12 a **beam_7 (7 strats)**:
+- ALL_AROON_CROSS, ALL_DC10_EMA, ALL_EMA_821, ALL_MACD_RSI, ALL_LR_BREAK, ALL_EMA_921, ALL_ICHI_TK
+- n=1390 PF=1.32 WR=69% DD=-11.5% Rend=+345% **M+=12/12 (parfait)**
+
+US500, US30, US2000 retires.
+
+Portfolio Pepperstone passe de 21 a **18 instruments**.
+
 ## 2026-04-29 — Pepperstone: portfolio construit (21 instruments, regularité-first)
 
 User: regularité = M+ ratio max (le plus de mois positifs). Pas DD min, pas Rend max.
