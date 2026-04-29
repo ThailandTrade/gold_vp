@@ -536,42 +536,11 @@ def main():
                     ss['_triggered_open'] = {}
                     ss['_triggered_close'] = {}
 
-                # Conflict check: positions ouvertes + fermees sur cette bougie
-                # (identique au BT: un trade sorti au meme candle bloque encore)
+                # Conflict filter retire 2026-04-29: SHORT et LONG simultanes autorises
                 our_pos = mt5_our_positions(sym)
-                open_dirs = set('long' if p.type == 0 else 'short' for p in our_pos)
-                # Tracking interne: detecter positions disparues depuis dernier tick
-                # (fermees entre 2 ticks = fermetures physiques MT5 a capter)
-                current_tickets_map = {str(p.ticket): ('long' if p.type == 0 else 'short') for p in our_pos}
-                prev_tickets_map = state.get('_tracked_tickets', {}).get(sym, {})
-                for ticket_str, direction in prev_tickets_map.items():
-                    if ticket_str not in current_tickets_map:
-                        state.setdefault('closed_this_bar', {}).setdefault(sym, set()).add(direction)
-                state.setdefault('_tracked_tickets', {})[sym] = current_tickets_map
-                # Ajouter les directions des deals ouverts OU fermes sur la bougie courante
-                # En BT, un trade sorti a candle N est encore actif a candle N (>=)
-                try:
-                    candle_start_utc = candle_time_utc if candle_time_utc.tzinfo else candle_time_utc.replace(tzinfo=timezone.utc)
-                    candle_start_broker = (candle_start_utc + BROKER_OFFSET).replace(tzinfo=None)
-                    deals = mt5.history_deals_get(candle_start_broker, candle_start_broker + timedelta(minutes=5)) or []
-                    for d in deals:
-                        if d.symbol != sym: continue
-                        if d.magic not in ALL_MAGIC_SET: continue
-                        if d.entry == 0:  # DEAL_ENTRY_IN: trade ouvert sur cette bougie
-                            open_dirs.add('long' if d.type == 0 else 'short')
-                        elif d.entry == 1:  # DEAL_ENTRY_OUT: trade ferme (SL/TP) sur cette bougie
-                            # La direction de la position fermee est l'inverse du deal de sortie
-                            # SELL pour fermer un LONG, BUY pour fermer un SHORT
-                            open_dirs.add('short' if d.type == 0 else 'long')
-                except: pass
 
                 is_new = current_ts != last_ts.get(sym, 0)
                 if not is_new: continue
-
-                # Nouveau bar: swap closed_this_bar -> closed_prev_bar
-                # Ces directions bloqueront les opposes sur le bar courant (identique BT axi>=ci)
-                state.setdefault('closed_prev_bar', {})[sym] = set(state.get('closed_this_bar', {}).get(sym, set()))
-                state.setdefault('closed_this_bar', {})[sym] = set()
 
                 # Heartbeat
                 bal = mt5_balance()
@@ -591,17 +560,9 @@ def main():
 
                 last_ts[sym] = current_ts
 
-                # Close strats (open_dirs inclut deja les deals fermes sur cette bougie)
-                our_pos = mt5_our_positions(sym)
-                for p in our_pos:
-                    open_dirs.add('long' if p.type == 0 else 'short')
-                # Directions des positions fermees sur la bougie precedente (tracking interne)
-                open_dirs.update(state.get('closed_prev_bar', {}).get(sym, set()))
+                # Open new positions sur signaux detectes (sans filtre conflit)
                 for sig in sorted(detect_close_strats(candles, ss, atr, candle_time_utc, today, portfolio), key=lambda s: s['strat']):
-                    if sig['dir'] == 'long' and 'short' in open_dirs: continue
-                    if sig['dir'] == 'short' and 'long' in open_dirs: continue
                     open_position(state, sym, sig, atr, risk_pct)
-                    open_dirs.add(sig['dir'])
 
             save_state(state)
 

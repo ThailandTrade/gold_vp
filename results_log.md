@@ -2,6 +2,31 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-29 — REGLE SUPPRIMEE: filtre conflit SHORT/LONG simultanes
+
+User (permission explicite): "On laisse tomber la regle d'exclusion mutuelle SHORT LONG. A partir de maintenant on la laisse totalement tomber."
+
+### Code modifie
+
+- **backtest_engine.collect_trades**: retire le bloc `active_pos` + check `ad != di`. Tous les signaux passent maintenant, peu importe direction.
+- **live_mt5.py main loop**: retire l'infrastructure conflit (open_dirs, _tracked_tickets, closed_this_bar/closed_prev_bar, history_deals_get pour fermetures). Simplification massive de la boucle. Les signaux detectes ouvrent direct sans verification de conflit.
+- Docstring backtest_engine: mention "Conflict filter retire 2026-04-29".
+
+### CLAUDE.md modifie
+
+- Section XAUUSD Regles: ligne "Jamais 2 trades simultanes en sens opposes" remplacee par note "(Filtre anti-conflit SHORT/LONG retire 2026-04-29)"
+- Section Architecture Regles: ligne "Conflit filter: tri alphabetique + deals ouverts/fermes sur bougie courante" supprimee
+
+### Memoire feedback_never_remove_documented_filters.md
+
+Maintenu (la regle GENERALE de jamais retirer un filtre sans permission reste valide). Note 2026-04-29 ajoutee precisant que le conflit filter a ete retire avec permission explicite.
+
+### Impact
+
+- Tous les BT existants (5ers/ftmo/icm/pepperstone) auront des resultats DIFFERENTS desormais (plus de trades autorises, peut amplifier l'edge mais aussi le DD).
+- Optim Pepperstone EURUSD a relancer (le 1er run avec filter actif a donne 0 combo robuste).
+- Eventuellement re-optim 5ers/ftmo/icm si on veut re-evaluer leurs portfolios sans filter (a discuter avec user).
+
 ## 2026-04-29 — Pepperstone: SYMBOL_ID + MAGIC_BASES + verification fetch
 
 ### Fetch DB verifie

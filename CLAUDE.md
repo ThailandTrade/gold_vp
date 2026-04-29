@@ -27,11 +27,11 @@
 
 ### Regles
 - Exits TRAIL majoritaires (11/12 strats), 1 TPSL (ALL_3SOLDIERS)
-- Jamais 2 trades simultanes en sens opposes
 - ATR du jour precedent
 - Spread: 2x monthly avg dans backtest, bid/ask reel en live
 - 1 trigger max par strat par jour
 - Indicateurs precalcules: MACD(8,17,9), RSI(14), EMA(20), Parabolic SAR, Keltner Channels
+- (Filtre anti-conflit SHORT/LONG retire 2026-04-29 — directions opposees autorisees simultanement)
 
 ## Architecture
 
@@ -71,7 +71,6 @@
 - Candles en DB = UTC uniquement. JAMAIS heure systeme ou broker
 - Marge WR >= 8% obligatoire
 - PAS de strats open (timing non reproductible)
-- Conflit filter: tri alphabetique + deals ouverts/fermes sur bougie courante
 - Pipeline: optimize -> strat_exits -> combos -> config -> bt -> audit -> live
 
 ## Infrastructure
