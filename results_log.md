@@ -2,6 +2,60 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-29 — Pepperstone Round 1: optimization 16 instruments terminee
+
+Capital $200, risk 0.5%, cost-r 0.05R. Beam search top-3 + reverse cleanup.
+
+### Forex (6 instruments)
+
+| Sym | Combo | n | PF | WR | DD | Rend | M+ |
+|---|---|---|---|---|---|---|---|
+| EURUSD | (vide) | - | - | - | - | - | - |
+| GBPUSD | ALL_ELDER_BULL | 299 | 1.13 | 86% | -5.8% | +6% | 7/12 |
+| AUDUSD | MACD_HIST + FVG_BULL + CMO_9 | 736 | 1.30 | 65% | -9.7% | +88% | 9/13 |
+| USDCAD | STOCH_PIVOT + GAP_CONT + ELDER_BEAR + TOK_STOCH | 953 | 1.19 | 74% | -11.0% | +59% | 8/12 |
+| USDCHF | BB_REV + NR4 + FIB_618 + RSI_EXTREME + TOK_TRIX | 864 | 1.23 | 66% | -9.1% | +84% | 9/12 |
+| USDJPY | MSTAR + ENGULF | 340 | 1.22 | 60% | -7.0% | +37% | 9/12 |
+
+### Indices US (4)
+
+| Sym | Combo | n | PF | WR | DD | Rend | M+ |
+|---|---|---|---|---|---|---|---|
+| NAS100 | 10 strats | 1805 | 1.29 | 69% | -13.6% | +462% | 10/12 |
+| US500 | MACD_STD_SIG + MSTAR + BOS_FVG | 591 | 1.40 | 76% | -6.3% | +80% | 10/12 |
+| US30 | 5 strats | 947 | 1.25 | 69% | -15.1% | +78% | 9/12 |
+| US2000 | LR_BREAK + TOK_NR4 | 473 | 1.11 | 78% | -6.0% | +13% | 8/12 |
+
+### Indices Asie (3)
+
+| Sym | Combo | n | PF | WR | DD | Rend | M+ |
+|---|---|---|---|---|---|---|---|
+| JPN225 | ENGULF + IDX_3SOLDIERS | 508 | 1.16 | 67% | -8.4% | +34% | 7/12 |
+| AUS200 | TOK_2BAR + DPO_14 + MSTAR + PIVOT_BOUNCE + MOM_10 | 922 | 1.29 | 69% | -7.3% | **+133%** | **12/12** |
+| CN50 | (vide, 0 strat robuste) | - | - | - | - | - | - |
+
+### Indices Europe (3)
+
+| Sym | Combo | n | PF | WR | DD | Rend | M+ |
+|---|---|---|---|---|---|---|---|
+| GER40 | 7 strats | 1262 | 1.25 | 69% | -16.0% | +133% | 12/12 |
+| EUSTX50 | 8 strats | 1293 | 1.28 | 70% | -14.5% | +164% | 9/12 |
+| UK100 | DOJI_REV + TOK_NR4 + CMO_14 + MSTAR | 725 | 1.20 | 82% | -5.8% | +28% | 9/12 |
+| SCI25 | IDX_PREV_HL | 158 | 1.32 | 68% | -5.9% | +12% | 7/12 |
+
+### Synthese Round 1
+
+- **Tradeables**: 14/16 instruments (87% du Round 1)
+- **Pas tradeables**: EURUSD (cleanup vide), CN50 (0 strat robuste)
+- **Top performers**: AUS200 (+133% M+12/12 parfait), NAS100 (+462%), GER40+EUSTX50 (+133%/+164%)
+- **DD eleve (>10%)**: NAS100, US30, GER40, EUSTX50 (a discuter pour validation user)
+
+### Reste a faire
+
+- Round 2: chinah, hk50, fra40, neth25, swi20, spa35 (sample 12-15k)
+- Round 3: ca60, us400, hstech, twn (samples courts)
+- Validation user des combos retenus, ecrire config_pepperstone.py
+
 ## 2026-04-29 — Suppression strats LON_/NY_ (16 strats retirees pour DST)
 
 User: "vire directement les strats NY et LON de notre dict". Raison: les sessions Londres/New York changent d'heure UTC entre l'ete (BST/EDT) et l'hiver (GMT/EST), introduisant un decalage qui complique le filtre horaire stable. Tokyo (Asie) ne fait pas de DST = horaire stable.
