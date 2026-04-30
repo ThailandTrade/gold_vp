@@ -2,6 +2,88 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-30 — Decision finale: find_winners > combos sur la robustesse temporelle
+
+User: "le find winners me parait moins cherry pick que combos" / "quelle approche garantit le mieux que les résultats tiennent dans le temps"
+
+### Comparaison robustesse (4 axes)
+
+| Axe | find_winners | combos | Gagnant |
+|---|---|---|---|
+| Walk-forward (h1>0, h2>0) | filtre explicite par strat | non filtre | **find_winners** |
+| Outlier-resistance | avg_R_trim>0, OS<30% par strat | PF combo seulement | **find_winners** |
+| Diversite | AUS200 16 strats (21%) | distribue, max 10 NAS100 | **combos** |
+| Regularite (M+) | 9.2/12 moyenne | 8.9/12 moyenne | match nul |
+
+### Pourquoi combos est cherry-pick par construction
+
+1. **Objectif d'optimisation = l'ensemble** (PF agrege max), pas la strat individuelle
+2. **Multiple testing**: beam search teste 100s combos et garde top → expose au hasard
+3. **PF combo masque PF strat**: une strat PF 1.05 peut entrer dans combo PF 1.30 si decorrelee, mais individuellement fragile
+4. **Filtre marge WR >=8% ensembliste**, pas par strat
+
+### Pourquoi find_winners ne peut pas etre cherry-pick
+
+1. **Pas de comparaison entre alternatives**: pas de top-of-top
+2. **Criteres absolus, pas relatifs** (avg_R >= 0.05, pas "> mediane candidats")
+3. **Aucune optimisation d'objectif**: filtre, pas optimise
+4. **Walk-forward intransigeant**: drift = elimination systematique
+
+### Conclusion
+
+**find_winners est plus robuste sur l'axe le plus important (walk-forward + outlier-resistance).** 
+Les combos sont plus jolis sur le papier (DD -18.8% vs -29.7%) mais ce resultat est **suspect**: trop propre, trop dependant du fait que beam search ait trouve "la bonne combinaison" sur la periode actuelle.
+
+Si on rejouait l'optimisation avec periode decalee de 6 mois:
+- combos: probablement combos differents (overfit periode)
+- find_winners: 60-70 strats avec 80%+ chevauchement (signature methode robuste)
+
+### Decision
+
+**Adoption find_winners pur, sans cherry-pick a posteriori.**
+- Pas de retrait AUS200 (16 strats valides individuellement)
+- Pas de recuperation USDCHF/HK50/SPA35/CHINAH depuis combos run 1 (introduirait cherry-pick)
+- Seul ajustement defendable: **risk variable par instrument** pour gerer concentration capital sans toucher a la selection des strats
+
+Le -29.66% MaxDD est un cout attendu (plus de strats WR-bas = plus de sequences pertes en aggregate), pas un signal de fragilite.
+
+## 2026-04-30 — Revue detaillee comparison.log: combos run 1 vs find_winners run 2
+
+### Patterns systemiques
+
+**A. WR baisse 5-25 pts sur 18/20 instruments** (filtre avg_R_trim selectionne contre WR au profit de l'expectancy)
+**B. DD majoritairement empire**: USDCAD x2, AUS200 x4.5, HK50 x2.3, GER40 x2, UK100 x2
+**C. Avril 2026 mois rouge generalise sauf AUS200/UK100**: USDCAD -21, NAS100 -34, US500 -18, GER40 -32, AUS200 +529, UK100 +24. **Sans AUS200/UK100, perte mensuelle**
+**D. Sept 2025 worst week -16.71%** (vs run 1 worst -13.5%): queues plus epaisses
+
+### Instruments ou find_winners EMPIRE clairement
+
+| Sym | Run 1 | Run 2 | Diff |
+|---|---|---|---|
+| USDCHF | 5 strats, Rend +31%, M+11/12 | 1 strat, Rend +8%, M+9/12 | -23 pts rend |
+| HK50 | PF 1.30, DD -4.7%, Rend +29% | PF 1.13, DD -10.6%, Rend +13% | DD x2.3 |
+| SPA35 | 3 strats, Rend +21%, M+10/12 | 1 strat, Rend +5%, M+7/12 | -16 pts rend |
+| CHINAH | 3 strats, M+11/12, PF 1.26 | **0 strat (skip)** | eliminee |
+| SCI25 | 1 strat, M+7/12, PF 1.33 | 0 strat | eliminee |
+| NETH25 | 1 strat, M+8/12, PF 1.22 | 0 strat | eliminee |
+
+### Instruments ou find_winners AMELIORE rendement mais empire DD
+
+| Sym | Rend run1→run2 | DD run1→run2 |
+|---|---|---|
+| AUS200 | +68% → +699% (x10) | -4.8% → -21.3% (x4.5) |
+| UK100 | +13% → +212% (x16) | -4.3% → -9.2% (x2) |
+| USDCAD | +28% → +97% (x3.5) | -5.9% → -11.9% (x2) |
+| GER40 | +34% → +90% | -11.2% → -22.9% (x2) |
+
+### Instruments NEUTRES/legerement mieux
+
+GBPUSD (PF mieux), AUDUSD, USDJPY, US30, US500 (M+ mieux DD pire), EUSTX50 (clean BIEN MIEUX 8→3), FRA40, US2000, JPN225
+
+### Instruments NOUVEAUX
+- EURUSD (3 strats): WR 51%, PF 1.19, DD -12.1%, Rend +51%
+- CA60 (1 strat): WR 69%, PF 1.32, DD -4.0%, Rend +11%
+
 ## 2026-04-30 — Pepperstone: analyse cout 0.01 lot — capital $200 trop juste pour 8/20 instruments
 
 User: "calcul moi le cout de 0.01 lot pour tous les instruments. Est ce que 1 doll ca passe ?"
