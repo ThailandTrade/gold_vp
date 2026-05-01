@@ -14,67 +14,99 @@ BROKER = 'pepperstone'
 ALL_INSTRUMENTS = {
     'AUDUSD': {
         '15m': {'risk_pct': 0.005, 'portfolio': ['ALL_CONSEC_REV', 'ALL_ENGULF', 'ALL_FVG_BULL', 'ALL_PIVOT_BRK']},
+        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_DC50', 'ALL_HAMMER', 'TOK_STOCH']},
     },
     'EURUSD': {
         '15m': {'risk_pct': 0.005, 'portfolio': ['ALL_MACD_STD_SIG', 'ALL_WILLR_14', 'TOK_WILLR']},
+        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_FISHER_9', 'ALL_ICHI_TK', 'ALL_MACD_ADX', 'ALL_MACD_STD_SIG', 'ALL_STOCH_RSI', 'ALL_WILLR_7', 'AVWAP_RECLAIM']},
     },
     'GBPUSD': {
         '15m': {'risk_pct': 0.005, 'portfolio': ['ALL_ELDER_BULL']},
+        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_3SOLDIERS', 'ALL_FISHER_9', 'AVWAP_RECLAIM']},
     },
     'USDCAD': {
         '15m': {'risk_pct': 0.005, 'portfolio': ['ALL_CCI_100', 'ALL_MACD_DIV', 'ALL_WILLR_14', 'IDX_GAP_CONT', 'TOK_STOCH', 'TOK_TRIX', 'TOK_WILLR']},
+        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_MACD_HIST', 'ALL_PIVOT_BOUNCE', 'IDX_PREV_HL']},
     },
     'USDCHF': {
         '15m': {'risk_pct': 0.005, 'portfolio': ['ALL_FIB_618']},
+        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_ELDER_BULL', 'ALL_MACD_HIST', 'IDX_VWAP_BOUNCE']},
     },
     'USDJPY': {
         '15m': {'risk_pct': 0.005, 'portfolio': ['ALL_ADX_FAST', 'ALL_MSTAR', 'ALL_PIVOT_BOUNCE', 'TOK_BIG']},
+        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_CCI_20_ZERO', 'ALL_RSI_EXTREME', 'IDX_RSI_REV', 'IDX_VWAP_BOUNCE', 'TOK_NR4']},
     },
     'AUS200': {
         '15m': {'risk_pct': 0.005, 'portfolio': ['ALL_ADX_RSI50', 'ALL_CCI_100', 'ALL_CCI_14_ZERO', 'ALL_DPO_14', 'ALL_ELDER_BULL', 'ALL_HMA_CROSS', 'ALL_MACD_FAST_SIG', 'ALL_MACD_HIST', 'ALL_RSI_50', 'ALL_RSI_EXTREME', 'ALL_WILLR_14', 'ALL_WILLR_7', 'IDX_CONSEC_REV', 'IDX_RSI_REV', 'TOK_2BAR', 'TOK_WILLR']},
+        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_BB_TIGHT', 'ALL_ELDER_BULL', 'ALL_FISHER_9', 'ALL_MACD_ADX', 'ALL_MACD_DIV', 'ALL_MTF_BRK', 'ALL_NR4', 'ALL_PIVOT_BOUNCE', 'ALL_RSI_DIV', 'ALL_WILLR_14', 'TOK_FISHER']},
     },
     'EUSTX50': {
         '15m': {'risk_pct': 0.005, 'portfolio': ['ALL_DOJI_REV', 'ALL_EMA_921', 'ALL_MACD_HIST']},
+        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_DOJI_REV', 'ALL_SUPERTREND']},
     },
     'FRA40': {
         '15m': {'risk_pct': 0.005, 'portfolio': ['ALL_MACD_HIST']},
+        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_NR4']},
     },
     'JPN225': {
         '15m': {'risk_pct': 0.005, 'portfolio': ['ALL_DC50']},
+        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_EMA_821', 'ALL_EMA_921', 'ALL_FVG_BULL', 'ALL_STOCH_OB']},
     },
     'NAS100': {
         '15m': {'risk_pct': 0.005, 'portfolio': ['ALL_CCI_14_ZERO', 'ALL_EMA_821', 'ALL_LR_BREAK', 'ALL_MACD_STD_SIG', 'ALL_NR4']},
+        '1h': {'risk_pct': 0.005, 'portfolio': ['TOK_STOCH']},
     },
     'UK100': {
         '15m': {'risk_pct': 0.005, 'portfolio': ['ALL_CCI_100', 'ALL_CMO_14', 'ALL_CMO_9', 'ALL_DOJI_REV', 'ALL_ELDER_BULL', 'ALL_MSTAR', 'ALL_NR4', 'ALL_STOCH_RSI', 'TOK_NR4']},
+        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_CMO_14_ZERO', 'ALL_MOM_14', 'ALL_MTF_BRK', 'IDX_CONSEC_REV']},
     },
     'US30': {
         '15m': {'risk_pct': 0.005, 'portfolio': ['ALL_ADX_FAST', 'ALL_MSTAR', 'ALL_NR4', 'TOK_NR4']},
+        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_MACD_DIV', 'ALL_NR4', 'ALL_PIVOT_BOUNCE', 'ALL_PSAR_EMA', 'IDX_PREV_HL', 'TOK_NR4']},
     },
     'US500': {
         '15m': {'risk_pct': 0.005, 'portfolio': ['ALL_DC10', 'ALL_ENGULF', 'ALL_STOCH_OB', 'BOS_FVG', 'IDX_PREV_HL']},
+        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_AROON_CROSS', 'ALL_HAMMER', 'ALL_HMA_CROSS', 'ALL_PIVOT_BOUNCE']},
     },
     'GER40': {
         '15m': {'risk_pct': 0.005, 'portfolio': ['ALL_ADX_RSI50', 'ALL_CMO_14_ZERO', 'ALL_EMA_513', 'ALL_EMA_821', 'ALL_MACD_FAST_ZERO', 'ALL_MOM_14', 'ALL_MTF_BRK']},
+        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_CMO_14', 'ALL_CMO_9', 'ALL_CONSEC_REV', 'ALL_INSIDE_BRK', 'ALL_KC_BRK', 'ALL_MACD_ADX', 'ALL_PSAR_EMA', 'ALL_RSI_DIV', 'ALL_WILLR_7', 'BOS_FVG', 'IDX_CONSEC_REV', 'TOK_FISHER']},
     },
     'SPA35': {
         '15m': {'risk_pct': 0.005, 'portfolio': ['ALL_ICHI_TK']},
+        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_ELDER_BULL', 'ALL_HMA_CROSS']},
     },
     'HK50': {
         '15m': {'risk_pct': 0.005, 'portfolio': ['ALL_3SOLDIERS', 'IDX_ORB30']},
+        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_3SOLDIERS', 'ALL_DC50', 'ALL_DPO_14', 'ALL_FVG_BULL', 'ALL_NR4', 'BOS_FVG', 'IDX_3SOLDIERS']},
     },
     'US2000': {
         '15m': {'risk_pct': 0.005, 'portfolio': ['ALL_EMA_821']},
+        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_EMA_821', 'ALL_ICHI_TK', 'IDX_VWAP_BOUNCE']},
     },
     'CA60': {
         '15m': {'risk_pct': 0.005, 'portfolio': ['ALL_3SOLDIERS']},
+        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_DC50', 'ALL_FVG_BULL', 'ALL_HAMMER']},
     },
     'SWI20': {
         '15m': {'risk_pct': 0.005, 'portfolio': ['ALL_MACD_HIST', 'ALL_STOCH_OB']},
+        '1h': {'risk_pct': 0.005, 'portfolio': ['IDX_3SOLDIERS']},
+    },
+    'CN50': {
+        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_CMO_9', 'ALL_ELDER_BULL']},
+    },
+    'CHINAH': {
+        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_CMO_14', 'ALL_DC50', 'ALL_KC_BRK', 'ALL_MACD_RSI', 'BOS_FVG', 'IDX_CONSEC_REV', 'TOK_STOCH']},
+    },
+    'NETH25': {
+        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_DC50']},
+    },
+    'SCI25': {
+        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_MACD_RSI', 'ALL_PSAR_EMA', 'TOK_TRIX']},
     },
 }
 
-LIVE_TIMEFRAMES = ['15m']
+LIVE_TIMEFRAMES = ['1h']
 
 LIVE_INSTRUMENTS = list(ALL_INSTRUMENTS.keys())
 INSTRUMENTS = {k: v for k, v in ALL_INSTRUMENTS.items() if k in LIVE_INSTRUMENTS}

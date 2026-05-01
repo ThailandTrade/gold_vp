@@ -306,3 +306,176 @@ STRAT_EXITS[('pepperstone', 'SWI20', '15m')] = {
 'ALL_MACD_HIST': ('TPSL', 3.0, 4.0, 0),
     'ALL_STOCH_OB': ('TPSL', 2.5, 3.0, 0),
 }
+
+# ==== Pepperstone 1h (find_winners 2026-05-01) ====
+
+STRAT_EXITS[('pepperstone', 'AUDUSD', '1h')] = {
+    'ALL_DC50': ('TPSL', 3.0, 2.0, 0),
+    'ALL_HAMMER': ('TPSL', 1.25, 1.5, 0),
+    'TOK_STOCH': ('TPSL', 3.0, 2.5, 0),
+}
+
+STRAT_EXITS[('pepperstone', 'EURUSD', '1h')] = {
+    'ALL_FISHER_9': ('TPSL', 2.5, 3.0, 0),
+    'ALL_ICHI_TK': ('TPSL', 3.0, 3.0, 0),
+    'ALL_MACD_ADX': ('TPSL', 1.25, 1.0, 0),
+    'ALL_MACD_STD_SIG': ('TPSL', 1.25, 1.0, 0),
+    'ALL_STOCH_RSI': ('TPSL', 2.5, 3.0, 0),
+    'ALL_WILLR_7': ('TPSL', 2.5, 3.0, 0),
+    'AVWAP_RECLAIM': ('BE_TP', 1.5, 0.5, 1.0),
+}
+
+STRAT_EXITS[('pepperstone', 'GBPUSD', '1h')] = {
+    'ALL_3SOLDIERS': ('TPSL', 2.5, 2.0, 0),
+    'ALL_FISHER_9': ('TPSL', 1.25, 0.75, 0),
+    'AVWAP_RECLAIM': ('TPSL', 2.0, 0.75, 0),
+}
+
+STRAT_EXITS[('pepperstone', 'USDCHF', '1h')] = {
+    'ALL_ELDER_BULL': ('TPSL', 2.0, 2.0, 0),
+    'ALL_MACD_HIST': ('TPSL', 2.0, 2.5, 0),
+    'IDX_VWAP_BOUNCE': ('TPSL', 3.0, 1.0, 0),
+}
+
+STRAT_EXITS[('pepperstone', 'USDJPY', '1h')] = {
+    'ALL_CCI_20_ZERO': ('TPSL', 3.0, 4.0, 0),
+    'ALL_RSI_EXTREME': ('TPSL', 3.0, 4.0, 0),
+    'IDX_RSI_REV': ('TPSL', 3.0, 4.0, 0),
+    'IDX_VWAP_BOUNCE': ('TPSL', 2.5, 1.0, 0),
+    'TOK_NR4': ('TPSL', 1.25, 1.5, 0),
+}
+
+STRAT_EXITS[('pepperstone', 'USDCAD', '1h')] = {
+    'ALL_MACD_HIST': ('TPSL', 2.5, 2.0, 0),
+    'ALL_PIVOT_BOUNCE': ('TPSL', 1.5, 1.5, 0),
+    'IDX_PREV_HL': ('TPSL', 3.0, 2.5, 0),
+}
+
+STRAT_EXITS[('pepperstone', 'AUS200', '1h')] = {
+    'ALL_BB_TIGHT': ('TPSL', 3.0, 4.0, 0),
+    'ALL_ELDER_BULL': ('TPSL', 1.5, 1.5, 0),
+    'ALL_FISHER_9': ('TPSL', 2.0, 1.5, 0),
+    'ALL_MACD_ADX': ('TPSL', 3.0, 3.0, 0),
+    'ALL_MACD_DIV': ('TPSL', 2.0, 2.5, 0),
+    'ALL_MTF_BRK': ('TPSL', 2.5, 2.5, 0),
+    'ALL_NR4': ('TPSL', 1.5, 1.0, 0),
+    'ALL_PIVOT_BOUNCE': ('TPSL', 2.5, 1.5, 0),
+    'ALL_RSI_DIV': ('TPSL', 2.0, 2.5, 0),
+    'ALL_WILLR_14': ('TPSL', 2.0, 1.5, 0),
+    'TOK_FISHER': ('TPSL', 2.0, 1.5, 0),
+}
+
+STRAT_EXITS[('pepperstone', 'EUSTX50', '1h')] = {
+    'ALL_DOJI_REV': ('BE_TP', 2.0, 0.5, 1.5),
+    'ALL_SUPERTREND': ('BE_TP', 1.5, 0.3, 0.75),
+}
+
+STRAT_EXITS[('pepperstone', 'FRA40', '1h')] = {
+    'ALL_NR4': ('TPSL', 2.5, 3.0, 0),
+}
+
+STRAT_EXITS[('pepperstone', 'JPN225', '1h')] = {
+    'ALL_EMA_821': ('TPSL', 1.5, 1.0, 0),
+    'ALL_EMA_921': ('TPSL', 1.5, 1.0, 0),
+    'ALL_FVG_BULL': ('TPSL', 2.0, 1.5, 0),
+    'ALL_STOCH_OB': ('TPSL', 2.5, 3.0, 0),
+}
+
+STRAT_EXITS[('pepperstone', 'NAS100', '1h')] = {
+    'TOK_STOCH': ('TPSL', 1.25, 1.5, 0),
+}
+
+STRAT_EXITS[('pepperstone', 'UK100', '1h')] = {
+    'ALL_CMO_14_ZERO': ('TPSL', 0.75, 0.75, 0),
+    'ALL_MOM_14': ('TPSL', 0.75, 0.75, 0),
+    'ALL_MTF_BRK': ('TPSL', 3.0, 4.0, 0),
+    'IDX_CONSEC_REV': ('TPSL', 2.5, 2.0, 0),
+}
+
+STRAT_EXITS[('pepperstone', 'US30', '1h')] = {
+    'ALL_MACD_DIV': ('TPSL', 1.25, 0.75, 0),
+    'ALL_NR4': ('TPSL', 1.25, 1.5, 0),
+    'ALL_PIVOT_BOUNCE': ('TPSL', 1.0, 0.5, 0),
+    'ALL_PSAR_EMA': ('TPSL', 2.0, 1.0, 0),
+    'IDX_PREV_HL': ('BE_TP', 1.5, 0.5, 1.0),
+    'TOK_NR4': ('TPSL', 1.25, 0.5, 0),
+}
+
+STRAT_EXITS[('pepperstone', 'US500', '1h')] = {
+    'ALL_AROON_CROSS': ('BE_TP', 2.5, 0.75, 1.5),
+    'ALL_HAMMER': ('TPSL', 1.5, 0.75, 0),
+    'ALL_HMA_CROSS': ('TPSL', 0.75, 0.5, 0),
+    'ALL_PIVOT_BOUNCE': ('TPSL', 0.75, 0.75, 0),
+}
+
+STRAT_EXITS[('pepperstone', 'GER40', '1h')] = {
+    'ALL_CMO_14': ('TPSL', 2.5, 3.0, 0),
+    'ALL_CMO_9': ('TPSL', 2.0, 2.5, 0),
+    'ALL_CONSEC_REV': ('TPSL', 1.5, 0.5, 0),
+    'ALL_INSIDE_BRK': ('TPSL', 3.0, 2.5, 0),
+    'ALL_KC_BRK': ('TPSL', 1.25, 0.75, 0),
+    'ALL_MACD_ADX': ('TPSL', 0.75, 0.75, 0),
+    'ALL_PSAR_EMA': ('TPSL', 2.0, 2.5, 0),
+    'ALL_RSI_DIV': ('TPSL', 1.25, 1.5, 0),
+    'ALL_WILLR_7': ('TPSL', 3.0, 2.5, 0),
+    'BOS_FVG': ('TPSL', 1.25, 1.5, 0),
+    'IDX_CONSEC_REV': ('TPSL', 1.0, 1.5, 0),
+    'TOK_FISHER': ('TPSL', 2.0, 2.5, 0),
+}
+
+STRAT_EXITS[('pepperstone', 'SPA35', '1h')] = {
+    'ALL_ELDER_BULL': ('TPSL', 2.5, 4.0, 0),
+    'ALL_HMA_CROSS': ('TPSL', 3.0, 3.0, 0),
+}
+
+STRAT_EXITS[('pepperstone', 'CN50', '1h')] = {
+    'ALL_CMO_9': ('TPSL', 3.0, 3.0, 0),
+    'ALL_ELDER_BULL': ('TPSL', 3.0, 3.0, 0),
+}
+
+STRAT_EXITS[('pepperstone', 'HK50', '1h')] = {
+    'ALL_3SOLDIERS': ('BE_TP', 2.0, 0.75, 1.5),
+    'ALL_DC50': ('TPSL', 3.0, 2.0, 0),
+    'ALL_DPO_14': ('BE_TP', 2.0, 0.5, 1.0),
+    'ALL_FVG_BULL': ('TPSL', 1.5, 1.5, 0),
+    'ALL_NR4': ('BE_TP', 1.0, 0.5, 0.75),
+    'BOS_FVG': ('TPSL', 3.0, 2.0, 0),
+    'IDX_3SOLDIERS': ('TPSL', 2.0, 1.5, 0),
+}
+
+STRAT_EXITS[('pepperstone', 'US2000', '1h')] = {
+    'ALL_EMA_821': ('BE_TP', 1.5, 0.75, 1.0),
+    'ALL_ICHI_TK': ('TRAIL', 2.0, 1.0, 0.5),
+    'IDX_VWAP_BOUNCE': ('TPSL', 3.0, 4.0, 0),
+}
+
+STRAT_EXITS[('pepperstone', 'CA60', '1h')] = {
+    'ALL_DC50': ('TRAIL', 1.5, 0.3, 0.3),
+    'ALL_FVG_BULL': ('TPSL', 3.0, 5.0, 0),
+    'ALL_HAMMER': ('TPSL', 1.5, 2.0, 0),
+}
+
+STRAT_EXITS[('pepperstone', 'CHINAH', '1h')] = {
+    'ALL_CMO_14': ('TPSL', 1.25, 1.5, 0),
+    'ALL_DC50': ('TPSL', 1.5, 2.0, 0),
+    'ALL_KC_BRK': ('TPSL', 1.5, 2.0, 0),
+    'ALL_MACD_RSI': ('TPSL', 1.5, 1.5, 0),
+    'BOS_FVG': ('TPSL', 1.5, 2.0, 0),
+    'IDX_CONSEC_REV': ('TPSL', 3.0, 1.5, 0),
+    'TOK_STOCH': ('TPSL', 1.25, 1.5, 0),
+}
+
+STRAT_EXITS[('pepperstone', 'SWI20', '1h')] = {
+    'IDX_3SOLDIERS': ('BE_TP', 1.5, 0.75, 1.5),
+}
+
+STRAT_EXITS[('pepperstone', 'NETH25', '1h')] = {
+    'ALL_DC50': ('TPSL', 3.0, 2.5, 0),
+}
+
+STRAT_EXITS[('pepperstone', 'SCI25', '1h')] = {
+    'ALL_MACD_RSI': ('BE_TP', 3.0, 0.75, 2.0),
+    'ALL_PSAR_EMA': ('TPSL', 2.5, 4.0, 0),
+    'TOK_TRIX': ('TPSL', 2.5, 1.0, 0),
+}
+

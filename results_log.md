@@ -2,6 +2,90 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-01 — Decision: trade 1h only (LIVE_TIMEFRAMES = ['1h'])
+
+User: "j'ai plutot envie de ne trade que sur du 1h, ca parait moins compliqué"
+
+### Comparaison 15m vs 1h vs Multi-TF (BT pepperstone $200 0.5%)
+
+| Run | Trades | WR | PF | MaxDD | Rend | Capital | Sem+/- |
+|---|---|---|---|---|---|---|---|
+| 15m only (find_winners) | 19,388 | 59% | 1.19 | -29.66% | +828k% | $1.66M | 46/53 |
+| 1h only (find_winners) | 17,371 | 60% | 1.29 | **-20.13%** | +578k% | $1.16M | **49/51** |
+| Multi-TF naif | 36,721 | 60% | 1.21 | **-41.78%** | +3.3B% | $6.7B | 50/53 |
+
+### Pourquoi 1h gagne sur la robustesse
+- PF +8.4% vs 15m
+- MaxDD -10pts (vs 15m), -22pts (vs multi-TF)
+- Worst week -12.6% vs -16.7% (15m) vs -28.1% (multi-TF)
+- Regularite 96% semaines+ vs 87%
+- Outlier dependency 4.7% vs 6%
+
+### Pourquoi multi-TF naif casse
+- Pertes correlees entre 15m et 1h (memes instruments, sessions overlap)
+- DD additif (-42% en multi-TF >> -30% 15m + -20% 1h separes)
+- Risk 0.5% × 176 strats = ~88% capital theorique en risk simultane
+
+### Verification gaps weekend (BT honnete)
+- Gap perte (open au-dela du SL): exit @ open, loss > 1R correctement comptee
+- Gap gain (open au-dela du TP): exit @ TP, gain cape (TP = limit order broker)
+- BT pessimiste asymetrique = predictions fiables
+
+### Activation
+- LIVE_TIMEFRAMES = ['1h']
+- 15m reste dans ALL_INSTRUMENTS (reversible si reactivation future)
+- Live: 24 instruments × 1h, 98 strats
+
+### Risque assume
+- Weekend cross 7.5% des trades (vs 0.8% en 15m) — slippage live ~5-10% au-dela du BT, MaxDD estime live ~-25%
+- NAS100 quasiment perdu (1 strat seulement vs 5 en 15m) — sacrifice acceptable
+
+## 2026-05-01 — Pepperstone 1h: find_winners + activation LIVE_TIMEFRAMES = ['15m', '1h']
+
+User: "Le 1h est chargé. find winners pour tous les instruments." + "60" (n-min)
+
+### Run find_winners
+- Commande: `python find_winners.py pepperstone --tf 1h --n-min 60`
+- Seuil n=60 (vs 80 par defaut 15m): bars 1h ~25% des bars 15m donc ratio adapte
+- 27 instruments testes, 24 avec winners (HSTECH/US400/TWN trop courts: 0 winners)
+- Total: 98 strats WIN sur 24 instruments (1h)
+
+### Resultats par instrument (1h)
+
+Forex: AUDUSD 3, EURUSD 7, GBPUSD 3, USDCHF 3, USDJPY 5, USDCAD 3 = 24 strats
+Indices: AUS200 11, EUSTX50 2, FRA40 1, JPN225 4, NAS100 1, UK100 4, US30 6, US500 4, GER40 12, SPA35 2, CN50 2, HK50 7, US2000 3, CA60 3, CHINAH 7, SWI20 1, NETH25 1, SCI25 3 = 74 strats
+
+### Profil 1h vs 15m (instruments communs)
+
+| Sym | 15m strats | 1h strats |
+|---|---|---|
+| AUDUSD | 4 | 3 |
+| EURUSD | 3 | 7 |
+| AUS200 | 16 | 11 |
+| GER40 | 7 | 12 |
+| HK50 | 2 | 7 |
+| NAS100 | 5 | 1 |
+| UK100 | 9 | 4 |
+| US30 | 4 | 6 |
+
+Profils tres differents par TF: NAS100 perd quasiment tout en 1h (5->1), GER40 gonfle (7->12), HK50 idem (2->7), EURUSD double (3->7). AUS200 reste dominant avec 11+16=27 strats total.
+
+### Nouveaux instruments via 1h (pas en 15m)
+
+CN50 (2), CHINAH (7), NETH25 (1), SCI25 (3) -- 13 strats sur instruments qui etaient skip 0-strats en 15m.
+
+### Activation
+
+- LIVE_TIMEFRAMES = ['15m', '1h']
+- Total: 44 units (20 syms × 15m + 24 syms × 1h) = 176 strats
+- STRAT_EXITS: 20 entries 15m + 24 entries 1h
+
+### Files
+- temp/find_winners_1h.log (log complet 27 instruments)
+- temp/compile_pepperstone_1h.py (compile + merge dans config + strat_exits)
+- config_pepperstone.py: schema multi-TF avec '15m' + '1h' par sym + 4 nouveaux syms (CN50, CHINAH, NETH25, SCI25)
+- strat_exits.py: 24 sections (pepperstone, sym, '1h')
+
 ## 2026-05-01 — Multi-TF: implementation complete (Phase 1+2+3)
 
 User: "fais tout ce qu'il y a faire"
