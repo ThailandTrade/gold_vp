@@ -2,6 +2,90 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-01 — Multi-TF: implementation complete (Phase 1+2+3)
+
+User: "fais tout ce qu'il y a faire"
+
+Branche `multi-tf` cree depuis main. Architecture TF-agnostique des le depart, ajouter un TF = juste editer `LIVE_TIMEFRAMES` + run optimize/find_winners.
+
+### Schema multi-TF retenu
+
+**Magic numbers** (32 bits, max 325k):
+```
+broker_base + sym_id*1000 + tf_id*200 + strat_id
+TF_ID = {'5m': 0, '15m': 1, '1h': 2, '4h': 3, '1d': 4}
+```
+make_magic(broker, sym, strat, tf), decode_magic(magic, broker) -> (sym, tf, strat).
+
+**Configs** (Opt1, TF sous instrument):
+```python
+ALL_INSTRUMENTS = {
+    'AUS200': {
+        '15m': {'risk_pct': 0.005, 'portfolio': [...]},
+        '1h':  {'risk_pct': 0.005, 'portfolio': [...]},
+    }
+}
+LIVE_TIMEFRAMES = ['15m']  # editable
+```
+
+**STRAT_EXITS** key = (broker, sym, tf), migration auto via regex.
+
+**Pkl path** = `data/<broker>/<sym>/<tf>/optim_data.pkl`.
+
+**Trade tuple** = `(ci, xi, di, pnl_oz, sl_atr, atr, mo, sn, tf)` (9 elements, retrocompat 8).
+
+**Strats independantes du TF** (pas de logique conditionnelle): si une strat trigger sur 15m ET 1h en meme temps = 2 trades distincts.
+
+### Fichiers modifies
+
+**Nouveaux**:
+- config_helpers.py: iter_sym_tf, list_timeframes, get_inst_config — interface unifiee
+
+**Phase 1 (infra)**:
+- strats.py: TF_ID, SYMBOL_ID_REV, STRAT_ID_REV, make_magic(.., tf), decode_magic
+- config_pepperstone.py, config_ftmo.py, config_5ers.py: schema [sym][tf]
+- strat_exits.py: cle 3-tuple (broker, sym, tf)
+
+**Phase 2 (BT/optim)**:
+- backtest_engine.py: collect_trades(.., tf), tuple etendu
+- bt_portfolio.py: refacto complet, boucle (sym, tf), reporting par unit + agrege + breakdown
+- optimize_all.py: pkl path /<tf>/
+- find_winners.py: output config + STRAT_EXITS aux nouveaux formats
+- optimize_simple.py, analyze_combos.py: pkl path avec fallback legacy
+
+**Phase 3 (live)**:
+- live_mt5.py: UNITS = iter_sym_tf, ALL_MAGICS 4-tuple, state per_unit "sym|tf", manage_trailing/be_tp filtre par tf, comment "STRAT|TF" dans MT5
+- compare_today.py: live_trades indexe par (sym, tf), magic decode 4-tuple, table avec colonne TF
+- vps_pusher.py: get_positions/_deals_to_trades extrait tf depuis comment, compute_compare_today indexe "sym|tf"
+- dashboard.py: UNITS + INSTRUMENTS aplati pour compat legacy UI, MAGIC_REVERSE 4-tuple
+
+**NON touche** (volontairement):
+- mt5_fetch_clean.py: gere deja multi-TF via timeframes.txt
+- api_server.py: 1700 lignes UI, refonte cosmetique reportee
+
+### Tests
+
+```python
+strats.make_magic('pepperstone', 'AUS200', 'ALL_MACD_HIST', '1h') = 299433
+strats.decode_magic(299433, 'pepperstone') = ('AUS200', '1h', 'ALL_MACD_HIST')
+```
+
+BT pepperstone AUS200 [15m] $200 0.5% cost-r 0.05:
+- 3,961 trades, PF 1.33, WR 62%, DD -21.3%, Rend +706%, M+ 12/13
+- Coherent avec BT pre-multi-TF (run 2 find_winners) -> validation OK
+
+### Impact prochaines iterations
+
+Pour ajouter le 1h sur pepperstone:
+1. Ajouter '1h' dans LIVE_TIMEFRAMES
+2. python optimize_all.py pepperstone --tf 1h --symbol <sym> (pour chaque sym)
+3. python find_winners.py pepperstone --tf 1h
+4. Ajouter les blocks `'sym': {'1h': {...}}` dans config_pepperstone.py
+5. Ajouter STRAT_EXITS[('pepperstone', sym, '1h')] dans strat_exits.py
+6. python bt_portfolio.py pepperstone (run multi-TF complet)
+
+Aucune modif de code. Architecture est generique.
+
 ## 2026-05-01 — Cleanup: suppression complete ICM (compte non actif)
 
 User: "osef d'icm, tu peux tout virer"

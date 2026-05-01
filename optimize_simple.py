@@ -96,7 +96,11 @@ all_results = {}
 
 for sym in INSTRUMENTS:
     sym_lower = sym.lower().replace('.','_')
-    pkl_path = f'data/{args.account}/{sym_lower}/optim_data.pkl'
+    # Try TF-specific path first, fallback to legacy flat path
+    pkl_path = f'data/{args.account}/{sym_lower}/{args.tf}/optim_data.pkl'
+    legacy_path = f'data/{args.account}/{sym_lower}/optim_data.pkl'
+    if not os.path.exists(pkl_path) and os.path.exists(legacy_path):
+        pkl_path = legacy_path
     if not os.path.exists(pkl_path):
         print(f"\n  {sym}: pkl manquant ({pkl_path})")
         continue

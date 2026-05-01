@@ -68,6 +68,7 @@ ALL_STRATS = [s for s in _ALL_STRATS_RAW if s not in REMOVED_STRATS]
 # Index unique par strat pour magic numbers (ne jamais changer l'ordre, ajouter en fin)
 # IMPORTANT: utilise _ALL_STRATS_RAW pour garder les index stables (meme si strat retiree)
 STRAT_ID = {s: i for i, s in enumerate(_ALL_STRATS_RAW)}
+STRAT_ID_REV = {i: s for s, i in STRAT_ID.items()}
 
 # Symboles connus et leur offset (ne jamais changer, ajouter en fin)
 SYMBOL_ID = {
@@ -90,9 +91,34 @@ SYMBOL_ID = {
 
 MAGIC_BASES = {'ftmo': 250000, '5ers': 260000, 'pepperstone': 270000}
 
-def make_magic(broker, symbol, strat):
-    """Magic = broker_base + symbol_id * 200 + strat_id. Garanti unique."""
-    return MAGIC_BASES[broker] + SYMBOL_ID[symbol] * 200 + STRAT_ID[strat]
+# TF encoding pour magic numbers multi-TF
+TF_ID = {'5m': 0, '15m': 1, '1h': 2, '4h': 3, '1d': 4}
+TF_ID_REV = {v: k for k, v in TF_ID.items()}
+
+def make_magic(broker, symbol, strat, tf='15m'):
+    """Magic = broker_base + symbol_id * 1000 + tf_id * 200 + strat_id. Garanti unique.
+
+    Range max: 270000 + 54*1000 + 4*200 + 113 = 325,113 (bien sous 2^31).
+    """
+    return MAGIC_BASES[broker] + SYMBOL_ID[symbol] * 1000 + TF_ID[tf] * 200 + STRAT_ID[strat]
+
+def decode_magic(magic, broker):
+    """Decode magic number -> (symbol_id, tf, strat_id). Retourne (sym_name, tf, strat_name) ou None."""
+    base = MAGIC_BASES.get(broker)
+    if base is None: return None
+    rem = magic - base
+    if rem < 0: return None
+    sym_id = rem // 1000
+    rest = rem % 1000
+    tf_id = rest // 200
+    strat_id = rest % 200
+    sym_name = SYMBOL_ID_REV.get(sym_id)
+    tf = TF_ID_REV.get(tf_id)
+    strat_name = STRAT_ID_REV.get(strat_id)
+    if not (sym_name and tf and strat_name): return None
+    return (sym_name, tf, strat_name)
+
+SYMBOL_ID_REV = {v: k for k, v in SYMBOL_ID.items()}
 
 STRAT_NAMES = {
     'TOK_2BAR':'2BAR reversal Tokyo','TOK_BIG':'Big candle Tokyo >1ATR',

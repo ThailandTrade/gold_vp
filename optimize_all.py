@@ -731,10 +731,10 @@ if len(valid) == 0:
     import re
     _broker = _a.account
     _sym_san = re.sub(r"[^a-z0-9]+", "_", SYMBOL).strip("_")
-    _dir = f'data/{_broker}/{_sym_san}'
+    _dir = f'data/{_broker}/{_sym_san}/{TF}'
     os.makedirs(_dir, exist_ok=True)
     with open(f'{_dir}/optim_data.pkl', 'wb') as f:
-        pickle.dump({'strat_arrays': {}, 'best_configs': {}}, f)
+        pickle.dump({'strat_arrays': {}, 'best_configs': {}, 'tf': TF}, f)
     print(f"Saved {_dir}/optim_data.pkl (vide)")
     sys.exit(0)
 
@@ -816,9 +816,10 @@ import os
 import re as _re
 _broker = _a.account
 _sym_san = _re.sub(r"[^a-z0-9]+", "_", SYMBOL).strip("_")
-_dir = f'data/{_broker}/{_sym_san}'
+_dir = f'data/{_broker}/{_sym_san}/{TF}'
 os.makedirs(_dir, exist_ok=True)
 _pkl_file = f'{_dir}/optim_data.pkl'
+save_data['tf'] = TF
 with open(_pkl_file, 'wb') as f:
     pickle.dump(save_data, f)
 print(f"Saved {_pkl_file}")

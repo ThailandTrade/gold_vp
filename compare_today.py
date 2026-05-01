@@ -1,56 +1,65 @@
 """
-Compare backtest vs live MT5 trades for today — multi-instrument.
-Usage: python compare_today.py [icm|ftmo|5ers]
+Compare backtest vs live MT5 trades for today -- multi-instrument multi-TF.
+Usage: python compare_today.py [ftmo|5ers|pepperstone] [--tf 15m]
 """
 import warnings; warnings.filterwarnings('ignore')
 import sys, argparse, importlib; sys.stdout.reconfigure(encoding='utf-8')
 import pandas as pd, numpy as np
 from dotenv import load_dotenv; load_dotenv()
 from phase1_poc_calculator import get_conn
-from strats import make_magic
+from strats import make_magic, decode_magic
 from strat_exits import STRAT_EXITS, DEFAULT_EXIT
 from backtest_engine import load_data_recent, collect_trades, OPEN_STRATS
 from datetime import datetime, timezone, timedelta
 from prettytable import PrettyTable
+from config_helpers import iter_sym_tf
 
 parser = argparse.ArgumentParser()
 parser.add_argument('account', choices=['ftmo','5ers','pepperstone'])
-parser.add_argument('--tf', default='5m', help='Timeframe: 5m or 15m')
+parser.add_argument('--tf', default=None, help='Filtre: un seul TF (sinon tous LIVE_TIMEFRAMES)')
 args = parser.parse_args()
 
 import os, json
 cfg = importlib.import_module(f'config_{args.account}')
 BROKER = cfg.BROKER
-INSTRUMENTS = cfg.INSTRUMENTS
+
+UNITS = list(iter_sym_tf(cfg))
+if args.tf:
+    UNITS = [u for u in UNITS if u[1] == args.tf]
+SYMBOLS = sorted({sym for sym, _, _ in UNITS})
 
 with open(os.path.join(os.path.dirname(__file__), 'broker_offsets.json')) as f:
     _offsets = json.load(f)
 BROKER_OFFSET = timedelta(hours=_offsets[args.account])
 
-# OPEN_STRATS importe depuis backtest_engine (source unique)
 
-def _magic(symbol, strat):
-    return make_magic(args.account, symbol, strat)
+def _magic(symbol, strat, tf):
+    return make_magic(args.account, symbol, strat, tf)
 
+# magic -> (sym, tf, strat)
 MAGIC_REVERSE = {}
-for sym, icfg in INSTRUMENTS.items():
+for sym, tf, icfg in UNITS:
     for sn in icfg['portfolio']:
-        MAGIC_REVERSE[_magic(sym, sn)] = (sym, sn)
+        MAGIC_REVERSE[_magic(sym, sn, tf)] = (sym, tf, sn)
 
-# Date = derniere bougie en DB (pas l'horloge systeme — regle UTC candles)
+# Date = derniere bougie en DB. Choisir un (sym, tf) reference.
+_ref_sym = SYMBOLS[0] if SYMBOLS else 'XAUUSD'
+_ref_tf = UNITS[0][1] if UNITS else '15m'
+import re as _re
+_ref_table = f"candles_mt5_{_re.sub(r'[^a-z0-9]+', '_', _ref_sym.lower()).strip('_')}_{_ref_tf}"
 _conn_tmp = get_conn(); _conn_tmp.autocommit = True
 _cur = _conn_tmp.cursor()
-_cur.execute(f"SELECT MAX(ts) FROM candles_mt5_xauusd_{args.tf}")
+_cur.execute(f"SELECT MAX(ts) FROM {_ref_table}")
 _max_ts = _cur.fetchone()[0]
 _cur.close(); _conn_tmp.close()
 today = datetime.fromtimestamp(_max_ts / 1000, tz=timezone.utc).date() if _max_ts else datetime.now(timezone.utc).date()
 conn = get_conn(); conn.autocommit = True
 
-print(f"\n  COMPARE BT vs LIVE — {BROKER} — {today}")
+print(f"\n  COMPARE BT vs LIVE -- {BROKER} -- {today} -- {len(UNITS)} units (sym,tf)")
 
-# ── Load MT5 live trades ──
-live_trades = {}  # sym -> [trades]
-live_open = {}    # sym -> [positions]
+# Live trades indexes par (sym, tf)
+live_trades = {}  # (sym, tf) -> [trades]
+live_open = {}    # (sym, tf) -> [positions]
 try:
     import MetaTrader5 as mt5
     if mt5.initialize():
@@ -73,33 +82,32 @@ try:
         for pid, td in pos_deals.items():
             if not td['in'] or not td['out']: continue
             din = td['in']; dout = td['out']
-            # din.time est en heure broker (UTC+3) — convertir en UTC pour filtrer
             entry_broker = datetime.fromtimestamp(din.time, tz=timezone.utc)
             entry_utc = entry_broker - BROKER_OFFSET
             if entry_utc.date() != today: continue
-            sym_sn = MAGIC_REVERSE.get(din.magic)
-            if not sym_sn: continue
-            sym, sn = sym_sn
+            decoded = MAGIC_REVERSE.get(din.magic)
+            if not decoded: continue
+            sym, tf, sn = decoded
             d_dir = 'long' if din.type == 0 else 'short'
-            live_trades.setdefault(sym, []).append({
-                'strat': sn, 'dir': d_dir,
+            live_trades.setdefault((sym, tf), []).append({
+                'strat': sn, 'tf': tf, 'dir': d_dir,
                 'entry': din.price, 'exit': dout.price,
                 'pnl': td['pnl'],
-                'entry_time': entry_broker,  # stocker heure broker, l'affichage soustrait 3h
+                'entry_time': entry_broker,
                 'exit_time': datetime.fromtimestamp(dout.time, tz=timezone.utc),
             })
 
         # Open positions
-        for sym in INSTRUMENTS:
+        for sym in SYMBOLS:
             positions = mt5.positions_get(symbol=sym) or []
             for p in positions:
-                sym_sn = MAGIC_REVERSE.get(p.magic)
-                if not sym_sn: continue
-                s, sn = sym_sn
+                decoded = MAGIC_REVERSE.get(p.magic)
+                if not decoded: continue
+                s, tf, sn = decoded
                 if s != sym: continue
                 d_dir = 'long' if p.type == 0 else 'short'
-                live_open.setdefault(sym, []).append({
-                    'strat': sn, 'dir': d_dir,
+                live_open.setdefault((sym, tf), []).append({
+                    'strat': sn, 'tf': tf, 'dir': d_dir,
                     'entry': p.price_open, 'stop': p.sl, 'tp': p.tp,
                     'pnl': p.profit, 'lots': p.volume,
                     'time': datetime.fromtimestamp(p.time, tz=timezone.utc),
@@ -111,31 +119,29 @@ try:
 except ImportError:
     print("  MetaTrader5 non installe — comparaison BT uniquement")
 
-# ── Per instrument ──
-for sym, icfg in INSTRUMENTS.items():
+# Per (sym, tf)
+for sym, tf, icfg in UNITS:
     portfolio = icfg['portfolio']
     if not portfolio: continue
-    sym_exits = STRAT_EXITS.get((args.account, sym), {})
+    sym_exits = STRAT_EXITS.get((args.account, sym, tf), {})
 
-    # Load recent data (5000 bars = convergence garantie indicateurs, ~20x plus rapide que full)
-    candles, daily_atr, global_atr, trading_days = load_data_recent(conn, sym, n=5000, tf=args.tf)
+    candles, daily_atr, global_atr, trading_days = load_data_recent(conn, sym, n=5000, tf=tf)
     from backtest_engine import prev_trading_day
     pd_ = prev_trading_day(today, trading_days)
     atr = daily_atr.get(pd_, global_atr) if pd_ else global_atr
 
-    # Collect trades via backtest_engine (meme code que bt_portfolio)
     raw_trades = collect_trades(candles, daily_atr, global_atr, trading_days,
-                                portfolio, sym_exits, date_filter=today)
+                                portfolio, sym_exits, date_filter=today, tf=tf)
 
-    # Convertir en format compare_today
     bt_trades = []
-    for ci, xi, di, pnl_oz, sl_atr, atr_t, mo, sn in raw_trades:
+    for tup in raw_trades:
+        ci, xi, di, pnl_oz, sl_atr, atr_t, mo, sn = tup[:8]
         d_dir = 'long' if di == 1 else 'short'
         entry = float(candles.iloc[ci]['close'])
         ex = entry + pnl_oz if di == 1 else entry - pnl_oz
-        risk_1r = sl_atr * atr_t  # 1R = distance du stop en points
+        risk_1r = sl_atr * atr_t
         bt_trades.append({
-            'strat': sn, 'dir': d_dir, 'entry': entry, 'exit': ex,
+            'strat': sn, 'tf': tf, 'dir': d_dir, 'entry': entry, 'exit': ex,
             'pnl_pts': pnl_oz, 'pnl_r': pnl_oz / risk_1r if risk_1r > 0 else 0,
             'risk_1r': risk_1r, 'bars': xi - ci,
             'entry_time': str(candles.iloc[ci]['ts_dt']),
@@ -143,16 +149,15 @@ for sym, icfg in INSTRUMENTS.items():
             'skipped': None,
         })
 
-    # Live data for this symbol
-    lv = live_trades.get(sym, [])
-    lo = live_open.get(sym, [])
+    lv = live_trades.get((sym, tf), [])
+    lo = live_open.get((sym, tf), [])
 
-    bt_active = bt_trades  # tous les trades (conflict filter deja applique dans collect_trades)
+    bt_active = bt_trades
     bt_skip = []
 
     if not bt_active and not bt_skip and not lv and not lo: continue
 
-    print(f"\n  {sym} — ATR={atr:.2f} — {len(portfolio)} strats")
+    print(f"\n  {sym} [{tf}] -- ATR={atr:.2f} -- {len(portfolio)} strats")
     print(f"  BT: {len(bt_active)} trades ({len(bt_skip)} skipped) | Live: {len(lv)} closed + {len(lo)} open")
 
     # Build maps
@@ -166,11 +171,12 @@ for sym, icfg in INSTRUMENTS.items():
 
     # Build table
     tbl = PrettyTable()
-    tbl.field_names = ['Sym', 'Strat', 'Exit', 'BT Dir', 'BT Entry', 'BT Exit', 'BT R', 'BT In', 'BT Out',
+    tbl.field_names = ['Sym', 'TF', 'Strat', 'Exit', 'BT Dir', 'BT Entry', 'BT Exit', 'BT R', 'BT In', 'BT Out',
                        'LV Dir', 'LV Entry', 'LV Exit', 'LV R', 'LV In', 'LV Out',
                        'LV-BT', 'Verdict']
     tbl.align = 'r'
     tbl.align['Sym'] = 'l'
+    tbl.align['TF'] = 'l'
     tbl.align['Strat'] = 'l'
     tbl.align['Verdict'] = 'l'
 
@@ -254,7 +260,7 @@ for sym, icfg in INSTRUMENTS.items():
         else:
             verdict = '?'
 
-        table_rows.append((lv_sort_key, [sym, sn, exit_type, bt_dir, bt_entry, bt_exit, bt_pts, bt_in, bt_out,
+        table_rows.append((lv_sort_key, [sym, tf, sn, exit_type, bt_dir, bt_entry, bt_exit, bt_pts, bt_in, bt_out,
                      lv_dir, lv_entry, lv_exit, lv_pts, lv_in, lv_out,
                      lv_bt_diff, verdict]))
 
