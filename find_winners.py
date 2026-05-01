@@ -181,7 +181,11 @@ exits_blocks = []
 for sym in INSTRUMENTS:
     print(f"\n{'='*100}\n{sym}\n{'='*100}", flush=True)
     conn = get_conn()
-    candles, daily_atr, global_atr, trading_days = load_data(conn, sym, tf=args.tf)
+    try:
+        candles, daily_atr, global_atr, trading_days = load_data(conn, sym, tf=args.tf)
+    except Exception as e:
+        print(f"  Skip {sym} [{args.tf}]: {e}")
+        conn.close(); continue
     conn.close()
     if len(candles) < 500:
         print(f"  Sample trop court ({len(candles)} bars), skip"); continue

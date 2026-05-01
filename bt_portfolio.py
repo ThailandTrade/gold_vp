@@ -52,8 +52,10 @@ def crosses_weekend(entry_ts, exit_ts):
 
 
 # Resolution liste (sym, tf, icfg) a backtester
+# Si --tf specifie, ignore LIVE_TIMEFRAMES (cherche dans tous les TFs configures)
+only_live = (args.tf is None)
 sym_tf_pairs = []
-for sym, tf, icfg in iter_sym_tf(cfg):
+for sym, tf, icfg in iter_sym_tf(cfg, only_live=only_live):
     if args.symbol and sym.upper() != args.symbol.upper():
         continue
     if args.tf and tf != args.tf:

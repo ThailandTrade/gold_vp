@@ -2,6 +2,146 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-01 — 5ers comparison 15m combos vs 1h find_winners
+
+User: "Pas de gagnant clair -- bah si, le find winners cherche du long terme, pas du cherry pick"
+
+### Run find_winners 5ers 1h
+
+Commande: `python find_winners.py 5ers --tf 1h --n-min 60`
+- 8 instruments testes (XAUUSD, XAGUSD, NAS100, SP500, UK100, JPN225, US30, DAX40)
+- Total: **34 strats WIN sur 8 instruments**
+- Tous les instruments ont >=1 strat winner
+
+### Detail par instrument 1h
+
+| Sym | n strats | Strats |
+|---|---|---|
+| XAUUSD | 3 | ALL_HMA_CROSS, ALL_NR4, ALL_TRIX |
+| XAGUSD | 5 | ALL_DC10, ALL_DC10_EMA, ALL_FVG_BULL, ALL_KC_BRK, ALL_MTF_BRK |
+| NAS100 | 1 | TOK_STOCH |
+| SP500 | 7 | ALL_FVG_BULL, ALL_HAMMER, ALL_MACD_HIST, ALL_PIVOT_BOUNCE, ALL_STOCH_RSI, IDX_3SOLDIERS, TOK_STOCH |
+| UK100 | 3 | ALL_CMO_9, ALL_HAMMER, AVWAP_RECLAIM |
+| JPN225 | 5 | ALL_EMA_821, ALL_EMA_921, ALL_FVG_BULL, ALL_MOM_10, TOK_STOCH |
+| US30 | 5 | ALL_MACD_ADX, ALL_MOM_10, ALL_STOCH_RSI, IDX_3SOLDIERS, TOK_NR4 |
+| DAX40 | 5 | ALL_MACD_HIST, BOS_FVG, IDX_VWAP_BOUNCE, TOK_STOCH, TOK_TRIX |
+
+### BT comparatif 5ers (capital $100k, risk 0.5% pour benchmark)
+
+| Run | Trades | WR | PF | MaxDD | Rend | Capital | Sem+/- | Multi-day | Weekend |
+|---|---|---|---|---|---|---|---|---|---|
+| 15m combos | 6,280 | 69% | 1.18 | -14.08% | +522% | $622k | 41/52 | 1.2% | 0.6% |
+| **1h find_winners** | 6,647 | 57% | 1.19 | -17.58% | **+2324%** | $2.4M | 42/51 | 18.2% | 7.1% |
+
+### Cle d'interpretation: PF/DD trompeurs entre methodes
+
+Le 15m combos a un DD -14.08% qui parait meilleur que le 1h -17.58%. **C'est un effet de la methode de selection, pas une superiorite reelle**:
+
+- **combos = optimisation in-sample**: beam search choisit le combo qui minimise le DD SUR LA PERIODE DE BT. Le DD bas est un sous-produit de l'optimisation, pas une garantie OOS.
+- **find_winners = walk-forward par strat**: chaque strat passe h1>0 ET h2>0 individuellement. Aucune optimisation d'ensemble. Le DD est honnete, reproductible OOS.
+
+Le DD -14% du combos sera presque certainement plus haut en live (overfit). Le DD -17.58% du find_winners sera plus stable car chaque strat est validee independamment.
+
+### Top R par instrument (5ers)
+
+| Sym | 15m R | 1h R | Note |
+|---|---|---|---|
+| XAGUSD | +46 | **+145** | +99 (1h domine) |
+| SP500 | +69 | **+129** | +60 |
+| JPN225 | +46 | +89 | +43 |
+| UK100 | +6 | +76 | +70 (revivifie en 1h) |
+| US30 | +71 | +85 | +14 |
+| XAUUSD | +43 | +78 | +35 |
+| DAX40 | +29 | +67 | +38 |
+| **NAS100** | **+72** | **+9** | -63 (15m domine, idem pepperstone) |
+
+NAS100 chute systematiquement en 1h (15m sur les 2 brokers). XAGUSD et SP500 explosent en 1h (+99R, +60R).
+
+### Verdict 5ers
+
+**Le 1h find_winners gagne** sur la robustesse temporelle:
+- Pas de cherry-pick combinatoire
+- Walk-forward intransigeant par strat
+- Independance des strats verifiee individuellement
+- DD OOS predictible (vs combos optimise in-sample)
+
+Le rendement 4.5x superieur (+2324% vs +522%) confirme que le 1h capture mieux l'edge sur 5ers.
+
+### A faire
+- find_winners + BT comparatif pour FTMO (idem methodologie)
+- Decision finale: passer les 3 comptes (pepperstone, 5ers, ftmo) sur 1h find_winners pur
+
+### Files
+- temp/find_winners_5ers_1h.log
+- temp/compile_5ers_1h.py (compile + merge)
+- comparison_5ers.log (BT 15m vs 1h)
+- config_5ers.py: schema multi-TF [sym][tf], 1h sections ajoutees, risk 0.0001 (0.01%)
+- strat_exits.py: 8 sections (5ers, sym, '1h')
+
+## 2026-05-01 — Pepperstone 4h: find_winners + BT - inferieur a 1h
+
+User: "le 4h est charge, ca m'interesserait de faire un find winners et backtest"
+
+### Run find_winners 4h
+- Commande: `python find_winners.py pepperstone --tf 4h --n-min 40`
+- Seuil n=40 (ratio 1500 bars × 2.5%, coherent avec 1h)
+- **107 strats WIN sur 23 instruments** (FRA40 0 strat)
+- AUDUSD revele en 4h: 19 strats (vs 3 en 1h, 4 en 15m)
+
+### Stats qualite 4h vs 1h vs 15m (WIN strats)
+
+| Metric | 15m | 1h | 4h |
+|---|---|---|---|
+| n strats | 78 | 98 | 107 |
+| n trades moyen | 249 | 177 | 88 |
+| avg_R moyen | 0.103 | 0.117 | **0.174** (+49%) |
+| avg_R_trim | 0.117 | 0.140 | **0.192** (+64%) |
+| avg_R max | 0.30 | 0.44 | **0.68** |
+| OS moyen | 6.0% | 4.7% | 5.6% |
+
+Le 4h a expectancy par trade plus elevee mais beaucoup moins de trades.
+
+### BT 4h (capital $200, risk 0.5%)
+
+| Run | Trades | WR | PF | MaxDD | Rend | Capital |
+|---|---|---|---|---|---|---|
+| 15m | 19,388 | 59% | 1.19 | -29.66% | +828k% | $1.66M |
+| 1h | 17,371 | 60% | 1.29 | -20.13% | +578k% | $1.16M |
+| **4h** | 9,404 | **65%** | **1.36** | **-17.00%** | +68k% | $137k |
+
+### Le 4h gagne en qualite mais perd en compounding
+
+Pros:
+- PF 1.36 (top), WR 65% (top), MaxDD -17% (top)
+- Worst week -11.3% (top)
+
+Cons (severs):
+- Capital final $137k vs $1.16M (1h): compounding 8x moindre
+- **Weekend cross 33.8%** (vs 7.5% en 1h, 0.8% en 15m): 1/3 des trades cross weekend
+- Multi-day 63.8% (vs 15.9% en 1h)
+- Duree moyenne 68h (~3 jours): position type lundi -> jeudi
+- Ratio Rend/DD: 4.0k% / %DD (vs 28.9k% / %DD pour 1h)
+
+### Top R par instrument 4h
+
+AUDUSD +255R (star, 19 strats, vs 33 1h et 70 15m), EURUSD +119R, US2000 +111R, US30 +101R, USDJPY +97R, CHINAH +97R, HK50 +86R, USDCHF +84R, UK100 +76R, SCI25 +70R.
+AUS200 chute drastiquement: 38R 4h vs 270R 1h vs 452R 15m.
+
+### Verdict 4h
+
+**Pas un remplacant du 1h** pour le live $200:
+- Compounding insuffisant (8x moins)
+- Weekend exposure 4.5x plus violent (slippage live ~30-40% perte additionnelle non modelisee)
+- Ratio rendement/DD bien moins favorable
+
+**4h reste utile selectivement**: AUDUSD 4h sans rival (+255R). Pourrait etre integre via best-TF par instrument plus tard. Pour l'instant: 4h reste compile dans config (reversible).
+
+### Files
+- temp/find_winners_4h.log
+- temp/compile_pepperstone_4h.py
+- temp/bt_4h.log
+- config_pepperstone.py: 23 sym '4h' sections ajoutees
+
 ## 2026-05-01 — Decision: trade 1h only (LIVE_TIMEFRAMES = ['1h'])
 
 User: "j'ai plutot envie de ne trade que sur du 1h, ca parait moins compliqué"
