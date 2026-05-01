@@ -1,6 +1,6 @@
 """
 Module commun: toutes les strategies, exit et indicateurs.
-Le portfolio actif est defini dans config_icm.py / config_ftmo.py / config_5ers.py.
+Le portfolio actif est defini dans config_ftmo.py / config_5ers.py / config_pepperstone.py.
 """
 import pandas as pd
 import numpy as np
@@ -76,11 +76,9 @@ SYMBOL_ID = {
     'US500.cash': 10, 'US30.cash': 11, 'JP225.cash': 12,
     'AUS200.cash': 13, 'EU50.cash': 14, 'HK50.cash': 15, 'US2000.cash': 16,
     'XAGUSD': 17, 'US30': 18,
-    # ICM naming
     'EURUSD': 19, 'GBPUSD': 20, 'USDCHF': 21, 'USDJPY': 22, 'USDCAD': 23, 'AUDUSD': 24,
     'DE40': 25, 'F40': 26, 'STOXX50': 27, 'USTEC': 28,
     'AUS200': 29, 'JP225': 30, 'US500': 31,
-    # ICM crypto + nouveaux indices 2026-04-26
     'ETHUSD': 32, 'SOLUSD': 33, 'BNBUSD': 34,
     'HK50': 35, 'US2000': 36,
     'ES35': 37, 'IT40': 38, 'CA60': 39, 'NETH25': 40, 'SE30': 41, 'SWI20': 42, 'SA40': 43, 'NOR25': 44,
@@ -90,7 +88,7 @@ SYMBOL_ID = {
 }
 # (HK50.cash already in SYMBOL_ID at 15, US2000.cash at 16)
 
-MAGIC_BASES = {'icm': 240000, 'ftmo': 250000, '5ers': 260000, 'pepperstone': 270000}
+MAGIC_BASES = {'ftmo': 250000, '5ers': 260000, 'pepperstone': 270000}
 
 def make_magic(broker, symbol, strat):
     """Magic = broker_base + symbol_id * 200 + strat_id. Garanti unique."""

@@ -21,7 +21,7 @@ OPEN_STRATS = {'TOK_FADE','TOK_PREVEXT','LON_GAP','LON_BIGGAP','LON_KZ','LON_TOK
                'NY_GAP','NY_LONEND','NY_LONMOM','NY_DAYMOM'}
 
 parser = argparse.ArgumentParser()
-parser.add_argument('account', choices=['icm','ftmo','5ers'])
+parser.add_argument('account', choices=['ftmo','5ers'])
 parser.add_argument('--symbol', default='XAUUSD')
 parser.add_argument('--date', default=None, help='YYYY-MM-DD specific date')
 parser.add_argument('--last', type=int, default=5, help='Last N trading days')

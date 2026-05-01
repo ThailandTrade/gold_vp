@@ -16,9 +16,9 @@ st.set_page_config(page_title="VP Swing", layout="wide")
 
 # ── SIDEBAR: ACCOUNT ──
 ACCOUNTS = {
-    'icm': {'module': 'config_icm', 'label': 'ICMarkets'},
     'ftmo': {'module': 'config_ftmo', 'label': 'FTMO'},
     '5ers': {'module': 'config_5ers', 'label': '5ers'},
+    'pepperstone': {'module': 'config_pepperstone', 'label': 'Pepperstone'},
 }
 with st.sidebar:
     account = st.selectbox("Compte", list(ACCOUNTS.keys()),

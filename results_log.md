@@ -2,6 +2,34 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-01 — Cleanup: suppression complete ICM (compte non actif)
+
+User: "osef d'icm, tu peux tout virer"
+
+Demarrage chantier multi-tf — preparation: nettoyage ICM pour reduire surface du codebase.
+
+### Fichiers supprimes
+- config_icm.py, config_icmarkets.py (legacy)
+- live_mt5_icmarkets.py, live_paper_icmarkets.py
+- simu_icmarkets.py, simu_final.py (obsolete, importait config_icmarkets)
+- strat_dict.py (orphelin, plus reference)
+- pairs_icm.txt
+- rapport_icmarkets.pdf
+- data/icm/ (dossier entier — 30 instruments avec pkl)
+
+### Fichiers modifies
+- strats.py: MAGIC_BASES retire 'icm', commentaires "ICM naming" enleves
+- broker_offsets.json: retire 'icm'
+- strat_exits.py: 25+ sections STRAT_EXITS[('icm', ...)] supprimees
+- dashboard.py: ACCOUNTS dict — retire 'icm', ajoute 'pepperstone'
+- argparse choices nettoyes (10 fichiers): find_winners, bt_portfolio, compare_today, vps_pusher, optimize_simple, live_mt5, live_paper, mqtt_publisher, audit_bt_vs_compare, check_candles_mt5_vs_db
+- live_paper.py: fallback config_icm → config_pepperstone
+- CLAUDE.md: refonte complete (FTMO, 5ers, Pepperstone seuls), ajout regles find_winners et no LON_/NY_
+
+### Tests imports OK
+strats, strat_exits, config_pepperstone, config_ftmo, config_5ers se chargent sans erreur.
+MAGIC_BASES = {'ftmo': 250000, '5ers': 260000, 'pepperstone': 270000}
+
 ## 2026-04-30 — Decision finale: find_winners > combos sur la robustesse temporelle
 
 User: "le find winners me parait moins cherry pick que combos" / "quelle approche garantit le mieux que les résultats tiennent dans le temps"

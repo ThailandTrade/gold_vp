@@ -22,7 +22,7 @@ import paho.mqtt.client as mqtt
 
 # ── CONFIG ──
 parser = argparse.ArgumentParser()
-parser.add_argument('account', choices=['icm', 'ftmo', '5ers'])
+parser.add_argument('account', choices=['ftmo', '5ers'])
 args = parser.parse_args()
 
 cfg = importlib.import_module(f'config_{args.account}')

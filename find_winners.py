@@ -31,7 +31,7 @@ from backtest_engine import load_data, prev_trading_day, _make_day_data
 from strats import detect_all, sim_exit_custom, compute_indicators, REMOVED_STRATS
 
 parser = argparse.ArgumentParser()
-parser.add_argument('account', choices=['icm','ftmo','5ers','pepperstone'])
+parser.add_argument('account', choices=['ftmo','5ers','pepperstone'])
 parser.add_argument('--tf', default='15m')
 parser.add_argument('--symbol', default=None)
 parser.add_argument('--cost-r', type=float, default=0.05)

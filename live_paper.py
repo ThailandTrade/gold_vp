@@ -18,7 +18,7 @@ from phase1_poc_calculator import get_conn
 # ── CONFIG ────────────────────────────────────────────
 
 parser = argparse.ArgumentParser(description='Paper trading')
-parser.add_argument('account', choices=['icm','ftmo','5ers'])
+parser.add_argument('account', choices=['ftmo','5ers'])
 parser.add_argument('-c', '--capital', type=float, default=None, help='Capital initial')
 parser.add_argument('-r', '--risk', type=float, default=None, help='Risk %% par trade (ex: 0.5)')
 parser.add_argument('--reset', action='store_true', help='Reset state')
@@ -32,7 +32,7 @@ if _account == 'ftmo':
 elif _account == '5ers':
     from config_5ers import PORTFOLIO as STRATS, RISK_PCT, BROKER
 else:
-    from config_icm import PORTFOLIO as STRATS, RISK_PCT, BROKER
+    from config_pepperstone import PORTFOLIO as STRATS, RISK_PCT, BROKER
 
 RISK_PCT = args.risk / 100 if args.risk else RISK_PCT
 CAPITAL_INITIAL = args.capital if args.capital else 1000.0

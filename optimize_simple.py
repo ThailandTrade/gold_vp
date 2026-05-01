@@ -21,7 +21,7 @@ sys.stdout.reconfigure(encoding='utf-8')
 from collections import defaultdict
 
 parser = argparse.ArgumentParser()
-parser.add_argument('account', choices=['icm','ftmo','5ers','pepperstone'])
+parser.add_argument('account', choices=['ftmo','5ers','pepperstone'])
 parser.add_argument('--tf', default='15m')
 parser.add_argument('--symbol', default=None, help='Si fourni, ne traite qu\'un sym')
 parser.add_argument('--n-min', type=int, default=80)
