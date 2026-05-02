@@ -2,6 +2,29 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-02 — Sizing sur equity au lieu de balance (multi-positions)
+
+User: "le probleme c'est surtout que si on a plusieurs positions en meme temps, le risque n'est plus bon. Il faut changer pour equity."
+
+### Probleme
+Avec mutex retire (2 mai), plusieurs positions same magic possibles. mt5_balance() retourne info.balance (= capital ferme, sans PnL flottant). Sizing sur balance:
+- Si DD latent (-$X flottant): sous-estime le risque reel, sur-expose le compte
+- Si profit latent (+$X): conservateur mais incoherent
+
+### Fix
+- Ajout `mt5_equity()` retournant `info.equity`
+- `open_position` utilise `mt5_equity()` au lieu de `mt5_balance()` pour le sizing
+- `mt5_balance()` reste pour l'affichage heartbeat
+
+### Comportement
+- Plusieurs positions en profit -> equity > balance, sizing un peu plus genereux mais legitime
+- Plusieurs positions en perte -> equity < balance, **dynamic risk reduction automatique**
+
+C'est un mecanisme de drawdown protection naturel.
+
+### Files
+- live_mt5.py: ajout mt5_equity(), open_position utilise equity
+
 ## 2026-05-02 — Merge multi-tf -> main + activation prod-ready 5ers + FTMO en 1h
 
 User: "on merge maintenant. On configure 5ers avec les configs 1h (toutes sauf metaux) find winners a 0.01% de risque. On configure FTMO avec toutes les configs 1h avec 0.04% de risque. Tout doit etre prod ready"

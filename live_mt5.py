@@ -95,6 +95,13 @@ def mt5_balance():
     info = mt5.account_info()
     return info.balance if info else 0
 
+def mt5_equity():
+    """Equity = balance + PnL flottant des positions ouvertes.
+    Utilise pour sizing: a multi-positions, equity reflete le capital reel
+    disponible/expose, pas la balance figee."""
+    info = mt5.account_info()
+    return info.equity if info else 0
+
 def mt5_tick(symbol):
     t = mt5.symbol_info_tick(symbol)
     return {'bid': t.bid, 'ask': t.ask, 'spread': t.ask - t.bid} if t else None
@@ -319,9 +326,11 @@ def open_position(state, symbol, tf, sig, atr, risk_pct):
     magic = _magic(symbol, sn, tf)
     # Mutex magic retire 2026-05-02 -- align sur BT, plusieurs positions same magic autorisees
     # (la dedup 1/strat/jour est garantie par _triggered_close au niveau detect_close_strats)
-    capital = mt5_balance()
+    # Sizing sur EQUITY (pas balance) -- 2026-05-02: avec multi-positions, equity reflete
+    # le capital reel expose. Balance figee sous-estime/surestime selon PnL flottant.
+    capital = mt5_equity()
     if capital <= 0:
-        log.warning("SKIP {} -- balance zero".format(sn)); return
+        log.warning("SKIP {} -- equity zero".format(sn)); return
     tick = mt5_tick(symbol)
     if not tick:
         log.warning("SKIP {} [{}] {} -- no tick".format(symbol, tf, sn)); return
