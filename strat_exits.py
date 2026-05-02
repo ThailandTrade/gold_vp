@@ -801,3 +801,60 @@ STRAT_EXITS[('ftmo', 'JP225.cash', '1h')] = {
     'BOS_FVG': ('TPSL', 2.5, 0.75, 0),
 }
 
+# ==== 5ers 4h (find_winners 2026-05-02) ====
+
+STRAT_EXITS[('5ers', 'XAUUSD', '4h')] = {
+    'ALL_ENGULF': ('TRAIL', 1.0, 0.5, 0.3),
+    'IDX_3SOLDIERS': ('TPSL', 3.0, 5.0, 0),
+    'IDX_PREV_HL': ('TPSL', 1.25, 2.5, 0),
+}
+
+STRAT_EXITS[('5ers', 'XAGUSD', '4h')] = {
+    'TOK_NR4': ('TPSL', 3.0, 5.0, 0),
+}
+
+STRAT_EXITS[('5ers', 'NAS100', '4h')] = {
+    'ALL_DOJI_REV': ('TPSL', 1.5, 2.0, 0),
+    'ALL_EMA_921': ('TPSL', 2.0, 3.0, 0),
+    'ALL_KC_BRK': ('TPSL', 3.0, 1.5, 0),
+}
+
+STRAT_EXITS[('5ers', 'SP500', '4h')] = {
+    'ALL_STOCH_OB': ('TPSL', 3.0, 1.5, 0),
+    'ALL_STOCH_RSI': ('TPSL', 2.5, 2.5, 0),
+}
+
+STRAT_EXITS[('5ers', 'UK100', '4h')] = {
+    'ALL_FVG_BULL': ('TPSL', 3.0, 5.0, 0),
+    'ALL_MACD_DIV': ('BE_TP', 1.5, 0.3, 0.75),
+    'ALL_MACD_FAST_SIG': ('TPSL', 1.0, 1.0, 0),
+    'IDX_BB_REV': ('TPSL', 1.5, 1.5, 0),
+}
+
+STRAT_EXITS[('5ers', 'JPN225', '4h')] = {
+    'ALL_MOM_10': ('BE_TP', 1.5, 0.3, 1.0),
+    'ALL_STOCH_OB': ('TPSL', 1.25, 2.0, 0),
+    'ALL_STOCH_RSI': ('TPSL', 1.5, 1.5, 0),
+    'ALL_WILLR_14': ('TPSL', 1.5, 1.5, 0),
+    'IDX_PREV_HL': ('TPSL', 2.5, 3.0, 0),
+}
+
+STRAT_EXITS[('5ers', 'US30', '4h')] = {
+    'ALL_CMO_14_ZERO': ('TRAIL', 2.5, 0.75, 0.3),
+    'ALL_HAMMER': ('TPSL', 2.5, 2.0, 0),
+    'ALL_LR_BREAK': ('TPSL', 2.5, 3.0, 0),
+    'ALL_MOM_10': ('TPSL', 3.0, 2.0, 0),
+    'ALL_MOM_14': ('TRAIL', 2.5, 0.75, 0.3),
+    'ALL_PIVOT_BOUNCE': ('TPSL', 0.75, 1.0, 0),
+    'AVWAP_RECLAIM': ('TPSL', 2.0, 2.5, 0),
+}
+
+STRAT_EXITS[('5ers', 'DAX40', '4h')] = {
+    'ALL_ADX_RSI50': ('BE_TP', 2.5, 0.5, 0.75),
+    'ALL_AROON_CROSS': ('TPSL', 1.5, 0.75, 0),
+    'ALL_INSIDE_BRK': ('TPSL', 3.0, 2.0, 0),
+    'ALL_KC_BRK': ('TRAIL', 2.0, 0.5, 0.3),
+    'ALL_MACD_RSI': ('TPSL', 2.0, 2.0, 0),
+    'BOS_FVG': ('TRAIL', 1.0, 0.3, 0.3),
+}
+

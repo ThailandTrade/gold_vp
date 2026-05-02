@@ -2,6 +2,118 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-02 — Investigation swap MT5: formule theorique != realite live (17x off pour JPY)
+
+User: "Le swap ne PEUT PAS tuer a ce point les strats"
+
+### Investigation menee
+1. Extracted swap rates 5ers MT5: JPN225 swap_long=-10800 pts, tick_value=$6.37e-5
+2. Recherche web sur formule MT5 SYMBOL_SWAP_MODE_POINTS
+3. Implemente BT temp swap-aware (temp/bt_portfolio_swap.py)
+4. BT 5ers 4h post-swap: rendement +796% -> +143%, DD -8.71% -> -16.66%, JPN225 mort (-142R)
+5. User: "ca ne peut pas etre juste". Verification empirique via mt5.history_deals_get.
+
+### Bugs identifies dans ma formule
+
+**Bug 1: contract_size pour metaux** (XAUUSD, XAGUSD)
+- Ma formule swap_R = swap_pts × point / SL_dist sous-estime $/lot/unit par 100x sur metaux
+- XAUUSD contract_size=100 → tick_value MT5 represent $/oz/tick, pas $/lot/tick
+- Real impact: XAUUSD swap negligeable (~-0.3R), pas -32R comme mon BT disait
+
+**Bug 2: profit currency JPY** (JPN225, JPY pairs)
+- Verification via history_deals_get sur 11 positions reelles 5ers:
+  - JPN225 (2 positions, 82 lot-days): real swap = -$0.04/lot/day vs ma formule -$0.69/lot/day → ratio 0.06 (17x trop haut)
+  - CADJPY ratio 0.067, CHFJPY 0.062, EURJPY 0.074 → tous ~14-17x sur-estimes
+- Symboles non-JPY (AUDNZD, NZDCHF): ma formule correcte (ratio ~1)
+- Cause: MT5 applique une conversion FX cachee pour profit_currency=JPY, non documentee dans la formule MQL5 forum
+
+### Real impact sur 5ers 4h post-swap
+
+| | Mon BT (faux) | Reel (corrige) |
+|---|---|---|
+| JPN225 swap | -142.8R | **-8.4R** |
+| Total swap | -272R | **~-138R** |
+| Rend post-swap | +143% | **~+580%** |
+
+**JPN225 reste tradable en 4h sur 5ers** (perdait 0.016R/trade en swap, totalement gerable).
+
+### Decision
+
+User: "ce sera juste de la diff live"
+
+- **Enterrer le BT swap-aware**. Pas fiable car formule theorique imparfaite pour certaines monnaies.
+- **Mesurer le swap reel via history_deals_get** apres quelques semaines de live trading.
+- **Ne pas tordre la formule** pour faire matcher — les conversions FX MT5 internes sont opaques.
+
+### Lessons
+
+1. La formule "swap_$ = swap_pts × tick_value × lots × nights" du MQL5 forum n'est correcte QUE pour symboles a profit_currency simple (USD/EUR direct).
+2. Pour metaux: il faut multiplier par contract_size (factor 100 sur XAU).
+3. Pour JPY-quoted: il y a une conversion cachee (factor ~17) inexplique.
+4. **Single source of truth = mt5.history_deals_get** pour le swap reel.
+
+### Files
+- temp/check_swaps_5ers.py (extract MT5 swap rates)
+- temp/verify_swap_jpn225.py (compare formule vs order_calc_profit)
+- temp/check_actual_swap.py (decouvre la realite empirique)
+- temp/bt_portfolio_swap.py (entierre)
+
+## 2026-05-02 — 5ers 4h: find_winners + BT comparatif (sans swap)
+
+User: "le 4h est charge, ca m'interesserait de faire un find winners et backtest"
+
+### Run find_winners 5ers 4h
+- Commande: `python find_winners.py 5ers --tf 4h --n-min 40`
+- 8 instruments testes (XAUUSD, XAGUSD, NAS100, SP500, UK100, JPN225, US30, DAX40)
+- **31 strats WIN sur 8 instruments**
+
+| Sym | n strats | Strats |
+|---|---|---|
+| XAUUSD | 3 | ALL_ENGULF, IDX_3SOLDIERS, IDX_PREV_HL |
+| XAGUSD | 1 | TOK_NR4 |
+| NAS100 | 3 | ALL_DOJI_REV, ALL_EMA_921, ALL_KC_BRK |
+| SP500 | 2 | ALL_STOCH_OB, ALL_STOCH_RSI |
+| UK100 | 4 | ALL_FVG_BULL, ALL_MACD_DIV, ALL_MACD_FAST_SIG, IDX_BB_REV |
+| JPN225 | 5 | ALL_MOM_10, ALL_STOCH_OB, ALL_STOCH_RSI, ALL_WILLR_14, IDX_PREV_HL |
+| US30 | 7 | ALL_CMO_14_ZERO, ALL_HAMMER, ALL_LR_BREAK, ALL_MOM_10, ALL_MOM_14, ALL_PIVOT_BOUNCE, AVWAP_RECLAIM |
+| DAX40 | 6 | ALL_ADX_RSI50, ALL_AROON_CROSS, ALL_INSIDE_BRK, ALL_KC_BRK, ALL_MACD_RSI, BOS_FVG |
+
+### BT 5ers 4h (capital $100k, risk 0.5%, cost-r 0.05R, hebdo)
+
+| Run | Trades | WR | PF | MaxDD | Rend | Capital |
+|---|---|---|---|---|---|---|
+| 5ers 15m combos | 6,280 | 69% | 1.18 | -14.08% | +522% | $622k |
+| 5ers 1h find_winners | 6,647 | 57% | 1.19 | -17.58% | +2324% | $2.4M |
+| **5ers 4h find_winners** | 2,925 | **62%** | **1.36** | **-8.71%** | +796% | $896k |
+
+Le 4h gagne sur DD/PF/regularite mais perd en rendement absolu (compounding moindre).
+
+### BT 5ers 4h a 1% risk
+
+| | 4h @ 0.5% | 4h @ 1.0% | 1h @ 0.5% (ref) |
+|---|---|---|---|
+| MaxDD | -8.71% | -16.79% | -17.58% |
+| Rend | +796% | +6488% | +2324% |
+
+**A DD equivalent (~17%), 4h @ 1% donne 2.8x plus de rendement que 1h @ 0.5%.**
+
+### Top R par instrument 4h
+
+US30 +113R, XAUUSD +75R, DAX40 +65R, JPN225 +60R, UK100 +54R, XAGUSD +35R (PF 3.05 mais n=51 = anomalie possible), NAS100 +34R, SP500 +26R.
+
+### Verdict 5ers 4h
+
+- 4h DD plus contenu que 1h
+- Mais weekend cross 23.5% (vs 7.1% en 1h) -> exposure live plus haute
+- 1h reste champion en risk-adjusted (132k%/DD vs 91k%/DD)
+
+### Files
+- temp/find_winners_5ers_4h.log
+- temp/compile_5ers_4h.py (compile + merge dans config + strat_exits)
+- temp/bt_5ers_4h.log, temp/bt_5ers_4h_r1.log
+- config_5ers.py: 8 sym '4h' sections ajoutees
+- strat_exits.py: 8 sections (5ers, sym, '4h')
+
 ## 2026-05-02 — Sizing sur equity au lieu de balance (multi-positions)
 
 User: "le probleme c'est surtout que si on a plusieurs positions en meme temps, le risque n'est plus bon. Il faut changer pour equity."
