@@ -2,6 +2,25 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-02 — Mise a jour CLAUDE.md + memory pipeline pour nouvelles sessions
+
+### Probleme
+CLAUDE.md et memory/feedback_pipeline_order.md obsoletes:
+- mention de combos beam search comme methode principale (legacy maintenant)
+- pas de mention multi-TF (architecture en place depuis 2026-05-01)
+- pas de find_winners (methode actuelle depuis 2026-04-30)
+- pas de retrait mutex / sizing equity / cost-r interpretation
+- ICM toujours mentionne (supprime 2026-05-01)
+
+### Action
+- CLAUDE.md reecrit: etat actuel 3 brokers en 1h, schema multi-TF, methode find_winners, regles intransigeantes (LON_/NY_ retires, mutex retire, equity sizing), cost-r interpretation, swap non-modelise
+- memory/feedback_pipeline_order.md reecrit: pipeline find_winners-first, etapes precises avec commands, regles transversales, validation post-modif
+- memory/feedback_log_after_every_commit.md renforce avec historique des recidives + pattern d'oubli + promesses vides a ne pas refaire + escalade hook si re-recidive
+
+### Pourquoi
+User: "le pipeline a ete mis a jour ? Si on demarre une nouvelle session on saura quoi faire"
+La doc loaded chaque session etait obsolete -> nouvelle session aurait suivi l'ancien pipeline.
+
 ## 2026-05-02 — Investigation swap MT5: formule theorique != realite live (17x off pour JPY)
 
 User: "Le swap ne PEUT PAS tuer a ce point les strats"
