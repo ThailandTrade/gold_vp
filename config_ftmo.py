@@ -62,11 +62,11 @@ ALL_INSTRUMENTS = {
     },
 }
 
-LIVE_TIMEFRAMES = ['15m']
+LIVE_TIMEFRAMES = ['1h']
 
-# XAGUSD desactive: cout 0.01 lot $21.92 > target $18.32 a 0.04% risk
-LIVE_INSTRUMENTS = [k for k in ALL_INSTRUMENTS.keys() if k != 'XAGUSD']
+# Toutes les configs 1h actives (incl. metaux). En 1h, le SL est plus large -> cost en R plus bas
+LIVE_INSTRUMENTS = list(ALL_INSTRUMENTS.keys())
 INSTRUMENTS = {k: v for k, v in ALL_INSTRUMENTS.items() if k in LIVE_INSTRUMENTS}
 
-RISK_PCT = ALL_INSTRUMENTS['XAUUSD']['15m']['risk_pct']
-PORTFOLIO = ALL_INSTRUMENTS['XAUUSD']['15m']['portfolio']
+RISK_PCT = ALL_INSTRUMENTS['XAUUSD']['1h']['risk_pct']
+PORTFOLIO = ALL_INSTRUMENTS['XAUUSD']['1h']['portfolio']

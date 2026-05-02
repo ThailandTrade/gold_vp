@@ -45,11 +45,11 @@ ALL_INSTRUMENTS = {
     },
 }
 
-LIVE_TIMEFRAMES = ['15m']
+LIVE_TIMEFRAMES = ['1h']
 
 # Metaux desactives (XAUUSD/XAGUSD): cout min lot 0.01 depasse le risk target 0.01%
 LIVE_INSTRUMENTS = [k for k in ALL_INSTRUMENTS.keys() if k not in ('XAUUSD', 'XAGUSD')]
 INSTRUMENTS = {k: v for k, v in ALL_INSTRUMENTS.items() if k in LIVE_INSTRUMENTS}
 
-RISK_PCT = ALL_INSTRUMENTS['XAUUSD']['15m']['risk_pct']
-PORTFOLIO = ALL_INSTRUMENTS['XAUUSD']['15m']['portfolio']
+RISK_PCT = ALL_INSTRUMENTS['XAUUSD']['1h']['risk_pct']
+PORTFOLIO = ALL_INSTRUMENTS['XAUUSD']['1h']['portfolio']

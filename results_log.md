@@ -2,6 +2,29 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-02 — Merge multi-tf -> main + activation prod-ready 5ers + FTMO en 1h
+
+User: "on merge maintenant. On configure 5ers avec les configs 1h (toutes sauf metaux) find winners a 0.01% de risque. On configure FTMO avec toutes les configs 1h avec 0.04% de risque. Tout doit etre prod ready"
+
+### Merge
+
+multi-tf merge sur main (5 commits): cleanup ICM, multi-tf architecture, pepperstone 1h activation, 4h+5ers find_winners, retrait mutex+alignment+ftmo 1h.
+
+### Activation prod-ready 3 brokers
+
+| Compte | TFs | Units | Strats | Risk | LIVE_INSTRUMENTS |
+|---|---|---|---|---|---|
+| Pepperstone | 1h | 24 | 98 | 0.5% | toutes |
+| 5ers | 1h | 6 | 26 | 0.01% | sans XAUUSD/XAGUSD (cost lot trop eleve) |
+| FTMO | 1h | 11 | 49 | 0.04% | toutes (XAUUSD/XAGUSD/JP225/EU50 inclus) |
+
+### Validation
+Tous les portfolios 1h ont une entree STRAT_EXITS correspondante. Aucun trou.
+
+### Files
+- config_5ers.py: LIVE_TIMEFRAMES=['1h'], RISK_PCT/PORTFOLIO refs '1h'
+- config_ftmo.py: LIVE_TIMEFRAMES=['1h'], LIVE_INSTRUMENTS=toutes (XAGUSD reactive en 1h car SL plus large -> cost R plus bas)
+
 ## 2026-05-02 — Retrait du mutex magic en live + alignement BT/Live (compare + dashboard)
 
 ### Insight: cost-r BT vs reality
