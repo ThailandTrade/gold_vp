@@ -208,6 +208,7 @@ def compute_compare_today():
         atr = daily_atr.get(pd_, global_atr) if pd_ else global_atr
         raw = collect_trades(candles, daily_atr, global_atr, trading_days,
                             portfolio, sym_exits, date_filter=today, tf=tf)
+        # Multiple trades per (sym, tf, strat) possible (mutex retire 2026-05-02)
         bt_by_strat = {}
         for tup in raw:
             ci, xi, di, pnl_oz, sl_atr, atr_t, mo, sn = tup[:8]
@@ -216,7 +217,7 @@ def compute_compare_today():
             xi_safe = min(xi, len(candles) - 1)
             entry_time = candles.iloc[ci]['ts_dt'].isoformat() if ci < len(candles) else None
             exit_time = candles.iloc[xi_safe]['ts_dt'].isoformat() if xi_safe < len(candles) else None
-            bt_by_strat[sn] = {
+            bt_by_strat.setdefault(sn, []).append({
                 'dir': 'long' if di == 1 else 'short',
                 'entry': round(entry, 2),
                 'exit': round(entry + pnl_oz if di == 1 else entry - pnl_oz, 2),
@@ -224,42 +225,50 @@ def compute_compare_today():
                 'risk_1r': round(risk_1r, 4),
                 'entry_time': entry_time,
                 'exit_time': exit_time,
-            }
+            })
         lv_by_strat = {}
         for t in today_trades:
             if t['symbol'] != sym: continue
             if t.get('tf') != tf: continue
             sn = t.get('strat', '')
             if sn in portfolio:
-                lv_by_strat[sn] = t
+                lv_by_strat.setdefault(sn, []).append(t)
+        # Tri par entry_time pour matching ordonne
+        for sn in bt_by_strat: bt_by_strat[sn].sort(key=lambda b: b.get('entry_time') or '')
+        for sn in lv_by_strat: lv_by_strat[sn].sort(key=lambda l: l.get('time_open') or '')
+
         rows = []
         for sn in portfolio:
-            bt = bt_by_strat.get(sn)
-            lv = lv_by_strat.get(sn)
-            row = {'strat': sn, 'bt': None, 'lv': None, 'delta': None}
-            if bt:
-                row['bt'] = bt
-            if lv:
-                lv_pnl = (lv['exit'] - lv['entry']) if lv['dir'] == 'long' else (lv['entry'] - lv['exit'])
+            bts = bt_by_strat.get(sn, [])
+            lvs = lv_by_strat.get(sn, [])
+            n_pairs = max(len(bts), len(lvs), 1)
+            for idx in range(n_pairs):
+                bt = bts[idx] if idx < len(bts) else None
+                lv = lvs[idx] if idx < len(lvs) else None
+                row = {'strat': sn, 'idx': idx, 'bt': None, 'lv': None, 'delta': None}
                 if bt:
-                    risk_1r = bt['risk_1r']
-                else:
-                    ex = sym_exits.get(sn, DEFAULT_EXIT)
-                    risk_1r = ex[1] * atr
-                lv_r = round(lv_pnl / risk_1r, 2) if risk_1r > 0 else 0
-                row['lv'] = {
-                    'dir': lv['dir'],
-                    'entry': lv['entry'],
-                    'exit': lv['exit'],
-                    'pnl_r': lv_r,
-                    'pnl_usd': lv['pnl'],
-                    'entry_time': lv.get('time_open'),
-                    'exit_time': lv.get('time_close'),
-                    'ticket': lv.get('ticket'),
-                }
-            if bt and row['lv']:
-                row['delta'] = round(row['lv']['pnl_r'] - bt['pnl_r'], 2)
-            rows.append(row)
+                    row['bt'] = bt
+                if lv:
+                    lv_pnl = (lv['exit'] - lv['entry']) if lv['dir'] == 'long' else (lv['entry'] - lv['exit'])
+                    if bt:
+                        risk_1r = bt['risk_1r']
+                    else:
+                        ex = sym_exits.get(sn, DEFAULT_EXIT)
+                        risk_1r = ex[1] * atr
+                    lv_r = round(lv_pnl / risk_1r, 2) if risk_1r > 0 else 0
+                    row['lv'] = {
+                        'dir': lv['dir'],
+                        'entry': lv['entry'],
+                        'exit': lv['exit'],
+                        'pnl_r': lv_r,
+                        'pnl_usd': lv['pnl'],
+                        'entry_time': lv.get('time_open'),
+                        'exit_time': lv.get('time_close'),
+                        'ticket': lv.get('ticket'),
+                    }
+                if bt and row['lv']:
+                    row['delta'] = round(row['lv']['pnl_r'] - bt['pnl_r'], 2)
+                rows.append(row)
         result[_unit_key(sym, tf)] = {'symbol': sym, 'tf': tf, 'atr': round(atr, 2), 'rows': rows}
     conn.close()
     return result

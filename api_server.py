@@ -541,18 +541,26 @@ function modalBack(){
 }
 
 // === BT match for live trade ===
-function findBtMatch(sym,strat,data,acc){
+function stratOf(t){return t.strat||((t.comment||'').split('|')[0]);}
+
+function findBtMatch(sym,strat,data,acc,ticket){
   const btc=data?.bt_compare||{};
-  // En mode LIVE les cles sont 'acc:sym', sinon 'sym'
+  // En mode LIVE les cles sont 'acc:sym', sinon 'sym|tf' ou 'sym'
   let info=btc[sym];
   if(!info && acc) info=btc[acc+':'+sym];
   if(!info){
-    // Fallback: chercher n'importe quelle cle qui finit par ':sym'
-    for(const k of Object.keys(btc)){if(k.endsWith(':'+sym)){info=btc[k];break;}}
+    for(const k of Object.keys(btc)){if(k.endsWith(':'+sym)||k.startsWith(sym+'|')){info=btc[k];break;}}
   }
   if(!info)return null;
-  const row=(info.rows||[]).find(r=>r.strat===strat);
-  return row?{...row,atr:info.atr,_acc:info._acc}:null;
+  const rows=(info.rows||[]).filter(r=>r.strat===strat);
+  if(rows.length===0)return null;
+  // Si ticket fourni, prefere matcher par ticket LV
+  if(ticket){
+    const byTicket=rows.find(r=>r.lv&&r.lv.ticket===ticket);
+    if(byTicket)return {...byTicket,atr:info.atr,_acc:info._acc};
+  }
+  // Fallback: premier row (idx 0)
+  return {...rows[0],atr:info.atr,_acc:info._acc};
 }
 
 // === Drill-down: trade ===
@@ -586,7 +594,7 @@ function tradeTitle(t){
 }
 
 function renderTradeDrill(t,data){
-  const m=findBtMatch(t.symbol,t.comment,data,t._acc);
+  const m=findBtMatch(t.symbol,stratOf(t),data,t._acc,t.ticket);
   const pnl=t.pnl||0;
   const isLong=t.dir==='long';
   let h='';
@@ -653,7 +661,7 @@ function renderTradeDrill(t,data){
 }
 
 function renderPositionDrill(p,data){
-  const m=findBtMatch(p.symbol,p.comment,data,p._acc);
+  const m=findBtMatch(p.symbol,stratOf(p),data,p._acc,p.ticket);
   const isLong=p.dir==='long';
   const elapsed=p.time_open?Math.round((Date.now()-new Date(p.time_open).getTime())/60000):0;
   const pnl=p.pnl||0;

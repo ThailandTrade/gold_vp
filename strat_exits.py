@@ -717,3 +717,87 @@ STRAT_EXITS[('5ers', 'DAX40', '1h')] = {
     'TOK_TRIX': ('TPSL', 2.5, 1.5, 0),
 }
 
+# ==== FTMO 1h (find_winners 2026-05-01) ====
+
+STRAT_EXITS[('ftmo', 'XAUUSD', '1h')] = {
+    'ALL_HMA_CROSS': ('TPSL', 3.0, 4.0, 0),
+}
+
+STRAT_EXITS[('ftmo', 'XAGUSD', '1h')] = {
+    'ALL_MTF_BRK': ('TPSL', 3.0, 2.5, 0),
+    'TOK_TRIX': ('TPSL', 2.5, 3.0, 0),
+}
+
+STRAT_EXITS[('ftmo', 'GER40.cash', '1h')] = {
+    'ALL_CMO_9': ('TPSL', 2.0, 2.5, 0),
+    'ALL_ELDER_BEAR': ('TPSL', 2.5, 2.5, 0),
+    'ALL_INSIDE_BRK': ('TPSL', 3.0, 2.5, 0),
+    'ALL_STOCH_RSI': ('TPSL', 2.5, 3.0, 0),
+    'BOS_FVG': ('TPSL', 3.0, 1.0, 0),
+    'IDX_CONSEC_REV': ('TPSL', 2.5, 3.0, 0),
+}
+
+STRAT_EXITS[('ftmo', 'AUS200.cash', '1h')] = {
+    'ALL_BB_TIGHT': ('TPSL', 3.0, 4.0, 0),
+    'ALL_FISHER_9': ('TPSL', 2.0, 1.5, 0),
+    'ALL_MACD_ADX': ('TPSL', 3.0, 3.0, 0),
+    'ALL_PIVOT_BOUNCE': ('BE_TP', 2.5, 0.75, 1.5),
+    'ALL_WILLR_14': ('BE_TP', 2.0, 0.75, 1.5),
+    'ALL_WILLR_7': ('TPSL', 2.0, 0.75, 0),
+    'TOK_FISHER': ('TPSL', 2.0, 1.5, 0),
+}
+
+STRAT_EXITS[('ftmo', 'EU50.cash', '1h')] = {
+    'ALL_CONSEC_REV': ('TPSL', 2.0, 2.0, 0),
+    'ALL_HAMMER': ('BE_TP', 3.0, 0.75, 2.0),
+    'ALL_PIVOT_BRK': ('TPSL', 1.25, 1.0, 0),
+}
+
+STRAT_EXITS[('ftmo', 'HK50.cash', '1h')] = {
+    'ALL_DC50': ('TPSL', 3.0, 2.0, 0),
+    'BOS_FVG': ('TPSL', 2.5, 2.0, 0),
+}
+
+STRAT_EXITS[('ftmo', 'UK100.cash', '1h')] = {
+    'ALL_HAMMER': ('TPSL', 1.5, 2.0, 0),
+    'ALL_MACD_DIV': ('TPSL', 1.0, 1.0, 0),
+    'ALL_STOCH_OB': ('TPSL', 2.5, 2.0, 0),
+    'AVWAP_RECLAIM': ('TPSL', 3.0, 1.5, 0),
+    'IDX_BB_REV': ('TPSL', 3.0, 3.0, 0),
+}
+
+STRAT_EXITS[('ftmo', 'US2000.cash', '1h')] = {
+    'ALL_ICHI_TK': ('TPSL', 2.0, 2.5, 0),
+    'AVWAP_RECLAIM': ('TPSL', 1.25, 1.5, 0),
+    'IDX_VWAP_BOUNCE': ('TPSL', 3.0, 4.0, 0),
+    'TOK_NR4': ('TPSL', 1.5, 1.0, 0),
+    'TOK_STOCH': ('TPSL', 1.0, 1.5, 0),
+}
+
+STRAT_EXITS[('ftmo', 'US30.cash', '1h')] = {
+    'ALL_3SOLDIERS': ('BE_TP', 1.5, 0.75, 1.5),
+    'ALL_CMO_14': ('TPSL', 2.5, 2.5, 0),
+    'ALL_CMO_9': ('TPSL', 2.5, 2.5, 0),
+    'ALL_DPO_14': ('TPSL', 1.25, 1.5, 0),
+    'ALL_ICHI_TK': ('TRAIL', 3.0, 0.75, 0.5),
+    'ALL_MACD_ADX': ('TPSL', 2.5, 2.5, 0),
+    'ALL_MOM_10': ('TPSL', 2.5, 2.5, 0),
+}
+
+STRAT_EXITS[('ftmo', 'US500.cash', '1h')] = {
+    'ALL_FVG_BULL': ('TPSL', 1.5, 1.5, 0),
+    'ALL_HAMMER': ('BE_TP', 1.5, 0.3, 1.0),
+    'ALL_MACD_RSI': ('TPSL', 2.5, 1.5, 0),
+    'ALL_PIVOT_BOUNCE': ('BE_TP', 1.0, 0.75, 1.0),
+    'ALL_STOCH_RSI': ('TPSL', 2.0, 2.0, 0),
+    'TOK_STOCH': ('TPSL', 3.0, 1.5, 0),
+}
+
+STRAT_EXITS[('ftmo', 'JP225.cash', '1h')] = {
+    'ALL_EMA_821': ('BE_TP', 1.5, 0.75, 1.0),
+    'ALL_EMA_921': ('TPSL', 1.5, 1.0, 0),
+    'ALL_FVG_BULL': ('TPSL', 1.25, 1.5, 0),
+    'ALL_MOM_10': ('TPSL', 2.5, 3.0, 0),
+    'BOS_FVG': ('TPSL', 2.5, 0.75, 0),
+}
+

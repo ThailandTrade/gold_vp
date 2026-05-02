@@ -317,9 +317,8 @@ def open_position(state, symbol, tf, sig, atr, risk_pct):
     d = sig['dir']; sn = sig['strat']
     signal_close = sig['entry']
     magic = _magic(symbol, sn, tf)
-    for p in mt5_our_positions(symbol):
-        if p.magic == magic:
-            log.info("SKIP {} [{}] {} -- deja ouvert #{}".format(symbol, tf, sn, p.ticket)); return
+    # Mutex magic retire 2026-05-02 -- align sur BT, plusieurs positions same magic autorisees
+    # (la dedup 1/strat/jour est garantie par _triggered_close au niveau detect_close_strats)
     capital = mt5_balance()
     if capital <= 0:
         log.warning("SKIP {} -- balance zero".format(sn)); return
