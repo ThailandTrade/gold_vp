@@ -16,9 +16,9 @@ st.set_page_config(page_title="VP Swing", layout="wide")
 
 # ── SIDEBAR: ACCOUNT ──
 ACCOUNTS = {
-    'icm': {'module': 'config_icm', 'label': 'ICMarkets'},
     'ftmo': {'module': 'config_ftmo', 'label': 'FTMO'},
     '5ers': {'module': 'config_5ers', 'label': '5ers'},
+    'pepperstone': {'module': 'config_pepperstone', 'label': 'Pepperstone'},
 }
 with st.sidebar:
     account = st.selectbox("Compte", list(ACCOUNTS.keys()),
@@ -35,18 +35,27 @@ with st.sidebar:
 
 cfg = importlib.import_module(ACCOUNTS[account]['module'])
 BROKER = cfg.BROKER
-INSTRUMENTS = getattr(cfg, 'ALL_INSTRUMENTS', cfg.INSTRUMENTS)
+from config_helpers import iter_sym_tf
+UNITS = list(iter_sym_tf(cfg))
+# Vue plate par sym (fusion portfolios multi-TF)
+INSTRUMENTS = {}
+for sym, tf, icfg in UNITS:
+    if sym not in INSTRUMENTS:
+        INSTRUMENTS[sym] = {'risk_pct': icfg['risk_pct'], 'portfolio': []}
+    INSTRUMENTS[sym]['portfolio'].extend(icfg['portfolio'])
+# Dedup
+for sym in INSTRUMENTS:
+    INSTRUMENTS[sym]['portfolio'] = sorted(set(INSTRUMENTS[sym]['portfolio']))
 
-# ── MAGIC NUMBERS (from strats.py — garanti unique) ──
-def _magic(symbol, strat):
-    return make_magic(account, symbol, strat)
+# MAGIC NUMBERS multi-TF
+def _magic(symbol, strat, tf):
+    return make_magic(account, symbol, strat, tf)
 
-# Build reverse magic map for ALL instruments (pas seulement live)
-MAGIC_REVERSE = {}  # magic -> (symbol, strat)
-for sym, icfg in INSTRUMENTS.items():
+MAGIC_REVERSE = {}  # magic -> (symbol, tf, strat)
+for sym, tf, icfg in UNITS:
     for sn in icfg['portfolio']:
-        m = _magic(sym, sn)
-        MAGIC_REVERSE[m] = (sym, sn)
+        m = _magic(sym, sn, tf)
+        MAGIC_REVERSE[m] = (sym, tf, sn)
 ALL_OUR_MAGICS = set(MAGIC_REVERSE.keys())
 
 # ── MT5 DATA LOADING ──

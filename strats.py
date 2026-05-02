@@ -1,6 +1,6 @@
 """
 Module commun: toutes les strategies, exit et indicateurs.
-Le portfolio actif est defini dans config_icm.py / config_ftmo.py / config_5ers.py.
+Le portfolio actif est defini dans config_ftmo.py / config_5ers.py / config_pepperstone.py.
 """
 import pandas as pd
 import numpy as np
@@ -68,6 +68,7 @@ ALL_STRATS = [s for s in _ALL_STRATS_RAW if s not in REMOVED_STRATS]
 # Index unique par strat pour magic numbers (ne jamais changer l'ordre, ajouter en fin)
 # IMPORTANT: utilise _ALL_STRATS_RAW pour garder les index stables (meme si strat retiree)
 STRAT_ID = {s: i for i, s in enumerate(_ALL_STRATS_RAW)}
+STRAT_ID_REV = {i: s for s, i in STRAT_ID.items()}
 
 # Symboles connus et leur offset (ne jamais changer, ajouter en fin)
 SYMBOL_ID = {
@@ -76,11 +77,9 @@ SYMBOL_ID = {
     'US500.cash': 10, 'US30.cash': 11, 'JP225.cash': 12,
     'AUS200.cash': 13, 'EU50.cash': 14, 'HK50.cash': 15, 'US2000.cash': 16,
     'XAGUSD': 17, 'US30': 18,
-    # ICM naming
     'EURUSD': 19, 'GBPUSD': 20, 'USDCHF': 21, 'USDJPY': 22, 'USDCAD': 23, 'AUDUSD': 24,
     'DE40': 25, 'F40': 26, 'STOXX50': 27, 'USTEC': 28,
     'AUS200': 29, 'JP225': 30, 'US500': 31,
-    # ICM crypto + nouveaux indices 2026-04-26
     'ETHUSD': 32, 'SOLUSD': 33, 'BNBUSD': 34,
     'HK50': 35, 'US2000': 36,
     'ES35': 37, 'IT40': 38, 'CA60': 39, 'NETH25': 40, 'SE30': 41, 'SWI20': 42, 'SA40': 43, 'NOR25': 44,
@@ -90,11 +89,36 @@ SYMBOL_ID = {
 }
 # (HK50.cash already in SYMBOL_ID at 15, US2000.cash at 16)
 
-MAGIC_BASES = {'icm': 240000, 'ftmo': 250000, '5ers': 260000, 'pepperstone': 270000}
+MAGIC_BASES = {'ftmo': 250000, '5ers': 260000, 'pepperstone': 270000}
 
-def make_magic(broker, symbol, strat):
-    """Magic = broker_base + symbol_id * 200 + strat_id. Garanti unique."""
-    return MAGIC_BASES[broker] + SYMBOL_ID[symbol] * 200 + STRAT_ID[strat]
+# TF encoding pour magic numbers multi-TF
+TF_ID = {'5m': 0, '15m': 1, '1h': 2, '4h': 3, '1d': 4}
+TF_ID_REV = {v: k for k, v in TF_ID.items()}
+
+def make_magic(broker, symbol, strat, tf='15m'):
+    """Magic = broker_base + symbol_id * 1000 + tf_id * 200 + strat_id. Garanti unique.
+
+    Range max: 270000 + 54*1000 + 4*200 + 113 = 325,113 (bien sous 2^31).
+    """
+    return MAGIC_BASES[broker] + SYMBOL_ID[symbol] * 1000 + TF_ID[tf] * 200 + STRAT_ID[strat]
+
+def decode_magic(magic, broker):
+    """Decode magic number -> (symbol_id, tf, strat_id). Retourne (sym_name, tf, strat_name) ou None."""
+    base = MAGIC_BASES.get(broker)
+    if base is None: return None
+    rem = magic - base
+    if rem < 0: return None
+    sym_id = rem // 1000
+    rest = rem % 1000
+    tf_id = rest // 200
+    strat_id = rest % 200
+    sym_name = SYMBOL_ID_REV.get(sym_id)
+    tf = TF_ID_REV.get(tf_id)
+    strat_name = STRAT_ID_REV.get(strat_id)
+    if not (sym_name and tf and strat_name): return None
+    return (sym_name, tf, strat_name)
+
+SYMBOL_ID_REV = {v: k for k, v in SYMBOL_ID.items()}
 
 STRAT_NAMES = {
     'TOK_2BAR':'2BAR reversal Tokyo','TOK_BIG':'Big candle Tokyo >1ATR',

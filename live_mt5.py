@@ -1,12 +1,10 @@
 """
-Live Trading MT5 — multi-compte, multi-instrument.
+Live Trading MT5 -- multi-compte, multi-instrument, multi-TF.
 Usage:
-  python live_mt5.py icm                    → ICM tous instruments
-  python live_mt5.py ftmo                   → FTMO tous instruments
-  python live_mt5.py 5ers                   → 5ers tous instruments
-  python live_mt5.py 5ers --reset           → reset state
+  python live_mt5.py ftmo                   -> FTMO tous instruments+TFs configures
+  python live_mt5.py pepperstone --reset    -> reset state
 
-Un seul process par broker. Gere tous les instruments configures.
+Un seul process par broker. Gere tous les (instrument, TF) configures.
 """
 import warnings; warnings.filterwarnings('ignore')
 import sys, argparse; sys.stdout.reconfigure(encoding='utf-8')
@@ -20,21 +18,31 @@ from phase1_poc_calculator import get_conn
 from strats import STRAT_NAMES, STRAT_SESSION, detect_all, make_magic
 from strat_exits import STRAT_EXITS, DEFAULT_EXIT
 from backtest_engine import load_data, prev_trading_day, OPEN_STRATS, _make_day_data
+from config_helpers import iter_sym_tf
 
-# ── CONFIG ────────────────────────────────────────────
+# CONFIG
 
-parser = argparse.ArgumentParser(description='Live MT5 trading')
-parser.add_argument('account', choices=['icm','ftmo','5ers','pepperstone'])
+parser = argparse.ArgumentParser(description='Live MT5 trading multi-TF')
+parser.add_argument('account', choices=['ftmo','5ers','pepperstone'])
 parser.add_argument('--reset', action='store_true', help='Reset state')
-parser.add_argument('--tf', default='5m', help='Timeframe: 5m or 15m')
 args = parser.parse_args()
 _account = args.account
 
 import importlib
 cfg_mod = importlib.import_module(f'config_{_account}')
 BROKER = cfg_mod.BROKER
-INSTRUMENTS = cfg_mod.INSTRUMENTS
+
+# Build UNITS = [(sym, tf, icfg), ...] depuis le config multi-TF
+UNITS = list(iter_sym_tf(cfg_mod))
+# Backwards compat: structure {sym: icfg_first_tf} pour les fonctions qui attendent encore l'ancien format
+INSTRUMENTS = {sym: icfg for sym, _tf, icfg in UNITS}
+SYMBOLS = sorted({sym for sym, _, _ in UNITS})
 CHECK_INTERVAL = 1
+
+
+def _unit_key(sym, tf):
+    return f"{sym}|{tf}"
+
 
 with open(os.path.join(os.path.dirname(__file__), 'broker_offsets.json')) as f:
     _offsets = json.load(f)
@@ -43,19 +51,17 @@ BROKER_OFFSET = timedelta(hours=_offsets[_account])
 os.makedirs(f'data/{_account}', exist_ok=True)
 STATE_FILE = f"data/{_account}/live_mt5.json"
 
-# OPEN_STRATS importe depuis backtest_engine (source unique)
+# MAGIC NUMBERS multi-TF
 
-# ── MAGIC NUMBERS ────────────────────────────────────
+def _magic(symbol, strat, tf):
+    return make_magic(_account, symbol, strat, tf)
 
-def _magic(symbol, strat):
-    return make_magic(_account, symbol, strat)
-
-# Build reverse lookup
-ALL_MAGICS = {}  # magic -> (symbol, strat)
-for sym, icfg in INSTRUMENTS.items():
+# Build reverse lookup magic -> (symbol, tf, strat)
+ALL_MAGICS = {}
+for sym, tf, icfg in UNITS:
     for sn in icfg['portfolio']:
-        m = _magic(sym, sn)
-        ALL_MAGICS[m] = (sym, sn)
+        m = _magic(sym, sn, tf)
+        ALL_MAGICS[m] = (sym, tf, sn)
 ALL_MAGIC_SET = set(ALL_MAGICS.keys())
 
 # ── LOGGING ──────────────────────────────────────────
@@ -119,21 +125,22 @@ def mt5_lot_size(symbol, risk_amount, entry, stop, direction):
     lots = min(lots, sym.volume_max)
     return round(lots, 2)
 
-def mt5_send_order(symbol, strat, direction, sl, tp, lots):
+def mt5_send_order(symbol, strat, direction, sl, tp, lots, tf='15m'):
     sym = mt5.symbol_info(symbol)
     if not sym: return None
     order_type = mt5.ORDER_TYPE_BUY if direction == 'long' else mt5.ORDER_TYPE_SELL
     price = sym.ask if direction == 'long' else sym.bid
-    magic = _magic(symbol, strat)
+    magic = _magic(symbol, strat, tf)
+    comment = f"{strat}|{tf}"[:31]  # MT5 comment limited to 31 chars
     request = {
         'action': mt5.TRADE_ACTION_DEAL, 'symbol': symbol, 'volume': lots,
         'type': order_type, 'price': price,
         'sl': round(sl, sym.digits), 'tp': round(tp, sym.digits) if tp else 0.0,
-        'deviation': 20, 'magic': magic, 'comment': strat,
+        'deviation': 20, 'magic': magic, 'comment': comment,
         'type_time': mt5.ORDER_TIME_GTC,
     }
-    log.info(">>> {} {} {} {} {:.2f}lots @ {:.2f} SL={:.2f} TP={:.2f} <<<".format(
-        'BUY' if direction == 'long' else 'SELL', symbol, strat, direction.upper(),
+    log.info(">>> {} {} [{}] {} {} {:.2f}lots @ {:.2f} SL={:.2f} TP={:.2f} <<<".format(
+        'BUY' if direction == 'long' else 'SELL', symbol, tf, strat, direction.upper(),
         lots, price, sl, tp or 0))
     result = mt5.order_send(request)
     if not result:
@@ -181,9 +188,9 @@ def mt5_close_position(ticket, symbol):
 def get_conn_autocommit():
     conn = get_conn(); conn.autocommit = True; return conn
 
-def get_recent_candles(conn, symbol, n=1500, tf=None):
+def get_recent_candles(conn, symbol, n=1500, tf='15m'):
+    """Charge les n dernieres candles de candles_mt5_<sym>_<tf>."""
     import re
-    if tf is None: tf = args.tf
     table = f"candles_mt5_{re.sub(r'[^a-z0-9]+', '_', symbol.lower()).strip('_')}_{tf}"
     cur = conn.cursor()
     cur.execute(f"SELECT ts, open, high, low, close FROM {table} ORDER BY ts DESC LIMIT %s", (n,))
@@ -206,13 +213,13 @@ def get_yesterday_atr(candles_df, today):
 # ── STATE ─────────────────────────────────────────────
 
 def new_state():
-    return {'broker': BROKER, 'instruments': list(INSTRUMENTS.keys()),
+    return {'broker': BROKER, 'units': [_unit_key(s, t) for s, t, _ in UNITS],
             'daily_cache': {}, 'trail': {}, 'be_tp': {},
             'closed_this_bar': {}, 'closed_prev_bar': {}, '_tracked_tickets': {},
-            'per_symbol': {sym: {'_triggered_open': {}, '_triggered_close': {},
-                                  '_prev_day_data': None, '_prev2_day_data': None,
-                                  '_prev_day_date': None,
-                                  'last_candle_ts': 0} for sym in INSTRUMENTS}}
+            'per_unit': {_unit_key(s, t): {'_triggered_open': {}, '_triggered_close': {},
+                                           '_prev_day_data': None, '_prev2_day_data': None,
+                                           '_prev_day_date': None,
+                                           'last_candle_ts': 0} for s, t, _ in UNITS}}
 
 def load_state():
     if os.path.exists(STATE_FILE):
@@ -220,18 +227,21 @@ def load_state():
             state = json.load(f)
             state.setdefault('trail', {})
             state.setdefault('be_tp', {})
-            state.setdefault('per_symbol', {})
-            # Nouvelles cles pour mutex LONG/SHORT aligne sur BT (tracking interne)
+            state.setdefault('per_unit', {})
             state.setdefault('closed_this_bar', {})
             state.setdefault('closed_prev_bar', {})
             state.setdefault('_tracked_tickets', {})
-            # Conversion lists -> sets au load (JSON ne supporte pas sets)
             for key in ('closed_this_bar', 'closed_prev_bar'):
-                for sym, v in list(state[key].items()):
+                for k, v in list(state[key].items()):
                     if isinstance(v, list):
-                        state[key][sym] = set(v)
-            for sym in INSTRUMENTS:
-                state['per_symbol'].setdefault(sym, {
+                        state[key][k] = set(v)
+            # Migration legacy 'per_symbol' -> 'per_unit' (assume 15m)
+            if 'per_symbol' in state and not state['per_unit']:
+                for sym, ss in state['per_symbol'].items():
+                    state['per_unit'][_unit_key(sym, '15m')] = ss
+                del state['per_symbol']
+            for sym, tf, _ in UNITS:
+                state['per_unit'].setdefault(_unit_key(sym, tf), {
                     '_triggered_open': {}, '_triggered_close': {},
                     '_prev_day_data': None, '_prev2_day_data': None,
                     '_prev_day_date': None,
@@ -256,7 +266,7 @@ def reset_state():
     if os.path.exists(STATE_FILE): os.remove(STATE_FILE)
     state = new_state()
     save_state(state)
-    log.info("RESET {} — {} instruments".format(BROKER, len(INSTRUMENTS)))
+    log.info("RESET {} -- {} units (sym,tf)".format(BROKER, len(UNITS)))
     return state
 
 # ── SIGNAL DETECTION ─────────────────────────────────
@@ -303,21 +313,20 @@ def detect_close_strats(candles, sym_state, atr, candle_time_utc, today, portfol
 
 # ── OPEN POSITION ────────────────────────────────────
 
-def open_position(state, symbol, sig, atr, risk_pct):
+def open_position(state, symbol, tf, sig, atr, risk_pct):
     d = sig['dir']; sn = sig['strat']
-    signal_close = sig['entry']  # close de la bougie signal (= entry theorique BT)
-    magic = _magic(symbol, sn)
-    for p in mt5_our_positions(symbol):
-        if p.magic == magic:
-            log.info("SKIP {} {} — deja ouvert #{}".format(symbol, sn, p.ticket)); return
+    signal_close = sig['entry']
+    magic = _magic(symbol, sn, tf)
+    # Mutex magic retire 2026-05-02 -- align sur BT, plusieurs positions same magic autorisees
+    # (la dedup 1/strat/jour est garantie par _triggered_close au niveau detect_close_strats)
     capital = mt5_balance()
     if capital <= 0:
-        log.warning("SKIP {} — balance zero".format(sn)); return
+        log.warning("SKIP {} -- balance zero".format(sn)); return
     tick = mt5_tick(symbol)
     if not tick:
-        log.warning("SKIP {} {} — no tick".format(symbol, sn)); return
+        log.warning("SKIP {} [{}] {} -- no tick".format(symbol, tf, sn)); return
     entry = tick['ask'] if d == 'long' else tick['bid']
-    sym_exits = STRAT_EXITS.get((_account, symbol), {})
+    sym_exits = STRAT_EXITS.get((_account, symbol, tf), {})
     exit_cfg = sym_exits.get(sn, DEFAULT_EXIT)
     exit_type = exit_cfg[0]; sl_val = exit_cfg[1]
     # SL/TP bases sur signal_close (= meme que BT), pas sur fill price
@@ -330,17 +339,17 @@ def open_position(state, symbol, sig, atr, risk_pct):
     elif exit_type == 'BE_TP':
         # p2=be_act (R), p3=tp (R). TP envoye a l'ordre, SL bougera a BE quand be_act atteint.
         tp = signal_close + exit_cfg[3] * atr if d == 'long' else signal_close - exit_cfg[3] * atr
-    result = mt5_send_order(symbol, sn, d, stop, tp, lots)
+    result = mt5_send_order(symbol, sn, d, stop, tp, lots, tf=tf)
     if not result: return
     if exit_type == 'TRAIL':
         state['trail'][str(result['ticket'])] = {
-            'symbol': symbol, 'strat': sn, 'dir': d, 'entry': signal_close,
+            'symbol': symbol, 'tf': tf, 'strat': sn, 'dir': d, 'entry': signal_close,
             'best': signal_close, 'trail_active': False,
             'atr': atr, 'act_val': exit_cfg[2], 'trail_val': exit_cfg[3], 'stop': stop,
         }
     elif exit_type == 'BE_TP':
         state['be_tp'][str(result['ticket'])] = {
-            'symbol': symbol, 'strat': sn, 'dir': d, 'entry': signal_close,
+            'symbol': symbol, 'tf': tf, 'strat': sn, 'dir': d, 'entry': signal_close,
             'be_active': False,
             'atr': atr, 'be_val': exit_cfg[2], 'tp_val': exit_cfg[3], 'stop': stop,
         }
@@ -349,12 +358,13 @@ def open_position(state, symbol, sig, atr, risk_pct):
 
 # ── TRAILING ─────────────────────────────────────────
 
-def manage_trailing(state, symbol, candles):
+def manage_trailing(state, symbol, candles, tf='15m'):
     last = candles.iloc[-1]
     mt5_pos = {p.ticket: p for p in mt5_our_positions(symbol)}
     closed_tickets = []
     for ticket_str, info in state['trail'].items():
         if info.get('symbol') != symbol: continue
+        if info.get('tf', '15m') != tf: continue
         ticket = int(ticket_str)
         if ticket not in mt5_pos:
             closed_tickets.append(ticket_str); continue
@@ -398,13 +408,14 @@ def manage_trailing(state, symbol, candles):
 
 # ── BE_TP MANAGEMENT ─────────────────────────────────
 
-def manage_be_tp(state, symbol, candles):
+def manage_be_tp(state, symbol, candles, tf='15m'):
     """Move SL to break-even quand prix atteint be_val*atr favorable. TP envoye a l'ordre."""
     last = candles.iloc[-1]
     mt5_pos = {p.ticket: p for p in mt5_our_positions(symbol)}
     closed_tickets = []
     for ticket_str, info in state['be_tp'].items():
         if info.get('symbol') != symbol: continue
+        if info.get('tf', '15m') != tf: continue
         ticket = int(ticket_str)
         if ticket not in mt5_pos:
             closed_tickets.append(ticket_str); continue
@@ -430,52 +441,48 @@ def main():
 
     if args.reset:
         def _is_managed(p):
-            sym, sn = ALL_MAGICS.get(p.magic, ('',''))
-            et = STRAT_EXITS.get((_account, sym), {}).get(sn, DEFAULT_EXIT)[0]
+            decoded = ALL_MAGICS.get(p.magic, ('','',''))
+            sym, tf, sn = decoded
+            et = STRAT_EXITS.get((_account, sym, tf), {}).get(sn, DEFAULT_EXIT)[0]
             return et in ('TRAIL', 'BE_TP')
         open_trail = [p for p in mt5_our_positions() if _is_managed(p)]
         if open_trail:
-            log.warning("!!! RESET avec {} TRAIL ouvertes !!!".format(len(open_trail)))
+            log.warning("!!! RESET avec {} TRAIL/BE_TP ouvertes !!!".format(len(open_trail)))
         state = reset_state()
     else:
         state = load_state()
 
-    syms = list(INSTRUMENTS.keys())
-    log.info("=== {} LIVE === {} instruments: {} ===".format(BROKER, len(syms), ', '.join(syms)))
-    for sym in syms:
-        icfg = INSTRUMENTS[sym]
-        log.info("  {} — {} strats @ {:.2f}%: {}".format(
-            sym, len(icfg['portfolio']), icfg['risk_pct']*100, ', '.join(icfg['portfolio'])))
+    log.info("=== {} LIVE === {} units (sym,tf): {} ===".format(BROKER, len(UNITS),
+        ', '.join(f"{s}[{t}]" for s, t, _ in UNITS)))
+    for sym, tf, icfg in UNITS:
+        log.info("  {} [{}] -- {} strats @ {:.2f}%: {}".format(
+            sym, tf, len(icfg['portfolio']), icfg['risk_pct']*100, ', '.join(icfg['portfolio'])))
 
     # Rebuild triggers from MT5 positions
-    # Get current date from DB candles (UTC), not system clock
     _conn_tmp = get_conn_autocommit()
-    _last_candle = get_recent_candles(_conn_tmp, syms[0] if syms else 'XAUUSD', 1)
+    _last_candle = get_recent_candles(_conn_tmp, SYMBOLS[0] if SYMBOLS else 'XAUUSD', 1, tf=UNITS[0][1] if UNITS else '15m')
     _conn_tmp.close()
     _db_today = _last_candle.iloc[-1]['ts_dt'].date() if len(_last_candle) > 0 else datetime.now(timezone.utc).date()
     for p in mt5_our_positions():
-        sym_sn = ALL_MAGICS.get(p.magic)
-        if not sym_sn: continue
-        sym, sn = sym_sn
+        decoded = ALL_MAGICS.get(p.magic)
+        if not decoded: continue
+        sym, tf, sn = decoded
         pos_date = (datetime.fromtimestamp(p.time, tz=timezone.utc) - BROKER_OFFSET).date()
         if pos_date == _db_today:
-            ss = state['per_symbol'].get(sym, {})
+            ss = state['per_unit'].get(_unit_key(sym, tf), {})
             if sn in OPEN_STRATS: ss.setdefault('_triggered_open', {})[sn] = True
             else: ss.setdefault('_triggered_close', {})[sn] = True
         d = 'LONG' if p.type == 0 else 'SHORT'
-        log.info("  MT5 #{} {} {} {} {:.2f}lots pnl={:+.2f}".format(p.ticket, sym, sn, d, p.volume, p.profit))
+        log.info("  MT5 #{} {} [{}] {} {} {:.2f}lots pnl={:+.2f}".format(p.ticket, sym, tf, sn, d, p.volume, p.profit))
 
     conn = get_conn_autocommit()
-    _atr_cache = {}  # sym -> {'date', 'atr', 'trading_days', 'daily_atr', 'global_atr'}
+    _atr_cache = {}  # (sym, tf) -> {'date', 'atr'}
 
-    # Calage per symbol
+    # Calage per (sym, tf)
     last_ts = {}
-    for sym in syms:
-        ci = get_recent_candles(conn, sym, 1)
-        if len(ci) > 0:
-            last_ts[sym] = int(ci.iloc[-1]['ts'])
-        else:
-            last_ts[sym] = 0
+    for sym, tf, _ in UNITS:
+        ci = get_recent_candles(conn, sym, 1, tf=tf)
+        last_ts[(sym, tf)] = int(ci.iloc[-1]['ts']) if len(ci) > 0 else 0
     log.info("Calage done.")
 
     while True:
@@ -489,38 +496,35 @@ def main():
             if not mt5.terminal_info():
                 log.warning("MT5 reconnexion..."); mt5_init()
 
-            for sym in syms:
-                icfg = INSTRUMENTS[sym]
+            for sym, tf, icfg in UNITS:
                 portfolio = icfg['portfolio']
                 risk_pct = icfg['risk_pct']
-                ss = state['per_symbol'][sym]
+                uk = _unit_key(sym, tf)
+                ss = state['per_unit'][uk]
 
                 if not portfolio: continue
 
-                # Candles recentes (rapide) + indicateurs
-                candles = get_recent_candles(conn, sym, 500)
+                candles = get_recent_candles(conn, sym, 500, tf=tf)
                 if len(candles) == 0: continue
                 from strats import compute_indicators
                 candles = compute_indicators(candles)
 
                 current_ts = int(candles.iloc[-1]['ts'])
-                # REGLE: seule source de temps = ts_dt UTC des candles en DB
                 candle_time_utc = candles.iloc[-1]['ts_dt'].to_pydatetime()
                 today = candle_time_utc.date()
 
-                # ATR via backtest_engine (supporte 5m et 15m)
-                if sym not in _atr_cache or _atr_cache[sym]['date'] != str(today):
+                cache_key = (sym, tf)
+                if cache_key not in _atr_cache or _atr_cache[cache_key]['date'] != str(today):
                     from backtest_engine import _load_candles_raw, _compute_atr_from_df, _get_trading_days_from_df, prev_trading_day as _ptd
-                    _full = _load_candles_raw(conn, sym, tf=args.tf, limit=1500)
+                    _full = _load_candles_raw(conn, sym, tf=tf, limit=1500)
                     _da, _ga = _compute_atr_from_df(_full)
                     _td = _get_trading_days_from_df(_full)
                     _pd = _ptd(today, _td)
                     _atr_val = _da.get(_pd, _ga) if _pd else _ga
-                    _atr_cache[sym] = {'date': str(today), 'atr': _atr_val}
-                atr = _atr_cache[sym]['atr']
+                    _atr_cache[cache_key] = {'date': str(today), 'atr': _atr_val}
+                atr = _atr_cache[cache_key]['atr']
                 if not atr or atr == 0: continue
 
-                # Day reset
                 if ss.get('_prev_day_date') != str(today):
                     yc = candles[candles['date'] < today]
                     if len(yc) > 0:
@@ -536,33 +540,31 @@ def main():
                     ss['_triggered_open'] = {}
                     ss['_triggered_close'] = {}
 
-                # Conflict filter retire 2026-04-29: SHORT et LONG simultanes autorises
                 our_pos = mt5_our_positions(sym)
 
-                is_new = current_ts != last_ts.get(sym, 0)
+                is_new = current_ts != last_ts.get(cache_key, 0)
                 if not is_new: continue
 
-                # Heartbeat
                 bal = mt5_balance()
-                log.info("~ {} {} C={:.2f} ATR={:.2f} {}pos ${:,.0f}".format(
-                    sym, candle_time_utc.strftime("%H:%M"), candles.iloc[-1]['close'],
+                log.info("~ {} [{}] {} C={:.2f} ATR={:.2f} {}pos ${:,.0f}".format(
+                    sym, tf, candle_time_utc.strftime("%H:%M"), candles.iloc[-1]['close'],
                     atr, len(our_pos), bal))
 
-                # Trailing
-                trail_syms = [t for t, info in state['trail'].items() if info.get('symbol') == sym]
-                if trail_syms:
-                    manage_trailing(state, sym, candles)
+                # Trailing/BE_TP filtre par (sym, tf)
+                trail_units = [t for t, info in state['trail'].items()
+                               if info.get('symbol') == sym and info.get('tf', '15m') == tf]
+                if trail_units:
+                    manage_trailing(state, sym, candles, tf=tf)
 
-                # BE_TP (move SL to break-even)
-                be_tp_syms = [t for t, info in state['be_tp'].items() if info.get('symbol') == sym]
-                if be_tp_syms:
-                    manage_be_tp(state, sym, candles)
+                be_tp_units = [t for t, info in state['be_tp'].items()
+                               if info.get('symbol') == sym and info.get('tf', '15m') == tf]
+                if be_tp_units:
+                    manage_be_tp(state, sym, candles, tf=tf)
 
-                last_ts[sym] = current_ts
+                last_ts[cache_key] = current_ts
 
-                # Open new positions sur signaux detectes (sans filtre conflit)
                 for sig in sorted(detect_close_strats(candles, ss, atr, candle_time_utc, today, portfolio), key=lambda s: s['strat']):
-                    open_position(state, sym, sig, atr, risk_pct)
+                    open_position(state, sym, tf, sig, atr, risk_pct)
 
             save_state(state)
 

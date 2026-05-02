@@ -130,7 +130,7 @@ def prev_trading_day(day, trading_days_list):
 #  COLLECT TRADES — signaux + exits + conflict filter
 # ══════════════════════════════════════════════════════════════
 
-def collect_trades(candles, daily_atr, global_atr, trading_days_list, portfolio, sym_exits, date_filter=None):
+def collect_trades(candles, daily_atr, global_atr, trading_days_list, portfolio, sym_exits, date_filter=None, tf='15m'):
     """
     Detecte tous les signaux + simule les exits en temps reel.
     Meme code pour bt_portfolio, compare_today, et live.
@@ -143,9 +143,10 @@ def collect_trades(candles, daily_atr, global_atr, trading_days_list, portfolio,
         portfolio: list de noms de strats a detecter
         sym_exits: dict strat -> (type, p1, p2, p3)
         date_filter: si specifie, ne collecte que les signaux de ce jour (date object)
+        tf: timeframe string ('5m', '15m', '1h', '4h', '1d') -- attache a chaque trade
 
     Returns:
-        list of (ci, xi, di, pnl_oz, sl_atr, atr, mo, sn) — meme format que strat_arrays
+        list of (ci, xi, di, pnl_oz, sl_atr, atr, mo, sn, tf) -- format trade unifie multi-TF
     """
     portfolio_set = set(portfolio)
 
@@ -209,7 +210,7 @@ def collect_trades(candles, daily_atr, global_atr, trading_days_list, portfolio,
         pnl_oz = (ex - entry) if d_dir == 'long' else (entry - ex)
         mo = f"{today.year}-{str(today.month).zfill(2)}"
 
-        trades.append((ci, xi, di, pnl_oz, p1, atr, mo, sn))
+        trades.append((ci, xi, di, pnl_oz, p1, atr, mo, sn, tf))
 
     return trades
 
@@ -262,7 +263,9 @@ def eval_portfolio(trades, risk, capital=100000.0, spread=False, cost_r=None):
         if evt == 0:
             entry_caps[idx] = cap
         else:
-            ei, xi, di, pnl_oz, sl_atr, atr, mo, _sn = trades[idx]
+            tup = trades[idx]
+            ei, xi, di, pnl_oz, sl_atr, atr, mo, _sn = tup[:8]
+            _tf = tup[8] if len(tup) > 8 else '15m'
             if effective_cost > 0:
                 pnl_oz -= effective_cost * sl_atr * atr  # penalite R par trade
             pnl = pnl_oz * (entry_caps[idx] * risk) / (sl_atr * atr)

@@ -20,10 +20,9 @@ import requests
 
 # ── CONFIG ──
 parser = argparse.ArgumentParser()
-parser.add_argument('account', choices=['icm', 'ftmo', '5ers', 'pepperstone'])
+parser.add_argument('account', choices=['ftmo', '5ers', 'pepperstone'])
 parser.add_argument('--url', default='https://dashboard.glorytavern.world')
 parser.add_argument('--interval', type=float, default=1.0)
-parser.add_argument('--tf', default='5m', help='Timeframe: 5m or 15m')
 args = parser.parse_args()
 
 cfg = importlib.import_module(f'config_{args.account}')
@@ -32,12 +31,29 @@ with open(os.path.join(os.path.dirname(__file__), 'broker_offsets.json')) as f:
 BROKER_OFFSET = timedelta(hours=_offsets[args.account])
 
 def mt5_time_to_utc(ts):
-    """Convertit un timestamp MT5 (epoch serveur) en datetime UTC."""
     return datetime.fromtimestamp(ts, tz=timezone.utc) - BROKER_OFFSET
 BROKER = cfg.BROKER
-INSTRUMENTS = cfg.INSTRUMENTS
+from config_helpers import iter_sym_tf
+UNITS = list(iter_sym_tf(cfg))
+SYMBOLS = sorted({sym for sym, _, _ in UNITS})
+# Map sym -> set of TFs configures
+SYM_TFS = {}
+for sym, tf, _ in UNITS:
+    SYM_TFS.setdefault(sym, []).append(tf)
 API_URL = f"{args.url.rstrip('/')}/push/{args.account}"
 INTERVAL = args.interval
+
+
+def _unit_key(sym, tf):
+    return f"{sym}|{tf}"
+
+
+def _decode_comment(comment):
+    """Comment format: 'STRAT|TF'. Retourne (strat, tf). Fallback (comment, '15m')."""
+    if comment and '|' in comment:
+        parts = comment.split('|')
+        return parts[0], parts[1]
+    return comment, '15m'
 
 # ── MT5 ──
 def mt5_init():
@@ -49,11 +65,14 @@ def mt5_init():
 
 def get_positions():
     positions = []
-    for sym in INSTRUMENTS:
+    for sym in SYMBOLS:
         for p in (mt5.positions_get(symbol=sym) or []):
+            strat, tf = _decode_comment(p.comment)
             positions.append({
                 'ticket': p.ticket,
                 'symbol': p.symbol,
+                'tf': tf,
+                'strat': strat,
                 'dir': 'long' if p.type == 0 else 'short',
                 'volume': p.volume,
                 'entry': round(p.price_open, 2),
@@ -91,9 +110,12 @@ def _deals_to_trades(deals):
     for pid, td in pos.items():
         if not td.get('in') or not td.get('out'): continue
         din = td['in']; dout = td['out']
+        strat, tf = _decode_comment(din.comment)
         trades.append({
             'ticket': din.order,
             'symbol': din.symbol,
+            'tf': tf,
+            'strat': strat,
             'dir': 'long' if din.type == 0 else 'short',
             'entry': round(din.price, 2),
             'exit': round(dout.price, 2),
@@ -106,12 +128,12 @@ def _deals_to_trades(deals):
     return trades
 
 def _get_candle_date():
-    """Date de la derniere bougie en DB (pas l'horloge systeme)."""
+    """Date de la derniere bougie en DB (1ere unit du portfolio)."""
     conn = _get_conn()
     cur = conn.cursor()
     import re
-    sym0 = list(INSTRUMENTS.keys())[0]
-    table = f"candles_mt5_{re.sub(r'[^a-z0-9]+', '_', sym0.lower()).strip('_')}_{args.tf}"
+    sym0, tf0, _ = UNITS[0]
+    table = f"candles_mt5_{re.sub(r'[^a-z0-9]+', '_', sym0.lower()).strip('_')}_{tf0}"
     cur.execute(f"SELECT MAX(ts) FROM {table}")
     max_ts = cur.fetchone()[0]
     cur.close(); conn.close()
@@ -134,8 +156,13 @@ def get_all_history():
     deals = mt5.history_deals_get(from_date, to_date) or []
     return _deals_to_trades(deals)
 
-def get_last_candle(symbol):
-    tf_mt5 = mt5.TIMEFRAME_M15 if args.tf == '15m' else mt5.TIMEFRAME_M5
+_TF_MT5 = {
+    '5m': mt5.TIMEFRAME_M5, '15m': mt5.TIMEFRAME_M15,
+    '1h': mt5.TIMEFRAME_H1, '4h': mt5.TIMEFRAME_H4, '1d': mt5.TIMEFRAME_D1,
+}
+
+def get_last_candle(symbol, tf='15m'):
+    tf_mt5 = _TF_MT5.get(tf, mt5.TIMEFRAME_M15)
     rates = mt5.copy_rates_from_pos(symbol, tf_mt5, 1, 1)
     if rates is None or len(rates) == 0: return {}
     r = rates[0]
@@ -151,8 +178,8 @@ def get_last_candle(symbol):
 # ── MAIN ──
 mt5_init()
 
-print(f"Pusher {BROKER} → {API_URL}")
-print(f"Instruments: {list(INSTRUMENTS.keys())}")
+print(f"Pusher {BROKER} -> {API_URL}")
+print(f"Units: {len(UNITS)} (sym,tf): {[f'{s}[{t}]' for s,t,_ in UNITS]}")
 print(f"Interval: {INTERVAL}s")
 
 # Push full history au demarrage
@@ -166,31 +193,31 @@ from backtest_engine import load_data_recent, collect_trades, prev_trading_day
 from strat_exits import STRAT_EXITS, DEFAULT_EXIT
 
 def compute_compare_today():
-    """Calcule le compare BT vs LV complet (meme logique que compare_today.py).
-    Retourne le tableau final pret a afficher — aucun calcul cote dashboard."""
+    """Calcule le compare BT vs LV par (sym, tf). Cle resultat = 'sym|tf'."""
     today = _get_candle_date()
     today_trades = get_today_trades()
     conn = _get_conn()
     result = {}
-    for sym, icfg in INSTRUMENTS.items():
+    for sym, tf, icfg in UNITS:
         portfolio = icfg['portfolio']
         if not portfolio: continue
-        sym_exits = STRAT_EXITS.get((args.account, sym), {})
-        candles, daily_atr, global_atr, trading_days = load_data_recent(conn, sym, n=5000, tf=args.tf)
+        sym_exits = STRAT_EXITS.get((args.account, sym, tf), {})
+        candles, daily_atr, global_atr, trading_days = load_data_recent(conn, sym, n=5000, tf=tf)
         if len(candles) == 0: continue
         pd_ = prev_trading_day(today, trading_days)
         atr = daily_atr.get(pd_, global_atr) if pd_ else global_atr
         raw = collect_trades(candles, daily_atr, global_atr, trading_days,
-                            portfolio, sym_exits, date_filter=today)
-        # BT par strat
+                            portfolio, sym_exits, date_filter=today, tf=tf)
+        # Multiple trades per (sym, tf, strat) possible (mutex retire 2026-05-02)
         bt_by_strat = {}
-        for ci, xi, di, pnl_oz, sl_atr, atr_t, mo, sn in raw:
+        for tup in raw:
+            ci, xi, di, pnl_oz, sl_atr, atr_t, mo, sn = tup[:8]
             entry = float(candles.iloc[ci]['close'])
             risk_1r = sl_atr * atr_t
             xi_safe = min(xi, len(candles) - 1)
             entry_time = candles.iloc[ci]['ts_dt'].isoformat() if ci < len(candles) else None
             exit_time = candles.iloc[xi_safe]['ts_dt'].isoformat() if xi_safe < len(candles) else None
-            bt_by_strat[sn] = {
+            bt_by_strat.setdefault(sn, []).append({
                 'dir': 'long' if di == 1 else 'short',
                 'entry': round(entry, 2),
                 'exit': round(entry + pnl_oz if di == 1 else entry - pnl_oz, 2),
@@ -198,44 +225,51 @@ def compute_compare_today():
                 'risk_1r': round(risk_1r, 4),
                 'entry_time': entry_time,
                 'exit_time': exit_time,
-            }
-        # LV par strat
+            })
         lv_by_strat = {}
         for t in today_trades:
             if t['symbol'] != sym: continue
-            sn = t.get('comment', '')
+            if t.get('tf') != tf: continue
+            sn = t.get('strat', '')
             if sn in portfolio:
-                lv_by_strat[sn] = t
-        # Build compare rows (toutes les strats du portfolio)
+                lv_by_strat.setdefault(sn, []).append(t)
+        # Tri par entry_time pour matching ordonne
+        for sn in bt_by_strat: bt_by_strat[sn].sort(key=lambda b: b.get('entry_time') or '')
+        for sn in lv_by_strat: lv_by_strat[sn].sort(key=lambda l: l.get('time_open') or '')
+
         rows = []
         for sn in portfolio:
-            bt = bt_by_strat.get(sn)
-            lv = lv_by_strat.get(sn)
-            row = {'strat': sn, 'bt': None, 'lv': None, 'delta': None}
-            if bt:
-                row['bt'] = bt
-            if lv:
-                lv_pnl = (lv['exit'] - lv['entry']) if lv['dir'] == 'long' else (lv['entry'] - lv['exit'])
+            bts = bt_by_strat.get(sn, [])
+            lvs = lv_by_strat.get(sn, [])
+            n_pairs = max(len(bts), len(lvs), 1)
+            for idx in range(n_pairs):
+                bt = bts[idx] if idx < len(bts) else None
+                lv = lvs[idx] if idx < len(lvs) else None
+                row = {'strat': sn, 'idx': idx, 'bt': None, 'lv': None, 'delta': None}
                 if bt:
-                    risk_1r = bt['risk_1r']
-                else:
-                    ex = sym_exits.get(sn, DEFAULT_EXIT)
-                    risk_1r = ex[1] * atr
-                lv_r = round(lv_pnl / risk_1r, 2) if risk_1r > 0 else 0
-                row['lv'] = {
-                    'dir': lv['dir'],
-                    'entry': lv['entry'],
-                    'exit': lv['exit'],
-                    'pnl_r': lv_r,
-                    'pnl_usd': lv['pnl'],
-                    'entry_time': lv.get('time_open'),
-                    'exit_time': lv.get('time_close'),
-                    'ticket': lv.get('ticket'),
-                }
-            if bt and row['lv']:
-                row['delta'] = round(row['lv']['pnl_r'] - bt['pnl_r'], 2)
-            rows.append(row)
-        result[sym] = {'atr': round(atr, 2), 'rows': rows}
+                    row['bt'] = bt
+                if lv:
+                    lv_pnl = (lv['exit'] - lv['entry']) if lv['dir'] == 'long' else (lv['entry'] - lv['exit'])
+                    if bt:
+                        risk_1r = bt['risk_1r']
+                    else:
+                        ex = sym_exits.get(sn, DEFAULT_EXIT)
+                        risk_1r = ex[1] * atr
+                    lv_r = round(lv_pnl / risk_1r, 2) if risk_1r > 0 else 0
+                    row['lv'] = {
+                        'dir': lv['dir'],
+                        'entry': lv['entry'],
+                        'exit': lv['exit'],
+                        'pnl_r': lv_r,
+                        'pnl_usd': lv['pnl'],
+                        'entry_time': lv.get('time_open'),
+                        'exit_time': lv.get('time_close'),
+                        'ticket': lv.get('ticket'),
+                    }
+                if bt and row['lv']:
+                    row['delta'] = round(row['lv']['pnl_r'] - bt['pnl_r'], 2)
+                rows.append(row)
+        result[_unit_key(sym, tf)] = {'symbol': sym, 'tf': tf, 'atr': round(atr, 2), 'rows': rows}
     conn.close()
     return result
 
@@ -254,11 +288,11 @@ try:
             account = get_account()
             today_trades = get_today_trades()
             candles = {}
-            for sym in INSTRUMENTS:
-                candles[sym] = get_last_candle(sym)
+            for sym, tf, _ in UNITS:
+                candles[_unit_key(sym, tf)] = get_last_candle(sym, tf=tf)
 
-            # Portfolio par instrument (pour afficher toutes les strats dans le dashboard)
-            portfolios = {sym: icfg['portfolio'] for sym, icfg in INSTRUMENTS.items()}
+            # Portfolios par (sym, tf)
+            portfolios = {_unit_key(sym, tf): icfg['portfolio'] for sym, tf, icfg in UNITS}
 
             state = {
                 'ts': datetime.now(timezone.utc).isoformat(),

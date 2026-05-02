@@ -1,12 +1,13 @@
 """
-Backtest complet — multi-instrument.
+Backtest complet -- multi-instrument multi-TF.
 Utilise backtest_engine.py (moteur unique, meme code que compare_today et live).
 
 Usage:
-  python bt_portfolio.py ftmo                       → tous instruments, mensuel
-  python bt_portfolio.py ftmo --weekly              → tous instruments, hebdo
-  python bt_portfolio.py icm --symbol XAUUSD        → un seul instrument
-  python bt_portfolio.py icm -c 50000 -r 0.5        → capital + risk custom
+  python bt_portfolio.py ftmo                       -> tous instruments+TFs, mensuel
+  python bt_portfolio.py ftmo --weekly              -> hebdo
+  python bt_portfolio.py pepperstone --symbol AUS200  -> un seul instrument
+  python bt_portfolio.py pepperstone --tf 1h        -> un seul TF (filtre)
+  python bt_portfolio.py pepperstone -c 50000 -r 0.5  -> capital + risk custom
 """
 import warnings; warnings.filterwarnings('ignore')
 import sys, argparse, importlib
@@ -14,21 +15,21 @@ sys.stdout.reconfigure(encoding='utf-8')
 from phase1_poc_calculator import get_conn
 from strat_exits import STRAT_EXITS
 from backtest_engine import load_data, collect_trades, eval_portfolio
+from config_helpers import iter_sym_tf
 
-parser = argparse.ArgumentParser(description='Backtest portfolio')
-parser.add_argument('account', choices=['icm', 'ftmo', '5ers', 'pepperstone'])
+parser = argparse.ArgumentParser(description='Backtest portfolio multi-TF')
+parser.add_argument('account', choices=['ftmo', '5ers', 'pepperstone'])
 parser.add_argument('-c', '--capital', type=float, default=None)
 parser.add_argument('-r', '--risk', type=float, default=None)
-parser.add_argument('--symbol', default=None, help='Single instrument (default: all)')
-parser.add_argument('--tf', default='5m', help='Timeframe: 5m or 15m')
-parser.add_argument('--weekly', action='store_true', help='Affichage hebdomadaire au lieu de mensuel')
-parser.add_argument('--spread', action='store_true', help='Modelise le spread (-0.1R par trade, legacy)')
-parser.add_argument('--cost-r', type=float, default=0.0, help='Penalite R par trade (ex: 0.05 pour modeliser spread+slippage)')
+parser.add_argument('--symbol', default=None, help='Filtre: un seul instrument')
+parser.add_argument('--tf', default=None, help='Filtre: un seul TF (5m/15m/1h/4h)')
+parser.add_argument('--weekly', action='store_true', help='Affichage hebdomadaire')
+parser.add_argument('--spread', action='store_true', help='Spread legacy -0.1R/trade')
+parser.add_argument('--cost-r', type=float, default=0.0, help='Penalite R par trade')
 args = parser.parse_args()
 
 cfg = importlib.import_module(f'config_{args.account}')
 BROKER = cfg.BROKER
-INSTRUMENTS = getattr(cfg, 'ALL_INSTRUMENTS', cfg.INSTRUMENTS)
 
 CRYPTO_BASES = ('BTC', 'ETH', 'SOL', 'BNB', 'XRP', 'ADA', 'DOT', 'AVAX',
                 'LINK', 'MATIC', 'DOGE', 'LTC', 'BCH', 'TRX', 'ATOM', 'SHIB',
@@ -40,9 +41,6 @@ def is_crypto(sym):
 
 
 def crosses_weekend(entry_ts, exit_ts):
-    """True si le trade traverse un weekend (samedi entre entry+1j et exit_date inclus).
-    Exclut les trades qui entrent dimanche soir (forex reouvre Sun 22h UTC) ou
-    sortent vendredi soir sans tenir le weekend."""
     from datetime import timedelta as _td
     d = entry_ts.date() + _td(days=1)
     end = exit_ts.date()
@@ -52,56 +50,65 @@ def crosses_weekend(entry_ts, exit_ts):
         d += _td(days=1)
     return False
 
-if args.symbol:
-    sym = args.symbol.upper()
-    if sym in INSTRUMENTS:
-        INSTRUMENTS = {sym: INSTRUMENTS[sym]}
-    else:
-        print(f"ERROR: {sym} not in config. Available: {list(cfg.ALL_INSTRUMENTS.keys())}")
-        sys.exit(1)
+
+# Resolution liste (sym, tf, icfg) a backtester
+# Si --tf specifie, ignore LIVE_TIMEFRAMES (cherche dans tous les TFs configures)
+only_live = (args.tf is None)
+sym_tf_pairs = []
+for sym, tf, icfg in iter_sym_tf(cfg, only_live=only_live):
+    if args.symbol and sym.upper() != args.symbol.upper():
+        continue
+    if args.tf and tf != args.tf:
+        continue
+    sym_tf_pairs.append((sym, tf, icfg))
+
+if not sym_tf_pairs:
+    print(f"ERROR: aucun (instrument, TF) ne correspond aux filtres")
+    sys.exit(1)
 
 CAPITAL = args.capital or 100000.0
 W = 100
 
 print(f"\n{'='*W}")
-# Cost effective: --cost-r prioritaire si >0, sinon --spread (0.1R legacy), sinon 0
 COST_R = args.cost_r if args.cost_r > 0 else (0.1 if args.spread else 0.0)
-cost_tag = f' — COST -{COST_R}R/trade' if COST_R > 0 else ''
-print(f"  BACKTEST {BROKER} — ${CAPITAL:,.0f} — {'hebdo' if args.weekly else 'mensuel'}{cost_tag}")
+cost_tag = f' -- COST -{COST_R}R/trade' if COST_R > 0 else ''
+print(f"  BACKTEST {BROKER} -- ${CAPITAL:,.0f} -- {'hebdo' if args.weekly else 'mensuel'}{cost_tag}")
 print(f"{'='*W}")
 
 conn = get_conn()
 
-all_sym_trades = []
-candles_by_sym = {}
+# Cache (sym, tf) -> DataFrame
+candles_cache = {}
+all_unit_trades = []  # list of dicts {sym, tf, accepted, risk}
 
-for sym, icfg in INSTRUMENTS.items():
+for sym, tf, icfg in sym_tf_pairs:
     portfolio = icfg['portfolio']
     risk = args.risk / 100 if args.risk else icfg['risk_pct']
     if not portfolio:
-        print(f"\n  {sym}: portfolio vide"); continue
+        print(f"\n  {sym} [{tf}]: portfolio vide"); continue
 
-    sym_exits = STRAT_EXITS.get((args.account, sym), {})
+    sym_exits = STRAT_EXITS.get((args.account, sym, tf), {})
 
-    print(f"\n  Loading {sym}...", end='', flush=True)
-    candles, daily_atr, global_atr, trading_days = load_data(conn, sym, tf=args.tf)
+    print(f"\n  Loading {sym} [{tf}]...", end='', flush=True)
+    candles, daily_atr, global_atr, trading_days = load_data(conn, sym, tf=tf)
     print(f" {len(candles)} bars, {len(trading_days)} days", flush=True)
-    candles_by_sym[sym] = candles
+    candles_cache[(sym, tf)] = candles
 
-    trades = collect_trades(candles, daily_atr, global_atr, trading_days, portfolio, sym_exits)
+    trades = collect_trades(candles, daily_atr, global_atr, trading_days, portfolio, sym_exits, tf=tf)
     r = eval_portfolio(trades, risk, CAPITAL, spread=(COST_R > 0), cost_r=COST_R)
     if not r:
-        print(f"  {sym}: 0 trades"); continue
+        print(f"  {sym} [{tf}]: 0 trades"); continue
 
     print(f"  {'-'*W}")
-    print(f"  {sym} — {len(portfolio)} strats @ {risk*100:.2f}%")
+    print(f"  {sym} [{tf}] -- {len(portfolio)} strats @ {risk*100:.2f}%")
     print(f"  Trades: {r['n']:,d}  PF: {r['pf']:.2f}  WR: {r['wr']:.0f}%  DD: {r['mdd']:+.1f}%  Rend: {r['ret']:+,.0f}%  M+: {r['pm']}/{r['tm']}")
 
     durations_h = []
     multi_day = 0
     weekend_cross = 0
     sym_is_crypto = is_crypto(sym)
-    for ci, xi, *_ in trades:
+    for tup in trades:
+        ci = tup[0]; xi = tup[1]
         xi_safe = min(xi, len(candles) - 1)
         ets = candles.iloc[ci]['ts_dt']
         xts = candles.iloc[xi_safe]['ts_dt']
@@ -132,29 +139,27 @@ for sym, icfg in INSTRUMENTS.items():
         v = r['months'][mo]
         print(f"  {mo:>8s} ${v:>+9,.0f}")
 
-    all_sym_trades.append({'sym': sym, 'accepted': trades, 'risk': risk})
+    all_unit_trades.append({'sym': sym, 'tf': tf, 'accepted': trades, 'risk': risk})
 
-# ── AGGREGATE ──
-if len(all_sym_trades) >= 1:
+# AGREGE multi-(sym, tf)
+if len(all_unit_trades) >= 1:
     print(f"\n{'='*W}")
-    print(f"  AGREGE — {len(all_sym_trades)} instruments — ${CAPITAL:,.0f}")
+    print(f"  AGREGE -- {len(all_unit_trades)} (sym,tf) units -- ${CAPITAL:,.0f}")
     print(f"{'='*W}")
 
-    # Convertit ei/xi (indices DataFrame par sym) en timestamps reels.
-    # Indispensable: chaque sym a son propre DataFrame avec longueur differente,
-    # donc trier sur les indices melange la chronologie globale.
     from datetime import timedelta
     filtered = []
-    for st in all_sym_trades:
-        sym = st['sym']
-        cd = candles_by_sym[sym]
+    for unit in all_unit_trades:
+        sym = unit['sym']; tf = unit['tf']
+        cd = candles_cache[(sym, tf)]
         n_bars = len(cd)
-        for t in st['accepted']:
-            ei, xi, di, pnl_oz, sl_atr, atr, mo, sn = t
+        for tup in unit['accepted']:
+            ei = tup[0]; xi = tup[1]; di = tup[2]; pnl_oz = tup[3]
+            sl_atr = tup[4]; atr = tup[5]; mo = tup[6]; sn = tup[7]
             xi_safe = min(xi, n_bars - 1)
             entry_ts = cd.iloc[ei]['ts_dt']
             exit_ts = cd.iloc[xi_safe]['ts_dt']
-            filtered.append((entry_ts, exit_ts, di, pnl_oz, sl_atr, atr, sn, st['risk'], sym))
+            filtered.append((entry_ts, exit_ts, di, pnl_oz, sl_atr, atr, sn, unit['risk'], sym, tf))
 
     events = [(t[0], 0, idx) for idx, t in enumerate(filtered)] + \
              [(t[1], 1, idx) for idx, t in enumerate(filtered)]
@@ -167,7 +172,7 @@ if len(all_sym_trades) >= 1:
         if evt == 0:
             entry_caps[idx] = cap
         else:
-            entry_ts, exit_ts, di, pnl_oz, sl_atr, atr, sn, risk, sym = filtered[idx]
+            entry_ts, exit_ts, di, pnl_oz, sl_atr, atr, sn, risk, sym, tf = filtered[idx]
             if COST_R > 0:
                 pnl_oz -= COST_R * sl_atr * atr
             pnl = pnl_oz * (entry_caps[idx] * risk) / (sl_atr * atr)
@@ -176,8 +181,6 @@ if len(all_sym_trades) >= 1:
             dd = (cap - peak) / peak * 100
             if dd < max_dd: max_dd = dd
 
-            # Period bucket base sur exit_ts: ps['cap'] est ainsi cap au dernier
-            # exit du calendaire, coherent avec PnL agrege du calendaire.
             if args.weekly:
                 period = (exit_ts - timedelta(days=exit_ts.weekday())).strftime('%Y-%m-%d')
             else:
@@ -227,7 +230,7 @@ if len(all_sym_trades) >= 1:
     total_multi_day = 0
     weekend_cross_total = 0
     non_crypto_n = 0
-    for entry_ts, exit_ts, di, pnl_oz, sl_atr, atr, sn, risk, sym in filtered:
+    for entry_ts, exit_ts, di, pnl_oz, sl_atr, atr, sn, risk, sym, tf in filtered:
         dh = (exit_ts - entry_ts).total_seconds() / 3600
         total_durations_h.append(dh)
         if dh >= 24: total_multi_day += 1
@@ -243,6 +246,27 @@ if len(all_sym_trades) >= 1:
     print(f"  Duree avg: {avg_dur_total:.1f}h  Multi-day (>=24h): {total_multi_day} ({md_pct_total:.1f}%)  Weekend cross (non-crypto): {weekend_cross_total}/{non_crypto_n} ({wk_pct_total:.1f}%)")
     print(f"  {label}+ {pos_periods}/{len(sorted_periods)}  {label}- {neg_periods}/{len(sorted_periods)}")
     print(f"  ${CAPITAL:,.0f} -> ${cap:,.0f}")
+
+    # Breakdown par (sym, tf)
+    print(f"\n  BREAKDOWN par (sym, tf):")
+    print(f"  {'Sym':<14s} {'TF':>5s} {'n':>6s} {'WR':>4s} {'PF':>5s} {'PnL':>12s}")
+    by_unit = {}
+    for entry_ts, exit_ts, di, pnl_oz, sl_atr, atr, sn, risk, sym, tf in filtered:
+        # Recompute pnl with cost
+        po = pnl_oz - (COST_R * sl_atr * atr if COST_R > 0 else 0)
+        # Approx pnl in $ using initial capital (constant for breakdown)
+        bu = by_unit.setdefault((sym, tf), {'n': 0, 'w': 0, 'gp': 0, 'gl': 0})
+        bu['n'] += 1
+        # Use risk-relative R for breakdown
+        pnl_r = po / (sl_atr * atr) if (sl_atr * atr) > 0 else 0
+        if pnl_r > 0: bu['w'] += 1; bu['gp'] += pnl_r
+        else: bu['gl'] += abs(pnl_r)
+    for (sym, tf), bu in sorted(by_unit.items()):
+        if bu['n'] == 0: continue
+        wr = bu['w'] / bu['n'] * 100
+        pf = bu['gp'] / (bu['gl'] + 0.01)
+        net = bu['gp'] - bu['gl']
+        print(f"  {sym:<14s} {tf:>5s} {bu['n']:>6d} {wr:>3.0f}% {pf:>4.2f} {net:>+10.1f}R")
 
 conn.close()
 print(f"\n{'='*W}")

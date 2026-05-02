@@ -9,7 +9,7 @@ from dotenv import load_dotenv; load_dotenv()
 from phase1_poc_calculator import get_conn
 
 parser = argparse.ArgumentParser()
-parser.add_argument('broker', choices=['icm','ftmo','5ers'])
+parser.add_argument('broker', choices=['ftmo','5ers'])
 args = parser.parse_args()
 with open(os.path.join(os.path.dirname(__file__), 'broker_offsets.json')) as f:
     _offsets = json.load(f)

@@ -2,6 +2,521 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-02 — Retrait du mutex magic en live + alignement BT/Live (compare + dashboard)
+
+### Insight: cost-r BT vs reality
+
+Le BT applique cost-r=0.05 uniformement quel que soit le TF. Mais le cost reel en R depend du SL distance:
+- 15m: SL ~25 pts, spread ~1-2 pts -> cost reel 0.04-0.08R
+- 1h: SL ~75 pts, spread ~1-2 pts -> cost reel 0.013-0.027R (3x moins)
+- 4h: SL ~200 pts, spread ~1-2 pts -> cost reel 0.005-0.010R (6-8x moins)
+
+Donc le BT 15m est ~accurate, le BT 1h sur-estime les couts (-0.03R par trade pour 17371 trades = ~520R surfactures), le BT 4h sur-facture massivement.
+**En realite live, le 1h sera ENCORE meilleur que le BT predit.**
+User: "j'ai besoin de recul de trading live pour estimer le cout reel" -> on garde 0.05 pour l'instant.
+
+### Decouverte: BT vs Live discrepance sur position multiple meme strat
+
+User: "dans le backtest, si une position s'ouvre le 1er sur un instrument et une strategie, mais que le 2 elle est encore active et qu'on a le setup pour en ouvrir une nouvelle, est ce que la position va s'ouvrir ou est ce qu'elle sera bloquee ?"
+
+**Reponse**:
+- **BT**: la nouvelle position S'OUVRE (collect_trades n'a pas de mutex sur (sym, strat) actif)
+- **Live**: la nouvelle position EST BLOQUEE (open_position check magic et skip)
+
+Discrepance significative en 1h (16% multi-day) et 4h (64% multi-day).
+
+### Tests BT mutex et dirday
+
+User: "Si le bt est meilleur il faudra plutot modifier le live !!"
+
+**Test 1 - BT avec mutex** (skip nouveau signal si position precedente meme strat encore active):
+- Verdict: PIRE que BT principal -> les signaux skips sont en moyenne profitables
+- Conclusion: retirer le mutex du live
+
+**Test 2 - BT dirday** (1 trigger / sym / strat / direction / jour, vs 1 / sym / strat / jour actuel):
+- Verdict: PIRE que BT principal -> les contre-signaux meme jour sont du bruit
+- Conclusion: garder dedup direction-blind (1 / strat / jour, premier qui fire gagne)
+
+### Verification BT trade exit honnete
+
+User: "le BT actuel compte les SL plus forts quand open plus loin que le SL ?"
+
+OUI. sim_exit_custom (strats.py):
+- Gap-down/gap-up au-dela du SL: exit @ open (loss > 1R)
+- Gap au-dela du TP: exit @ target (gain cape -- TP = limit order broker, realiste)
+- BT pessimiste asymetrique = predictions fiables
+
+### Mecanisme dedup live (1 fire / sym / strat / jour)
+
+3 couches de protection:
+1. detect_all `if not trig.get(sn)` -- per-bar in-process
+2. state['per_unit'][k]['_triggered_close'] dans live_mt5.json -- between loops + crash recovery
+3. Rebuild from MT5 positions au boot -- source ultime
+
+Source temps = ts_dt UTC des candles DB (jamais horloge systeme).
+
+### ATR fige par position
+
+Chaque position fige son ATR a l'entree:
+- Open: `atr = daily_atr.get(prev_trading_day(today), global_atr)` -- ATR cloture jour J-1
+- Stockage: `state['trail'][ticket]['atr'] = atr` -- frozen
+- Trail/BE_TP utilise toujours cet ATR-la pendant la vie de la position
+
+2 positions meme strat ouvertes a 2 jours differents = 2 ATRs differents (= 2 calibrations independantes). Aligne avec BT.
+
+### Trail multi-positions
+
+State `state['trail']` keyed par TICKET (pas magic ni strat). Chaque ticket a son propre best/trail_active/stop. manage_trailing itere tous les tickets independamment. Ouverture de N positions same magic supportee nativement.
+
+### Modifications appliquees
+
+1. **live_mt5.py**: retrait des 3 lignes du mutex magic dans `open_position`. Commentaire explicatif laisse en place. La dedup 1/strat/jour reste garantie par `_triggered_close` au niveau detect_close_strats.
+
+2. **compare_today.py**:
+   - `entry_time`/`exit_time`/`time` LV stockes en **UTC pur** (etait broker time UTC+offset auparavant)
+   - bt_map/lv_map/lo_map: tri par entry_time UTC
+   - Boucle `for idx in range(n_pairs)` avec `n_pairs = max(len(bts), len(lvs), len(los))`
+   - Affichage strat label `STRAT#1`, `STRAT#2`... si plusieurs trades
+
+3. **vps_pusher.py compute_compare_today**:
+   - bt_by_strat / lv_by_strat passent de dict simple a dict-de-listes
+   - `setdefault(sn, []).append(...)` au lieu d'ecrasement
+   - Tri par entry_time UTC (BT) et time_open UTC (LV) avant pairing
+   - Rows incluent field `idx` pour identifier le rang du trade dans la strat
+
+4. **api_server.py** (frontend JS):
+   - Helper `stratOf(t) = t.strat || t.comment.split('|')[0]` pour extraire strat de comment "STRAT|TF"
+   - `findBtMatch(sym, strat, data, acc, ticket)`: si ticket fourni, prefere match par `row.lv.ticket === ticket`. Sinon premier match.
+   - Call sites `renderTradeDrill`/`renderPositionDrill` passent ticket
+
+### Verification UTC
+
+| Source | Format |
+|---|---|
+| BT entry_time | UTC (ts_dt candles DB) |
+| compare LV entry_time | UTC (entry_broker - BROKER_OFFSET) |
+| compare LO time | UTC (pos_broker - BROKER_OFFSET) |
+| vps_pusher time_open/close | UTC (mt5_time_to_utc) |
+
+Tous timestamps en UTC pour comparaison/tri/matching coherents.
+
+### Risques residuels (a monitorer en paper trading)
+
+- Margin/exposure simultanee plus elevee (2-3 positions same magic possibles)
+- Slippage burst si 2 ordres mêmes parametres en <1s
+- Display dashboard montre "STRAT|TF" via t.comment (cosmetique)
+- Pairing temporel par ordre dans compare (acceptable, peut etre raffine en proximite si necessaire)
+
+### A tester avant prod
+
+1. Live boot sur paper -> aucune erreur
+2. Trigger 2 positions same strat (jour J et J+1 sans fermeture) -> les 2 s'ouvrent
+3. Trail multi-positions -> chaque ticket trail independamment
+4. Compare display -> `STRAT#1`, `STRAT#2` lignes apparaissent
+5. Reset state mid-day -> rebuild correct des triggers
+6. Exposure totale a 0.5% × N positions -> margin OK
+
+## 2026-05-02 — FTMO 1h find_winners + BT comparison
+
+User: "ok find winners sur 1h sur tous les instru en base"
+
+### Run find_winners FTMO 1h
+- Commande: `python find_winners.py ftmo --tf 1h --n-min 60`
+- 12 instruments testes
+- **49 strats WIN sur 11 instruments** (US100/NAS = 0)
+- 2 nouveaux instruments via 1h: EU50.cash (3 strats), JP225.cash (5 strats)
+
+### Detail par instrument (1h)
+
+| Sym | n strats | vs 15m |
+|---|---|---|
+| XAUUSD | 1 | -2 |
+| XAGUSD | 2 | nouveau (15m exclu cost) |
+| GER40.cash | 6 | +4 |
+| AUS200.cash | 7 | 0 |
+| EU50.cash | 3 | nouveau |
+| HK50.cash | 2 | +1 |
+| UK100.cash | 5 | +2 |
+| US100.cash (NAS) | **0** | -7 ABANDONNE |
+| US2000.cash | 5 | +4 |
+| US30.cash | 7 | +4 |
+| US500.cash | 6 | 0 |
+| JP225.cash | 5 | nouveau |
+
+NAS100/US100 chute total en 1h. Confirmation 3 brokers: pepperstone (5->1), 5ers (5->1), ftmo (7->0).
+
+### BT comparatif FTMO (capital $50k, risk 0.5% benchmark)
+
+| Run | Trades | WR | PF | MaxDD | Rend | Capital | Sem+/- |
+|---|---|---|---|---|---|---|---|
+| 15m combos | 8,815 | 71% | 1.22 | -13.20% | +1,296% | $698k | 43/52 |
+| **1h find_winners** | 9,318 | 60% | 1.27 | **-22.06%** | **+6,921%** | $3.51M | 43/51 |
+
+Pattern identique a 5ers: 15m combos a meilleur DD apparent (effet optimisation in-sample). Le 1h find_winners gagne sur la robustesse (walk-forward par strat).
+
+Worst week 1h: -15.94% (2026-02-23) vs -8.55% en 15m. Mais c'est a benchmark 0.5% risk, en realite 0.04% FTMO -> -1.7% du capital, bien sous 10% limite.
+
+### Top R par instrument FTMO
+
+GER40 +108R (15m: 30R), UK100 +130R (15m: 24R), JP225 +84R (15m: exclu), US30 +115R, AUS200 +164R, US2000 +77R (15m: 2R), US500 +84R, XAUUSD +38R, US100 0R (vs +92R 15m).
+
+### Verdict 3 brokers
+
+| Broker | 15m Rend | 1h Rend | 15m DD | 1h DD | Verdict |
+|---|---|---|---|---|---|
+| Pepperstone | +828k% | +578k% | -29.7% | -20.1% | **1h gagne tout** |
+| 5ers | +522% | +2324% | -14.1% | -17.6% | 1h gagne robustesse |
+| FTMO | +1296% | +6921% | -13.2% | -22.1% | 1h gagne robustesse |
+
+Sur les 3 brokers, **1h find_winners donne 4-5x plus de rendement** que 15m. DD apparent plus haut sur 5ers/FTMO car 15m utilise combos (DD-optimise in-sample), trompeur en OOS.
+
+### Decision: passer les 3 comptes en LIVE_TIMEFRAMES = ['1h']
+
+Validation (a faire): mettre LIVE_TIMEFRAMES=['1h'] sur 5ers et ftmo (pepperstone deja fait).
+
+### Files
+- temp/find_winners_ftmo_1h.log
+- temp/compile_ftmo_1h.py (compile + merge)
+- comparison_ftmo.log (BT 15m vs 1h)
+- config_ftmo.py: schema multi-TF [sym][tf], 1h sections ajoutees, risk 0.0004 (0.04%)
+- strat_exits.py: 11 sections (ftmo, sym, '1h')
+
+## 2026-05-01 — 5ers comparison 15m combos vs 1h find_winners
+
+User: "Pas de gagnant clair -- bah si, le find winners cherche du long terme, pas du cherry pick"
+
+### Run find_winners 5ers 1h
+
+Commande: `python find_winners.py 5ers --tf 1h --n-min 60`
+- 8 instruments testes (XAUUSD, XAGUSD, NAS100, SP500, UK100, JPN225, US30, DAX40)
+- Total: **34 strats WIN sur 8 instruments**
+- Tous les instruments ont >=1 strat winner
+
+### Detail par instrument 1h
+
+| Sym | n strats | Strats |
+|---|---|---|
+| XAUUSD | 3 | ALL_HMA_CROSS, ALL_NR4, ALL_TRIX |
+| XAGUSD | 5 | ALL_DC10, ALL_DC10_EMA, ALL_FVG_BULL, ALL_KC_BRK, ALL_MTF_BRK |
+| NAS100 | 1 | TOK_STOCH |
+| SP500 | 7 | ALL_FVG_BULL, ALL_HAMMER, ALL_MACD_HIST, ALL_PIVOT_BOUNCE, ALL_STOCH_RSI, IDX_3SOLDIERS, TOK_STOCH |
+| UK100 | 3 | ALL_CMO_9, ALL_HAMMER, AVWAP_RECLAIM |
+| JPN225 | 5 | ALL_EMA_821, ALL_EMA_921, ALL_FVG_BULL, ALL_MOM_10, TOK_STOCH |
+| US30 | 5 | ALL_MACD_ADX, ALL_MOM_10, ALL_STOCH_RSI, IDX_3SOLDIERS, TOK_NR4 |
+| DAX40 | 5 | ALL_MACD_HIST, BOS_FVG, IDX_VWAP_BOUNCE, TOK_STOCH, TOK_TRIX |
+
+### BT comparatif 5ers (capital $100k, risk 0.5% pour benchmark)
+
+| Run | Trades | WR | PF | MaxDD | Rend | Capital | Sem+/- | Multi-day | Weekend |
+|---|---|---|---|---|---|---|---|---|---|
+| 15m combos | 6,280 | 69% | 1.18 | -14.08% | +522% | $622k | 41/52 | 1.2% | 0.6% |
+| **1h find_winners** | 6,647 | 57% | 1.19 | -17.58% | **+2324%** | $2.4M | 42/51 | 18.2% | 7.1% |
+
+### Cle d'interpretation: PF/DD trompeurs entre methodes
+
+Le 15m combos a un DD -14.08% qui parait meilleur que le 1h -17.58%. **C'est un effet de la methode de selection, pas une superiorite reelle**:
+
+- **combos = optimisation in-sample**: beam search choisit le combo qui minimise le DD SUR LA PERIODE DE BT. Le DD bas est un sous-produit de l'optimisation, pas une garantie OOS.
+- **find_winners = walk-forward par strat**: chaque strat passe h1>0 ET h2>0 individuellement. Aucune optimisation d'ensemble. Le DD est honnete, reproductible OOS.
+
+Le DD -14% du combos sera presque certainement plus haut en live (overfit). Le DD -17.58% du find_winners sera plus stable car chaque strat est validee independamment.
+
+### Top R par instrument (5ers)
+
+| Sym | 15m R | 1h R | Note |
+|---|---|---|---|
+| XAGUSD | +46 | **+145** | +99 (1h domine) |
+| SP500 | +69 | **+129** | +60 |
+| JPN225 | +46 | +89 | +43 |
+| UK100 | +6 | +76 | +70 (revivifie en 1h) |
+| US30 | +71 | +85 | +14 |
+| XAUUSD | +43 | +78 | +35 |
+| DAX40 | +29 | +67 | +38 |
+| **NAS100** | **+72** | **+9** | -63 (15m domine, idem pepperstone) |
+
+NAS100 chute systematiquement en 1h (15m sur les 2 brokers). XAGUSD et SP500 explosent en 1h (+99R, +60R).
+
+### Verdict 5ers
+
+**Le 1h find_winners gagne** sur la robustesse temporelle:
+- Pas de cherry-pick combinatoire
+- Walk-forward intransigeant par strat
+- Independance des strats verifiee individuellement
+- DD OOS predictible (vs combos optimise in-sample)
+
+Le rendement 4.5x superieur (+2324% vs +522%) confirme que le 1h capture mieux l'edge sur 5ers.
+
+### A faire
+- find_winners + BT comparatif pour FTMO (idem methodologie)
+- Decision finale: passer les 3 comptes (pepperstone, 5ers, ftmo) sur 1h find_winners pur
+
+### Files
+- temp/find_winners_5ers_1h.log
+- temp/compile_5ers_1h.py (compile + merge)
+- comparison_5ers.log (BT 15m vs 1h)
+- config_5ers.py: schema multi-TF [sym][tf], 1h sections ajoutees, risk 0.0001 (0.01%)
+- strat_exits.py: 8 sections (5ers, sym, '1h')
+
+## 2026-05-01 — Pepperstone 4h: find_winners + BT - inferieur a 1h
+
+User: "le 4h est charge, ca m'interesserait de faire un find winners et backtest"
+
+### Run find_winners 4h
+- Commande: `python find_winners.py pepperstone --tf 4h --n-min 40`
+- Seuil n=40 (ratio 1500 bars × 2.5%, coherent avec 1h)
+- **107 strats WIN sur 23 instruments** (FRA40 0 strat)
+- AUDUSD revele en 4h: 19 strats (vs 3 en 1h, 4 en 15m)
+
+### Stats qualite 4h vs 1h vs 15m (WIN strats)
+
+| Metric | 15m | 1h | 4h |
+|---|---|---|---|
+| n strats | 78 | 98 | 107 |
+| n trades moyen | 249 | 177 | 88 |
+| avg_R moyen | 0.103 | 0.117 | **0.174** (+49%) |
+| avg_R_trim | 0.117 | 0.140 | **0.192** (+64%) |
+| avg_R max | 0.30 | 0.44 | **0.68** |
+| OS moyen | 6.0% | 4.7% | 5.6% |
+
+Le 4h a expectancy par trade plus elevee mais beaucoup moins de trades.
+
+### BT 4h (capital $200, risk 0.5%)
+
+| Run | Trades | WR | PF | MaxDD | Rend | Capital |
+|---|---|---|---|---|---|---|
+| 15m | 19,388 | 59% | 1.19 | -29.66% | +828k% | $1.66M |
+| 1h | 17,371 | 60% | 1.29 | -20.13% | +578k% | $1.16M |
+| **4h** | 9,404 | **65%** | **1.36** | **-17.00%** | +68k% | $137k |
+
+### Le 4h gagne en qualite mais perd en compounding
+
+Pros:
+- PF 1.36 (top), WR 65% (top), MaxDD -17% (top)
+- Worst week -11.3% (top)
+
+Cons (severs):
+- Capital final $137k vs $1.16M (1h): compounding 8x moindre
+- **Weekend cross 33.8%** (vs 7.5% en 1h, 0.8% en 15m): 1/3 des trades cross weekend
+- Multi-day 63.8% (vs 15.9% en 1h)
+- Duree moyenne 68h (~3 jours): position type lundi -> jeudi
+- Ratio Rend/DD: 4.0k% / %DD (vs 28.9k% / %DD pour 1h)
+
+### Top R par instrument 4h
+
+AUDUSD +255R (star, 19 strats, vs 33 1h et 70 15m), EURUSD +119R, US2000 +111R, US30 +101R, USDJPY +97R, CHINAH +97R, HK50 +86R, USDCHF +84R, UK100 +76R, SCI25 +70R.
+AUS200 chute drastiquement: 38R 4h vs 270R 1h vs 452R 15m.
+
+### Verdict 4h
+
+**Pas un remplacant du 1h** pour le live $200:
+- Compounding insuffisant (8x moins)
+- Weekend exposure 4.5x plus violent (slippage live ~30-40% perte additionnelle non modelisee)
+- Ratio rendement/DD bien moins favorable
+
+**4h reste utile selectivement**: AUDUSD 4h sans rival (+255R). Pourrait etre integre via best-TF par instrument plus tard. Pour l'instant: 4h reste compile dans config (reversible).
+
+### Files
+- temp/find_winners_4h.log
+- temp/compile_pepperstone_4h.py
+- temp/bt_4h.log
+- config_pepperstone.py: 23 sym '4h' sections ajoutees
+
+## 2026-05-01 — Decision: trade 1h only (LIVE_TIMEFRAMES = ['1h'])
+
+User: "j'ai plutot envie de ne trade que sur du 1h, ca parait moins compliqué"
+
+### Comparaison 15m vs 1h vs Multi-TF (BT pepperstone $200 0.5%)
+
+| Run | Trades | WR | PF | MaxDD | Rend | Capital | Sem+/- |
+|---|---|---|---|---|---|---|---|
+| 15m only (find_winners) | 19,388 | 59% | 1.19 | -29.66% | +828k% | $1.66M | 46/53 |
+| 1h only (find_winners) | 17,371 | 60% | 1.29 | **-20.13%** | +578k% | $1.16M | **49/51** |
+| Multi-TF naif | 36,721 | 60% | 1.21 | **-41.78%** | +3.3B% | $6.7B | 50/53 |
+
+### Pourquoi 1h gagne sur la robustesse
+- PF +8.4% vs 15m
+- MaxDD -10pts (vs 15m), -22pts (vs multi-TF)
+- Worst week -12.6% vs -16.7% (15m) vs -28.1% (multi-TF)
+- Regularite 96% semaines+ vs 87%
+- Outlier dependency 4.7% vs 6%
+
+### Pourquoi multi-TF naif casse
+- Pertes correlees entre 15m et 1h (memes instruments, sessions overlap)
+- DD additif (-42% en multi-TF >> -30% 15m + -20% 1h separes)
+- Risk 0.5% × 176 strats = ~88% capital theorique en risk simultane
+
+### Verification gaps weekend (BT honnete)
+- Gap perte (open au-dela du SL): exit @ open, loss > 1R correctement comptee
+- Gap gain (open au-dela du TP): exit @ TP, gain cape (TP = limit order broker)
+- BT pessimiste asymetrique = predictions fiables
+
+### Activation
+- LIVE_TIMEFRAMES = ['1h']
+- 15m reste dans ALL_INSTRUMENTS (reversible si reactivation future)
+- Live: 24 instruments × 1h, 98 strats
+
+### Risque assume
+- Weekend cross 7.5% des trades (vs 0.8% en 15m) — slippage live ~5-10% au-dela du BT, MaxDD estime live ~-25%
+- NAS100 quasiment perdu (1 strat seulement vs 5 en 15m) — sacrifice acceptable
+
+## 2026-05-01 — Pepperstone 1h: find_winners + activation LIVE_TIMEFRAMES = ['15m', '1h']
+
+User: "Le 1h est chargé. find winners pour tous les instruments." + "60" (n-min)
+
+### Run find_winners
+- Commande: `python find_winners.py pepperstone --tf 1h --n-min 60`
+- Seuil n=60 (vs 80 par defaut 15m): bars 1h ~25% des bars 15m donc ratio adapte
+- 27 instruments testes, 24 avec winners (HSTECH/US400/TWN trop courts: 0 winners)
+- Total: 98 strats WIN sur 24 instruments (1h)
+
+### Resultats par instrument (1h)
+
+Forex: AUDUSD 3, EURUSD 7, GBPUSD 3, USDCHF 3, USDJPY 5, USDCAD 3 = 24 strats
+Indices: AUS200 11, EUSTX50 2, FRA40 1, JPN225 4, NAS100 1, UK100 4, US30 6, US500 4, GER40 12, SPA35 2, CN50 2, HK50 7, US2000 3, CA60 3, CHINAH 7, SWI20 1, NETH25 1, SCI25 3 = 74 strats
+
+### Profil 1h vs 15m (instruments communs)
+
+| Sym | 15m strats | 1h strats |
+|---|---|---|
+| AUDUSD | 4 | 3 |
+| EURUSD | 3 | 7 |
+| AUS200 | 16 | 11 |
+| GER40 | 7 | 12 |
+| HK50 | 2 | 7 |
+| NAS100 | 5 | 1 |
+| UK100 | 9 | 4 |
+| US30 | 4 | 6 |
+
+Profils tres differents par TF: NAS100 perd quasiment tout en 1h (5->1), GER40 gonfle (7->12), HK50 idem (2->7), EURUSD double (3->7). AUS200 reste dominant avec 11+16=27 strats total.
+
+### Nouveaux instruments via 1h (pas en 15m)
+
+CN50 (2), CHINAH (7), NETH25 (1), SCI25 (3) -- 13 strats sur instruments qui etaient skip 0-strats en 15m.
+
+### Activation
+
+- LIVE_TIMEFRAMES = ['15m', '1h']
+- Total: 44 units (20 syms × 15m + 24 syms × 1h) = 176 strats
+- STRAT_EXITS: 20 entries 15m + 24 entries 1h
+
+### Files
+- temp/find_winners_1h.log (log complet 27 instruments)
+- temp/compile_pepperstone_1h.py (compile + merge dans config + strat_exits)
+- config_pepperstone.py: schema multi-TF avec '15m' + '1h' par sym + 4 nouveaux syms (CN50, CHINAH, NETH25, SCI25)
+- strat_exits.py: 24 sections (pepperstone, sym, '1h')
+
+## 2026-05-01 — Multi-TF: implementation complete (Phase 1+2+3)
+
+User: "fais tout ce qu'il y a faire"
+
+Branche `multi-tf` cree depuis main. Architecture TF-agnostique des le depart, ajouter un TF = juste editer `LIVE_TIMEFRAMES` + run optimize/find_winners.
+
+### Schema multi-TF retenu
+
+**Magic numbers** (32 bits, max 325k):
+```
+broker_base + sym_id*1000 + tf_id*200 + strat_id
+TF_ID = {'5m': 0, '15m': 1, '1h': 2, '4h': 3, '1d': 4}
+```
+make_magic(broker, sym, strat, tf), decode_magic(magic, broker) -> (sym, tf, strat).
+
+**Configs** (Opt1, TF sous instrument):
+```python
+ALL_INSTRUMENTS = {
+    'AUS200': {
+        '15m': {'risk_pct': 0.005, 'portfolio': [...]},
+        '1h':  {'risk_pct': 0.005, 'portfolio': [...]},
+    }
+}
+LIVE_TIMEFRAMES = ['15m']  # editable
+```
+
+**STRAT_EXITS** key = (broker, sym, tf), migration auto via regex.
+
+**Pkl path** = `data/<broker>/<sym>/<tf>/optim_data.pkl`.
+
+**Trade tuple** = `(ci, xi, di, pnl_oz, sl_atr, atr, mo, sn, tf)` (9 elements, retrocompat 8).
+
+**Strats independantes du TF** (pas de logique conditionnelle): si une strat trigger sur 15m ET 1h en meme temps = 2 trades distincts.
+
+### Fichiers modifies
+
+**Nouveaux**:
+- config_helpers.py: iter_sym_tf, list_timeframes, get_inst_config — interface unifiee
+
+**Phase 1 (infra)**:
+- strats.py: TF_ID, SYMBOL_ID_REV, STRAT_ID_REV, make_magic(.., tf), decode_magic
+- config_pepperstone.py, config_ftmo.py, config_5ers.py: schema [sym][tf]
+- strat_exits.py: cle 3-tuple (broker, sym, tf)
+
+**Phase 2 (BT/optim)**:
+- backtest_engine.py: collect_trades(.., tf), tuple etendu
+- bt_portfolio.py: refacto complet, boucle (sym, tf), reporting par unit + agrege + breakdown
+- optimize_all.py: pkl path /<tf>/
+- find_winners.py: output config + STRAT_EXITS aux nouveaux formats
+- optimize_simple.py, analyze_combos.py: pkl path avec fallback legacy
+
+**Phase 3 (live)**:
+- live_mt5.py: UNITS = iter_sym_tf, ALL_MAGICS 4-tuple, state per_unit "sym|tf", manage_trailing/be_tp filtre par tf, comment "STRAT|TF" dans MT5
+- compare_today.py: live_trades indexe par (sym, tf), magic decode 4-tuple, table avec colonne TF
+- vps_pusher.py: get_positions/_deals_to_trades extrait tf depuis comment, compute_compare_today indexe "sym|tf"
+- dashboard.py: UNITS + INSTRUMENTS aplati pour compat legacy UI, MAGIC_REVERSE 4-tuple
+
+**NON touche** (volontairement):
+- mt5_fetch_clean.py: gere deja multi-TF via timeframes.txt
+- api_server.py: 1700 lignes UI, refonte cosmetique reportee
+
+### Tests
+
+```python
+strats.make_magic('pepperstone', 'AUS200', 'ALL_MACD_HIST', '1h') = 299433
+strats.decode_magic(299433, 'pepperstone') = ('AUS200', '1h', 'ALL_MACD_HIST')
+```
+
+BT pepperstone AUS200 [15m] $200 0.5% cost-r 0.05:
+- 3,961 trades, PF 1.33, WR 62%, DD -21.3%, Rend +706%, M+ 12/13
+- Coherent avec BT pre-multi-TF (run 2 find_winners) -> validation OK
+
+### Impact prochaines iterations
+
+Pour ajouter le 1h sur pepperstone:
+1. Ajouter '1h' dans LIVE_TIMEFRAMES
+2. python optimize_all.py pepperstone --tf 1h --symbol <sym> (pour chaque sym)
+3. python find_winners.py pepperstone --tf 1h
+4. Ajouter les blocks `'sym': {'1h': {...}}` dans config_pepperstone.py
+5. Ajouter STRAT_EXITS[('pepperstone', sym, '1h')] dans strat_exits.py
+6. python bt_portfolio.py pepperstone (run multi-TF complet)
+
+Aucune modif de code. Architecture est generique.
+
+## 2026-05-01 — Cleanup: suppression complete ICM (compte non actif)
+
+User: "osef d'icm, tu peux tout virer"
+
+Demarrage chantier multi-tf — preparation: nettoyage ICM pour reduire surface du codebase.
+
+### Fichiers supprimes
+- config_icm.py, config_icmarkets.py (legacy)
+- live_mt5_icmarkets.py, live_paper_icmarkets.py
+- simu_icmarkets.py, simu_final.py (obsolete, importait config_icmarkets)
+- strat_dict.py (orphelin, plus reference)
+- pairs_icm.txt
+- rapport_icmarkets.pdf
+- data/icm/ (dossier entier — 30 instruments avec pkl)
+
+### Fichiers modifies
+- strats.py: MAGIC_BASES retire 'icm', commentaires "ICM naming" enleves
+- broker_offsets.json: retire 'icm'
+- strat_exits.py: 25+ sections STRAT_EXITS[('icm', ...)] supprimees
+- dashboard.py: ACCOUNTS dict — retire 'icm', ajoute 'pepperstone'
+- argparse choices nettoyes (10 fichiers): find_winners, bt_portfolio, compare_today, vps_pusher, optimize_simple, live_mt5, live_paper, mqtt_publisher, audit_bt_vs_compare, check_candles_mt5_vs_db
+- live_paper.py: fallback config_icm → config_pepperstone
+- CLAUDE.md: refonte complete (FTMO, 5ers, Pepperstone seuls), ajout regles find_winners et no LON_/NY_
+
+### Tests imports OK
+strats, strat_exits, config_pepperstone, config_ftmo, config_5ers se chargent sans erreur.
+MAGIC_BASES = {'ftmo': 250000, '5ers': 260000, 'pepperstone': 270000}
+
 ## 2026-04-30 — Decision finale: find_winners > combos sur la robustesse temporelle
 
 User: "le find winners me parait moins cherry pick que combos" / "quelle approche garantit le mieux que les résultats tiennent dans le temps"

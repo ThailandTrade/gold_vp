@@ -21,7 +21,7 @@ sys.stdout.reconfigure(encoding='utf-8')
 from collections import defaultdict
 
 parser = argparse.ArgumentParser()
-parser.add_argument('account', choices=['icm','ftmo','5ers','pepperstone'])
+parser.add_argument('account', choices=['ftmo','5ers','pepperstone'])
 parser.add_argument('--tf', default='15m')
 parser.add_argument('--symbol', default=None, help='Si fourni, ne traite qu\'un sym')
 parser.add_argument('--n-min', type=int, default=80)
@@ -96,7 +96,11 @@ all_results = {}
 
 for sym in INSTRUMENTS:
     sym_lower = sym.lower().replace('.','_')
-    pkl_path = f'data/{args.account}/{sym_lower}/optim_data.pkl'
+    # Try TF-specific path first, fallback to legacy flat path
+    pkl_path = f'data/{args.account}/{sym_lower}/{args.tf}/optim_data.pkl'
+    legacy_path = f'data/{args.account}/{sym_lower}/optim_data.pkl'
+    if not os.path.exists(pkl_path) and os.path.exists(legacy_path):
+        pkl_path = legacy_path
     if not os.path.exists(pkl_path):
         print(f"\n  {sym}: pkl manquant ({pkl_path})")
         continue

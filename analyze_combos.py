@@ -15,10 +15,14 @@ import argparse
 import importlib
 _parser = argparse.ArgumentParser(); _parser.add_argument('account')
 _parser.add_argument('--symbol', default='xauusd')
+_parser.add_argument('--tf', default='15m')
 _args = _parser.parse_args()
-import re
+import re, os
 _sym = re.sub(r"[^a-z0-9]+", "_", _args.symbol.lower()).strip("_")
-_pkl = f'data/{_args.account}/{_sym}/optim_data.pkl'
+_pkl = f'data/{_args.account}/{_sym}/{_args.tf}/optim_data.pkl'
+_legacy = f'data/{_args.account}/{_sym}/optim_data.pkl'
+if not os.path.exists(_pkl) and os.path.exists(_legacy):
+    _pkl = _legacy
 print(f"Loading {_pkl}...", flush=True)
 with open(_pkl, 'rb') as f:
     data = pickle.load(f)

@@ -31,7 +31,7 @@ from backtest_engine import load_data, prev_trading_day, _make_day_data
 from strats import detect_all, sim_exit_custom, compute_indicators, REMOVED_STRATS
 
 parser = argparse.ArgumentParser()
-parser.add_argument('account', choices=['icm','ftmo','5ers','pepperstone'])
+parser.add_argument('account', choices=['ftmo','5ers','pepperstone'])
 parser.add_argument('--tf', default='15m')
 parser.add_argument('--symbol', default=None)
 parser.add_argument('--cost-r', type=float, default=0.05)
@@ -181,7 +181,11 @@ exits_blocks = []
 for sym in INSTRUMENTS:
     print(f"\n{'='*100}\n{sym}\n{'='*100}", flush=True)
     conn = get_conn()
-    candles, daily_atr, global_atr, trading_days = load_data(conn, sym, tf=args.tf)
+    try:
+        candles, daily_atr, global_atr, trading_days = load_data(conn, sym, tf=args.tf)
+    except Exception as e:
+        print(f"  Skip {sym} [{args.tf}]: {e}")
+        conn.close(); continue
     conn.close()
     if len(candles) < 500:
         print(f"  Sample trop court ({len(candles)} bars), skip"); continue
@@ -266,17 +270,16 @@ print(f"\n{'='*100}\n  RESUME\n{'='*100}")
 total_winners = sum(len(v) for v in all_results.values())
 print(f"  {total_winners} strats WIN sur {len(all_results)} instruments")
 
-print(f"\n=== config_{args.account} ALL_INSTRUMENTS ===\n")
+print(f"\n=== config_{args.account} ALL_INSTRUMENTS (TF={args.tf}) ===\n")
 for sym, winners in all_results.items():
     portfolio = [sn for sn, _, _ in winners]
     print(f"    '{sym}': {{")
-    print(f"        'risk_pct': 0.005,")
-    print(f"        'portfolio': {portfolio},")
+    print(f"        '{args.tf}': {{'risk_pct': 0.005, 'portfolio': {portfolio}}},")
     print(f"    }},")
 
-print(f"\n=== STRAT_EXITS ===\n")
+print(f"\n=== STRAT_EXITS (TF={args.tf}) ===\n")
 for sym, winners in all_results.items():
-    print(f"STRAT_EXITS[('{args.account}', '{sym}')] = {{")
+    print(f"STRAT_EXITS[('{args.account}', '{sym}', '{args.tf}')] = {{")
     for sn, exit_cfg, _ in winners:
         print(f"    '{sn}': {exit_cfg},")
     print(f"}}\n")
