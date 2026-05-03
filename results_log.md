@@ -2,6 +2,53 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-03 — Pepperstone find_winners x3 TFs (15m + 1h + 4h) reconstruit
+
+User: "je veux pouvoir lancer des BT" -> compile les 3 TFs dans config + strat_exits.
+
+### Run find_winners pepperstone x3 TFs (sequentiel)
+
+| TF | Instruments | Strats | n_min |
+|---|---|---|---|
+| 15m | 20 | 87 | 80 |
+| 1h | 23 | 101 | 60 |
+| 4h | 22 | 108 | 40 |
+| **Total** | **24 unique** | **296** | -- |
+
+### Best TF par instrument (analyse)
+
+**15m domine** (8): AUS200 (18), EUSTX50 (4), NAS100 (6), SWI20 (2), UK100 (10), US500 (4), USDCAD (5)
+**1h domine** (8): CA60 (4), EURUSD (9), FRA40 (2), GBPUSD (3), GER40 (10), JPN225 (6), SPA35 (2), USDJPY (5)
+**4h domine** (7): AUDUSD (22 !), CHINAH (7), HK50 (7), NETH25 (1), SCI25 (4), US2000 (9), US30 (9), USDCHF (5)
+
+### Surprises
+- **AUDUSD 4h: 22 strats** (vs 5 en 1h, 8 en 15m) - edge fort en swing 4h
+- **AUS200 15m: 18 strats** (vs 8 en 1h, 5 en 4h) - clairement scalp
+- **CHINAH 0/6/7**: tradable seulement en TF superieurs
+- **NAS100 inversion 6/2/4**: 15m bat 1h, 4h recupere
+
+### Stabilite vs ancien run
+- 15m: 87 vs 78 ancien (+9)
+- 1h: 101 vs 98 (+3)
+- 4h: 108 vs 107 (~stable)
+
+Confirme robustesse OOS de find_winners (3 jours data en plus = peu de variation).
+
+### Config compile
+
+config_pepperstone.py reconstruit propre: 24 syms, 65 units (sym, tf), 296 strats.
+strat_exits.py: 65 sections pepperstone (sym, tf), 0 missing.
+
+LIVE_TIMEFRAMES = ['1h'] (inchange).
+
+### Files
+- temp/find_winners_pepperstone_15m.log, _1h_v2.log, _4h_v2.log
+- temp/compile_pepperstone_all_tfs.py
+- config_pepperstone.py: rebuild propre 3 TFs
+- strat_exits.py: 65 sections pepperstone
+
+User peut lancer BT par TF (--tf X) ou agrege (modifier LIVE_TIMEFRAMES).
+
 ## 2026-05-02 — Mise a jour CLAUDE.md + memory pipeline pour nouvelles sessions
 
 ### Probleme
