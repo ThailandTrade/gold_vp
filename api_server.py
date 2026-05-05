@@ -1019,11 +1019,9 @@ function renderEquityChart(points, opts){
   if(baseline!=null){if(baseline<eMin)eMin=baseline; if(baseline>eMax)eMax=baseline;}
   const ePad=(eMax-eMin)*0.08||1;
   const yMin=eMin-ePad, yMax=eMax+ePad, ySpan=yMax-yMin||1;
-  const ts=points.map((p,i)=>p.t?new Date(p.t).getTime():(i?Date.now():Date.now()-3600000));
-  let tMin=ts[0],tMax=ts[0];
-  for(const v of ts){if(v<tMin)tMin=v; if(v>tMax)tMax=v;}
-  const tSpan=tMax-tMin||1;
-  const xOf=t=>PAD_L+((t-tMin)/tSpan)*innerW;
+  // X-axis = index trade (pas temps)
+  const N=points.length;
+  const xOf=i=>PAD_L+(N>1?(i/(N-1))*innerW:innerW/2);
   const yOf=v=>PAD_T+(1-(v-yMin)/ySpan)*innerH;
 
   // Y ticks
@@ -1036,26 +1034,24 @@ function renderEquityChart(points, opts){
     yAxis+=`<text class="chart-axis-label" x="${PAD_L-7}" y="${y+3}" text-anchor="end">$${fmt(v,0)}</text>`;
   }
 
-  // X ticks (dates)
+  // X ticks (numero du trade)
   const xTicks=5;
   let xAxis='';
   for(let i=0;i<xTicks;i++){
-    const t=tMin+(tSpan*i/(xTicks-1));
-    const x=xOf(t);
+    const idx=Math.round((N-1)*i/(xTicks-1));
+    const x=xOf(idx);
     xAxis+=`<line class="chart-grid" x1="${x}" x2="${x}" y1="${PAD_T}" y2="${H-PAD_B}"/>`;
-    const d=new Date(t);
-    const lbl=String(d.getUTCMonth()+1).padStart(2,'0')+'-'+String(d.getUTCDate()).padStart(2,'0');
-    xAxis+=`<text class="chart-axis-label" x="${x}" y="${H-PAD_B+15}" text-anchor="middle">${lbl}</text>`;
+    xAxis+=`<text class="chart-axis-label" x="${x}" y="${H-PAD_B+15}" text-anchor="middle">#${idx}</text>`;
   }
 
   // Equity line + area
   let path='', area='';
   for(let i=0;i<points.length;i++){
-    const x=xOf(ts[i]), y=yOf(eqs[i]);
+    const x=xOf(i), y=yOf(eqs[i]);
     if(!path){path=`M${x.toFixed(1)},${y.toFixed(1)}`; area=`M${x.toFixed(1)},${(H-PAD_B)} L${x.toFixed(1)},${y.toFixed(1)}`;}
     else { path+=` L${x.toFixed(1)},${y.toFixed(1)}`; area+=` L${x.toFixed(1)},${y.toFixed(1)}`; }
   }
-  area+=` L${xOf(tMax).toFixed(1)},${(H-PAD_B)} Z`;
+  area+=` L${xOf(N-1).toFixed(1)},${(H-PAD_B)} Z`;
 
   // Baseline line
   let baselineLine='';
@@ -1070,12 +1066,12 @@ function renderEquityChart(points, opts){
   if(eqs.length>1){
     const yp=yOf(eqs[peakIdx]);
     peakLine=`<line class="chart-peak-line" x1="${PAD_L}" x2="${W-PAD_R}" y1="${yp}" y2="${yp}"/><text class="chart-axis-label" x="${W-PAD_R-3}" y="${yp+12}" text-anchor="end" fill="#059669">peak $${fmt(eqs[peakIdx],0)}</text>`;
-    peakMarker=`<circle class="chart-marker peak" cx="${xOf(ts[peakIdx])}" cy="${yp}" r="3.5"/>`;
+    peakMarker=`<circle class="chart-marker peak" cx="${xOf(peakIdx)}" cy="${yp}" r="3.5"/>`;
   }
 
   // Current marker
   const lastIdx=points.length-1;
-  const curMarker=`<circle class="chart-marker" cx="${xOf(ts[lastIdx])}" cy="${yOf(eqs[lastIdx])}" r="4"/>`;
+  const curMarker=`<circle class="chart-marker" cx="${xOf(lastIdx)}" cy="${yOf(eqs[lastIdx])}" r="4"/>`;
 
   const grad=`<defs><linearGradient id="eq-grad" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#2563eb" stop-opacity="0.3"/><stop offset="100%" stop-color="#2563eb" stop-opacity="0.02"/></linearGradient></defs>`;
   const svg=`<svg class="chart-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">${grad}${yAxis}${xAxis}<path class="chart-area" d="${area}"/>${baselineLine}${peakLine}<path class="chart-line" d="${path}"/>${peakMarker}${curMarker}</svg>`;

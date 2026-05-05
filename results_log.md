@@ -2,6 +2,22 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-05 — Dashboard equity charts: abscisse en index trades (pas en temps)
+
+User: "dans le dashboard, dans les graphiques. L'abscisse ne doit pas etre en temps mais en trades"
+
+### Fix
+renderEquityChart (api_server.py):
+- xOf(i) = position basee sur index trade (pas timestamp)
+- X ticks affichent #idx (ex #0, #25, #50)
+- peakMarker et curMarker repositionnes par index
+- Suppression du calcul ts/tMin/tMax (plus utilise pour x-axis)
+
+Visuellement: equity progresse trade par trade au lieu de bar temporelle. Plus lisible quand peu de trades sur peu de jours, ou pour comparer differents portfolios sur meme periode.
+
+### Files
+- api_server.py: renderEquityChart x-axis trade index
+
 ## 2026-05-05 — Dashboard BT vs Live: metriques en grand (4 cells)
 
 User: "c'est en tout petit la... je t'ai demande une metrique"
