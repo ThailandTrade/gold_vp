@@ -2,6 +2,22 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-05 — Dashboard BT vs Live: ajout metrique ΔR moyen signe
+
+User: "dans BT vs live, je veux voir le R diff moyen des trades du jour en metrique"
+
+### Ajout
+Score banner du tab BT vs Live affiche maintenant:
+- ΔR moy (signe): sum(row.delta) / matched -- direction du biais (pos=live mieux que BT, neg=inverse)
+- |ΔR| moy: sum(|row.delta|) / matched -- penalty absolue (existait deja)
+
+Code couleur: vert si ΔR moy >= 0 (live mieux), rouge sinon.
+
+bt_compare etant filtre `today_utc` par `vps_pusher.compute_compare_today()`, ces metriques sont bien sur les trades du jour uniquement.
+
+### Files
+- api_server.py: renderBT score banner avec sumDelta + avgDelta + colored display
+
 ## 2026-05-05 — Dashboard fix: matching BT/Live multi-TF + display propre
 
 User: "dans trades, on n'a jamais aucun BT qui correspond. Refais moi tout ca proprement"

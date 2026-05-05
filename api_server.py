@@ -1359,8 +1359,8 @@ function renderBT(data){
   const syms=Object.keys(btc);
   if(syms.length===0){root.innerHTML='<div class="card"><div class="empty">Pas de comparaison BT disponible</div></div>';return;}
 
-  // Score: count rows with both BT and LV, compute avg |delta|
-  let matched=0,nLv=0,nBt=0,sumAbsDelta=0,topDiv=[];
+  // Score: count rows with both BT and LV, compute avg |delta| AND avg signed delta
+  let matched=0,nLv=0,nBt=0,sumAbsDelta=0,sumDelta=0,topDiv=[];
   for(const symKey of syms){
     const info=btc[symKey];
     const rows=info?.rows||[];
@@ -1374,6 +1374,7 @@ function renderBT(data){
         matched++;
         const d=row.delta||0;
         sumAbsDelta+=Math.abs(d);
+        sumDelta+=d;
         topDiv.push({sym:realSym,tf:realTf,acc:realAcc,strat:row.strat,delta:d,bt:row.bt.pnl_r,lv:row.lv.pnl_r});
       }
       if(row.bt)nBt++;
@@ -1381,16 +1382,19 @@ function renderBT(data){
     }
   }
   const avgPenalty=matched>0?sumAbsDelta/matched:0;
+  const avgDelta=matched>0?sumDelta/matched:0;
   const align=nBt>0?(matched/nBt*100):0;
   let scoreCls='good',scoreLbl='Aligne';
   if(avgPenalty>0.3){scoreCls='bad';scoreLbl='Divergent';}
   else if(avgPenalty>0.1){scoreCls='warn';scoreLbl='Surveille';}
+  const deltaSign=avgDelta>=0?'+':'';
+  const deltaCls=avgDelta>=0?'pnl-pos':'pnl-neg';
 
   let h='';
   h+=`<div class="score-banner ${scoreCls}">
     <h3>${scoreLbl} BT vs Live</h3>
     <div class="big">${align.toFixed(0)}%</div>
-    <p>${matched} matches sur ${nBt} BT &middot; penalite moy <b>${avgPenalty.toFixed(3)}R</b> &middot; LV-only ${nLv-matched} &middot; BT-only ${nBt-matched}</p>
+    <p>${matched} matches sur ${nBt} BT &middot; <b class="${deltaCls}">&Delta;R moy ${deltaSign}${avgDelta.toFixed(3)}R</b> &middot; |&Delta;R| moy ${avgPenalty.toFixed(3)}R &middot; LV-only ${nLv-matched} &middot; BT-only ${nBt-matched}</p>
   </div>`;
 
   topDiv.sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta));
