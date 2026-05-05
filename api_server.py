@@ -267,9 +267,14 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .score-banner.good { background:linear-gradient(135deg,#d1fae5,#a7f3d0); border:1px solid #6ee7b7; }
   .score-banner.warn { background:linear-gradient(135deg,#fef3c7,#fde68a); border:1px solid #fcd34d; }
   .score-banner.bad { background:linear-gradient(135deg,#fee2e2,#fecaca); border:1px solid #fca5a5; }
-  .score-banner h3 { font-size:13px; margin-bottom:4px; }
-  .score-banner p { font-size:11px; color:#4b5563; }
+  .score-banner h3 { font-size:13px; margin-bottom:8px; }
+  .score-banner p { font-size:11px; color:#4b5563; margin-top:6px; }
   .score-banner .big { font-size:24px; font-weight:700; }
+  .banner-metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  .bm-cell { background:rgba(255,255,255,0.55); border-radius:8px; padding:8px; text-align:center; }
+  .bm-lbl { font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:2px; }
+  .bm-val { font-size:22px; font-weight:700; }
+  @media (max-width:600px){ .banner-metrics{grid-template-columns:repeat(2,1fr);} }
 
   /* Logs */
   .log-row { padding:6px 0; border-bottom:1px solid #f0f1f3; font-size:11px; display:flex; gap:8px; align-items:center; cursor:pointer; }
@@ -1393,8 +1398,13 @@ function renderBT(data){
   let h='';
   h+=`<div class="score-banner ${scoreCls}">
     <h3>${scoreLbl} BT vs Live</h3>
-    <div class="big">${align.toFixed(0)}%</div>
-    <p>${matched} matches sur ${nBt} BT &middot; <b class="${deltaCls}">&Delta;R moy ${deltaSign}${avgDelta.toFixed(3)}R</b> &middot; |&Delta;R| moy ${avgPenalty.toFixed(3)}R &middot; LV-only ${nLv-matched} &middot; BT-only ${nBt-matched}</p>
+    <div class="banner-metrics">
+      <div class="bm-cell"><div class="bm-lbl">&Delta;R moy</div><div class="bm-val ${deltaCls}">${deltaSign}${avgDelta.toFixed(3)}R</div></div>
+      <div class="bm-cell"><div class="bm-lbl">|&Delta;R| moy</div><div class="bm-val">${avgPenalty.toFixed(3)}R</div></div>
+      <div class="bm-cell"><div class="bm-lbl">Align</div><div class="bm-val">${align.toFixed(0)}%</div></div>
+      <div class="bm-cell"><div class="bm-lbl">Matches</div><div class="bm-val">${matched}/${nBt}</div></div>
+    </div>
+    <p>LV-only ${nLv-matched} &middot; BT-only ${nBt-matched}</p>
   </div>`;
 
   topDiv.sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta));

@@ -2,6 +2,22 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-05 — Dashboard BT vs Live: metriques en grand (4 cells)
+
+User: "c'est en tout petit la... je t'ai demande une metrique"
+
+### Refonte score banner
+4 cells en grand (font 22px) au lieu d'une seule "big":
+- ΔR moy (signe, colored)
+- |ΔR| moy
+- Align %
+- Matches n/N
+
+CSS .banner-metrics + .bm-cell + .bm-val. Grid 4 colonnes desktop, 2x2 mobile (<600px).
+
+### Files
+- api_server.py: banner-metrics CSS + 4 bm-cell HTML
+
 ## 2026-05-05 — Dashboard BT vs Live: ajout metrique ΔR moyen signe
 
 User: "dans BT vs live, je veux voir le R diff moyen des trades du jour en metrique"
