@@ -205,6 +205,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .tcard-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; gap:8px; }
   .tcard-sym { font-weight:700; font-size:13px; }
   .tcard-strat { color:#2563eb; font-size:11px; font-weight:500; }
+  .tcard-tf { color:#6b7280; font-size:10px; font-weight:500; margin-left:4px; padding:1px 4px; background:#f3f4f6; border-radius:3px; }
   .tcard-time { font-size:10px; color:#9ca3af; }
   .tcard-meta { display:flex; gap:10px; font-size:11px; color:#6b7280; flex-wrap:wrap; }
   .tcard-pnl { font-weight:700; font-size:13px; }
@@ -541,15 +542,29 @@ function modalBack(){
 }
 
 // === BT match for live trade ===
+// Trades poussent par vps_pusher ont les fields: symbol, tf, strat, comment ('STRAT|TF'), ticket
+// bt_compare keys = 'sym|tf' (single account) ou 'acc:sym|tf' (live merged)
 function stratOf(t){return t.strat||((t.comment||'').split('|')[0]);}
+function tfOf(t){return t.tf||((t.comment||'').split('|')[1])||'15m';}
+// Format pour affichage 'STRAT|TF' -> 'STRAT [TF]'
+function fmtStratTf(commentOrKey){
+  const parts=(commentOrKey||'').split('|');
+  if(parts.length>=2)return `${escapeH(parts[0])} <span class="tcard-tf">[${escapeH(parts[1])}]</span>`;
+  return escapeH(commentOrKey||'');
+}
 
-function findBtMatch(sym,strat,data,acc,ticket){
+function findBtMatch(sym,strat,tf,data,acc,ticket){
   const btc=data?.bt_compare||{};
-  // En mode LIVE les cles sont 'acc:sym', sinon 'sym|tf' ou 'sym'
-  let info=btc[sym];
-  if(!info && acc) info=btc[acc+':'+sym];
+  const unitKey=`${sym}|${tf}`;
+  // 1. Mode single account: cle directe 'sym|tf'
+  let info=btc[unitKey];
+  // 2. Mode LIVE merge: cle 'acc:sym|tf'
+  if(!info && acc) info=btc[`${acc}:${unitKey}`];
+  // 3. Fallback: chercher n'importe quelle cle qui finit par '|sym|tf' ou matche unitKey
   if(!info){
-    for(const k of Object.keys(btc)){if(k.endsWith(':'+sym)||k.startsWith(sym+'|')){info=btc[k];break;}}
+    for(const k of Object.keys(btc)){
+      if(k===unitKey||k.endsWith(':'+unitKey)){info=btc[k];break;}
+    }
   }
   if(!info)return null;
   const rows=(info.rows||[]).filter(r=>r.strat===strat);
@@ -557,10 +572,10 @@ function findBtMatch(sym,strat,data,acc,ticket){
   // Si ticket fourni, prefere matcher par ticket LV
   if(ticket){
     const byTicket=rows.find(r=>r.lv&&r.lv.ticket===ticket);
-    if(byTicket)return {...byTicket,atr:info.atr,_acc:info._acc};
+    if(byTicket)return {...byTicket,atr:info.atr,tf:info.tf,_acc:info._acc};
   }
   // Fallback: premier row (idx 0)
-  return {...rows[0],atr:info.atr,_acc:info._acc};
+  return {...rows[0],atr:info.atr,tf:info.tf,_acc:info._acc};
 }
 
 // === Drill-down: trade ===
@@ -580,21 +595,21 @@ function openTradeByKey(key,push){
     if(!p){body='<div class="empty">Position introuvable</div>';}
     else{title=tradeTitle(p)+' <span class="sub">OPEN</span>';body=renderPositionDrill(p,data);}
   }else if(scope==='bt'){
-    const sym=rest[0],strat=rest[1];
-    const m=findBtMatch(sym,strat,data);
+    const sym=rest[0],tf=rest[1],strat=rest[2];
+    const m=findBtMatch(sym,strat,tf,data);
     if(!m){body='<div class="empty">BT introuvable</div>';}
-    else{title=`${escapeH(sym)} <span class="sub">${escapeH(strat)} (BT)</span>`;body=renderBtRowDrill(sym,strat,m,data);}
+    else{title=`${escapeH(sym)} <span class="sub">[${escapeH(tf)}] ${escapeH(strat)} (BT)</span>`;body=renderBtRowDrill(sym,strat,m,data);}
   }
   openModal(title,body,push);
 }
 
 function tradeTitle(t){
   const d=(t.dir||'').toUpperCase();
-  return `${escapeH(t.symbol)} <span class="sub">${escapeH(t.comment)} ${d}</span>`;
+  return `${escapeH(t.symbol)} <span class="sub">${escapeH(stratOf(t))}<span class="tcard-tf">[${escapeH(tfOf(t))}]</span> ${d}</span>`;
 }
 
 function renderTradeDrill(t,data){
-  const m=findBtMatch(t.symbol,stratOf(t),data,t._acc,t.ticket);
+  const m=findBtMatch(t.symbol,stratOf(t),tfOf(t),data,t._acc,t.ticket);
   const pnl=t.pnl||0;
   const isLong=t.dir==='long';
   let h='';
@@ -649,7 +664,7 @@ function renderTradeDrill(t,data){
   // Meta
   h+='<div class="drill-section"><h4>Detail</h4>';
   h+=`<div class="drill-row"><span class="k">Ticket</span><span class="v">#${t.ticket||'-'}</span></div>`;
-  h+=`<div class="drill-row"><span class="k">Strat</span><span class="v" style="color:#2563eb">${escapeH(t.comment)}</span></div>`;
+  h+=`<div class="drill-row"><span class="k">Strat</span><span class="v" style="color:#2563eb">${escapeH(stratOf(t))}<span class="tcard-tf">[${escapeH(tfOf(t))}]</span></span></div>`;
   h+=`<div class="drill-row"><span class="k">Open</span><span class="v">${dateD(t.time_open)} ${timeHM(t.time_open)}</span></div>`;
   h+=`<div class="drill-row"><span class="k">Close</span><span class="v">${dateD(t.time_close)} ${timeHM(t.time_close)}</span></div>`;
   if(t.time_open&&t.time_close){
@@ -661,7 +676,7 @@ function renderTradeDrill(t,data){
 }
 
 function renderPositionDrill(p,data){
-  const m=findBtMatch(p.symbol,stratOf(p),data,p._acc,p.ticket);
+  const m=findBtMatch(p.symbol,stratOf(p),tfOf(p),data,p._acc,p.ticket);
   const isLong=p.dir==='long';
   const elapsed=p.time_open?Math.round((Date.now()-new Date(p.time_open).getTime())/60000):0;
   const pnl=p.pnl||0;
@@ -696,7 +711,7 @@ function renderPositionDrill(p,data){
 
   h+='<div class="drill-section"><h4>Detail</h4>';
   h+=`<div class="drill-row"><span class="k">Ticket</span><span class="v">#${p.ticket}</span></div>`;
-  h+=`<div class="drill-row"><span class="k">Strat</span><span class="v" style="color:#2563eb">${escapeH(p.comment)}</span></div>`;
+  h+=`<div class="drill-row"><span class="k">Strat</span><span class="v" style="color:#2563eb">${escapeH(stratOf(p))}<span class="tcard-tf">[${escapeH(tfOf(p))}]</span></span></div>`;
   h+=`<div class="drill-row"><span class="k">Time open</span><span class="v">${dateD(p.time_open)} ${timeHM(p.time_open)}</span></div>`;
   h+='</div>';
   return h;
@@ -764,7 +779,7 @@ function openInstrumentDrill(sym,push){
     h+='<div class="drill-section"><h4>Par strategie</h4><div class="toplist">';
     for(const [sn,st] of stratList){
       h+=`<div class="toprow" onclick="openStratDrill('${escapeH(sn)}',true)">
-        <span class="name">${escapeH(sn)}</span>
+        <span class="name">${fmtStratTf(sn)}</span>
         <span class="stats">${st.n}t &middot; WR ${(st.w/st.n*100).toFixed(0)}%</span>
         <span class="pnl ${pnlCls(st.$)}">${fmtUsd(st.$,2)}</span>
       </div>`;
@@ -780,7 +795,7 @@ function openInstrumentDrill(sym,push){
       const pnl=t.pnl||0;
       h+=`<div class="tcard" onclick="openTradeByKey('lv|${t.ticket}',true)">
         <div class="tcard-head">
-          <div><span class="tcard-strat">${escapeH(t.comment)}</span> <span class="${dirCls(t.dir)}">${(t.dir||'').toUpperCase()}</span></div>
+          <div><span class="tcard-strat">${escapeH(stratOf(t))}<span class="tcard-tf">[${escapeH(tfOf(t))}]</span></span> <span class="${dirCls(t.dir)}">${(t.dir||'').toUpperCase()}</span></div>
           <span class="tcard-pnl ${pnlCls(pnl)}">${fmtUsd(pnl,2)}</span>
         </div>
         <div class="tcard-meta"><span>${fmt(t.entry,2)}&rarr;${fmt(t.exit,2)}</span><span class="tcard-time">${dateD(t.time_close)} ${timeHM(t.time_close)}</span></div>
@@ -1125,7 +1140,7 @@ function renderHome(data){
     for(const p of pos){
       h+=`<div class="toprow" onclick="openTradeByKey('op|${p.ticket}',false)">
         <span class="name">${escapeH(p.symbol)}</span>
-        <span class="stats">${escapeH(p.comment)} &middot; <span class="${dirCls(p.dir)}">${(p.dir||'').toUpperCase()}</span></span>
+        <span class="stats">${escapeH(stratOf(p))}<span class="tcard-tf">[${escapeH(tfOf(p))}]</span> &middot; <span class="${dirCls(p.dir)}">${(p.dir||'').toUpperCase()}</span></span>
         <span class="pnl ${pnlCls(p.pnl||0)}">${fmtUsd(p.pnl||0,2)}</span>
       </div>`;
     }
@@ -1156,7 +1171,7 @@ function renderHome(data){
     h+='<div class="card"><div class="card-title">Par strategie<span class="right">'+stratList.length+' strats</span></div><div class="toplist">';
     for(const [sn,st] of stratList){
       h+=`<div class="toprow" onclick="openStratDrill('${escapeH(sn)}',false)">
-        <span class="name">${escapeH(sn)}</span>
+        <span class="name">${fmtStratTf(sn)}</span>
         <span class="stats">${st.n}t &middot; WR ${(st.w/st.n*100).toFixed(0)}%</span>
         <span class="pnl ${pnlCls(st.$)}">${fmtUsd(st.$,2)}</span>
       </div>`;
@@ -1192,7 +1207,7 @@ function renderToday(data){
       const pnl=t.pnl||0;
       h+=`<div class="tcard" onclick="openTradeByKey('lv|${t.ticket}',false)">
         <div class="tcard-head">
-          <div><span class="tcard-sym">${escapeH(t.symbol)}</span> <span class="tcard-strat">${escapeH(t.comment)}</span></div>
+          <div><span class="tcard-sym">${escapeH(t.symbol)}</span> <span class="tcard-strat">${escapeH(stratOf(t))}<span class="tcard-tf">[${escapeH(tfOf(t))}]</span></span></div>
           <span class="tcard-pnl ${pnlCls(pnl)}">${fmtUsd(pnl,2)}</span>
         </div>
         <div class="tcard-meta">
@@ -1242,7 +1257,7 @@ function renderPositionCard(p,opts){
   const accBadge=o.showAcc&&p._acc?`<span class="tcard-time" style="background:#1a1a2e;color:#fff;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase">${p._acc}</span>`:'';
   return `<div class="tcard pos-card ${cls}" onclick="openTradeByKey('op|${p.ticket}',false)">
     <div class="tcard-head">
-      <div>${accBadge?accBadge+' ':''}<span class="tcard-sym">${escapeH(p.symbol)}</span> <span class="tcard-strat">${escapeH(p.comment)}</span> <span class="${dirCls(p.dir)}">${(p.dir||'').toUpperCase()}</span></div>
+      <div>${accBadge?accBadge+' ':''}<span class="tcard-sym">${escapeH(p.symbol)}</span> <span class="tcard-strat">${escapeH(stratOf(p))}<span class="tcard-tf">[${escapeH(tfOf(p))}]</span></span> <span class="${dirCls(p.dir)}">${(p.dir||'').toUpperCase()}</span></div>
       <span class="tcard-pnl ${pnlCls(pnl)}">${fmtUsd(pnl,2)}</span>
     </div>
     <div class="pos-bar">
@@ -1321,7 +1336,7 @@ function renderHistory(data){
       const pnl=t.pnl||0;
       h+=`<div class="tcard" onclick="openTradeByKey('lv|${t.ticket}',false)">
         <div class="tcard-head">
-          <div><span class="tcard-sym">${escapeH(t.symbol)}</span> <span class="tcard-strat">${escapeH(t.comment)}</span></div>
+          <div><span class="tcard-sym">${escapeH(t.symbol)}</span> <span class="tcard-strat">${escapeH(stratOf(t))}<span class="tcard-tf">[${escapeH(tfOf(t))}]</span></span></div>
           <span class="tcard-pnl ${pnlCls(pnl)}">${fmtUsd(pnl,2)}</span>
         </div>
         <div class="tcard-meta">
@@ -1349,14 +1364,17 @@ function renderBT(data){
   for(const symKey of syms){
     const info=btc[symKey];
     const rows=info?.rows||[];
-    const realSym=info?._sym||symKey;
+    // _sym dans le merge LIVE = unitKey 'sym|tf', sinon symKey lui-meme = unitKey
+    const unitKey=info?._sym||symKey;
+    const realSym=info?.symbol||unitKey.split('|')[0];
+    const realTf=info?.tf||unitKey.split('|')[1]||'15m';
     const realAcc=info?._acc;
     for(const row of rows){
       if(row.bt&&row.lv){
         matched++;
         const d=row.delta||0;
         sumAbsDelta+=Math.abs(d);
-        topDiv.push({sym:realSym,acc:realAcc,strat:row.strat,delta:d,bt:row.bt.pnl_r,lv:row.lv.pnl_r});
+        topDiv.push({sym:realSym,tf:realTf,acc:realAcc,strat:row.strat,delta:d,bt:row.bt.pnl_r,lv:row.lv.pnl_r});
       }
       if(row.bt)nBt++;
       if(row.lv)nLv++;
@@ -1381,9 +1399,9 @@ function renderBT(data){
     h+=`<div class="card"><div class="card-title">Top divergences du jour</div><div class="list">`;
     for(const t of top){
       const symLbl=t.acc?`[${t.acc}] ${t.sym}`:t.sym;
-      h+=`<div class="tcard" onclick="openTradeByKey('bt|${escapeH(t.sym)}|${escapeH(t.strat)}',false)">
+      h+=`<div class="tcard" onclick="openTradeByKey('bt|${escapeH(t.sym)}|${escapeH(t.tf)}|${escapeH(t.strat)}',false)">
         <div class="tcard-head">
-          <div><span class="tcard-sym">${escapeH(symLbl)}</span> <span class="tcard-strat">${escapeH(t.strat)}</span></div>
+          <div><span class="tcard-sym">${escapeH(symLbl)}</span> <span class="tcard-tf">[${escapeH(t.tf)}]</span> <span class="tcard-strat">${escapeH(t.strat)}</span></div>
           <span class="badge-r ${t.delta>=0?'pos':'neg'}">${t.delta>=0?'+':''}${t.delta.toFixed(2)}R</span>
         </div>
         <div class="tcard-meta">
@@ -1496,7 +1514,7 @@ function renderLegacy(data){
     h+='<div style="overflow-x:auto"><table style="font-size:11px"><tr><th>Sym</th><th>Strat</th><th>Dir</th><th>Entry</th><th>Current</th><th>SL</th><th>TP</th><th>PnL</th><th>Lots</th></tr>';
     for(const p of pos){
       h+=`<tr onclick="openTradeByKey('op|${p.ticket}',false)" class="clickable">
-        <td class="sym">${escapeH(p.symbol)}</td><td class="strat-name">${escapeH(p.comment)}</td>
+        <td class="sym">${escapeH(p.symbol)}</td><td class="strat-name">${escapeH(stratOf(p))}<span class="tcard-tf">[${escapeH(tfOf(p))}]</span></td>
         <td class="${dirCls(p.dir)}">${(p.dir||'').toUpperCase()}</td>
         <td>${fmt(p.entry,2)}</td><td>${fmt(p.current,2)}</td><td>${fmt(p.sl,2)}</td><td>${p.tp?fmt(p.tp,2):'-'}</td>
         <td class="${pnlCls(p.pnl||0)}">${fmtUsd(p.pnl||0,2)}</td><td>${fmt(p.volume,2)}</td>
@@ -1505,15 +1523,18 @@ function renderLegacy(data){
     h+='</table></div>';
   }
   h+='</div>';
-  // BT vs Live per instrument (full table)
+  // BT vs Live per (instrument, TF)
   const btc=data.bt_compare||{};
   const btSyms=Object.keys(btc).sort();
   for(const symKey of btSyms){
     const info=btc[symKey]||{};
     const rows=(info.rows||[]).filter(r=>r.bt||r.lv).sort((a,b)=>a.strat.localeCompare(b.strat));
     if(rows.length===0)continue;
-    const sym=info._sym||symKey;
-    const symLbl=info._acc?`[${info._acc}] ${sym}`:sym;
+    // unitKey 'sym|tf' -> separer
+    const unitKey=info._sym||symKey;
+    const sym=info.symbol||unitKey.split('|')[0];
+    const tf=info.tf||unitKey.split('|')[1]||'15m';
+    const symLbl=info._acc?`[${info._acc}] ${sym} [${tf}]`:`${sym} [${tf}]`;
     let totalBtR=0,totalLvR=0,totalDelta=0,totalUsd=0;
     h+=`<div class="legacy-section-title"><span class="sym">${escapeH(symLbl)}</span><span class="meta">${rows.length} strats &middot; ATR ${fmt(info.atr,2)}</span></div>`;
     h+='<div class="legacy-wrap"><table class="legacy-tbl">';
@@ -1556,7 +1577,7 @@ function renderLegacy(data){
         else if(d<=-0.5)rowCls='row-warn';
         else if(d>=0.5)rowCls='row-good';
       }
-      const clickKey=lv&&lv.ticket?`lv|${lv.ticket}`:bt?`bt|${escapeH(sym)}|${escapeH(row.strat)}`:'';
+      const clickKey=lv&&lv.ticket?`lv|${lv.ticket}`:bt?`bt|${escapeH(sym)}|${escapeH(tf)}|${escapeH(row.strat)}`:'';
       const onclick=clickKey?`onclick="openTradeByKey('${clickKey}',false)"`:'';
       h+=`<tr ${onclick} ${clickKey?'class="clickable '+rowCls+'"':'class="'+rowCls+'"'}>
         <td class="col-strat">${escapeH(row.strat)}</td>
@@ -1602,7 +1623,7 @@ function renderLegacy(data){
     for(const t of [...hist].sort((a,b)=>(b.time_close||'').localeCompare(a.time_close||'')).slice(0,50)){
       h+=`<tr onclick="openTradeByKey('lv|${t.ticket}',false)" class="clickable">
         <td>${dateD(t.time_close).slice(5)} ${timeHM(t.time_close)}</td>
-        <td class="sym">${escapeH(t.symbol)}</td><td class="strat-name">${escapeH(t.comment)}</td>
+        <td class="sym">${escapeH(t.symbol)}</td><td class="strat-name">${escapeH(stratOf(t))}<span class="tcard-tf">[${escapeH(tfOf(t))}]</span></td>
         <td class="${dirCls(t.dir)}">${(t.dir||'').toUpperCase()}</td>
         <td>${fmt(t.entry,2)}</td><td>${fmt(t.exit,2)}</td>
         <td class="${pnlCls(t.pnl||0)}">${fmtUsd(t.pnl||0,2)}</td>
@@ -1625,11 +1646,11 @@ function renderLogs(data){
   // Open positions: only show if today period (they're current, not historical)
   if(PERIOD==='today'){
     for(const p of pos){
-      events.push({t:p.time_open,type:'entry',sym:p.symbol,strat:p.comment,dir:p.dir,pnl:p.pnl,extra:'OPEN',ticket:p.ticket});
+      events.push({t:p.time_open,type:'entry',sym:p.symbol,strat:stratOf(p),tf:tfOf(p),dir:p.dir,pnl:p.pnl,extra:'OPEN',ticket:p.ticket});
     }
   }
   for(const t of periodTrades){
-    events.push({t:t.time_close,type:(t.pnl||0)>=0?'exit-w':'exit-l',sym:t.symbol,strat:t.comment,dir:t.dir,pnl:t.pnl,extra:(t.pnl>=0?'WIN ':'LOSS ')+fmtUsd(t.pnl,2),ticket:t.ticket});
+    events.push({t:t.time_close,type:(t.pnl||0)>=0?'exit-w':'exit-l',sym:t.symbol,strat:stratOf(t),tf:tfOf(t),dir:t.dir,pnl:t.pnl,extra:(t.pnl>=0?'WIN ':'LOSS ')+fmtUsd(t.pnl,2),ticket:t.ticket});
   }
   events.sort((a,b)=>(b.t||'').localeCompare(a.t||''));
   let h=`<div class="card"><div class="card-title">Evenements ${range.label} (${events.length})</div>`;
@@ -1643,7 +1664,7 @@ function renderLogs(data){
         <span class="log-time">${showDate?dateD(e.t).slice(5)+' ':''}${timeHM(e.t)}</span>
         <span class="log-tag ${e.type}">${lbl}</span>
         <span class="tcard-sym">${escapeH(e.sym)}</span>
-        <span class="tcard-strat">${escapeH(e.strat)}</span>
+        <span class="tcard-strat">${escapeH(e.strat)}</span><span class="tcard-tf">[${escapeH(e.tf||'')}]</span>
         <span class="${dirCls(e.dir)}">${(e.dir||'').toUpperCase()}</span>
         <span style="margin-left:auto;font-size:11px;color:#6b7280">${escapeH(e.extra)}</span>
       </div>`;

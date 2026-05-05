@@ -2,6 +2,37 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-05 — Dashboard fix: matching BT/Live multi-TF + display propre
+
+User: "dans trades, on n'a jamais aucun BT qui correspond. Refais moi tout ca proprement"
+
+### Bug racine
+`findBtMatch(sym, strat, ...)` cherchait par `btc[sym]` mais les cles de bt_compare sont en realite `'sym|tf'` (ex `'AUS200|1h'`) ou `'acc:sym|tf'` (mode LIVE merge). Aucun match jamais.
+
+De plus, sans filtre TF, plusieurs strats en multi-TF auraient pris le premier match arbitrairement.
+
+### Fixes appliques api_server.py
+
+1. **findBtMatch(sym, strat, tf, data, acc, ticket)**: requiert maintenant tf, construit unitKey exact `'sym|tf'`. Fallback intelligent.
+
+2. **Helpers**: `stratOf(t)`, `tfOf(t)`, `fmtStratTf(commentOrKey)` pour decoupler strat/tf depuis le comment 'STRAT|TF'.
+
+3. **Tous les call sites** passent maintenant `tfOf(t)`:
+   - renderTradeDrill, renderPositionDrill: passent ticket+tf
+   - openTradeByKey scope 'bt': format `bt|sym|tf|strat` (3 segments au lieu de 2)
+   - Top divergences card: tf dans display + click key
+   - BT vs Live full table: unit key parse propre, titre `[acc] sym [tf]`
+   - clickKey dans rows: format etendu avec tf
+
+4. **Display**: `t.comment` ('STRAT|TF') remplace par `stratOf(t)` + badge `[tf]` partout (trade cards, position drill, timeline events). Plus lisible.
+
+5. **CSS**: `.tcard-tf` ajoute (badge gris `[tf]` discret).
+
+6. **Aggregations**: byStrat continue d'utiliser `t.comment` comme cle (= 'STRAT|TF') -> groupage propre par (strat, tf). Display via `fmtStratTf` pour rendre 'STRAT [TF]'.
+
+### Files
+- api_server.py: findBtMatch + stratOf + tfOf + fmtStratTf + 11 sites de display fixed
+
 ## 2026-05-03 — Pepperstone find_winners x3 TFs (15m + 1h + 4h) reconstruit
 
 User: "je veux pouvoir lancer des BT" -> compile les 3 TFs dans config + strat_exits.
