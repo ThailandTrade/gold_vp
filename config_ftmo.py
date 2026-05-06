@@ -64,9 +64,9 @@ ALL_INSTRUMENTS = {
 
 LIVE_TIMEFRAMES = ['1h']
 
-# Toutes les configs 1h actives (incl. metaux). En 1h, le SL est plus large -> cost en R plus bas
-LIVE_INSTRUMENTS = list(ALL_INSTRUMENTS.keys())
+# Metaux desactives 2026-05-06: swap rates trop eleves vs edge (cf analyse swap)
+LIVE_INSTRUMENTS = [k for k in ALL_INSTRUMENTS.keys() if k not in ('XAUUSD', 'XAGUSD')]
 INSTRUMENTS = {k: v for k, v in ALL_INSTRUMENTS.items() if k in LIVE_INSTRUMENTS}
 
-RISK_PCT = ALL_INSTRUMENTS['XAUUSD']['1h']['risk_pct']
-PORTFOLIO = ALL_INSTRUMENTS['XAUUSD']['1h']['portfolio']
+RISK_PCT = 0.0004
+PORTFOLIO = ALL_INSTRUMENTS['GER40.cash']['1h']['portfolio']

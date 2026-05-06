@@ -2,6 +2,34 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-06 — FTMO: desactivation metaux (XAUUSD/XAGUSD) — swap trop eleves
+
+User: "on desactive tous les metaux partout. Ca coute trop cher"
+
+### Etat avant
+- Pepperstone: 0 metaux dans config (rien a faire)
+- 5ers: XAUUSD/XAGUSD deja exclus de LIVE_INSTRUMENTS (rien a faire)
+- FTMO: XAUUSD/XAGUSD actifs (3 strats XAUUSD + 2 XAGUSD)
+
+### Modif
+config_ftmo.py:
+```python
+LIVE_INSTRUMENTS = [k for k in ALL_INSTRUMENTS.keys() if k not in ('XAUUSD', 'XAGUSD')]
+RISK_PCT = 0.0004
+PORTFOLIO = ALL_INSTRUMENTS['GER40.cash']['1h']['portfolio']
+```
+
+### Etat apres
+FTMO: 9 instruments (AUS200, EU50, GER40, HK50, JP225, UK100, US2000, US30, US500), 46 strats (vs 49).
+
+### Raison
+Analyse swap 2026-05-02: rates 5ers/FTMO sur metaux peuvent manger 30-50% de l'edge avg_R en swap multi-day. Mieux vaut couper que perdre l'edge en holding cost.
+
+ALL_INSTRUMENTS reste avec les configs metaux pour reactivation future (juste retire de LIVE_INSTRUMENTS).
+
+### Files
+- config_ftmo.py: LIVE_INSTRUMENTS sans XAU/XAG, RISK_PCT/PORTFOLIO refs GER40
+
 ## 2026-05-05 — Dashboard equity charts: abscisse en index trades (pas en temps)
 
 User: "dans le dashboard, dans les graphiques. L'abscisse ne doit pas etre en temps mais en trades"
