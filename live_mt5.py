@@ -114,19 +114,28 @@ def mt5_our_positions(symbol=None):
     return [p for p in positions if p.magic in ALL_MAGIC_SET]
 
 def mt5_lot_size(symbol, risk_amount, entry, stop, direction):
+    """Calcule le lot pour respecter risk_amount. Retourne 0 si min_lot risque deja > target.
+    Le caller doit checker lots <= 0 et skip le trade dans ce cas.
+    """
     sym = mt5.symbol_info(symbol)
-    if not sym or entry == stop: return sym.volume_min if sym else 0.01
+    if not sym or entry == stop: return 0.0
     order_type = mt5.ORDER_TYPE_BUY if direction == 'long' else mt5.ORDER_TYPE_SELL
     try:
         loss_per_lot = mt5.order_calc_profit(order_type, symbol, 1.0, float(entry), float(stop))
     except Exception:
         loss_per_lot = None
     if loss_per_lot is None:
-        log.warning("LOT {} — order_calc_profit failed, fallback".format(symbol))
+        log.warning("LOT {} -- order_calc_profit failed, fallback".format(symbol))
         loss_per_lot = abs(entry - stop) * sym.trade_contract_size
     else:
         loss_per_lot = abs(loss_per_lot)
-    if loss_per_lot == 0: return sym.volume_min
+    if loss_per_lot == 0: return 0.0
+    # Cost du min_lot vs target risk -- si depasse, skip
+    min_lot_risk = sym.volume_min * loss_per_lot
+    if min_lot_risk > risk_amount:
+        log.info("SKIP {} -- min_lot {:.2f} risk ${:.2f} > target ${:.2f}".format(
+            symbol, sym.volume_min, min_lot_risk, risk_amount))
+        return 0.0
     lots = risk_amount / loss_per_lot
     lots = max(sym.volume_min, round(lots / sym.volume_step) * sym.volume_step)
     lots = min(lots, sym.volume_max)
@@ -342,6 +351,9 @@ def open_position(state, symbol, tf, sig, atr, risk_pct):
     stop = signal_close - sl_val * atr if d == 'long' else signal_close + sl_val * atr
     risk = capital * risk_pct
     lots = mt5_lot_size(symbol, risk, entry, stop, d)
+    if lots <= 0:
+        # Skip: cost du min_lot > risk target (deja logge dans mt5_lot_size)
+        return
     tp = 0.0
     if exit_type == 'TPSL':
         tp = signal_close + exit_cfg[2] * atr if d == 'long' else signal_close - exit_cfg[2] * atr

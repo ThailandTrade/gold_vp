@@ -2,6 +2,33 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-07 — Live: skip trade si min_lot risk > risk target
+
+User: "Si le risque calcule par rapport au SL avec min lot de l'instrument est superieur au risque par rapport a l'equity, on skip le trade"
+
+### Probleme avant
+Si lot calcule (= risk_amount / loss_per_lot) < volume_min, le code bumpait au volume_min ce qui faisait dépasser le risk target. Pas de check.
+
+Exemple: 5ers à 0.01% sur $100k = $10 risk target. XAUUSD volume_min 0.01 lot, SL distance 25 pts = $25/lot risk au SL. Min_lot_risk = 0.01 × $25 = $25 > $10 target. Avant: trade pris quand meme avec 0.01 lot risquant $25 (= 2.5x target).
+
+### Fix mt5_lot_size
+- Calcule min_lot_risk = sym.volume_min × loss_per_lot
+- Si > risk_amount: log + return 0.0 (signal "skip")
+- Sinon: calcul normal du lot
+
+### Fix open_position
+Apres mt5_lot_size, check `if lots <= 0: return` (skip trade silencieux, deja logge).
+
+### Impact
+- 5ers metaux: deja exclus de LIVE_INSTRUMENTS, donc pas concerne
+- FTMO metaux: deja exclus depuis 2026-05-06
+- Pour les autres instruments avec faible risk_pct vs ATR/SL grand: peuvent maintenant skipper plutot que sur-risquer
+
+Le live va naturellement filter les setups qui couteraient trop pour le compte. Les BT eux n'ont pas cette logique (ils n'ont pas de volume_min concept) donc le BT prendra des trades que le live skippera. Divergence acceptable car ces trades sont structurellement inutiles (over-risque).
+
+### Files
+- live_mt5.py: mt5_lot_size return 0 si min_lot_risk > target, open_position check lots <= 0
+
 ## 2026-05-06 — FTMO: desactivation metaux (XAUUSD/XAGUSD) — swap trop eleves
 
 User: "on desactive tous les metaux partout. Ca coute trop cher"
