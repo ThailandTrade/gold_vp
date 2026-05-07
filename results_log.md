@@ -2,6 +2,44 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-04-30 — Pepperstone: find_winners 1h v3 (33 syms / 151 strats, +10 cryptos)
+
+User: "ok tu vas me faire un find winners sur le 1h pour tous les instruments pepperstone qui sont en base." puis "ok log moi tout ca, prepare les strats et je vais lancer un backtest"
+
+### Run
+find_winners pepperstone 1h sur 38 instruments en base (27 traditionnels + 11 cryptos). Filtres: n>=60, avg_R>=0.05, avg_R_trim>0, median_R>0, OS<30%, M+>=7/12, h1>0, h2>0.
+
+### Resultat
+- **151 strats WIN sur 33 instruments** (vs 148 / 23 instruments pour v2 du 2026-05-03)
+- 11 cryptos testees, 10 ont au moins 1 strat (DOGEUSD = 0)
+- 47 strats sur les 10 nouvelles cryptos
+- +3 net sur les 23 instruments existants (+11 / -8 par variations de seuil naturelles a 1 semaine d'ecart)
+- 13 instruments existants ont varie (mostly +/-1 strat). Confirme par user comme variation normale apres 1 semaine.
+
+### Cryptos qualifiees (1h)
+- BTCUSD: 3 strats | ETHUSD: 3 | LTCUSD: 1 | ADAUSD: 3 | AVAXUSD: 6
+- BCHUSD: 11 | BNBUSD: 2 | LINKUSD: 7 | SOLUSD: 6 | XRPUSD: 5
+- DOGEUSD: 0 (rejete par filtres)
+
+### Compile (temp/compile_pepperstone_v3_1h.py)
+- Update SEULEMENT la dimension '1h' dans config_pepperstone.py (preserve '15m' + '4h' du run 2026-05-03)
+- Ajoute les 10 nouveaux blocs sym cryptos
+- Reconstruit les 33 sections (pepperstone, sym, '1h') dans strat_exits.py
+- Validation: **346 entries OK / 0 missing**
+
+### Etat config_pepperstone.py
+- 34 syms (24 existants + 10 nouvelles cryptos)
+- 75 units (sym, tf): 87 strats 15m + 151 strats 1h + 108 strats 4h = **346 strats total**
+- LIVE_TIMEFRAMES = ['1h']
+
+### Files
+- config_pepperstone.py (regenere, 1h v3 + 15m/4h conserves)
+- strat_exits.py (33 sections (pepperstone, sym, '1h') reconstruites)
+- temp/find_winners_pepperstone_1h_v3.log
+- temp/compile_pepperstone_v3_1h.py
+
+User va lancer un BT lui-meme.
+
 ## 2026-05-07 — Live: skip trade si min_lot risk > risk target
 
 User: "Si le risque calcule par rapport au SL avec min lot de l'instrument est superieur au risque par rapport a l'equity, on skip le trade"
