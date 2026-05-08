@@ -146,9 +146,11 @@ for sym, tf, icfg in sym_tf_pairs:
     # Breakdown jour d'ouverture pour ce sym/tf
     DAY_NAMES = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
     unit_dow = {}
+    unit_dow_seq = {}
     for tup in trades:
-        ci = tup[0]; pnl_oz = tup[3]; sl_atr = tup[4]; atr = tup[5]
+        ci = tup[0]; xi = tup[1]; pnl_oz = tup[3]; sl_atr = tup[4]; atr = tup[5]
         ets = candles.iloc[ci]['ts_dt']
+        xts = candles.iloc[min(xi, len(candles)-1)]['ts_dt']
         po = pnl_oz - (COST_R * sl_atr * atr if COST_R > 0 else 0)
         pnl_r = po / (sl_atr * atr) if (sl_atr * atr) > 0 else 0
         d = ets.weekday()
@@ -156,16 +158,26 @@ for sym, tf, icfg in sym_tf_pairs:
         bd['n'] += 1
         if pnl_r > 0: bd['w'] += 1; bd['gp'] += pnl_r
         else: bd['gl'] += abs(pnl_r)
+        unit_dow_seq.setdefault(d, []).append((xts, pnl_r))
     if unit_dow:
+        for d, seq in unit_dow_seq.items():
+            seq.sort()
+            cum = 0; peak = 0; mdd = 0
+            for _, pr in seq:
+                cum += pr
+                if cum > peak: peak = cum
+                dd = cum - peak
+                if dd < mdd: mdd = dd
+            unit_dow[d]['ddr'] = mdd
         tot_n = sum(bd['n'] for bd in unit_dow.values())
-        print(f"\n  {'Jour':<5s} {'n':>5s} {'WR':>4s} {'PF':>5s} {'Share':>7s} {'NetR':>9s}")
+        print(f"\n  {'Jour':<5s} {'n':>5s} {'WR':>4s} {'PF':>5s} {'Share':>7s} {'NetR':>9s} {'DDR':>9s}")
         for d in sorted(unit_dow.keys()):
             bd = unit_dow[d]
             wr = bd['w'] / bd['n'] * 100
             pf = bd['gp'] / (bd['gl'] + 0.01)
             net = bd['gp'] - bd['gl']
             share = bd['n'] / tot_n * 100 if tot_n else 0
-            print(f"  {DAY_NAMES[d]:<5s} {bd['n']:>5d} {wr:>3.0f}% {pf:>4.2f} {share:>6.1f}% {net:>+7.1f}R")
+            print(f"  {DAY_NAMES[d]:<5s} {bd['n']:>5d} {wr:>3.0f}% {pf:>4.2f} {share:>6.1f}% {net:>+7.1f}R {bd['ddr']:>+7.1f}R")
 
     all_unit_trades.append({'sym': sym, 'tf': tf, 'accepted': trades, 'risk': risk})
 
@@ -300,6 +312,7 @@ if len(all_unit_trades) >= 1:
     print(f"\n  BREAKDOWN par jour d'ouverture (UTC) -- sizing flat ${CAPITAL:,.0f}:")
     DAY_NAMES = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
     by_dow = {}
+    by_dow_seq = {}
     for idx, t in enumerate(filtered):
         entry_ts, exit_ts, di, pnl_oz, sl_atr, atr, sn, risk, sym, tf = t
         po = pnl_oz - (COST_R * sl_atr * atr if COST_R > 0 else 0)
@@ -317,6 +330,17 @@ if len(all_unit_trades) >= 1:
         if pnl_r < bd['worst_r']: bd['worst_r'] = pnl_r
         if pnl_r > 0: bd['w'] += 1; bd['gp'] += pnl_r
         else: bd['gl'] += abs(pnl_r)
+        by_dow_seq.setdefault(dow, []).append((exit_ts, pnl_r))
+
+    for dow, seq in by_dow_seq.items():
+        seq.sort()
+        cum = 0; peak = 0; mdd = 0
+        for _, pr in seq:
+            cum += pr
+            if cum > peak: peak = cum
+            dd = cum - peak
+            if dd < mdd: mdd = dd
+        by_dow[dow]['ddr'] = mdd
 
     tot_n_dow = sum(bd['n'] for bd in by_dow.values())
     tot_pnl_d = sum(bd['pnl_d'] for bd in by_dow.values()) or 1
@@ -328,7 +352,7 @@ if len(all_unit_trades) >= 1:
 
     dow_tbl = PrettyTable()
     dow_tbl.field_names = ['Jour', 'n', 'Share', 'W', 'WR', 'PF',
-                           'AvgR', 'MedR', 'Best', 'Worst', 'NetR', 'PnL $', '$ %']
+                           'AvgR', 'MedR', 'Best', 'Worst', 'NetR', 'DDR', 'PnL $', '$ %']
     dow_tbl.align = 'r'
     dow_tbl.align['Jour'] = 'l'
     for dow in sorted(by_dow.keys()):
@@ -352,6 +376,7 @@ if len(all_unit_trades) >= 1:
             f"{bd['best_r']:+.1f}",
             f"{bd['worst_r']:+.1f}",
             f"{net:+.1f}",
+            f"{bd['ddr']:+.1f}",
             f"${bd['pnl_d']:+,.0f}",
             f"{share_d:+.1f}%",
         ])

@@ -2,6 +2,25 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-08 — bt_portfolio: breakdown DOW + DDR (drawdown en R)
+
+User: "ajoute juste un DD en R. Ca devrait etre plus facile non?"
+
+### Modifs
+- Ajout colonne `DDR` aux 2 niveaux du breakdown DOW (per-unit + agrege)
+- Calcul: trades du DOW tries chronologiquement par exit_ts, cum R running, max peak-to-trough en R
+- Donne le worst-case drawdown si on n'avait trade que ce jour-la, en unite R (pas de compound)
+
+### Test BTCUSD seul -r 1 -c 200
+- Lun: NetR +4.8R / DDR -8.9R (DD plus grand que le net gain -- jour risque)
+- Mar: NetR +15.3R / DDR -4.3R (rapport DD/Net favorable)
+- Dim: NetR +17.1R / DDR -8.4R (gros gain, gros DD)
+
+Ratio DDR/NetR utile pour spotter les jours dont l'edge est instable.
+
+### Files
+- bt_portfolio.py: unit_dow_seq + by_dow_seq, simulation cum R per DOW, ajout col DDR
+
 ## 2026-05-08 — bt_portfolio: breakdown DOW flat sizing (PnL $ comparable)
 
 User: "ce que je veux ce n'est pas savoir combien on a gagne chaque jour. Je veux savoir ce qu'on a gagne les jours ou les trades ont ete ouverts"
