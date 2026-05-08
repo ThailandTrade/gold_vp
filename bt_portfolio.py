@@ -158,7 +158,7 @@ for sym, tf, icfg in sym_tf_pairs:
         else: bd['gl'] += abs(pnl_r)
     if unit_dow:
         tot_n = sum(bd['n'] for bd in unit_dow.values())
-        print(f"\n  {'Jour':<5s} {'n':>5s} {'WR':>4s} {'PF':>5s} {'Rend':>7s} {'PnL':>9s}")
+        print(f"\n  {'Jour':<5s} {'n':>5s} {'WR':>4s} {'PF':>5s} {'Share':>7s} {'NetR':>9s}")
         for d in sorted(unit_dow.keys()):
             bd = unit_dow[d]
             wr = bd['w'] / bd['n'] * 100
