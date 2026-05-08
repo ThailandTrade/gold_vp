@@ -2,6 +2,28 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-08 — bt_portfolio: multi-symbol + breakdown day-of-week
+
+User: "j'aimerais ajouter un breakdown de stats dans le BT. Je veux pouvoir breakdown par jour de la semaine (open date). Aussi je veux pouvoir lancer avec une suite de symboles"
+
+### Modifs bt_portfolio.py
+1. `--symbol` accepte maintenant une liste separee par virgule:
+   `python bt_portfolio.py pepperstone --symbol AUDUSD,EURUSD,GBPUSD`
+   (compat avec single value preserve)
+2. Nouveau breakdown "par jour d'ouverture" affiche apres le breakdown (sym, tf):
+   - Colonnes: Jour, n, WR, PF, Rend (% des trades total), PnL R
+   - Base sur entry_ts.weekday() (UTC), 0=Lun ... 6=Dim
+   - Permet d'identifier des biais jour de la semaine (ex: Dim suspect sur 24/7 cryptos)
+
+### Test
+`python bt_portfolio.py pepperstone --symbol AUDUSD,EURUSD --tf 1h`:
+- 2690 trades agreges
+- Distribution: Lun 501 / Mar 531 / Mer 516 / Jeu 495 / Ven 495 / Dim 152
+- Lun-Ven ~60% WR / PF 1.2-1.6, Dim 54% WR / PF 1.08 (visiblement plus faible)
+
+### Files
+- bt_portfolio.py: --symbol parse en set, nouveau breakdown by_dow
+
 ## 2026-04-30 — Pepperstone: find_winners 1h v3 (33 syms / 151 strats, +10 cryptos)
 
 User: "ok tu vas me faire un find winners sur le 1h pour tous les instruments pepperstone qui sont en base." puis "ok log moi tout ca, prepare les strats et je vais lancer un backtest"

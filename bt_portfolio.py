@@ -6,6 +6,7 @@ Usage:
   python bt_portfolio.py ftmo                       -> tous instruments+TFs, mensuel
   python bt_portfolio.py ftmo --weekly              -> hebdo
   python bt_portfolio.py pepperstone --symbol AUS200  -> un seul instrument
+  python bt_portfolio.py pepperstone --symbol AUS200,GER40,US30  -> liste
   python bt_portfolio.py pepperstone --tf 1h        -> un seul TF (filtre)
   python bt_portfolio.py pepperstone -c 50000 -r 0.5  -> capital + risk custom
 """
@@ -21,7 +22,7 @@ parser = argparse.ArgumentParser(description='Backtest portfolio multi-TF')
 parser.add_argument('account', choices=['ftmo', '5ers', 'pepperstone'])
 parser.add_argument('-c', '--capital', type=float, default=None)
 parser.add_argument('-r', '--risk', type=float, default=None)
-parser.add_argument('--symbol', default=None, help='Filtre: un seul instrument')
+parser.add_argument('--symbol', default=None, help='Filtre: instrument(s), separes par virgule')
 parser.add_argument('--tf', default=None, help='Filtre: un seul TF (5m/15m/1h/4h)')
 parser.add_argument('--weekly', action='store_true', help='Affichage hebdomadaire')
 parser.add_argument('--spread', action='store_true', help='Spread legacy -0.1R/trade')
@@ -54,9 +55,12 @@ def crosses_weekend(entry_ts, exit_ts):
 # Resolution liste (sym, tf, icfg) a backtester
 # Si --tf specifie, ignore LIVE_TIMEFRAMES (cherche dans tous les TFs configures)
 only_live = (args.tf is None)
+sym_filter = None
+if args.symbol:
+    sym_filter = {s.strip().upper() for s in args.symbol.split(',') if s.strip()}
 sym_tf_pairs = []
 for sym, tf, icfg in iter_sym_tf(cfg, only_live=only_live):
-    if args.symbol and sym.upper() != args.symbol.upper():
+    if sym_filter and sym.upper() not in sym_filter:
         continue
     if args.tf and tf != args.tf:
         continue
@@ -267,6 +271,28 @@ if len(all_unit_trades) >= 1:
         pf = bu['gp'] / (bu['gl'] + 0.01)
         net = bu['gp'] - bu['gl']
         print(f"  {sym:<14s} {tf:>5s} {bu['n']:>6d} {wr:>3.0f}% {pf:>4.2f} {net:>+10.1f}R")
+
+    # Breakdown par jour de la semaine d'ouverture
+    print(f"\n  BREAKDOWN par jour d'ouverture (UTC):")
+    print(f"  {'Jour':<5s} {'n':>6s} {'WR':>4s} {'PF':>5s} {'Rend':>10s} {'PnL':>12s}")
+    DAY_NAMES = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
+    by_dow = {}
+    for entry_ts, exit_ts, di, pnl_oz, sl_atr, atr, sn, risk, sym, tf in filtered:
+        po = pnl_oz - (COST_R * sl_atr * atr if COST_R > 0 else 0)
+        pnl_r = po / (sl_atr * atr) if (sl_atr * atr) > 0 else 0
+        dow = entry_ts.weekday()
+        bd = by_dow.setdefault(dow, {'n': 0, 'w': 0, 'gp': 0, 'gl': 0})
+        bd['n'] += 1
+        if pnl_r > 0: bd['w'] += 1; bd['gp'] += pnl_r
+        else: bd['gl'] += abs(pnl_r)
+    tot_n_dow = sum(bd['n'] for bd in by_dow.values())
+    for dow in sorted(by_dow.keys()):
+        bd = by_dow[dow]
+        wr = bd['w'] / bd['n'] * 100
+        pf = bd['gp'] / (bd['gl'] + 0.01)
+        net = bd['gp'] - bd['gl']
+        share = bd['n'] / tot_n_dow * 100 if tot_n_dow else 0
+        print(f"  {DAY_NAMES[dow]:<5s} {bd['n']:>6d} {wr:>3.0f}% {pf:>4.2f} {share:>8.1f}% {net:>+10.1f}R")
 
 conn.close()
 print(f"\n{'='*W}")
