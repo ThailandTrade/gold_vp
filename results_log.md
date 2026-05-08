@@ -2,18 +2,20 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
-## 2026-05-08 — bt_portfolio: multi-symbol + breakdown day-of-week
+## 2026-05-08 — bt_portfolio: multi-symbol + breakdown day-of-week (unit + agrege)
 
-User: "j'aimerais ajouter un breakdown de stats dans le BT. Je veux pouvoir breakdown par jour de la semaine (open date). Aussi je veux pouvoir lancer avec une suite de symboles"
+User: "j'aimerais ajouter un breakdown de stats dans le BT. Je veux pouvoir breakdown par jour de la semaine (open date). Aussi je veux pouvoir lancer avec une suite de symboles" puis "dans le bt je veux le breakdown jour aussi au niveau du symbole"
 
 ### Modifs bt_portfolio.py
 1. `--symbol` accepte maintenant une liste separee par virgule:
    `python bt_portfolio.py pepperstone --symbol AUDUSD,EURUSD,GBPUSD`
    (compat avec single value preserve)
-2. Nouveau breakdown "par jour d'ouverture" affiche apres le breakdown (sym, tf):
-   - Colonnes: Jour, n, WR, PF, Rend (% des trades total), PnL R
+2. Breakdown "par jour d'ouverture" affiche a 2 niveaux:
+   - Au niveau de chaque (sym, tf) apres le breakdown mensuel
+   - A l'agregation finale apres le breakdown (sym, tf)
+   - Colonnes: Jour, n, WR, PF, Rend (% des trades), PnL R
    - Base sur entry_ts.weekday() (UTC), 0=Lun ... 6=Dim
-   - Permet d'identifier des biais jour de la semaine (ex: Dim suspect sur 24/7 cryptos)
+   - Permet d'identifier des biais jour de la semaine par instrument (ex: BTCUSD Dim 19.6% des trades vs Sam 5.8%)
 
 ### Test
 `python bt_portfolio.py pepperstone --symbol AUDUSD,EURUSD --tf 1h`:

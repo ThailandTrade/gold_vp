@@ -143,6 +143,30 @@ for sym, tf, icfg in sym_tf_pairs:
         v = r['months'][mo]
         print(f"  {mo:>8s} ${v:>+9,.0f}")
 
+    # Breakdown jour d'ouverture pour ce sym/tf
+    DAY_NAMES = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
+    unit_dow = {}
+    for tup in trades:
+        ci = tup[0]; pnl_oz = tup[3]; sl_atr = tup[4]; atr = tup[5]
+        ets = candles.iloc[ci]['ts_dt']
+        po = pnl_oz - (COST_R * sl_atr * atr if COST_R > 0 else 0)
+        pnl_r = po / (sl_atr * atr) if (sl_atr * atr) > 0 else 0
+        d = ets.weekday()
+        bd = unit_dow.setdefault(d, {'n': 0, 'w': 0, 'gp': 0, 'gl': 0})
+        bd['n'] += 1
+        if pnl_r > 0: bd['w'] += 1; bd['gp'] += pnl_r
+        else: bd['gl'] += abs(pnl_r)
+    if unit_dow:
+        tot_n = sum(bd['n'] for bd in unit_dow.values())
+        print(f"\n  {'Jour':<5s} {'n':>5s} {'WR':>4s} {'PF':>5s} {'Rend':>7s} {'PnL':>9s}")
+        for d in sorted(unit_dow.keys()):
+            bd = unit_dow[d]
+            wr = bd['w'] / bd['n'] * 100
+            pf = bd['gp'] / (bd['gl'] + 0.01)
+            net = bd['gp'] - bd['gl']
+            share = bd['n'] / tot_n * 100 if tot_n else 0
+            print(f"  {DAY_NAMES[d]:<5s} {bd['n']:>5d} {wr:>3.0f}% {pf:>4.2f} {share:>6.1f}% {net:>+7.1f}R")
+
     all_unit_trades.append({'sym': sym, 'tf': tf, 'accepted': trades, 'risk': risk})
 
 # AGREGE multi-(sym, tf)
