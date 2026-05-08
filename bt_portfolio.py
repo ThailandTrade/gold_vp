@@ -253,9 +253,54 @@ if len(all_unit_trades) >= 1:
     sorted_periods = sorted(period_stats.keys())
     label = 'Semaine' if args.weekly else 'Mois'
 
+    # Max risk simultane par periode (sweep-line entry/exit)
+    from datetime import datetime as _dt
+    risk_events = []
+    for et, xt, di, po, sa, a, sn, r, sym, tf in filtered:
+        risk_events.append((et, +r))
+        risk_events.append((xt, -r))
+    risk_events.sort()
+
+    def _period_of(ts):
+        if args.weekly:
+            return (ts - timedelta(days=ts.weekday())).strftime('%Y-%m-%d')
+        return ts.strftime('%Y-%m')
+
+    def _next_period(p):
+        if args.weekly:
+            d = _dt.strptime(p, '%Y-%m-%d').date()
+            return (d + timedelta(days=7)).strftime('%Y-%m-%d')
+        y, m = int(p[:4]), int(p[5:7])
+        m += 1
+        if m > 12: y += 1; m = 1
+        return f"{y:04d}-{m:02d}"
+
+    period_max_risk = {}
+    cur_risk = 0.0
+    last_period = None
+    last_risk = 0.0
+    for ts, dr in risk_events:
+        p = _period_of(ts)
+        if p != last_period:
+            if last_period is not None:
+                # Propage le risk plateau aux periodes intermediaires (sans event)
+                pp = _next_period(last_period)
+                while pp < p:
+                    if last_risk > period_max_risk.get(pp, 0):
+                        period_max_risk[pp] = last_risk
+                    pp = _next_period(pp)
+            # Initialise p avec risque herite du pre-period
+            if cur_risk > period_max_risk.get(p, 0):
+                period_max_risk[p] = cur_risk
+            last_period = p
+        cur_risk += dr
+        if cur_risk > period_max_risk.get(p, 0):
+            period_max_risk[p] = cur_risk
+        last_risk = cur_risk
+
     from prettytable import PrettyTable
     tbl = PrettyTable()
-    tbl.field_names = [label, 'Trades', 'Wins', 'WR', 'PF', 'PnL', 'Rend P', 'Capital', 'Rend', 'DD', 'MaxDD']
+    tbl.field_names = [label, 'Trades', 'Wins', 'WR', 'PF', 'PnL', 'Rend P', 'Capital', 'Rend', 'DD', 'MaxDD', 'MaxRisk']
     tbl.align = 'r'
     tbl.align[label] = 'l'
     prev_cap = CAPITAL
@@ -267,10 +312,12 @@ if len(all_unit_trades) >= 1:
         rend_period = (ps['cap'] - prev_cap) / prev_cap * 100 if prev_cap > 0 else 0
         prev_cap = ps['cap']
         p_dd = dd_per_period.get(p, 0)
+        mr = period_max_risk.get(p, 0) * 100  # en %
         tbl.add_row([p, f"{ps['n']:,d}", ps['w'], f"{wr:.0f}%", f"{pf:.2f}",
                      f"${ps['pnl']:+,.0f}", f"{rend_period:+.2f}%",
                      f"${ps['cap']:,.0f}", f"{rend:+.1f}%",
-                     f"{p_dd:+.2f}%", f"{ps['max_dd']:+.2f}%"])
+                     f"{p_dd:+.2f}%", f"{ps['max_dd']:+.2f}%",
+                     f"{mr:.2f}%"])
     print()
     print(tbl)
 

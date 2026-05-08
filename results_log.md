@@ -2,6 +2,23 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-08 — bt_portfolio: colonne MaxRisk a la table hebdo/mensuelle
+
+User: "j'aimerais voir un indicateur qui donne le risque max engage en meme temps par weekly ou monthly"
+
+### Modifs
+- Ajout colonne `MaxRisk` (en %) dans la PrettyTable hebdo/mensuelle agregee.
+- Calcul: sweep-line sur events (entry = +risk_pct, exit = -risk_pct), tri chronologique.
+- Pour chaque periode: max du `cur_risk` (somme des risques des trades ouverts simultanement).
+- Gere les plateaux qui traversent une periode sans event local (propagation du risk herite).
+
+### Exemple lecture
+- 5 trades ouverts simultanement a 1% chacun -> MaxRisk = 5.00%
+- Permet de calibrer le risk_pct unitaire vs le risque concentre simultane reel.
+
+### Files
+- bt_portfolio.py: events_risk loop + period_max_risk dict, helper _next_period pour iteration intermediaire.
+
 ## 2026-05-08 — bt_portfolio: ligne Total au breakdown DOW
 
 User: "ajoute un total a la fin des breakdown"
