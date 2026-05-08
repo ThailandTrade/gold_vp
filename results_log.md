@@ -2,6 +2,26 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-08 — bt_portfolio: breakdown day-of-week agrege en PrettyTable (13 cols)
+
+User: "c'est tres faible comme stats pour l'aggrege. On ne peut pas avoir mieux ? Et en prettytable ?"
+
+### Modifs bt_portfolio.py
+- L'evt loop trace maintenant `pnl_dollars[idx]` pour chaque trade (pnl $ reel avec cap evolutif).
+- Le breakdown agrege par jour utilise PrettyTable avec 13 colonnes:
+  - Jour, n, Share % (trades), W (wins), WR, PF
+  - AvgR (moyenne R), MedR (mediane R), Best (max R), Worst (min R), NetR
+  - **PnL $** (somme des pnl dollars reels)
+  - **$ %** (part du gain $ total -- different de Share % qui est par count)
+- Permet de voir si un jour avec peu de trades porte une part disproportionnee du gain (ou perte).
+
+### Test AUDUSD+EURUSD 1h
+- Ven: 18.4% trades / **31.1% du PnL $** (jour le plus profitable disproportionnellement)
+- Dim: 5.7% trades / **-0.7% PnL $** (perdant en valeur reelle malgre WR 54% PF 1.08)
+- Jeu: 18.4% trades / 6.4% du PnL $ (sous-performant en $)
+
+Note: AvgR < MedR partout = distribution avec quelques gros perdants sur 2-3R queue gauche.
+
 ## 2026-05-08 — bt_portfolio: multi-symbol + breakdown day-of-week (unit + agrege)
 
 User: "j'aimerais ajouter un breakdown de stats dans le BT. Je veux pouvoir breakdown par jour de la semaine (open date). Aussi je veux pouvoir lancer avec une suite de symboles" puis "dans le bt je veux le breakdown jour aussi au niveau du symbole"

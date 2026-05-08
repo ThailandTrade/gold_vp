@@ -195,6 +195,7 @@ if len(all_unit_trades) >= 1:
 
     cap = CAPITAL; peak = cap; max_dd = 0
     entry_caps = {}; period_stats = {}; dd_per_period = {}
+    pnl_dollars = {}  # idx -> $ pnl
 
     for ts, evt, idx in events:
         if evt == 0:
@@ -204,6 +205,7 @@ if len(all_unit_trades) >= 1:
             if COST_R > 0:
                 pnl_oz -= COST_R * sl_atr * atr
             pnl = pnl_oz * (entry_caps[idx] * risk) / (sl_atr * atr)
+            pnl_dollars[idx] = pnl
             cap += pnl
             if cap > peak: peak = cap
             dd = (cap - peak) / peak * 100
@@ -298,25 +300,64 @@ if len(all_unit_trades) >= 1:
 
     # Breakdown par jour de la semaine d'ouverture
     print(f"\n  BREAKDOWN par jour d'ouverture (UTC):")
-    print(f"  {'Jour':<5s} {'n':>6s} {'WR':>4s} {'PF':>5s} {'Rend':>10s} {'PnL':>12s}")
     DAY_NAMES = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
     by_dow = {}
-    for entry_ts, exit_ts, di, pnl_oz, sl_atr, atr, sn, risk, sym, tf in filtered:
+    for idx, t in enumerate(filtered):
+        entry_ts, exit_ts, di, pnl_oz, sl_atr, atr, sn, risk, sym, tf = t
         po = pnl_oz - (COST_R * sl_atr * atr if COST_R > 0 else 0)
         pnl_r = po / (sl_atr * atr) if (sl_atr * atr) > 0 else 0
+        pnl_d = pnl_dollars.get(idx, 0)
         dow = entry_ts.weekday()
-        bd = by_dow.setdefault(dow, {'n': 0, 'w': 0, 'gp': 0, 'gl': 0})
+        bd = by_dow.setdefault(dow, {
+            'n': 0, 'w': 0, 'gp': 0, 'gl': 0, 'rs': [], 'pnl_d': 0,
+            'best_r': float('-inf'), 'worst_r': float('inf'),
+        })
         bd['n'] += 1
+        bd['rs'].append(pnl_r)
+        bd['pnl_d'] += pnl_d
+        if pnl_r > bd['best_r']: bd['best_r'] = pnl_r
+        if pnl_r < bd['worst_r']: bd['worst_r'] = pnl_r
         if pnl_r > 0: bd['w'] += 1; bd['gp'] += pnl_r
         else: bd['gl'] += abs(pnl_r)
+
     tot_n_dow = sum(bd['n'] for bd in by_dow.values())
+    tot_pnl_d = sum(bd['pnl_d'] for bd in by_dow.values()) or 1
+
+    def _median(xs):
+        s = sorted(xs); n = len(s)
+        if n == 0: return 0
+        return s[n//2] if n % 2 else 0.5 * (s[n//2 - 1] + s[n//2])
+
+    dow_tbl = PrettyTable()
+    dow_tbl.field_names = ['Jour', 'n', 'Share', 'W', 'WR', 'PF',
+                           'AvgR', 'MedR', 'Best', 'Worst', 'NetR', 'PnL $', '$ %']
+    dow_tbl.align = 'r'
+    dow_tbl.align['Jour'] = 'l'
     for dow in sorted(by_dow.keys()):
         bd = by_dow[dow]
         wr = bd['w'] / bd['n'] * 100
         pf = bd['gp'] / (bd['gl'] + 0.01)
         net = bd['gp'] - bd['gl']
         share = bd['n'] / tot_n_dow * 100 if tot_n_dow else 0
-        print(f"  {DAY_NAMES[dow]:<5s} {bd['n']:>6d} {wr:>3.0f}% {pf:>4.2f} {share:>8.1f}% {net:>+10.1f}R")
+        avg_r = sum(bd['rs']) / bd['n']
+        med_r = _median(bd['rs'])
+        share_d = bd['pnl_d'] / tot_pnl_d * 100
+        dow_tbl.add_row([
+            DAY_NAMES[dow],
+            f"{bd['n']:,d}",
+            f"{share:.1f}%",
+            bd['w'],
+            f"{wr:.0f}%",
+            f"{pf:.2f}",
+            f"{avg_r:+.2f}",
+            f"{med_r:+.2f}",
+            f"{bd['best_r']:+.1f}",
+            f"{bd['worst_r']:+.1f}",
+            f"{net:+.1f}",
+            f"${bd['pnl_d']:+,.0f}",
+            f"{share_d:+.1f}%",
+        ])
+    print(dow_tbl)
 
 conn.close()
 print(f"\n{'='*W}")
