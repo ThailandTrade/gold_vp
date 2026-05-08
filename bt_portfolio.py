@@ -195,7 +195,6 @@ if len(all_unit_trades) >= 1:
 
     cap = CAPITAL; peak = cap; max_dd = 0
     entry_caps = {}; period_stats = {}; dd_per_period = {}
-    pnl_dollars = {}  # idx -> $ pnl
 
     for ts, evt, idx in events:
         if evt == 0:
@@ -205,7 +204,6 @@ if len(all_unit_trades) >= 1:
             if COST_R > 0:
                 pnl_oz -= COST_R * sl_atr * atr
             pnl = pnl_oz * (entry_caps[idx] * risk) / (sl_atr * atr)
-            pnl_dollars[idx] = pnl
             cap += pnl
             if cap > peak: peak = cap
             dd = (cap - peak) / peak * 100
@@ -298,15 +296,15 @@ if len(all_unit_trades) >= 1:
         net = bu['gp'] - bu['gl']
         print(f"  {sym:<14s} {tf:>5s} {bu['n']:>6d} {wr:>3.0f}% {pf:>4.2f} {net:>+10.1f}R")
 
-    # Breakdown par jour de la semaine d'ouverture
-    print(f"\n  BREAKDOWN par jour d'ouverture (UTC):")
+    # Breakdown par jour de la semaine d'ouverture (flat sizing -- edge pur)
+    print(f"\n  BREAKDOWN par jour d'ouverture (UTC) -- sizing flat ${CAPITAL:,.0f}:")
     DAY_NAMES = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
     by_dow = {}
     for idx, t in enumerate(filtered):
         entry_ts, exit_ts, di, pnl_oz, sl_atr, atr, sn, risk, sym, tf = t
         po = pnl_oz - (COST_R * sl_atr * atr if COST_R > 0 else 0)
         pnl_r = po / (sl_atr * atr) if (sl_atr * atr) > 0 else 0
-        pnl_d = pnl_dollars.get(idx, 0)
+        pnl_d_flat = pnl_r * CAPITAL * risk
         dow = entry_ts.weekday()
         bd = by_dow.setdefault(dow, {
             'n': 0, 'w': 0, 'gp': 0, 'gl': 0, 'rs': [], 'pnl_d': 0,
@@ -314,7 +312,7 @@ if len(all_unit_trades) >= 1:
         })
         bd['n'] += 1
         bd['rs'].append(pnl_r)
-        bd['pnl_d'] += pnl_d
+        bd['pnl_d'] += pnl_d_flat
         if pnl_r > bd['best_r']: bd['best_r'] = pnl_r
         if pnl_r < bd['worst_r']: bd['worst_r'] = pnl_r
         if pnl_r > 0: bd['w'] += 1; bd['gp'] += pnl_r

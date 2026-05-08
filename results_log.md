@@ -2,6 +2,29 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-08 — bt_portfolio: breakdown DOW flat sizing (PnL $ comparable)
+
+User: "ce que je veux ce n'est pas savoir combien on a gagne chaque jour. Je veux savoir ce qu'on a gagne les jours ou les trades ont ete ouverts"
+
+### Probleme identifie
+Le PnL $ avec sizing compound (cap evolutif) etait incomparable entre jours:
+- Cryptos test: Mer NetR +39.2 / PnL $+83,687 ; Ven NetR +142.7 / PnL $+1,876
+- Decalage 150x non du a une distribution calendaire (avgCap uniforme $41-46k tous jours)
+- Cause: ordering interne wins/losses dans la sequence d'evenements -- sur Ven, wins arrivent quand cap est bas et losses quand cap est haut, asymetrie qui distord le $.
+
+### Fix
+- `PnL $` calcule en flat sizing: `NetR × CAPITAL × risk` (cap fixe au capital initial).
+- Donne l'edge dollar pur par jour d'ouverture, comparable et proportionnel a NetR.
+- La realite compound reste visible dans le tableau mensuel/hebdo agrege au-dessus.
+
+### Test 10 cryptos -r 1 -c 200 --cost-r 0.05
+- Mer = trou (PF 1.06, AvgR +0.03 vs MedR +0.55, 4.6% du gain)
+- Lun/Ven/Dim au top (~17-19% du gain)
+- Sam moins de trades (12.5% n) mais PF 1.25
+
+### Files
+- bt_portfolio.py: pnl_dollars retire de l'event loop, breakdown DOW utilise pnl_d_flat = pnl_r × CAPITAL × risk
+
 ## 2026-05-08 — bt_portfolio: breakdown day-of-week agrege en PrettyTable (13 cols)
 
 User: "c'est tres faible comme stats pour l'aggrege. On ne peut pas avoir mieux ? Et en prettytable ?"
