@@ -169,7 +169,19 @@ for sym, tf, icfg in sym_tf_pairs:
                 dd = cum - peak
                 if dd < mdd: mdd = dd
             unit_dow[d]['ddr'] = mdd
+        # Total DDR sur toute la sequence chronologique
+        all_seq = sorted([(xt, pr) for s in unit_dow_seq.values() for xt, pr in s])
+        cum = 0; peak = 0; tot_mdd = 0
+        for _, pr in all_seq:
+            cum += pr
+            if cum > peak: peak = cum
+            dd = cum - peak
+            if dd < tot_mdd: tot_mdd = dd
         tot_n = sum(bd['n'] for bd in unit_dow.values())
+        tot_w = sum(bd['w'] for bd in unit_dow.values())
+        tot_gp = sum(bd['gp'] for bd in unit_dow.values())
+        tot_gl = sum(bd['gl'] for bd in unit_dow.values())
+        tot_net = tot_gp - tot_gl
         print(f"\n  {'Jour':<5s} {'n':>5s} {'WR':>4s} {'PF':>5s} {'Share':>7s} {'NetR':>9s} {'DDR':>9s}")
         for d in sorted(unit_dow.keys()):
             bd = unit_dow[d]
@@ -178,6 +190,9 @@ for sym, tf, icfg in sym_tf_pairs:
             net = bd['gp'] - bd['gl']
             share = bd['n'] / tot_n * 100 if tot_n else 0
             print(f"  {DAY_NAMES[d]:<5s} {bd['n']:>5d} {wr:>3.0f}% {pf:>4.2f} {share:>6.1f}% {net:>+7.1f}R {bd['ddr']:>+7.1f}R")
+        tot_wr = tot_w / tot_n * 100 if tot_n else 0
+        tot_pf = tot_gp / (tot_gl + 0.01)
+        print(f"  {'Total':<5s} {tot_n:>5d} {tot_wr:>3.0f}% {tot_pf:>4.2f} {100.0:>6.1f}% {tot_net:>+7.1f}R {tot_mdd:>+7.1f}R")
 
     all_unit_trades.append({'sym': sym, 'tf': tf, 'accepted': trades, 'risk': risk})
 
@@ -342,6 +357,15 @@ if len(all_unit_trades) >= 1:
             if dd < mdd: mdd = dd
         by_dow[dow]['ddr'] = mdd
 
+    # Total DDR sur toute la sequence chronologique multi-DOW
+    all_seq_agg = sorted([(xt, pr) for s in by_dow_seq.values() for xt, pr in s])
+    cum = 0; peak = 0; tot_mdd_agg = 0
+    for _, pr in all_seq_agg:
+        cum += pr
+        if cum > peak: peak = cum
+        dd = cum - peak
+        if dd < tot_mdd_agg: tot_mdd_agg = dd
+
     tot_n_dow = sum(bd['n'] for bd in by_dow.values())
     tot_pnl_d = sum(bd['pnl_d'] for bd in by_dow.values()) or 1
 
@@ -380,6 +404,31 @@ if len(all_unit_trades) >= 1:
             f"${bd['pnl_d']:+,.0f}",
             f"{share_d:+.1f}%",
         ])
+    # Total
+    all_rs = [r for bd in by_dow.values() for r in bd['rs']]
+    tot_n = sum(bd['n'] for bd in by_dow.values())
+    tot_w = sum(bd['w'] for bd in by_dow.values())
+    tot_gp = sum(bd['gp'] for bd in by_dow.values())
+    tot_gl = sum(bd['gl'] for bd in by_dow.values())
+    tot_pnl = sum(bd['pnl_d'] for bd in by_dow.values())
+    tot_best = max((bd['best_r'] for bd in by_dow.values()), default=0)
+    tot_worst = min((bd['worst_r'] for bd in by_dow.values()), default=0)
+    dow_tbl.add_row([
+        'Total',
+        f"{tot_n:,d}",
+        '100.0%',
+        tot_w,
+        f"{(tot_w/tot_n*100 if tot_n else 0):.0f}%",
+        f"{tot_gp/(tot_gl+0.01):.2f}",
+        f"{(sum(all_rs)/len(all_rs) if all_rs else 0):+.2f}",
+        f"{_median(all_rs):+.2f}",
+        f"{tot_best:+.1f}",
+        f"{tot_worst:+.1f}",
+        f"{tot_gp-tot_gl:+.1f}",
+        f"{tot_mdd_agg:+.1f}",
+        f"${tot_pnl:+,.0f}",
+        '100.0%',
+    ])
     print(dow_tbl)
 
 conn.close()
