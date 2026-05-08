@@ -2,6 +2,25 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-08 — bt_portfolio: ligne Total au breakdown DOW
+
+User: "ajoute un total a la fin des breakdown"
+
+### Modifs
+- Ajout ligne `Total` aux 2 breakdown DOW (per-unit + agrege).
+- n/W: somme. WR/PF: globaux (recalcules sur totaux). AvgR/MedR/Best/Worst: agreges sur tous les rs.
+- NetR: somme.
+- **DDR Total**: max DD sur la sequence chronologique FULL multi-DOW (pas la somme des DDR per-day).
+- Donc Total DDR >= worst single-day DDR car les pertes inter-jours s'accumulent.
+
+### Test BTCUSD
+- DDR per-DOW max: -8.9R (Lun)
+- DDR Total: -17.7R (sequence chrono full)
+- L'effet de chaining inter-jours double quasi le DD.
+
+### Files
+- bt_portfolio.py: simulation cum R sur all_seq sorted, ligne Total ajoutee.
+
 ## 2026-05-08 — bt_portfolio: breakdown DOW + DDR (drawdown en R)
 
 User: "ajoute juste un DD en R. Ca devrait etre plus facile non?"
