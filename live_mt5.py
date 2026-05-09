@@ -148,12 +148,17 @@ def mt5_send_order(symbol, strat, direction, sl, tp, lots, tf='15m'):
     price = sym.ask if direction == 'long' else sym.bid
     magic = _magic(symbol, strat, tf)
     comment = f"{strat}|{tf}"[:31]  # MT5 comment limited to 31 chars
+    fmode = sym.filling_mode
+    if fmode & 1:    type_filling = mt5.ORDER_FILLING_FOK
+    elif fmode & 2:  type_filling = mt5.ORDER_FILLING_IOC
+    else:            type_filling = mt5.ORDER_FILLING_RETURN
     request = {
         'action': mt5.TRADE_ACTION_DEAL, 'symbol': symbol, 'volume': lots,
         'type': order_type, 'price': price,
         'sl': round(sl, sym.digits), 'tp': round(tp, sym.digits) if tp else 0.0,
         'deviation': 20, 'magic': magic, 'comment': comment,
         'type_time': mt5.ORDER_TIME_GTC,
+        'type_filling': type_filling,
     }
     log.info(">>> {} {} [{}] {} {} {:.2f}lots @ {:.2f} SL={:.2f} TP={:.2f} <<<".format(
         'BUY' if direction == 'long' else 'SELL', symbol, tf, strat, direction.upper(),
@@ -188,11 +193,16 @@ def mt5_close_position(ticket, symbol):
     p = positions[0]
     order_type = mt5.ORDER_TYPE_SELL if p.type == mt5.POSITION_TYPE_BUY else mt5.ORDER_TYPE_BUY
     price = sym.bid if p.type == mt5.POSITION_TYPE_BUY else sym.ask
+    fmode = sym.filling_mode
+    if fmode & 1:    type_filling = mt5.ORDER_FILLING_FOK
+    elif fmode & 2:  type_filling = mt5.ORDER_FILLING_IOC
+    else:            type_filling = mt5.ORDER_FILLING_RETURN
     req = {
         'action': mt5.TRADE_ACTION_DEAL, 'symbol': symbol, 'volume': p.volume,
         'type': order_type, 'price': price, 'position': ticket,
         'deviation': 20, 'magic': p.magic, 'comment': 'TRAIL_VIOLATED',
         'type_time': mt5.ORDER_TIME_GTC,
+        'type_filling': type_filling,
     }
     r = mt5.order_send(req)
     if r and r.retcode == mt5.TRADE_RETCODE_DONE: return True

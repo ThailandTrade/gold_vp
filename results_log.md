@@ -2,6 +2,27 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-09 — live_mt5: type_filling auto-detecte (fix Pepperstone cryptos)
+
+User: "ECHEC: 10030 Unsupported filling mode" sur BCHUSD a l'open.
+
+### Cause
+Le code n'envoyait pas `type_filling` dans le request -- MT5 default = FOK que Pepperstone ne supporte pas pour les cryptos (qui demandent IOC).
+
+### Fix
+Detection automatique du mode supporte via `sym.filling_mode` (bitmask) dans `mt5_send_order` et `mt5_close_position`:
+```python
+fmode = sym.filling_mode
+if fmode & 1:    type_filling = mt5.ORDER_FILLING_FOK
+elif fmode & 2:  type_filling = mt5.ORDER_FILLING_IOC
+else:            type_filling = mt5.ORDER_FILLING_RETURN
+```
+
+Marche pour tous les sym (cryptos IOC, FX/indices FOK), aucun config par sym.
+
+### Files
+- live_mt5.py: type_filling auto dans mt5_send_order + mt5_close_position
+
 ## 2026-05-09 — strats.py: ajout 6 cryptos manquantes dans SYMBOL_ID
 
 User: live_mt5.py pepperstone crash sur VPS avec `KeyError: 'LTCUSD'` dans make_magic.
