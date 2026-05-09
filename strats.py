@@ -86,6 +86,8 @@ SYMBOL_ID = {
     # Pepperstone (2026-04-29)
     'US400': 45, 'CN50': 46, 'CHINAH': 47, 'HSTECH': 48, 'TWN': 49,
     'GER40': 50, 'EUSTX50': 51, 'SCI25': 52, 'FRA40': 53, 'SPA35': 54,
+    # Cryptos Pepperstone (2026-05-09 -- find_winners 1h v3)
+    'LTCUSD': 55, 'ADAUSD': 56, 'AVAXUSD': 57, 'BCHUSD': 58, 'LINKUSD': 59, 'XRPUSD': 60,
 }
 # (HK50.cash already in SYMBOL_ID at 15, US2000.cash at 16)
 

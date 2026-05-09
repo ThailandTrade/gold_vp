@@ -2,6 +2,27 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-09 — strats.py: ajout 6 cryptos manquantes dans SYMBOL_ID
+
+User: live_mt5.py pepperstone crash sur VPS avec `KeyError: 'LTCUSD'` dans make_magic.
+
+### Cause
+6 cryptos ajoutees dans config_pepperstone.py via find_winners 1h v3 mais pas enregistrees dans SYMBOL_ID de strats.py:
+- LTCUSD, ADAUSD, AVAXUSD, BCHUSD, LINKUSD, XRPUSD
+- BTCUSD, ETHUSD, SOLUSD, BNBUSD etaient deja la (commits anterieurs)
+
+### Fix
+Ajout aux IDs 55-60 (a la fin, sans toucher les IDs existants pour preserver les magics actuels):
+```python
+'LTCUSD': 55, 'ADAUSD': 56, 'AVAXUSD': 57, 'BCHUSD': 58, 'LINKUSD': 59, 'XRPUSD': 60
+```
+
+### Validation
+346 combos (sym, tf, strat) du config pepperstone testes via round-trip make_magic -> decode_magic = 0 erreurs. Max magic = 331,113 (largement sous 2^31).
+
+### Files
+- strats.py: SYMBOL_ID etendu de 6 entries
+
 ## 2026-05-08 — bt_portfolio: colonne MaxRisk a la table hebdo/mensuelle
 
 User: "j'aimerais voir un indicateur qui donne le risque max engage en meme temps par weekly ou monthly"
