@@ -160,7 +160,11 @@ ALL_INSTRUMENTS = {
 
 LIVE_TIMEFRAMES = ['1h']
 
-LIVE_INSTRUMENTS = list(ALL_INSTRUMENTS.keys())
+# Cryptos desactivees 2026-05-09: spreads Pepperstone Standard trop larges
+# (altcoins 0.20-1.43% du prix = 0.18-0.95R cost a l'entree, vs 0.005-0.04% sur FX/indices).
+# Edge BT (cost-r 0.05) sous-estime massivement le cout reel sur cryptos.
+EXCLUDE_CRYPTOS = ('BTCUSD', 'ETHUSD', 'LTCUSD', 'ADAUSD', 'AVAXUSD', 'BCHUSD', 'BNBUSD', 'LINKUSD', 'SOLUSD', 'XRPUSD')
+LIVE_INSTRUMENTS = [k for k in ALL_INSTRUMENTS.keys() if k not in EXCLUDE_CRYPTOS]
 INSTRUMENTS = {k: v for k, v in ALL_INSTRUMENTS.items() if k in LIVE_INSTRUMENTS}
 
 RISK_PCT = 0.005

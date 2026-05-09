@@ -2,6 +2,42 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-09 — Pepperstone: desactivation totale des cryptos (spreads Standard rhdibitoires)
+
+User: "on vire toutes les cryptos des symboles a trader"
+
+### Diagnostic spreads Pepperstone (snapshot Sam 2026-05-09)
+Cryptos altcoins (Standard markup):
+- ADAUSD: 1.43% spread / 0.95R cost a l'entree (~1.9R round-trip pour edge BT +0.10R)
+- LTCUSD: 0.52% / 0.49R
+- AVAXUSD: 0.51% / 0.31R
+- SOLUSD: 0.43% / 0.30R
+- XRPUSD: 0.35% / 0.27R
+- LINKUSD: 0.32% / 0.24R
+- BNBUSD: 0.20% / 0.20R
+- BCHUSD: 0.21% / 0.18R
+- ETHUSD: 0.09% / 0.05R (acceptable)
+- BTCUSD: 0.02% / 0.02R (excellent)
+
+Vs FX/indices: 0.005-0.14% / 0.01-0.14R cost (tous OK).
+
+Recherche web: Pepperstone confirme officiellement spreads larges sur cryptos Standard, structurel (pas seulement WE). Modèle Razor (raw + commission) eventuel pour ameliorer.
+
+### Modif
+config_pepperstone.py:
+```python
+EXCLUDE_CRYPTOS = ('BTCUSD', 'ETHUSD', 'LTCUSD', 'ADAUSD', 'AVAXUSD', 'BCHUSD', 'BNBUSD', 'LINKUSD', 'SOLUSD', 'XRPUSD')
+LIVE_INSTRUMENTS = [k for k in ALL_INSTRUMENTS.keys() if k not in EXCLUDE_CRYPTOS]
+```
+
+### Etat apres
+- 24 syms actifs (FX 6 + indices 18) sur 34 dans ALL_INSTRUMENTS
+- 104 strats live (1h only) sur 151 dans config (47 strats cryptos retirees du live, preservees dans ALL_INSTRUMENTS)
+- BT initial cost-r 0.05 reflete bien les spreads FX/indices observes
+
+### Files
+- config_pepperstone.py: EXCLUDE_CRYPTOS + LIVE_INSTRUMENTS filtre
+
 ## 2026-05-09 — live_mt5: type_filling auto-detecte (fix Pepperstone cryptos)
 
 User: "ECHEC: 10030 Unsupported filling mode" sur BCHUSD a l'open.
