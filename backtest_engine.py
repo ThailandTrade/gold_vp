@@ -187,7 +187,8 @@ def collect_trades(candles, daily_atr, global_atr, trading_days_list, portfolio,
         lon = tv[(tv['ts_dt'] >= ls) & (tv['ts_dt'] < ns)]
 
         def add_sig(sn, d_dir, e):
-            if sn in portfolio_set:
+            # Skip Dim (regle 2026-05-09: live commence Lun 00:00 UTC)
+            if sn in portfolio_set and ct.weekday() != 6:
                 signals.append((ci, sn, d_dir, e, atr, today))
 
         detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon,

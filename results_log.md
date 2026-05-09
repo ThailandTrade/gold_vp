@@ -2,6 +2,37 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-09 — Skip Dimanche (live + BT)
+
+User: "ne pas prendre de trades le dimanche. On commence le lundi 0h UTC"
+
+### Modifs
+**Live (live_mt5.py)** -- main loop:
+```python
+if candle_time_utc.weekday() == 6:
+    continue  # skip Dim
+```
+
+**BT (backtest_engine.py)** -- collect_trades, fonction add_sig:
+```python
+if sn in portfolio_set and ct.weekday() != 6:
+    signals.append(...)
+```
+
+### Pourquoi BT et live ensemble
+Sans le filtre BT, les stats BT incluent du Dim que le live ne prendra jamais -> divergence garantie. Le filtre identique cote BT garantit que les analyses (DOW, mensuel, agrege) refletent ce qui sera reellement trade.
+
+### Test BTCUSD seul
+Avant: 311 trades, NetR +58.5R (Dim 61 trades / +17.1R)
+Apres: 250 trades, NetR +41.3R, 0 trade Dim
+
+### Note pour FX/indices
+Marches fermes majoritairement le Dim (sauf fenetres Sydney 22:00-23:00 UTC). Impact attendu faible sur les 24 sym FX/indices live.
+
+### Files
+- live_mt5.py: skip dans la boucle
+- backtest_engine.py: filtre dans add_sig
+
 ## 2026-05-09 — Pepperstone: desactivation totale des cryptos (spreads Standard rhdibitoires)
 
 User: "on vire toutes les cryptos des symboles a trader"

@@ -594,6 +594,9 @@ def main():
 
                 last_ts[cache_key] = current_ts
 
+                # Skip Dim (regle 2026-05-09: live commence Lun 00:00 UTC)
+                if candle_time_utc.weekday() == 6:
+                    continue
                 for sig in sorted(detect_close_strats(candles, ss, atr, candle_time_utc, today, portfolio), key=lambda s: s['strat']):
                     open_position(state, sym, tf, sig, atr, risk_pct)
 
