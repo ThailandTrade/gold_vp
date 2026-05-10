@@ -2,6 +2,43 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-10 — Crypto: find_winners 1h v2 strict (n>=100, PF>=1.3) -> 8 strats / 4 syms
+
+User: "je veux durcir le find winners en 1h. Trades superieur a 100. PF superieur a 1.3."
+
+### Modif find_winners.py
+- Nouveau flag `--pf-min` (default None = pas de filtre, backward compat).
+- Filtre integre: `m['pf'] >= args.pf_min` (si specifie).
+- Status output: ajout `PF<X.X` si echec.
+
+### Run find_winners crypto --tf 1h --n-min 100 --pf-min 1.3
+Resultat: **8 strats WIN sur 4 instruments** (vs 33/11 sans strict, -76%).
+
+| Sym | Strict (n>=100, PF>=1.3) | Standard (n>=80) |
+|-----|--------------------------|------------------|
+| BTCUSD | 3 | 4 |
+| XLMUSD | 3 | 6 |
+| HYPEUSD | 1 | 4 |
+| BCHUSD | 1 | 6 |
+| autres (12 syms) | 0 | varied |
+
+### Lecture
+- 4 syms survivants: les plus liquides + edges les plus stables (BTC, XLM, HYPE, BCH)
+- ETH/SOL/LINK perdent tout: leur edge avg_R passait, mais PF<1.3 -> distribution diffuse
+- LTC perd ses 2 strats: PF trop borderline en 1h
+
+### Compile (temp/compile_crypto_1h_strict.py)
+- Replace 1h v1 par 1h v2 strict
+- Preserve 4h v2 (62 strats)
+- 4 sections STRAT_EXITS (crypto, sym, '1h') reconstruites
+- Validation: 70 entries OK / 0 missing
+- 15 syms, 19 units (4 avec 1h, 15 avec 4h)
+
+### Files
+- find_winners.py: --pf-min flag
+- config_crypto.py: 1h v2 strict (4 syms / 8 strats), 4h v2 inchange
+- strat_exits.py: 4 sections crypto 1h reconstruites
+
 ## 2026-05-10 — Crypto: find_winners 4h v2 (lookback 2y, 62 strats / 15 syms)
 
 User: "refais un find winner 4h mais sur 2 ans" puis "go" pour compile.

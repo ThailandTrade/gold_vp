@@ -6,7 +6,7 @@ Schema: ALL_INSTRUMENTS[sym][tf] = {'risk_pct': ..., 'portfolio': [...]}
 
 Pipeline find_winners:
 - 1h: n>=80, lookback 2y
-- 4h: n>=80, lookback 2y (v2)
+- 1h: n>=100, PF>=1.3, lookback 2y (v2 strict)
 - Filtres: avg_R>=0.05, avg_R_trim>0, median_R>0, OS<30%, M+>=7/12, h1>0, h2>0
 - TPSL only (TRAIL/BE_TP retires 2026-05-10)
 - Sunday inclus (crypto 24/7)
@@ -15,47 +15,40 @@ BROKER = 'crypto'
 
 ALL_INSTRUMENTS = {
     'BTCUSD': {
-        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_FIB_618', 'ALL_PSAR_EMA', 'ALL_SUPERTREND', 'BOS_FVG']},
+        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_FIB_618', 'ALL_PSAR_EMA', 'ALL_SUPERTREND']},
         '4h': {'risk_pct': 0.005, 'portfolio': ['ALL_3SOLDIERS', 'ALL_BB_TIGHT', 'ALL_DC10', 'ALL_DC10_EMA', 'ALL_KC_BRK', 'ALL_MACD_RSI', 'ALL_MTF_BRK', 'IDX_PREV_HL']},
     },
     'ETHUSD': {
-        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_BB_TIGHT']},
         '4h': {'risk_pct': 0.005, 'portfolio': ['ALL_LR_BREAK', 'ALL_MACD_DIV', 'ALL_MACD_STD_SIG', 'ALL_TRIX']},
     },
     'BNBUSD': {
-        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_TRIX', 'IDX_PREV_HL']},
         '4h': {'risk_pct': 0.005, 'portfolio': ['ALL_PIVOT_BRK']},
     },
     'SOLUSD': {
-        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_KB_SQUEEZE']},
         '4h': {'risk_pct': 0.005, 'portfolio': ['ALL_EMA_513', 'ALL_MACD_FAST_ZERO', 'ALL_MACD_STD_SIG', 'TOK_STOCH']},
     },
     'DOGEUSD': {
-        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_3SOLDIERS']},
         '4h': {'risk_pct': 0.005, 'portfolio': ['ALL_ENGULF', 'ALL_PIVOT_BRK']},
     },
     'HYPEUSD': {
-        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_DOJI_REV', 'ALL_RSI_DIV', 'IDX_BB_REV', 'TOK_BIG']},
+        '1h': {'risk_pct': 0.005, 'portfolio': ['TOK_BIG']},
         '4h': {'risk_pct': 0.005, 'portfolio': ['ALL_ADX_FAST', 'ALL_DPO_14']},
     },
     'BCHUSD': {
-        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_CMO_14_ZERO', 'ALL_LR_BREAK', 'ALL_MOM_14', 'ALL_TRIX', 'TOK_2BAR', 'TOK_BIG']},
+        '1h': {'risk_pct': 0.005, 'portfolio': ['TOK_2BAR']},
         '4h': {'risk_pct': 0.005, 'portfolio': ['ALL_CCI_100', 'ALL_ELDER_BEAR', 'ALL_INSIDE_BRK', 'IDX_CONSEC_REV']},
     },
     'LINKUSD': {
-        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_3SOLDIERS', 'TOK_BIG']},
         '4h': {'risk_pct': 0.005, 'portfolio': ['ALL_AROON_CROSS', 'ALL_DC10', 'ALL_DC10_EMA', 'AVWAP_RECLAIM', 'TOK_WILLR']},
     },
     'XMRUSD': {
-        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_CMO_14', 'ALL_MACD_DIV', 'IDX_BB_REV', 'TOK_STOCH']},
         '4h': {'risk_pct': 0.005, 'portfolio': ['ALL_ICHI_TK', 'ALL_TRIX', 'BOS_FVG']},
     },
     'XLMUSD': {
-        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_ADX_FAST', 'ALL_KB_SQUEEZE', 'ALL_KC_BRK', 'ALL_PSAR_EMA', 'ALL_SUPERTREND', 'TOK_2BAR']},
+        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_PSAR_EMA', 'ALL_SUPERTREND', 'TOK_2BAR']},
         '4h': {'risk_pct': 0.005, 'portfolio': ['ALL_ADX_FAST', 'ALL_CMO_14_ZERO', 'ALL_DC10', 'ALL_DC10_EMA', 'ALL_DC50', 'ALL_ICHI_TK', 'ALL_MACD_RSI', 'ALL_MOM_14']},
     },
     'LTCUSD': {
-        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_MACD_DIV', 'ALL_SUPERTREND']},
         '4h': {'risk_pct': 0.005, 'portfolio': ['ALL_3SOLDIERS', 'ALL_DC50', 'ALL_DOJI_REV', 'ALL_EMA_821', 'ALL_MACD_STD_SIG', 'ALL_STOCH_OB', 'ALL_TRIX', 'AVWAP_RECLAIM', 'IDX_VWAP_BOUNCE']},
     },
     'XRPUSD': {

@@ -41,6 +41,7 @@ parser.add_argument('--n-min', type=int, default=80)
 parser.add_argument('--mpos-min', type=int, default=7)
 parser.add_argument('--outlier-max', type=float, default=0.30)
 parser.add_argument('--avgr-min', type=float, default=0.05, help='Edge tangible minimum (apres cost)')
+parser.add_argument('--pf-min', type=float, default=None, help='Profit factor minimum (default: pas de filtre)')
 parser.add_argument('--lookback-years', type=float, default=None,
                     help="Restreint la donnee aux N dernieres annees. Default: 2 si tf=1h, 4 si tf=4h, full sinon.")
 args = parser.parse_args()
@@ -86,7 +87,8 @@ DUPLICATE_STRATS = {'IDX_KC_BRK','IDX_ENGULF','ALL_ROC_ZERO','IDX_NR4'}
 # Grille TPSL uniquement (TRAIL et BE_TP retires 2026-05-10: simplification)
 TPSL_GRID = [(sl, tp) for sl in [0.5,0.75,1.0,1.25,1.5,2.0,2.5,3.0] for tp in [0.5,0.75,1.0,1.5,2.0,2.5,3.0,4.0,5.0]]
 
-print(f"Cost-r {args.cost_r}R/trade | Filtres: n>={args.n_min} M+>={args.mpos_min} OS<{args.outlier_max:.0%} | grille TPSL={len(TPSL_GRID)}")
+pf_str = f" PF>={args.pf_min}" if args.pf_min else ""
+print(f"Cost-r {args.cost_r}R/trade | Filtres: n>={args.n_min} M+>={args.mpos_min} OS<{args.outlier_max:.0%}{pf_str} | grille TPSL={len(TPSL_GRID)}")
 
 
 def compute_metrics(pnls_R_arr, dates_arr, cost_r):
@@ -240,13 +242,14 @@ for sym in INSTRUMENTS:
         if best is None: continue
         m, etype, p1, p2, p3, h1, h2 = best
 
-        # Filtre 8 criteres
+        # Filtre criteres
         ok = (m['n'] >= args.n_min
               and m['avg_R'] >= args.avgr_min
               and m['avg_R_trim'] > 0
               and m['median_R'] > 0
               and m['outlier_share'] < args.outlier_max
               and m['m_pos'] >= args.mpos_min
+              and (args.pf_min is None or m['pf'] >= args.pf_min)
               and h1 > 0
               and h2 > 0)
         status = ''
@@ -261,6 +264,7 @@ for sym in INSTRUMENTS:
             if m['median_R'] <= 0: r.append("medR<=0")
             if m['outlier_share'] >= args.outlier_max: r.append(f"OS={m['outlier_share']:.0%}")
             if m['m_pos'] < args.mpos_min: r.append(f"M+<{args.mpos_min}")
+            if args.pf_min is not None and m['pf'] < args.pf_min: r.append(f"PF<{args.pf_min}")
             if h1 <= 0: r.append("h1<=0")
             if h2 <= 0: r.append("h2<=0")
             status = ' / '.join(r)
