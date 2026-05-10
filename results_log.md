@@ -2,6 +2,30 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-10 — Strats v9: 5 nouveaux pour swing/long-term
+
+User: "ok code ces nouvelles strategies" (apres reflexion sur swing trading).
+
+### Nouvelles strats (IDs 114-118, append a la fin)
+- **ALL_DC100**: Donchian 100 breakout (swing breakout)
+- **ALL_DC200**: Donchian 200 breakout (long trend)
+- **ALL_GOLDEN_CROSS**: EMA50 cross EMA200 (golden/death cross)
+- **ALL_SLOPE_50**: EMA50 slope >= +/-5% sur 20 bars (regime change)
+- **ALL_ADX_25**: ADX14 > 25 + DI cross (trend confirme strict)
+
+### Modifs strats.py
+- _ALL_STRATS_RAW: ajout en fin (preserve magic IDs anciens)
+- STRAT_NAMES + STRAT_SESSION: 5 entries 'All'
+- compute_indicators: ajout dc100_h/l, dc200_h/l, ema50_slope, adx14, pdi_14, mdi_14
+- detect_all: 5 nouveaux blocs detection apres ALL_DC50
+
+### Skip pour plus tard
+- Funding rate reversal (besoin API data separee)
+- Cross-sectional momentum (besoin refacto framework)
+
+### Files
+- strats.py: +5 strats v9 (113 -> 118 strats RAW)
+
 ## 2026-05-10 — Crypto: find_winners 1d v1 (full histo) -> 67 strats / 13 syms
 
 User: "me demande si ca vaudrait pas le coup de tester le daily." Puis "go" pour compile.

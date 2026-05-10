@@ -62,6 +62,8 @@ _ALL_STRATS_RAW = [
     'TOK_STOCH','TOK_TRIX','LON_STOCH','NY_ELDER',
     # New strats v8 (structure / ICT / price action)
     'AVWAP_RECLAIM','BOS_FVG','FLAG_BRK','EXH_GAP',
+    # New strats v9 (swing/long-term trend, 2026-05-10)
+    'ALL_DC100','ALL_DC200','ALL_GOLDEN_CROSS','ALL_SLOPE_50','ALL_ADX_25',
 ]
 ALL_STRATS = [s for s in _ALL_STRATS_RAW if s not in REMOVED_STRATS]
 
@@ -219,6 +221,11 @@ STRAT_NAMES = {
     'BOS_FVG':'Break of structure + FVG retrace',
     'FLAG_BRK':'Flag breakout (impulsion + consolidation)',
     'EXH_GAP':'Exhaustion gap fade',
+    'ALL_DC100':'Donchian 100 breakout (swing)',
+    'ALL_DC200':'Donchian 200 breakout (long trend)',
+    'ALL_GOLDEN_CROSS':'EMA50/EMA200 cross (golden/death)',
+    'ALL_SLOPE_50':'EMA50 slope >= +/-5% sur 20j',
+    'ALL_ADX_25':'ADX14 > 25 + DI cross (trend confirmed)',
 }
 
 STRAT_SESSION = {
@@ -258,6 +265,8 @@ STRAT_SESSION = {
     'ALL_MACD_DIV':'All','ALL_STOCH_PIVOT':'All',
     'TOK_STOCH':'Tokyo','TOK_TRIX':'Tokyo',
     'AVWAP_RECLAIM':'All','BOS_FVG':'All','FLAG_BRK':'All','EXH_GAP':'All',
+    'ALL_DC100':'All','ALL_DC200':'All','ALL_GOLDEN_CROSS':'All',
+    'ALL_SLOPE_50':'All','ALL_ADX_25':'All',
 }
 
 def sim_exit(cdf, pos, entry, d, atr, check_entry_candle=False):
@@ -517,6 +526,23 @@ def compute_indicators(candles):
     if 'dc50_h' not in c.columns:
         c['dc50_h'] = c['high'].rolling(50).max()
         c['dc50_l'] = c['low'].rolling(50).min()
+    # DC100 / DC200 (swing breakouts, v9)
+    if 'dc100_h' not in c.columns:
+        c['dc100_h'] = c['high'].rolling(100).max()
+        c['dc100_l'] = c['low'].rolling(100).min()
+    if 'dc200_h' not in c.columns:
+        c['dc200_h'] = c['high'].rolling(200).max()
+        c['dc200_l'] = c['low'].rolling(200).min()
+    # EMA 50 slope (% sur 20 bars)
+    if 'ema50_slope' not in c.columns:
+        c['ema50_slope'] = (c['ema50'] - c['ema50'].shift(20)) / (c['ema50'].shift(20) + 1e-10) * 100
+    # ADX 14 (slow, pour trend confirme)
+    if 'adx14' not in c.columns:
+        atr_14 = tr.ewm(span=14, adjust=False).mean()
+        c['pdi_14'] = 100 * pdm2.ewm(span=14, adjust=False).mean() / (atr_14 + 1e-10)
+        c['mdi_14'] = 100 * mdm2.ewm(span=14, adjust=False).mean() / (atr_14 + 1e-10)
+        dx_14 = 100 * abs(c['pdi_14'] - c['mdi_14']) / (c['pdi_14'] + c['mdi_14'] + 1e-10)
+        c['adx14'] = dx_14.ewm(span=14, adjust=False).mean()
     # Williams %R 7
     if 'wr7' not in c.columns:
         hh7 = c['high'].rolling(7).max(); ll7 = c['low'].rolling(7).min()
@@ -1182,6 +1208,35 @@ def detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_
     if 'ALL_DC50' not in trig and 'dc50_h' in row.index and pd.notna(prev.get('dc50_h')):
         if row['close']>prev['dc50_h']: add('ALL_DC50','long',row['close']); trig['ALL_DC50']=True
         elif row['close']<prev['dc50_l']: add('ALL_DC50','short',row['close']); trig['ALL_DC50']=True
+
+    # ── SWING / LONG-TERM (v9, 2026-05-10) ──
+    # ALL_DC100: Donchian 100 breakout
+    if 'ALL_DC100' not in trig and 'dc100_h' in row.index and pd.notna(prev.get('dc100_h')):
+        if row['close']>prev['dc100_h']: add('ALL_DC100','long',row['close']); trig['ALL_DC100']=True
+        elif row['close']<prev['dc100_l']: add('ALL_DC100','short',row['close']); trig['ALL_DC100']=True
+    # ALL_DC200: Donchian 200 breakout
+    if 'ALL_DC200' not in trig and 'dc200_h' in row.index and pd.notna(prev.get('dc200_h')):
+        if row['close']>prev['dc200_h']: add('ALL_DC200','long',row['close']); trig['ALL_DC200']=True
+        elif row['close']<prev['dc200_l']: add('ALL_DC200','short',row['close']); trig['ALL_DC200']=True
+    # ALL_GOLDEN_CROSS: EMA50 cross EMA200
+    if 'ALL_GOLDEN_CROSS' not in trig and pd.notna(prev.get('ema50')) and pd.notna(prev.get('ema200')):
+        if prev['ema50']<=prev['ema200'] and row['ema50']>row['ema200']:
+            add('ALL_GOLDEN_CROSS','long',row['close']); trig['ALL_GOLDEN_CROSS']=True
+        elif prev['ema50']>=prev['ema200'] and row['ema50']<row['ema200']:
+            add('ALL_GOLDEN_CROSS','short',row['close']); trig['ALL_GOLDEN_CROSS']=True
+    # ALL_SLOPE_50: EMA50 slope > +/- 5% sur 20 bars (entry au franchissement)
+    if 'ALL_SLOPE_50' not in trig and pd.notna(prev.get('ema50_slope')) and pd.notna(row.get('ema50_slope')):
+        if prev['ema50_slope']<5.0 and row['ema50_slope']>=5.0:
+            add('ALL_SLOPE_50','long',row['close']); trig['ALL_SLOPE_50']=True
+        elif prev['ema50_slope']>-5.0 and row['ema50_slope']<=-5.0:
+            add('ALL_SLOPE_50','short',row['close']); trig['ALL_SLOPE_50']=True
+    # ALL_ADX_25: ADX14 > 25 + DI cross
+    if 'ALL_ADX_25' not in trig and pd.notna(prev.get('adx14')) and row.get('adx14',0)>25:
+        if pd.notna(prev.get('pdi_14')) and pd.notna(prev.get('mdi_14')):
+            if prev['pdi_14']<=prev['mdi_14'] and row['pdi_14']>row['mdi_14']:
+                add('ALL_ADX_25','long',row['close']); trig['ALL_ADX_25']=True
+            elif prev['pdi_14']>=prev['mdi_14'] and row['pdi_14']<row['mdi_14']:
+                add('ALL_ADX_25','short',row['close']); trig['ALL_ADX_25']=True
 
     # TOK_FISHER: Fisher transform Tokyo
     if 0.0<=hour<6.0 and 'TOK_FISHER' not in trig and 'fisher9' in row.index and pd.notna(row.get('fisher9')):
