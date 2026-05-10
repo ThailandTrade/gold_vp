@@ -2,6 +2,27 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-10 — find_winners: --lookback-years (defaut 2y pour 1h, 4y pour 4h)
+
+User: "plutot un lookback years. du genre 2 ans pour du 1h et 3 ou 4 ans pour du 4h."
+
+### Modifs find_winners.py
+- Nouveau flag `--lookback-years N` (float). Default auto par TF:
+  - tf=1h: 2.0 ans
+  - tf=4h: 4.0 ans
+  - autres: pas de filtre (full)
+- Apres `load_data()`, coupe `candles`, `trading_days`, `daily_atr` au cutoff.
+- ATR par bar reste correct (calcule avec full lookback avant la coupe).
+
+### Pourquoi
+- Crypto: structure de marche post-FTX 2022 + post-ETF 2024 = regimes recents seulement.
+- 2 ans 1h = ~17,500 bars, h1/h2 split = 1 an chacun (comparable a Pepperstone 13 mois).
+- 4 ans 4h = ~8,800 bars, h1/h2 = 2 ans chacun, traverse plusieurs micro-regimes.
+- Coins listes recemment (HYPE ~1.5 an, TON ~2 ans): full disponible utilise.
+
+### Files
+- find_winners.py: argparse + filtre post-load (~10 lignes)
+
 ## 2026-05-10 — find_winners simplifie: TPSL only
 
 User: "On vire le trail des sorties possibles. Uniquement TPSL en fait. On veut faire simple."

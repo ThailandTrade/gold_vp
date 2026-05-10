@@ -41,7 +41,13 @@ parser.add_argument('--n-min', type=int, default=80)
 parser.add_argument('--mpos-min', type=int, default=7)
 parser.add_argument('--outlier-max', type=float, default=0.30)
 parser.add_argument('--avgr-min', type=float, default=0.05, help='Edge tangible minimum (apres cost)')
+parser.add_argument('--lookback-years', type=float, default=None,
+                    help="Restreint la donnee aux N dernieres annees. Default: 2 si tf=1h, 4 si tf=4h, full sinon.")
 args = parser.parse_args()
+
+# Defaut lookback par TF
+if args.lookback_years is None:
+    args.lookback_years = {'1h': 2.0, '4h': 4.0}.get(args.tf)
 
 # Defaut source: crypto si account=crypto, sinon mt5
 if args.source is None:
@@ -192,6 +198,17 @@ for sym in INSTRUMENTS:
         print(f"  Skip {sym} [{args.tf}]: {e}")
         conn.close(); continue
     conn.close()
+
+    # Lookback filter (ATR deja calcule avec full lookback, on coupe juste apres)
+    if args.lookback_years and len(candles) > 0:
+        from datetime import timedelta as _td
+        cutoff = candles['ts_dt'].max() - _td(days=int(args.lookback_years * 365))
+        before = len(candles)
+        candles = candles[candles['ts_dt'] >= cutoff].reset_index(drop=True)
+        trading_days = sorted(d for d in trading_days if d >= cutoff.date())
+        daily_atr = {d: v for d, v in daily_atr.items() if d >= cutoff.date()}
+        print(f"  Lookback {args.lookback_years}y -> {len(candles)} bars (etait {before})")
+
     if len(candles) < 500:
         print(f"  Sample trop court ({len(candles)} bars), skip"); continue
 
