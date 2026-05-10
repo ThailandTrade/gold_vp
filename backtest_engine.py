@@ -131,7 +131,7 @@ def prev_trading_day(day, trading_days_list):
 #  COLLECT TRADES — signaux + exits + conflict filter
 # ══════════════════════════════════════════════════════════════
 
-def collect_trades(candles, daily_atr, global_atr, trading_days_list, portfolio, sym_exits, date_filter=None, tf='15m'):
+def collect_trades(candles, daily_atr, global_atr, trading_days_list, portfolio, sym_exits, date_filter=None, tf='15m', skip_sunday=True):
     """
     Detecte tous les signaux + simule les exits en temps reel.
     Meme code pour bt_portfolio, compare_today, et live.
@@ -188,9 +188,10 @@ def collect_trades(candles, daily_atr, global_atr, trading_days_list, portfolio,
         lon = tv[(tv['ts_dt'] >= ls) & (tv['ts_dt'] < ns)]
 
         def add_sig(sn, d_dir, e):
-            # Skip Dim (regle 2026-05-09: live commence Lun 00:00 UTC)
-            if sn in portfolio_set and ct.weekday() != 6:
-                signals.append((ci, sn, d_dir, e, atr, today))
+            # Skip Dim si demande (regle 2026-05-09 pour FX/indices, off pour crypto 24/7)
+            if sn not in portfolio_set: return
+            if skip_sunday and ct.weekday() == 6: return
+            signals.append((ci, sn, d_dir, e, atr, today))
 
         detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon,
                    prev_day_data, add_sig, prev2_day_data)

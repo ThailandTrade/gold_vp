@@ -117,7 +117,8 @@ for sym, tf, icfg in sym_tf_pairs:
     print(f" {len(candles)} bars, {len(trading_days)} days", flush=True)
     candles_cache[(sym, tf)] = candles
 
-    trades = collect_trades(candles, daily_atr, global_atr, trading_days, portfolio, sym_exits, tf=tf)
+    trades = collect_trades(candles, daily_atr, global_atr, trading_days, portfolio, sym_exits, tf=tf,
+                            skip_sunday=(args.account != 'crypto'))
     r = eval_portfolio(trades, risk, CAPITAL, spread=(COST_R > 0), cost_r=COST_R)
     if not r:
         print(f"  {sym} [{tf}]: 0 trades"); continue

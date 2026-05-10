@@ -2,6 +2,24 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-10 — Fix: skip_sunday off pour crypto (24/7)
+
+User: "le dimanche skip est valable pour forex et indices. La on est sur les cryptos."
+
+### Bug
+Le skip Dim ajoute le 2026-05-09 a backtest_engine.collect_trades s'appliquait a tous les accounts. Pour crypto qui trade 24/7, ca exclu artificiellement ~14% du data (sample biaise).
+
+### Fix
+- `collect_trades(..., skip_sunday=True)`: nouveau param, default True (FX/indices).
+- bt_portfolio.py: passe `skip_sunday=(args.account != 'crypto')` -> off pour crypto, on pour pepperstone/5ers/ftmo.
+
+### Note find_winners
+find_winners.py a son propre `collect_signals` (pas de Sunday skip historique). Donc la run 1h crypto deja faite incluait bien les Dim. Pas besoin de re-runner pour ce point.
+
+### Files
+- backtest_engine.py: param skip_sunday
+- bt_portfolio.py: param dans collect_trades call
+
 ## 2026-05-10 — bt_portfolio: --lookback-years (default 1y)
 
 User: "pareil je veux pouvoir choisir la periode pour le BT. Par defaut la derniere annee."
