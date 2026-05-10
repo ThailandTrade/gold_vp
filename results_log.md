@@ -2,6 +2,28 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-10 — find_winners simplifie: TPSL only
+
+User: "On vire le trail des sorties possibles. Uniquement TPSL en fait. On veut faire simple."
+
+### Modifs find_winners.py
+- Retrait TRAIL_GRID et BE_TP_GRID (60+45 = 105 configs/strat retirees)
+- Retrait flag --tpsl-only (devenu sans objet)
+- Boucle d'exits reduite a la grille TPSL (8 SL x 9 TP = 72 configs/strat)
+
+### Impact
+- Les nouvelles selections find_winners ne produisent que des configs ('TPSL', sl, tp, 0).
+- strat_exits.py existants (TRAIL/BE_TP des runs precedents) restent intacts -- pas de breaking change pour live/BT actuels.
+- live_mt5.py (manage_trailing/manage_be_tp) inchange -- continue de gerer les exits TRAIL/BE_TP existants si presents dans strat_exits.
+
+### Pourquoi
+- Simplicite (rule of least mechanism)
+- TPSL est le format le plus interpretable et le moins susceptible a l'overfit (2 hyperparams vs 3)
+- Le BT pepperstone montrait deja TPSL dominant a 84% des selections find_winners precedentes
+
+### Files
+- find_winners.py: -23 lignes
+
 ## 2026-05-10 — Branche crypto: fetch top 20 perps via Binance Futures
 
 User: "crée une branche crypto. Tu vas m'adapter le fetch pour récupérer les bougies sur Hyperliquid au lieu de MT5. Recherche le top 20 crypto en market cap." Puis "On renomme les tables candles_crypto."

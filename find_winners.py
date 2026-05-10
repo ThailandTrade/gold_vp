@@ -2,7 +2,7 @@
 find_winners.py - Trouve les strats "gagnantes long terme" pour un broker.
 
 Pour chaque (instrument, strat):
-  1. Teste toutes les configs d'exit (TPSL/TRAIL/BE_TP grilles)
+  1. Teste toutes les configs d'exit TPSL (grille SL x TP)
   2. Cost-r applique au strat (par trade)
   3. Choisit l'exit qui maximise avg_R_trim
   4. Garde la strat si elle passe les 7 criteres "gagnante long terme":
@@ -41,7 +41,6 @@ parser.add_argument('--n-min', type=int, default=80)
 parser.add_argument('--mpos-min', type=int, default=7)
 parser.add_argument('--outlier-max', type=float, default=0.30)
 parser.add_argument('--avgr-min', type=float, default=0.05, help='Edge tangible minimum (apres cost)')
-parser.add_argument('--tpsl-only', action='store_true')
 args = parser.parse_args()
 
 # Defaut source: crypto si account=crypto, sinon mt5
@@ -78,15 +77,10 @@ if args.symbol:
 # Strats a tester (toutes sauf REMOVED + duplicates)
 DUPLICATE_STRATS = {'IDX_KC_BRK','IDX_ENGULF','ALL_ROC_ZERO','IDX_NR4'}
 
-# Grilles d'exits (memes que optimize_all)
+# Grille TPSL uniquement (TRAIL et BE_TP retires 2026-05-10: simplification)
 TPSL_GRID = [(sl, tp) for sl in [0.5,0.75,1.0,1.25,1.5,2.0,2.5,3.0] for tp in [0.5,0.75,1.0,1.5,2.0,2.5,3.0,4.0,5.0]]
-TRAIL_GRID = [] if args.tpsl_only else [(sl, act, trail) for sl in [1.0,1.5,2.0,2.5,3.0]
-              for act in [0.3,0.5,0.75,1.0] for trail in [0.3,0.5,0.75]]
-BE_TP_GRID = [] if args.tpsl_only else [(sl, be_act, tp) for sl in [1.0,1.5,2.0,2.5,3.0]
-              for be_act in [0.3,0.5,0.75] for tp in [0.75,1.0,1.5,2.0,3.0]
-              if be_act < tp]
 
-print(f"Cost-r {args.cost_r}R/trade | Filtres: n>={args.n_min} M+>={args.mpos_min} OS<{args.outlier_max:.0%} | grilles TPSL={len(TPSL_GRID)} TRAIL={len(TRAIL_GRID)} BE_TP={len(BE_TP_GRID)}")
+print(f"Cost-r {args.cost_r}R/trade | Filtres: n>={args.n_min} M+>={args.mpos_min} OS<{args.outlier_max:.0%} | grille TPSL={len(TPSL_GRID)}")
 
 
 def compute_metrics(pnls_R_arr, dates_arr, cost_r):
@@ -217,7 +211,7 @@ for sym in INSTRUMENTS:
         if len(signals) < args.n_min: continue
 
         best = None  # (metrics, etype, p1, p2, p3, h1, h2)
-        # Test all exits
+        # Test toutes les configs TPSL (grille SL x TP)
         for sl, tp in TPSL_GRID:
             pnls, dates = evaluate_exit(candles, signals, 'TPSL', sl, tp, 0)
             m = compute_metrics(pnls, dates, args.cost_r)
@@ -225,20 +219,6 @@ for sym in INSTRUMENTS:
             h1, h2 = split_metrics(pnls, dates, args.cost_r)
             if best is None or m['avg_R_trim'] > best[0]['avg_R_trim']:
                 best = (m, 'TPSL', sl, tp, 0, h1, h2)
-        for sl, act, trail in TRAIL_GRID:
-            pnls, dates = evaluate_exit(candles, signals, 'TRAIL', sl, act, trail)
-            m = compute_metrics(pnls, dates, args.cost_r)
-            if not m: continue
-            h1, h2 = split_metrics(pnls, dates, args.cost_r)
-            if best is None or m['avg_R_trim'] > best[0]['avg_R_trim']:
-                best = (m, 'TRAIL', sl, act, trail, h1, h2)
-        for sl, be_act, tp in BE_TP_GRID:
-            pnls, dates = evaluate_exit(candles, signals, 'BE_TP', sl, be_act, tp)
-            m = compute_metrics(pnls, dates, args.cost_r)
-            if not m: continue
-            h1, h2 = split_metrics(pnls, dates, args.cost_r)
-            if best is None or m['avg_R_trim'] > best[0]['avg_R_trim']:
-                best = (m, 'BE_TP', sl, be_act, tp, h1, h2)
 
         if best is None: continue
         m, etype, p1, p2, p3, h1, h2 = best
