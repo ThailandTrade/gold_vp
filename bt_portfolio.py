@@ -19,7 +19,9 @@ from backtest_engine import load_data, collect_trades, eval_portfolio
 from config_helpers import iter_sym_tf
 
 parser = argparse.ArgumentParser(description='Backtest portfolio multi-TF')
-parser.add_argument('account', choices=['ftmo', '5ers', 'pepperstone'])
+parser.add_argument('account', choices=['ftmo', '5ers', 'pepperstone', 'crypto'])
+parser.add_argument('--source', choices=['mt5', 'crypto'], default=None,
+                    help="Source DB. Default: 'crypto' si account='crypto', sinon 'mt5'.")
 parser.add_argument('-c', '--capital', type=float, default=None)
 parser.add_argument('-r', '--risk', type=float, default=None)
 parser.add_argument('--symbol', default=None, help='Filtre: instrument(s), separes par virgule')
@@ -31,6 +33,10 @@ args = parser.parse_args()
 
 cfg = importlib.import_module(f'config_{args.account}')
 BROKER = cfg.BROKER
+
+# Default source par account
+if args.source is None:
+    args.source = 'crypto' if args.account == 'crypto' else 'mt5'
 
 CRYPTO_BASES = ('BTC', 'ETH', 'SOL', 'BNB', 'XRP', 'ADA', 'DOT', 'AVAX',
                 'LINK', 'MATIC', 'DOGE', 'LTC', 'BCH', 'TRX', 'ATOM', 'SHIB',
@@ -94,7 +100,7 @@ for sym, tf, icfg in sym_tf_pairs:
     sym_exits = STRAT_EXITS.get((args.account, sym, tf), {})
 
     print(f"\n  Loading {sym} [{tf}]...", end='', flush=True)
-    candles, daily_atr, global_atr, trading_days = load_data(conn, sym, tf=tf)
+    candles, daily_atr, global_atr, trading_days = load_data(conn, sym, tf=tf, source=args.source)
     print(f" {len(candles)} bars, {len(trading_days)} days", flush=True)
     candles_cache[(sym, tf)] = candles
 

@@ -2,6 +2,43 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-10 — Crypto: find_winners 1h v1 + compile config_crypto + bt_portfolio adapte
+
+User: "go. Je lancerai le BT moi meme"
+
+### Run find_winners crypto --tf 1h
+Source: candles_crypto_*_1h (Binance Futures USDT-M), lookback 2y auto.
+Resultat: **33 strats WIN sur 11 instruments** (sur 16 testes).
+
+| Sym | Strats | | Sym | Strats |
+|-----|--------|-|-----|--------|
+| BCHUSD | 6 | | BNBUSD | 2 |
+| XLMUSD | 6 | | LINKUSD | 2 |
+| BTCUSD | 4 | | LTCUSD | 2 |
+| HYPEUSD | 4 | | ETHUSD | 1 |
+| XMRUSD | 4 | | SOLUSD | 1 |
+| | | | DOGEUSD | 1 |
+
+5 syms recales (0 strat): XRPUSD, TRXUSD, ZECUSD, ADAUSD, TONUSD.
+
+### Compile (temp/compile_crypto_1h.py)
+- Cree `config_crypto.py` (BROKER='crypto', LIVE_TIMEFRAMES=['1h'])
+- Append 11 sections `STRAT_EXITS[('crypto', sym, '1h')]` dans strat_exits.py
+- Validation: 33 entries OK / 0 missing
+
+### Adapt bt_portfolio.py
+- argparse `account` accepte 'crypto'
+- Flag `--source mt5|crypto` (default auto: crypto si account=crypto)
+- Passe `source=args.source` a `load_data()`
+
+Pret pour: `python bt_portfolio.py crypto --tf 1h`
+
+### Files
+- config_crypto.py (nouveau)
+- strat_exits.py: +11 sections crypto
+- bt_portfolio.py: +'crypto' choice + --source
+- temp/compile_crypto_1h.py (regenere depuis log find_winners)
+
 ## 2026-05-10 — find_winners: --lookback-years (defaut 2y pour 1h, 4y pour 4h)
 
 User: "plutot un lookback years. du genre 2 ans pour du 1h et 3 ou 4 ans pour du 4h."

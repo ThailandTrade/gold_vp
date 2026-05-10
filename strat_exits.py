@@ -941,3 +941,71 @@ STRAT_EXITS[('pepperstone', 'XRPUSD', '1h')] = {
     'TOK_TRIX': ('TPSL', 1.0, 0.75, 0.0),
 }
 
+# ==== Crypto 1h v1 (find_winners 2026-05-10, 11 syms / 33 strats) ====
+
+STRAT_EXITS[('crypto', 'BTCUSD', '1h')] = {
+    'ALL_FIB_618': ('TPSL', 1.25, 2.0, 0.0),
+    'ALL_PSAR_EMA': ('TPSL', 1.5, 1.5, 0.0),
+    'ALL_SUPERTREND': ('TPSL', 1.5, 1.5, 0.0),
+    'BOS_FVG': ('TPSL', 2.5, 2.0, 0.0),
+}
+
+STRAT_EXITS[('crypto', 'ETHUSD', '1h')] = {
+    'ALL_BB_TIGHT': ('TPSL', 1.5, 1.5, 0.0),
+}
+
+STRAT_EXITS[('crypto', 'BNBUSD', '1h')] = {
+    'ALL_TRIX': ('TPSL', 1.25, 1.5, 0.0),
+    'IDX_PREV_HL': ('TPSL', 2.5, 3.0, 0.0),
+}
+
+STRAT_EXITS[('crypto', 'SOLUSD', '1h')] = {
+    'ALL_KB_SQUEEZE': ('TPSL', 1.5, 1.0, 0.0),
+}
+
+STRAT_EXITS[('crypto', 'DOGEUSD', '1h')] = {
+    'ALL_3SOLDIERS': ('TPSL', 2.5, 2.5, 0.0),
+}
+
+STRAT_EXITS[('crypto', 'HYPEUSD', '1h')] = {
+    'ALL_DOJI_REV': ('TPSL', 1.5, 1.0, 0.0),
+    'ALL_RSI_DIV': ('TPSL', 1.0, 0.75, 0.0),
+    'IDX_BB_REV': ('TPSL', 1.0, 0.75, 0.0),
+    'TOK_BIG': ('TPSL', 3.0, 1.0, 0.0),
+}
+
+STRAT_EXITS[('crypto', 'BCHUSD', '1h')] = {
+    'ALL_CMO_14_ZERO': ('TPSL', 2.5, 2.0, 0.0),
+    'ALL_LR_BREAK': ('TPSL', 1.25, 1.5, 0.0),
+    'ALL_MOM_14': ('TPSL', 2.5, 2.0, 0.0),
+    'ALL_TRIX': ('TPSL', 1.25, 1.5, 0.0),
+    'TOK_2BAR': ('TPSL', 2.5, 1.5, 0.0),
+    'TOK_BIG': ('TPSL', 2.5, 3.0, 0.0),
+}
+
+STRAT_EXITS[('crypto', 'LINKUSD', '1h')] = {
+    'ALL_3SOLDIERS': ('TPSL', 2.0, 1.5, 0.0),
+    'TOK_BIG': ('TPSL', 1.25, 1.0, 0.0),
+}
+
+STRAT_EXITS[('crypto', 'XMRUSD', '1h')] = {
+    'ALL_CMO_14': ('TPSL', 1.25, 1.0, 0.0),
+    'ALL_MACD_DIV': ('TPSL', 1.5, 1.0, 0.0),
+    'IDX_BB_REV': ('TPSL', 2.0, 1.5, 0.0),
+    'TOK_STOCH': ('TPSL', 2.5, 1.5, 0.0),
+}
+
+STRAT_EXITS[('crypto', 'XLMUSD', '1h')] = {
+    'ALL_ADX_FAST': ('TPSL', 1.25, 1.5, 0.0),
+    'ALL_KB_SQUEEZE': ('TPSL', 2.5, 3.0, 0.0),
+    'ALL_KC_BRK': ('TPSL', 2.5, 3.0, 0.0),
+    'ALL_PSAR_EMA': ('TPSL', 2.5, 3.0, 0.0),
+    'ALL_SUPERTREND': ('TPSL', 2.5, 3.0, 0.0),
+    'TOK_2BAR': ('TPSL', 2.5, 3.0, 0.0),
+}
+
+STRAT_EXITS[('crypto', 'LTCUSD', '1h')] = {
+    'ALL_MACD_DIV': ('TPSL', 1.0, 1.0, 0.0),
+    'ALL_SUPERTREND': ('TPSL', 1.25, 1.5, 0.0),
+}
+
