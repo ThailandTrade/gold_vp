@@ -31,8 +31,17 @@ Binance Futures via CCXT: 5+ ans full history pour majors. Basis vs HL ~10-30 bp
 ### Reste a faire
 - Backfill complet 16 coins x 2 TFs (estim 15-20 min)
 - Verifier integrite (gaps, completeness) par coin
-- Adapter find_winners + bt_portfolio pour le prefixe `candles_crypto_*`
+- Adapter bt_portfolio pour le prefixe `candles_crypto_*` (find_winners deja adapte)
 - Decider source live (HL native ou Binance) pour eventual trading auto
+
+### Adaptation find_winners pour candles_crypto_*
+- backtest_engine.py: `_table_name`, `_load_candles_raw`, `load_data`, `load_data_recent` acceptent un param `source='mt5'` (default = comportement existant inchange).
+- find_winners.py:
+  - `account` accepte maintenant 'crypto' en plus de ftmo/5ers/pepperstone
+  - flag `--source mt5|crypto` (default auto: crypto si account=crypto, sinon mt5)
+  - account='crypto' utilise `hl_fetch.COIN_MAP` comme source des instruments (top 16)
+- Usage: `python find_winners.py crypto --tf 1h` -> lit candles_crypto_<sym>_1h, output config_crypto + STRAT_EXITS[('crypto', ...)]
+- Aucun autre script touche -- les 21 autres consommateurs gardent le default 'mt5' = comportement preserve
 
 ## 2026-05-09 — Skip Dimanche (live + BT)
 

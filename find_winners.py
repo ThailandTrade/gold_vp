@@ -31,9 +31,11 @@ from backtest_engine import load_data, prev_trading_day, _make_day_data
 from strats import detect_all, sim_exit_custom, compute_indicators, REMOVED_STRATS
 
 parser = argparse.ArgumentParser()
-parser.add_argument('account', choices=['ftmo','5ers','pepperstone'])
+parser.add_argument('account', choices=['ftmo','5ers','pepperstone','crypto'])
 parser.add_argument('--tf', default='15m')
 parser.add_argument('--symbol', default=None)
+parser.add_argument('--source', choices=['mt5','crypto'], default=None,
+                    help="Source DB. Default: 'crypto' si account='crypto', sinon 'mt5'.")
 parser.add_argument('--cost-r', type=float, default=0.05)
 parser.add_argument('--n-min', type=int, default=80)
 parser.add_argument('--mpos-min', type=int, default=7)
@@ -42,20 +44,29 @@ parser.add_argument('--avgr-min', type=float, default=0.05, help='Edge tangible 
 parser.add_argument('--tpsl-only', action='store_true')
 args = parser.parse_args()
 
-# Source de verite: pairs_<account>.txt (= tous les instruments disponibles)
-pairs_file = f'pairs_{args.account}.txt'
-INSTRUMENTS = []
-if os.path.exists(pairs_file):
-    with open(pairs_file) as f:
-        next(f)  # skip header
-        for line in f:
-            line = line.strip()
-            if line and ',' in line:
-                INSTRUMENTS.append(line.split(',')[1])
+# Defaut source: crypto si account=crypto, sinon mt5
+if args.source is None:
+    args.source = 'crypto' if args.account == 'crypto' else 'mt5'
+
+# Source de verite des instruments
+if args.account == 'crypto':
+    # Source = COIN_MAP du fetch (top 16 perps Binance Futures)
+    from hl_fetch import COIN_MAP as _CRYPTO_MAP
+    INSTRUMENTS = [v['db'] for v in _CRYPTO_MAP.values()]
 else:
-    cfg = importlib.import_module(f'config_{args.account}')
-    INSTRUMENTS = list(getattr(cfg, 'ALL_INSTRUMENTS', cfg.INSTRUMENTS).keys())
-    print(f"WARN: {pairs_file} introuvable, fallback sur config")
+    pairs_file = f'pairs_{args.account}.txt'
+    INSTRUMENTS = []
+    if os.path.exists(pairs_file):
+        with open(pairs_file) as f:
+            next(f)  # skip header
+            for line in f:
+                line = line.strip()
+                if line and ',' in line:
+                    INSTRUMENTS.append(line.split(',')[1])
+    else:
+        cfg = importlib.import_module(f'config_{args.account}')
+        INSTRUMENTS = list(getattr(cfg, 'ALL_INSTRUMENTS', cfg.INSTRUMENTS).keys())
+        print(f"WARN: {pairs_file} introuvable, fallback sur config")
 
 if args.symbol:
     sym_up = args.symbol.upper()
@@ -182,7 +193,7 @@ for sym in INSTRUMENTS:
     print(f"\n{'='*100}\n{sym}\n{'='*100}", flush=True)
     conn = get_conn()
     try:
-        candles, daily_atr, global_atr, trading_days = load_data(conn, sym, tf=args.tf)
+        candles, daily_atr, global_atr, trading_days = load_data(conn, sym, tf=args.tf, source=args.source)
     except Exception as e:
         print(f"  Skip {sym} [{args.tf}]: {e}")
         conn.close(); continue

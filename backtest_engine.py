@@ -30,16 +30,16 @@ OPEN_STRATS = frozenset()  # vide: toutes les open strats sont dans REMOVED_STRA
 TF = '5m'  # timeframe par defaut, changeable pour 15m
 
 
-def _table_name(symbol, tf=None):
+def _table_name(symbol, tf=None, source='mt5'):
     import re
     if tf is None: tf = TF
     sym_san = re.sub(r'[^a-z0-9]+', '_', symbol.lower()).strip('_')
-    return f"candles_mt5_{sym_san}_{tf}"
+    return f"candles_{source}_{sym_san}_{tf}"
 
 
-def _load_candles_raw(conn, symbol, tf=None, limit=None):
+def _load_candles_raw(conn, symbol, tf=None, limit=None, source='mt5'):
     """Charge candles brutes depuis DB. Si limit=None, charge tout."""
-    table = _table_name(symbol, tf)
+    table = _table_name(symbol, tf, source=source)
     cur = conn.cursor()
     if limit:
         cur.execute(f"SELECT ts, open, high, low, close FROM {table} ORDER BY ts DESC LIMIT %s", (limit,))
@@ -77,9 +77,10 @@ def _get_trading_days_from_df(candles):
     return sorted(candles['date'].unique())
 
 
-def load_data(conn, symbol, tf=None):
+def load_data(conn, symbol, tf=None, source='mt5'):
     """Charge candles FULL history + ATR + trading_days + indicateurs precalcules.
     Retourne (candles_df, daily_atr_dict, global_atr_float, trading_days_list).
+    source: 'mt5' (FX/indices) ou 'crypto' (perps Binance/HL).
     """
     if tf is None: tf = TF
     if tf == '5m':
@@ -87,19 +88,19 @@ def load_data(conn, symbol, tf=None):
         daily_atr, global_atr = compute_atr(conn, symbol=symbol.lower())
         trading_days_list = get_trading_days(conn, symbol=symbol.lower())
     else:
-        candles = _load_candles_raw(conn, symbol, tf=tf)
+        candles = _load_candles_raw(conn, symbol, tf=tf, source=source)
         daily_atr, global_atr = _compute_atr_from_df(candles)
         trading_days_list = _get_trading_days_from_df(candles)
     candles = compute_indicators(candles)
     return candles, daily_atr, global_atr, trading_days_list
 
 
-def load_data_recent(conn, symbol, n=2000, tf=None):
+def load_data_recent(conn, symbol, n=2000, tf=None, source='mt5'):
     """Charge les N derniers bars + ATR + indicateurs.
     Meme resultat que load_data mais ~50x plus rapide.
     """
     if tf is None: tf = TF
-    candles = _load_candles_raw(conn, symbol, tf=tf, limit=n)
+    candles = _load_candles_raw(conn, symbol, tf=tf, limit=n, source=source)
     if len(candles) == 0:
         return pd.DataFrame(), {}, 0, []
     if tf == '5m':
@@ -107,7 +108,7 @@ def load_data_recent(conn, symbol, n=2000, tf=None):
         trading_days_list = get_trading_days(conn, symbol=symbol.lower())
     else:
         # ATR sur 1500 derniers bars (suffisant pour ATR14 daily)
-        full = _load_candles_raw(conn, symbol, tf=tf, limit=1500)
+        full = _load_candles_raw(conn, symbol, tf=tf, limit=1500, source=source)
         daily_atr, global_atr = _compute_atr_from_df(full)
         trading_days_list = _get_trading_days_from_df(full)
     candles = compute_indicators(candles)
