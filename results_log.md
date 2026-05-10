@@ -2,6 +2,38 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-10 — Branche crypto: fetch top 20 perps via Binance Futures
+
+User: "crée une branche crypto. Tu vas m'adapter le fetch pour récupérer les bougies sur Hyperliquid au lieu de MT5. Recherche le top 20 crypto en market cap." Puis "On renomme les tables candles_crypto."
+
+### Decision source: Binance Futures (vs Hyperliquid native)
+HL API native limite a 5000 candles/TF total: 1h = 7 mois max, 4h = 2.3 ans max. Trop court pour find_winners robuste (n>=60 1h).
+Binance Futures via CCXT: 5+ ans full history pour majors. Basis vs HL ~10-30 bps -> acceptable pour BT.
+
+### Top 20 CoinGecko (mai 2026)
+- 17 actifs sur Binance Futures: BTC, ETH, XRP, BNB, SOL, TRX, DOGE, HYPE, ZEC, ADA, BCH, LINK, XMR, TON, XLM, LTC (16 effectifs)
+- 4 absents: FIGR (#7), WBT (#9), LEO (#13) -- tokens CEX/niche. CC (#18) absent de Binance Futures aussi.
+- Liste finale = 16 perps
+
+### Files
+- branche `crypto` (depuis main)
+- hl_fetch.py: rewrite
+  - Source: Binance Futures USDT-M via CCXT (replace Hyperliquid native abandonne)
+  - TFs: 1h + 4h (etait 15m)
+  - COIN_MAP top 16 (top 20 - 4 absents)
+  - Pagination forward depuis 2020-01-01
+  - Tables: `candles_crypto_<symbol>_<tf>` (renomme depuis `candles_hl_*`)
+  - Drop ancienne table candles_hl_btcusd_1h (leftover test HL native)
+
+### Smoke test BTC 1h
+55,707 candles inserees, range Apr-2020 -> May-2026 (6.4 ans). 38 batches CCXT, no error.
+
+### Reste a faire
+- Backfill complet 16 coins x 2 TFs (estim 15-20 min)
+- Verifier integrite (gaps, completeness) par coin
+- Adapter find_winners + bt_portfolio pour le prefixe `candles_crypto_*`
+- Decider source live (HL native ou Binance) pour eventual trading auto
+
 ## 2026-05-09 — Skip Dimanche (live + BT)
 
 User: "ne pas prendre de trades le dimanche. On commence le lundi 0h UTC"
