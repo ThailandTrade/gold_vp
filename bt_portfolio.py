@@ -29,6 +29,8 @@ parser.add_argument('--tf', default=None, help='Filtre: un seul TF (5m/15m/1h/4h
 parser.add_argument('--weekly', action='store_true', help='Affichage hebdomadaire')
 parser.add_argument('--spread', action='store_true', help='Spread legacy -0.1R/trade')
 parser.add_argument('--cost-r', type=float, default=0.0, help='Penalite R par trade')
+parser.add_argument('--lookback-years', type=float, default=1.0,
+                    help="Restreint la donnee aux N dernieres annees. 0 = full history. Default: 1.0")
 args = parser.parse_args()
 
 cfg = importlib.import_module(f'config_{args.account}')
@@ -101,6 +103,17 @@ for sym, tf, icfg in sym_tf_pairs:
 
     print(f"\n  Loading {sym} [{tf}]...", end='', flush=True)
     candles, daily_atr, global_atr, trading_days = load_data(conn, sym, tf=tf, source=args.source)
+
+    # Lookback filter (ATR deja calcule avec full lookback, on coupe juste apres)
+    if args.lookback_years and len(candles) > 0:
+        from datetime import timedelta as _td
+        cutoff = candles['ts_dt'].max() - _td(days=int(args.lookback_years * 365))
+        before = len(candles)
+        candles = candles[candles['ts_dt'] >= cutoff].reset_index(drop=True)
+        trading_days = sorted(d for d in trading_days if d >= cutoff.date())
+        daily_atr = {d: v for d, v in daily_atr.items() if d >= cutoff.date()}
+        print(f" lookback {args.lookback_years}y -> {len(candles)} bars (etait {before}),", end='')
+
     print(f" {len(candles)} bars, {len(trading_days)} days", flush=True)
     candles_cache[(sym, tf)] = candles
 

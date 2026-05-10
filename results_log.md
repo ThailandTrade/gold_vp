@@ -2,6 +2,28 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-10 — bt_portfolio: --lookback-years (default 1y)
+
+User: "pareil je veux pouvoir choisir la periode pour le BT. Par defaut la derniere annee."
+
+### Modifs bt_portfolio.py
+- Nouveau flag `--lookback-years N` (float, default 1.0)
+- 0 = full history (pas de filtre)
+- Apres `load_data()`: filtre candles, trading_days, daily_atr au cutoff
+- ATR par bar reste correct (calcule avec full lookback avant coupe)
+
+### Usage
+```
+python bt_portfolio.py crypto --tf 1h                       # default 1y
+python bt_portfolio.py crypto --tf 1h --lookback-years 2    # 2 ans
+python bt_portfolio.py crypto --tf 1h --lookback-years 0    # full
+```
+
+S'applique a tous les accounts (pepperstone/5ers/ftmo aussi). Pour ces brokers la DB ne contient deja que ~13 mois donc l'effet est minime, mais possibilite de couper plus si besoin de tester sur 6 mois recents par ex.
+
+### Files
+- bt_portfolio.py: argparse + filtre post-load (~10 lignes)
+
 ## 2026-05-10 — Crypto: find_winners 1h v1 + compile config_crypto + bt_portfolio adapte
 
 User: "go. Je lancerai le BT moi meme"
