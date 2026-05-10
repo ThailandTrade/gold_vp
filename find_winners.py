@@ -42,6 +42,8 @@ parser.add_argument('--mpos-min', type=int, default=7)
 parser.add_argument('--outlier-max', type=float, default=0.30)
 parser.add_argument('--avgr-min', type=float, default=0.05, help='Edge tangible minimum (apres cost)')
 parser.add_argument('--pf-min', type=float, default=None, help='Profit factor minimum (default: pas de filtre)')
+parser.add_argument('--all-exits', action='store_true',
+                    help='Inclut TRAIL et BE_TP grids en plus de TPSL (default: TPSL only)')
 parser.add_argument('--lookback-years', type=float, default=None,
                     help="Restreint la donnee aux N dernieres annees. Default: 2 si tf=1h, 4 si tf=4h, full sinon.")
 args = parser.parse_args()
@@ -84,11 +86,18 @@ if args.symbol:
 # Strats a tester (toutes sauf REMOVED + duplicates)
 DUPLICATE_STRATS = {'IDX_KC_BRK','IDX_ENGULF','ALL_ROC_ZERO','IDX_NR4'}
 
-# Grille TPSL uniquement (TRAIL et BE_TP retires 2026-05-10: simplification)
+# Grilles d'exits: TPSL toujours, TRAIL et BE_TP via --all-exits
 TPSL_GRID = [(sl, tp) for sl in [0.5,0.75,1.0,1.25,1.5,2.0,2.5,3.0] for tp in [0.5,0.75,1.0,1.5,2.0,2.5,3.0,4.0,5.0]]
+TRAIL_GRID = [(sl, act, trail) for sl in [1.0,1.5,2.0,2.5,3.0]
+              for act in [0.3,0.5,0.75,1.0] for trail in [0.3,0.5,0.75]] if args.all_exits else []
+BE_TP_GRID = [(sl, be_act, tp) for sl in [1.0,1.5,2.0,2.5,3.0]
+              for be_act in [0.3,0.5,0.75] for tp in [0.75,1.0,1.5,2.0,3.0]
+              if be_act < tp] if args.all_exits else []
 
 pf_str = f" PF>={args.pf_min}" if args.pf_min else ""
-print(f"Cost-r {args.cost_r}R/trade | Filtres: n>={args.n_min} M+>={args.mpos_min} OS<{args.outlier_max:.0%}{pf_str} | grille TPSL={len(TPSL_GRID)}")
+grids_str = f"TPSL={len(TPSL_GRID)}"
+if args.all_exits: grids_str += f" TRAIL={len(TRAIL_GRID)} BE_TP={len(BE_TP_GRID)}"
+print(f"Cost-r {args.cost_r}R/trade | Filtres: n>={args.n_min} M+>={args.mpos_min} OS<{args.outlier_max:.0%}{pf_str} | grilles {grids_str}")
 
 
 def compute_metrics(pnls_R_arr, dates_arr, cost_r):
@@ -230,7 +239,6 @@ for sym in INSTRUMENTS:
         if len(signals) < args.n_min: continue
 
         best = None  # (metrics, etype, p1, p2, p3, h1, h2)
-        # Test toutes les configs TPSL (grille SL x TP)
         for sl, tp in TPSL_GRID:
             pnls, dates = evaluate_exit(candles, signals, 'TPSL', sl, tp, 0)
             m = compute_metrics(pnls, dates, args.cost_r)
@@ -238,6 +246,20 @@ for sym in INSTRUMENTS:
             h1, h2 = split_metrics(pnls, dates, args.cost_r)
             if best is None or m['avg_R_trim'] > best[0]['avg_R_trim']:
                 best = (m, 'TPSL', sl, tp, 0, h1, h2)
+        for sl, act, trail in TRAIL_GRID:
+            pnls, dates = evaluate_exit(candles, signals, 'TRAIL', sl, act, trail)
+            m = compute_metrics(pnls, dates, args.cost_r)
+            if not m: continue
+            h1, h2 = split_metrics(pnls, dates, args.cost_r)
+            if best is None or m['avg_R_trim'] > best[0]['avg_R_trim']:
+                best = (m, 'TRAIL', sl, act, trail, h1, h2)
+        for sl, be_act, tp in BE_TP_GRID:
+            pnls, dates = evaluate_exit(candles, signals, 'BE_TP', sl, be_act, tp)
+            m = compute_metrics(pnls, dates, args.cost_r)
+            if not m: continue
+            h1, h2 = split_metrics(pnls, dates, args.cost_r)
+            if best is None or m['avg_R_trim'] > best[0]['avg_R_trim']:
+                best = (m, 'BE_TP', sl, be_act, tp, h1, h2)
 
         if best is None: continue
         m, etype, p1, p2, p3, h1, h2 = best
