@@ -2,6 +2,52 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-10 — Crypto: find_winners 1d v1 (full histo) -> 67 strats / 13 syms
+
+User: "me demande si ca vaudrait pas le coup de tester le daily." Puis "go" pour compile.
+
+### Backfill 1d
+- Add '1d' a TF_MS dans hl_fetch.py (86_400_000 ms)
+- Backfill 16 cryptos: 32,991 candles total (BTC/ETH/etc ~2300 = 6.4 ans, HYPE 345, TON 800)
+
+### Run find_winners crypto --tf 1d
+Source: candles_crypto_*_1d, lookback default = full (None pour 1d).
+Resultat: **67 strats WIN sur 13 instruments**.
+HYPE skip (345 bars < 500 minimum). TRX/TON: 0 strats.
+
+| Sym | 1d | 4h-2y | 1h-strict |
+|-----|----|-------|-----------|
+| BNBUSD | 9 | 1 | 0 |
+| LINKUSD | 9 | 5 | 0 |
+| XRPUSD | 8 | 3 | 0 |
+| XLMUSD | 7 | 8 | 3 |
+| LTCUSD | 6 | 9 | 0 |
+| ADAUSD | 5 | 5 | 0 |
+| SOLUSD | 5 | 4 | 0 |
+| XMRUSD | 5 | 3 | 0 |
+| ZECUSD | 4 | 0 | 0 |
+| DOGEUSD | 3 | 2 | 0 |
+| BTCUSD | 2 | 8 | 3 |
+| ETHUSD | 2 | 4 | 0 |
+| BCHUSD | 2 | 4 | 1 |
+
+### Lecture
+- 1d plus productif que 1h strict (67 vs 8). Comparable a 4h-2y (62) avec **5+ ans d'histo** vs 2 ans.
+- XRP/BNB/LINK/XLM/LTC/ZEC excelle sur 1d (trend-following long terme).
+- BCH/BTC mieux sur 4h (intraday).
+- Holds longs = funding/spread negligeable vs mouvement journalier (~3%).
+
+### Compile (temp/compile_crypto_1d.py)
+- Add 1d v1 dans config_crypto.py (preserve 1h v2 strict + 4h v2)
+- 13 sections STRAT_EXITS (crypto, sym, '1d')
+- Validation: 137 entries OK / 0 missing
+- 16 syms, 32 units, 137 strats total (8 1h + 62 4h + 67 1d)
+
+### Files
+- hl_fetch.py: TF_MS += '1d'
+- config_crypto.py: 1d v1 mergee
+- strat_exits.py: 13 sections crypto 1d
+
 ## 2026-05-10 — Crypto: find_winners 1h v2 strict (n>=100, PF>=1.3) -> 8 strats / 4 syms
 
 User: "je veux durcir le find winners en 1h. Trades superieur a 100. PF superieur a 1.3."

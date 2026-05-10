@@ -34,7 +34,7 @@ LOOP_SLEEP = 30
 BATCH_LIMIT = 1500  # Binance Futures cap par requete
 BACKFILL_START_MS = int(datetime(2020, 1, 1, tzinfo=UTC).timestamp() * 1000)
 TFS_DEFAULT = ['1h', '4h']
-TF_MS = {'15m': 900_000, '1h': 3_600_000, '4h': 14_400_000}
+TF_MS = {'15m': 900_000, '1h': 3_600_000, '4h': 14_400_000, '1d': 86_400_000}
 
 # Top 20 CoinGecko hors stables/wrapped, filtre par disponibilite Binance Futures USDT-M.
 # Format CCXT pour USDT-margined perp: 'BTC/USDT:USDT'
