@@ -1011,35 +1011,52 @@ STRAT_EXITS[('crypto', 'LTCUSD', '1h')] = {
 
 # ==== Crypto 4h v1 (find_winners 2026-05-10, 13 syms / 44 strats) ====
 
+# ==== Crypto 4h v2 (find_winners 2026-05-10 lookback 2y, 15 syms / 62 strats) ====
+
+# ==== Crypto 4h v2 (find_winners 2026-05-10 lookback 2y, 15 syms / 62 strats) ====
+
 STRAT_EXITS[('crypto', 'BTCUSD', '4h')] = {
-    'ALL_AROON_CROSS': ('TPSL', 3.0, 3.0, 0.0),
-    'ALL_KB_SQUEEZE': ('TPSL', 1.0, 1.5, 0.0),
+    'ALL_3SOLDIERS': ('TPSL', 3.0, 2.5, 0.0),
+    'ALL_BB_TIGHT': ('TPSL', 3.0, 3.0, 0.0),
+    'ALL_DC10': ('TPSL', 3.0, 3.0, 0.0),
+    'ALL_DC10_EMA': ('TPSL', 3.0, 3.0, 0.0),
+    'ALL_KC_BRK': ('TPSL', 3.0, 3.0, 0.0),
+    'ALL_MACD_RSI': ('TPSL', 2.5, 3.0, 0.0),
     'ALL_MTF_BRK': ('TPSL', 3.0, 3.0, 0.0),
-    'D8': ('TPSL', 3.0, 3.0, 0.0),
+    'IDX_PREV_HL': ('TPSL', 2.0, 2.5, 0.0),
 }
 
 STRAT_EXITS[('crypto', 'ETHUSD', '4h')] = {
-    'ALL_3SOLDIERS': ('TPSL', 1.25, 0.75, 0.0),
-    'ALL_ADX_RSI50': ('TPSL', 2.0, 1.5, 0.0),
-    'ALL_RSI_50': ('TPSL', 1.5, 1.0, 0.0),
-    'TOK_TRIX': ('TPSL', 3.0, 2.5, 0.0),
+    'ALL_LR_BREAK': ('TPSL', 1.25, 0.75, 0.0),
+    'ALL_MACD_DIV': ('TPSL', 0.5, 0.75, 0.0),
+    'ALL_MACD_STD_SIG': ('TPSL', 0.75, 0.5, 0.0),
+    'ALL_TRIX': ('TPSL', 1.5, 1.0, 0.0),
 }
 
 STRAT_EXITS[('crypto', 'XRPUSD', '4h')] = {
-    'ALL_EMA_821': ('TPSL', 2.5, 3.0, 0.0),
-    'ALL_ENGULF': ('TPSL', 1.0, 1.0, 0.0),
+    'ALL_DC10': ('TPSL', 3.0, 3.0, 0.0),
+    'ALL_DC10_EMA': ('TPSL', 3.0, 3.0, 0.0),
+    'ALL_EMA_921': ('TPSL', 3.0, 4.0, 0.0),
 }
 
 STRAT_EXITS[('crypto', 'BNBUSD', '4h')] = {
-    'ALL_3SOLDIERS': ('TPSL', 2.5, 3.0, 0.0),
-    'ALL_DC50': ('TPSL', 2.0, 2.0, 0.0),
-    'D8': ('TPSL', 3.0, 2.0, 0.0),
+    'ALL_PIVOT_BRK': ('TPSL', 1.5, 1.5, 0.0),
 }
 
 STRAT_EXITS[('crypto', 'SOLUSD', '4h')] = {
-    'ALL_DPO_14': ('TPSL', 1.0, 1.0, 0.0),
-    'ALL_KC_BRK': ('TPSL', 3.0, 3.0, 0.0),
-    'IDX_VWAP_BOUNCE': ('TPSL', 2.5, 1.5, 0.0),
+    'ALL_EMA_513': ('TPSL', 1.0, 0.75, 0.0),
+    'ALL_MACD_FAST_ZERO': ('TPSL', 1.0, 0.75, 0.0),
+    'ALL_MACD_STD_SIG': ('TPSL', 1.0, 1.0, 0.0),
+    'TOK_STOCH': ('TPSL', 3.0, 2.0, 0.0),
+}
+
+STRAT_EXITS[('crypto', 'TRXUSD', '4h')] = {
+    'ALL_CMO_14': ('TPSL', 0.5, 0.75, 0.0),
+}
+
+STRAT_EXITS[('crypto', 'DOGEUSD', '4h')] = {
+    'ALL_ENGULF': ('TPSL', 3.0, 3.0, 0.0),
+    'ALL_PIVOT_BRK': ('TPSL', 2.5, 3.0, 0.0),
 }
 
 STRAT_EXITS[('crypto', 'HYPEUSD', '4h')] = {
@@ -1047,50 +1064,61 @@ STRAT_EXITS[('crypto', 'HYPEUSD', '4h')] = {
     'ALL_DPO_14': ('TPSL', 2.0, 2.5, 0.0),
 }
 
-STRAT_EXITS[('crypto', 'ZECUSD', '4h')] = {
-    'ALL_EMA_921': ('TPSL', 2.5, 2.5, 0.0),
-    'D8': ('TPSL', 3.0, 3.0, 0.0),
+STRAT_EXITS[('crypto', 'ADAUSD', '4h')] = {
+    'ALL_CCI_20_ZERO': ('TPSL', 2.5, 3.0, 0.0),
+    'ALL_DPO_14': ('TPSL', 3.0, 3.0, 0.0),
+    'ALL_EMA_821': ('TPSL', 3.0, 4.0, 0.0),
+    'ALL_EMA_921': ('TPSL', 3.0, 4.0, 0.0),
+    'IDX_VWAP_BOUNCE': ('TPSL', 3.0, 4.0, 0.0),
 }
 
-STRAT_EXITS[('crypto', 'ADAUSD', '4h')] = {
-    'ALL_KC_BRK': ('TPSL', 1.5, 1.5, 0.0),
-    'ALL_RSI_EXTREME': ('TPSL', 3.0, 2.5, 0.0),
-    'IDX_RSI_REV': ('TPSL', 3.0, 2.5, 0.0),
+STRAT_EXITS[('crypto', 'BCHUSD', '4h')] = {
+    'ALL_CCI_100': ('TPSL', 2.5, 1.5, 0.0),
+    'ALL_ELDER_BEAR': ('TPSL', 1.0, 0.75, 0.0),
+    'ALL_INSIDE_BRK': ('TPSL', 2.5, 1.0, 0.0),
+    'IDX_CONSEC_REV': ('TPSL', 1.5, 3.0, 0.0),
 }
 
 STRAT_EXITS[('crypto', 'LINKUSD', '4h')] = {
     'ALL_AROON_CROSS': ('TPSL', 0.75, 1.0, 0.0),
-    'ALL_CCI_20_ZERO': ('TPSL', 1.25, 1.5, 0.0),
-    'ALL_CMO_14': ('TPSL', 3.0, 2.0, 0.0),
-    'ALL_EMA_513': ('TPSL', 1.25, 1.5, 0.0),
-    'ALL_MACD_FAST_ZERO': ('TPSL', 1.25, 1.5, 0.0),
-    'ALL_MOM_10': ('TPSL', 1.25, 1.5, 0.0),
-    'D8': ('TPSL', 1.5, 2.0, 0.0),
+    'ALL_DC10': ('TPSL', 1.0, 1.0, 0.0),
+    'ALL_DC10_EMA': ('TPSL', 1.0, 1.0, 0.0),
+    'AVWAP_RECLAIM': ('TPSL', 0.75, 0.75, 0.0),
+    'TOK_WILLR': ('TPSL', 3.0, 3.0, 0.0),
 }
 
 STRAT_EXITS[('crypto', 'XMRUSD', '4h')] = {
-    'ALL_ICHI_TK': ('TPSL', 1.5, 1.5, 0.0),
-    'TOK_NR4': ('TPSL', 2.5, 2.5, 0.0),
+    'ALL_ICHI_TK': ('TPSL', 2.0, 1.5, 0.0),
+    'ALL_TRIX': ('TPSL', 3.0, 3.0, 0.0),
+    'BOS_FVG': ('TPSL', 2.5, 2.0, 0.0),
 }
 
 STRAT_EXITS[('crypto', 'TONUSD', '4h')] = {
-    'ALL_ELDER_BEAR': ('TPSL', 3.0, 3.0, 0.0),
+    'ALL_FVG_BULL': ('TPSL', 1.0, 1.0, 0.0),
+    'ALL_MACD_ADX': ('TPSL', 1.25, 0.5, 0.0),
     'IDX_VWAP_BOUNCE': ('TPSL', 1.0, 0.75, 0.0),
 }
 
 STRAT_EXITS[('crypto', 'XLMUSD', '4h')] = {
-    'ALL_AROON_CROSS': ('TPSL', 1.5, 1.5, 0.0),
+    'ALL_ADX_FAST': ('TPSL', 1.25, 0.75, 0.0),
+    'ALL_CMO_14_ZERO': ('TPSL', 2.5, 3.0, 0.0),
+    'ALL_DC10': ('TPSL', 2.5, 3.0, 0.0),
+    'ALL_DC10_EMA': ('TPSL', 2.5, 3.0, 0.0),
+    'ALL_DC50': ('TPSL', 2.0, 2.5, 0.0),
     'ALL_ICHI_TK': ('TPSL', 2.0, 3.0, 0.0),
-    'ALL_STOCH_PIVOT': ('TPSL', 2.5, 3.0, 0.0),
-    'BOS_FVG': ('TPSL', 1.5, 1.0, 0.0),
-    'TOK_TRIX': ('TPSL', 3.0, 1.5, 0.0),
+    'ALL_MACD_RSI': ('TPSL', 1.25, 1.0, 0.0),
+    'ALL_MOM_14': ('TPSL', 2.5, 3.0, 0.0),
 }
 
 STRAT_EXITS[('crypto', 'LTCUSD', '4h')] = {
-    'ALL_3SOLDIERS': ('TPSL', 1.5, 1.0, 0.0),
-    'ALL_MACD_DIV': ('TPSL', 1.5, 2.0, 0.0),
-    'ALL_RSI_EXTREME': ('TPSL', 2.0, 2.0, 0.0),
-    'IDX_BB_REV': ('TPSL', 3.0, 2.0, 0.0),
-    'IDX_RSI_REV': ('TPSL', 2.0, 2.0, 0.0),
+    'ALL_3SOLDIERS': ('TPSL', 1.0, 1.0, 0.0),
+    'ALL_DC50': ('TPSL', 2.0, 0.75, 0.0),
+    'ALL_DOJI_REV': ('TPSL', 2.5, 1.5, 0.0),
+    'ALL_EMA_821': ('TPSL', 2.0, 1.0, 0.0),
+    'ALL_MACD_STD_SIG': ('TPSL', 3.0, 2.0, 0.0),
+    'ALL_STOCH_OB': ('TPSL', 2.5, 3.0, 0.0),
+    'ALL_TRIX': ('TPSL', 2.5, 1.0, 0.0),
+    'AVWAP_RECLAIM': ('TPSL', 2.0, 2.5, 0.0),
+    'IDX_VWAP_BOUNCE': ('TPSL', 0.75, 0.5, 0.0),
 }
 

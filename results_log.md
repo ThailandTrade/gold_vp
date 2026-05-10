@@ -2,6 +2,52 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-10 — Crypto: find_winners 4h v2 (lookback 2y, 62 strats / 15 syms)
+
+User: "refais un find winner 4h mais sur 2 ans" puis "go" pour compile.
+
+### Run find_winners crypto --tf 4h --lookback-years 2
+Source: candles_crypto_*_4h, lookback 2y, Sunday inclus.
+Resultat: **62 strats WIN sur 15 instruments** (vs v1 4y: 44/13). +41% strats.
+
+| Sym | 2y | 4y | Δ |
+|-----|----|----|----|
+| LTCUSD | 9 | 5 | +4 |
+| BTCUSD | 8 | 4 | +4 |
+| XLMUSD | 8 | 5 | +3 |
+| ADAUSD | 5 | 3 | +2 |
+| LINKUSD | 5 | 7 | -2 |
+| ETHUSD | 4 | 4 | = |
+| SOLUSD | 4 | 3 | +1 |
+| BCHUSD | 4 | 0 | +4 |
+| XRPUSD | 3 | 2 | +1 |
+| XMRUSD | 3 | 2 | +1 |
+| TONUSD | 3 | 2 | +1 |
+| DOGEUSD | 2 | 0 | +2 |
+| HYPEUSD | 2 | 2 | = |
+| TRXUSD | 1 | 0 | +1 |
+| BNBUSD | 1 | 3 | -2 |
+| ZECUSD | 0 | 2 | -2 |
+
+### Lecture
+- 2y plus permissif (62 vs 44): beaucoup de strats deviennent winners sur le recent qui ne tiennent pas sur 4y. Risque overfit regime recent.
+- 15/16 syms avec >=1 strat (vs 13/16 en 4y): seul ZEC perd ses strats en 2y.
+- LINK/BNB regressent en 2y -> leur edge est plus stable sur 4y.
+- 2y inclut surtout 2024-2026 (pump ETF + post-ETF). 4y inclut bear 2022.
+
+### Compile (temp/compile_crypto_4h_2y.py)
+- Remplace 4h existant (4y) par 4h v2 (2y) dans config_crypto.py
+- Preserve 1h v1 inchange
+- Drop l'ancien 4h ZECUSD (orphelin, 0 strat 2y)
+- 13 sections STRAT_EXITS (crypto, sym, '4h') reconstruites
+- Validation: 95 entries OK / 0 missing (33 strats 1h + 62 strats 4h)
+- 15 syms total, 26 units (sym, tf)
+
+### Files
+- config_crypto.py: 4h v2 mergee (1h preserve)
+- strat_exits.py: 15 sections crypto 4h reconstruites
+- temp/compile_crypto_4h_2y.py
+
 ## 2026-05-10 — Crypto: find_winners 4h v1 (44 strats / 13 syms)
 
 User: "fais moi un find winners 4h" puis "go" pour compile.
