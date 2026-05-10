@@ -2,6 +2,49 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-10 — Crypto: find_winners 4h v1 (44 strats / 13 syms)
+
+User: "fais moi un find winners 4h" puis "go" pour compile.
+
+### Run find_winners crypto --tf 4h
+Source: candles_crypto_*_4h, lookback 4y auto, Sunday inclus (24/7).
+Resultat: **44 strats WIN sur 13 instruments** (sur 16 testes).
+
+| Sym | 4h | 1h | Δ |
+|-----|----|----|----|
+| LINKUSD | 7 | 2 | +5 |
+| XLMUSD | 5 | 6 | -1 |
+| LTCUSD | 5 | 2 | +3 |
+| BTCUSD | 4 | 4 | = |
+| ETHUSD | 4 | 1 | +3 |
+| ADAUSD | 3 | 0 | +3 |
+| BNBUSD | 3 | 2 | +1 |
+| SOLUSD | 3 | 1 | +2 |
+| HYPEUSD | 2 | 4 | -2 |
+| TONUSD | 2 | 0 | +2 |
+| XMRUSD | 2 | 4 | -2 |
+| XRPUSD | 2 | 0 | +2 |
+| ZECUSD | 2 | 0 | +2 |
+| BCHUSD | 0 | 6 | -6 |
+| DOGEUSD | 0 | 1 | -1 |
+| TRXUSD | 0 | 0 | = |
+
+### Insights TF
+- 4h ramene 5 syms qui n'avaient rien en 1h (XRP, ADA, TON, ZEC, LTC ameliore).
+- BCH = pure 1h (0 strat 4h vs 6 strats 1h).
+- HYPE/XMR mieux en 1h, normal pour LINK 4h vs 1h.
+
+### Compile (temp/compile_crypto_4h.py)
+- Merge 4h dans config_crypto.py (preserve 1h existant)
+- Append 13 sections STRAT_EXITS[('crypto', sym, '4h')]
+- Validation: 77 entries OK / 0 missing (33 strats 1h + 44 strats 4h)
+- 15 syms total, 24 units (sym, tf)
+
+### Files
+- config_crypto.py: regenere (1h + 4h merged)
+- strat_exits.py: +13 sections crypto 4h
+- temp/compile_crypto_4h.py
+
 ## 2026-05-10 — Fix: skip_sunday off pour crypto (24/7)
 
 User: "le dimanche skip est valable pour forex et indices. La on est sur les cryptos."
