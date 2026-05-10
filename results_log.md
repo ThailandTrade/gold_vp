@@ -2,6 +2,54 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-10 — Branche crypto: parking, retour sur main
+
+User: "on laisse tomber la branche crypto pour l'instant. Log ce qu'on a fait, et on revient sur main."
+
+### Etat final branche `crypto`
+9 commits depuis main (2957e46 -> 8609582):
+1. **2957e46**: fetch top 16 perps via Binance Futures (CCXT). Tables `candles_crypto_<sym>_<tf>`.
+2. **d51b33f**: find_winners adapte (account='crypto', --source flag).
+3. **29e6ad3**: TPSL only (retrait TRAIL/BE_TP par defaut).
+4. **417d472**: --lookback-years (default 2y pour 1h, 4y pour 4h).
+5. **0068337**: find_winners 1h v1 + config_crypto + bt_portfolio adapte (33 strats / 11 syms).
+6. **63683c2**: bt_portfolio --lookback-years (default 1y).
+7. **a491274**: find_winners 4h v1 (44/13).
+8. **fca4756 (cherry du main)**: live_mt5 type_filling auto.
+9. **a13a6c3 (cherry main)**: BT DOW PnL flat sizing.
+10. **9eb7d13 (cherry main)**: cryptos exclues de Pepperstone Standard.
+11. **e8c4e08**: find_winners 4h v2 lookback 2y (62/15).
+12. **88ae8b3 (cherry main)**: SYMBOL_ID +6 cryptos.
+13. **be0be61**: skip_sunday off pour crypto (24/7).
+14. **b12350a**: find_winners 1h v2 strict n>=100 PF>=1.3 (8/4).
+15. **f479c8e**: 1d backfill + find_winners 1d v1 (67/13).
+16. **8609582**: strats v9 (DC100, DC200, GOLDEN_CROSS, SLOPE_50, ADX_25).
+
+### Decouvertes cles de la branche
+- **Pepperstone Standard cryptos = unviable** (spreads 0.20-1.43% vs 0.005-0.04% indices/FX). Cryptos retirees du live FX.
+- **HL native API limite a 5000 candles/TF** (7 mois 1h, 2.3 ans 4h) -> Binance Futures via CCXT plus utile.
+- **Top 20 - 4 absents** (FIGR, WBT, LEO, CC) = 16 perps actifs. TRX/TON les moins productifs.
+- **TF 1d > 1h pour crypto** (74/14 vs 33/11). Strats trend-following long terme dominent.
+- **Strats v9 swing**: seul ALL_ADX_25 qualifie (sur 3 syms: SOL, ADA, XLM). DC100/200, GOLDEN_CROSS, SLOPE_50 ne passent pas n>=80 -> trop rares en daily.
+- **Funding rate** non integre (besoin API separee, propose pour plus tard).
+- **Cross-sectional momentum** non integre (refacto framework requis).
+
+### Etat config_crypto.py au moment du parking
+- 16 syms ALL_INSTRUMENTS, 32 units (sym, tf), 137 strats:
+  - 1h v2 strict: 8 strats / 4 syms (BTC, BCH, HYPE, XLM)
+  - 4h v2 (lookback 2y): 62 strats / 15 syms
+  - 1d v1 (full histo, TPSL only): 67 strats / 13 syms
+- BT pas encore lance (user le fait lui-meme post-merge eventuel)
+
+### Decision
+Parking de la branche `crypto`. Reprise eventuelle apres focus prioritaire sur main (pepperstone live + dashboard).
+
+A faire si reprise:
+- Compile finale 1d v2 (74 strats avec all-exits + 3 ADX_25 v9)
+- Lancer BT pepperstone vs crypto pour comparer rendements vs DD
+- Decision live: HL natif vs Binance vs ne pas live crypto
+- Funding rate integration si crypto live
+
 ## 2026-05-10 — Strats v9: 5 nouveaux pour swing/long-term
 
 User: "ok code ces nouvelles strategies" (apres reflexion sur swing trading).
