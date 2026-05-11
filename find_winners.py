@@ -39,6 +39,9 @@ parser.add_argument('--n-min', type=int, default=80)
 parser.add_argument('--mpos-min', type=int, default=7)
 parser.add_argument('--outlier-max', type=float, default=0.30)
 parser.add_argument('--avgr-min', type=float, default=0.05, help='Edge tangible minimum (apres cost)')
+parser.add_argument('--pf-min', type=float, default=None, help='Profit factor minimum (default: pas de filtre)')
+parser.add_argument('--lookback-years', type=float, default=None,
+                    help='Restreint la donnee aux N dernieres annees (default: full)')
 parser.add_argument('--tpsl-only', action='store_true')
 args = parser.parse_args()
 
@@ -187,6 +190,17 @@ for sym in INSTRUMENTS:
         print(f"  Skip {sym} [{args.tf}]: {e}")
         conn.close(); continue
     conn.close()
+
+    # Lookback filter (ATR deja calcule avec full lookback, on coupe juste apres)
+    if args.lookback_years and len(candles) > 0:
+        from datetime import timedelta as _td
+        cutoff = candles['ts_dt'].max() - _td(days=int(args.lookback_years * 365))
+        before = len(candles)
+        candles = candles[candles['ts_dt'] >= cutoff].reset_index(drop=True)
+        trading_days = sorted(d for d in trading_days if d >= cutoff.date())
+        daily_atr = {d: v for d, v in daily_atr.items() if d >= cutoff.date()}
+        print(f"  Lookback {args.lookback_years}y -> {len(candles)} bars (etait {before})")
+
     if len(candles) < 500:
         print(f"  Sample trop court ({len(candles)} bars), skip"); continue
 
@@ -232,13 +246,14 @@ for sym in INSTRUMENTS:
         if best is None: continue
         m, etype, p1, p2, p3, h1, h2 = best
 
-        # Filtre 8 criteres
+        # Filtre criteres
         ok = (m['n'] >= args.n_min
               and m['avg_R'] >= args.avgr_min
               and m['avg_R_trim'] > 0
               and m['median_R'] > 0
               and m['outlier_share'] < args.outlier_max
               and m['m_pos'] >= args.mpos_min
+              and (args.pf_min is None or m['pf'] >= args.pf_min)
               and h1 > 0
               and h2 > 0)
         status = ''
@@ -253,6 +268,7 @@ for sym in INSTRUMENTS:
             if m['median_R'] <= 0: r.append("medR<=0")
             if m['outlier_share'] >= args.outlier_max: r.append(f"OS={m['outlier_share']:.0%}")
             if m['m_pos'] < args.mpos_min: r.append(f"M+<{args.mpos_min}")
+            if args.pf_min is not None and m['pf'] < args.pf_min: r.append(f"PF<{args.pf_min}")
             if h1 <= 0: r.append("h1<=0")
             if h2 <= 0: r.append("h2<=0")
             status = ' / '.join(r)

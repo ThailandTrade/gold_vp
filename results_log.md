@@ -2,6 +2,50 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-11 — Pepperstone: find_winners 15m v4 (1y glissant, PF>=1.2, n>=100)
+
+User: "Tu vas me faire une recherche find winners sur la derniere annee glissante. Je veux PF sup a 1.2." Puis "15m. Au moins 100 trades."
+
+### Modifs find_winners.py (port from crypto branch)
+- Nouveau flag `--pf-min` (filtre profit factor minimum)
+- Nouveau flag `--lookback-years` (fenetre glissante, default full)
+- TRAIL/BE_TP restent actifs par defaut sur main (vs TPSL-only sur crypto branch)
+
+### Run find_winners pepperstone --tf 15m --n-min 100 --pf-min 1.2 --lookback-years 1
+Source: candles_mt5_*_15m, 27 instruments testes (FX 6 + indices 21).
+Resultat: **44 strats WIN sur 16 instruments**.
+
+| Sym | Strats | | Sym | Strats |
+|-----|--------|-|-----|--------|
+| AUS200 | 12 | | NAS100 | 3 |
+| UK100 | 7 | | EUSTX50 | 3 |
+| USDCAD | 4 | | GER40 | 3 |
+| US30 | 2 | | US500 | 2 |
+| GBPUSD | 1 | | USDCHF | 1 |
+| USDJPY | 1 | | FRA40 | 1 |
+| JPN225 | 1 | | HK50 | 1 |
+| CA60 | 1 | | SWI20 | 1 |
+
+11 syms recales (0 strat): AUDUSD, EURUSD, SPA35, CN50, US2000, CHINAH, NETH25, SCI25, HSTECH, US400, TWN.
+
+### Lecture
+- AUS200 domine (vol + sessions Asie/EU/US qui se chevauchent).
+- EURUSD = 0 -- inhabituel (PF>=1.2 + n>=100 + 1y glissant strict).
+- Exotics (HSTECH/TWN/US400) recales par sample court (<1 an).
+
+### Compile (temp/compile_pep_15m_1y.py)
+- Replace 15m existant par v4 dans config_pepperstone.py
+- Preserve 1h v3 + 4h existants
+- 16 sections STRAT_EXITS reconstruites pour 15m
+- Validation: 303 entries OK / 0 missing
+- 34 syms, 71 units (sym, tf), 303 strats (44 15m + 151 1h + 108 4h)
+
+### Files
+- find_winners.py: +--pf-min, +--lookback-years (sur main)
+- config_pepperstone.py: 15m v4 regenere
+- strat_exits.py: 16 sections (pepperstone, sym, '15m') reconstruites
+- temp/compile_pep_15m_1y.py
+
 ## 2026-05-09 — Skip Dimanche (live + BT)
 
 User: "ne pas prendre de trades le dimanche. On commence le lundi 0h UTC"
