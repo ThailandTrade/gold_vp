@@ -98,7 +98,7 @@ async def icon_svg():
 
 @app.get("/sw.js")
 async def service_worker():
-    sw = """const CACHE='hydra-v4';
+    sw = """const CACHE='hydra-v5';
 self.addEventListener('install',e=>{self.skipWaiting();});
 self.addEventListener('activate',e=>{
   e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));
@@ -1194,11 +1194,18 @@ function renderToday(data){
   const trades=getPeriodTrades(data);
   const periodPnl=trades.reduce((s,t)=>s+(t.pnl||0),0);
   const eqInfo=buildEquity(hist,a.balance||0);
-  const recent=eqInfo.points.slice(-Math.min(100,eqInfo.points.length));
+  let recent=eqInfo.points.slice(-Math.min(100,eqInfo.points.length));
   let h='';
+  // Toujours afficher le chart -- si pas assez d'historique, ligne plate au balance actuel
+  let chartTitle;
   if(recent.length>=2){
-    h+=`<div class="card"><div class="card-title">Equity (${recent.length} derniers points)</div>${renderEquityChart(recent)}</div>`;
+    chartTitle=`Equity (${recent.length} derniers points)`;
+  } else {
+    const bal=a.balance||0;
+    recent=[{t:null,e:bal,dd:0},{t:null,e:bal,dd:0}];
+    chartTitle='Equity (en attente de trades)';
   }
+  h+=`<div class="card"><div class="card-title">${chartTitle}</div>${renderEquityChart(recent)}</div>`;
   h+=`<div class="card"><div class="card-title">Trades ${range.label}<span class="right">${trades.length} trades &middot; ${fmtUsd(periodPnl,2)}</span></div>`;
   if(trades.length===0)h+='<div class="empty">Aucun trade sur la periode</div>';
   else{
