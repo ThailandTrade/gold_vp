@@ -2,6 +2,28 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-12 — Pepperstone: drop cryptos de ALL_INSTRUMENTS
+
+User: "enleve moi les cryptos des strats 1h sur peppertsone"
+
+### Constat
+10 cryptos (BTCUSD, ETHUSD, LTCUSD, ADAUSD, AVAXUSD, BCHUSD, BNBUSD, LINKUSD, SOLUSD, XRPUSD) avaient toutes uniquement du 1h (find_winners 1h v3 du 2026-04-30). Retirees du live le 2026-05-09 via EXCLUDE_CRYPTOS mais encore dans ALL_INSTRUMENTS.
+
+### Modif
+- config_pepperstone.py: drop 10 cryptos de ALL_INSTRUMENTS (34 -> 24 syms)
+- strat_exits.py: drop 10 sections (pepperstone, crypto, '1h')
+- Simplifie LIVE_INSTRUMENTS = list(ALL_INSTRUMENTS.keys()) (plus besoin de EXCLUDE_CRYPTOS)
+
+### Etat apres
+- 24 syms (6 FX + 18 indices), 61 units (sym, tf)
+- Strats par TF: 15m=44, 1h=104 (etait 151, -47 cryptos), 4h=108. Total 256 strats.
+- Validation: 256 entries OK / 0 missing
+
+### Files
+- config_pepperstone.py: cryptos retires de ALL_INSTRUMENTS
+- strat_exits.py: -10 sections crypto
+- temp/drop_cryptos_pep.py
+
 ## 2026-05-11 — Pepperstone: find_winners 15m v4 (1y glissant, PF>=1.2, n>=100)
 
 User: "Tu vas me faire une recherche find winners sur la derniere annee glissante. Je veux PF sup a 1.2." Puis "15m. Au moins 100 trades."

@@ -1,13 +1,13 @@
 """
-Config Pepperstone multi-TF -- 15m v4 regenere 2026-05-11 (find_winners 1y glissant, PF>=1.2, n>=100).
-1h v3 conserve du run 2026-04-30, 4h conserve si present.
+Config Pepperstone multi-TF -- 15m v4 + 1h v3 + 4h.
+Cryptos retirees 2026-05-12 (spreads Standard rhedibitoires, decision 2026-05-09).
 Capital $200, risk 0.04%, server UTC+3.
 Schema: ALL_INSTRUMENTS[sym][tf] = {'risk_pct': ..., 'portfolio': [...]}
 
 Pipeline find_winners:
-- 15m: n>=100, PF>=1.2, lookback 1y glissant <- run v4 2026-05-11
+- 15m: n>=100, PF>=1.2, lookback 1y glissant (v4 2026-05-11)
 - 1h:  n>=60  (v3 2026-04-30)
-- 4h:  n>=40  (si present)
+- 4h:  n>=40
 - Filtres communs: avg_R>=0.05, avg_R_trim>0, median_R>0, OS<30%, M+>=7/12, h1>0, h2>0
 """
 BROKER = 'pepperstone'
@@ -121,36 +121,6 @@ ALL_INSTRUMENTS = {
     },
     'NETH25': {
         '4h': {'risk_pct': 0.005, 'portfolio': ['ALL_KC_BRK']},
-    },
-    'BTCUSD': {
-        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_CONSEC_REV', 'ALL_FIB_618', 'IDX_CONSEC_REV']},
-    },
-    'ETHUSD': {
-        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_HAMMER', 'TOK_BIG', 'TOK_STOCH']},
-    },
-    'LTCUSD': {
-        '1h': {'risk_pct': 0.005, 'portfolio': ['TOK_TRIX']},
-    },
-    'ADAUSD': {
-        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_STOCH_OB', 'IDX_3SOLDIERS', 'IDX_CONSEC_REV']},
-    },
-    'AVAXUSD': {
-        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_CMO_14_ZERO', 'ALL_EMA_921', 'ALL_MOM_14', 'TOK_BIG', 'TOK_TRIX', 'TOK_WILLR']},
-    },
-    'BCHUSD': {
-        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_DPO_14', 'ALL_EMA_821', 'ALL_FIB_618', 'ALL_FISHER_9', 'ALL_MACD_DIV', 'ALL_PIVOT_BRK', 'ALL_PSAR_EMA', 'ALL_RSI_DIV', 'ALL_SUPERTREND', 'TOK_BIG', 'TOK_FISHER']},
-    },
-    'BNBUSD': {
-        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_KC_BRK', 'ALL_TRIX']},
-    },
-    'LINKUSD': {
-        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_CCI_14_ZERO', 'ALL_CMO_14_ZERO', 'ALL_MOM_14', 'ALL_RSI_EXTREME', 'IDX_RSI_REV', 'IDX_VWAP_BOUNCE', 'TOK_TRIX']},
-    },
-    'SOLUSD': {
-        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_CCI_14_ZERO', 'ALL_CMO_9', 'ALL_ICHI_TK', 'ALL_KB_SQUEEZE', 'ALL_MACD_DIV', 'IDX_PREV_HL']},
-    },
-    'XRPUSD': {
-        '1h': {'risk_pct': 0.005, 'portfolio': ['ALL_BB_TIGHT', 'ALL_KB_SQUEEZE', 'ALL_PIVOT_BRK', 'IDX_PREV_HL', 'TOK_TRIX']},
     },
 }
 
