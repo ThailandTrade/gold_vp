@@ -98,7 +98,7 @@ async def icon_svg():
 
 @app.get("/sw.js")
 async def service_worker():
-    sw = """const CACHE='hydra-v5';
+    sw = """const CACHE='hydra-v6';
 self.addEventListener('install',e=>{self.skipWaiting();});
 self.addEventListener('activate',e=>{
   e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));
@@ -449,6 +449,8 @@ const PERIODS=[
 let SELECTED=localStorage.getItem('hydra-acc')||'live';
 let TAB=localStorage.getItem('hydra-tab')||'home';
 let PERIOD=localStorage.getItem('hydra-period')||'today';
+let EQ_LIMIT=parseInt(localStorage.getItem('hydra-eq-limit'))||100;
+const EQ_LIMITS=[20,50,100,200,500,0];  // 0 = tout
 let LAST={};
 let MODAL_STACK=[]; // pour bouton retour
 
@@ -917,6 +919,7 @@ function renderAccTabs(allData){
 function selectAcc(acc){SELECTED=acc;localStorage.setItem('hydra-acc',acc);render();}
 function selectTab(t){TAB=t;localStorage.setItem('hydra-tab',t);render();}
 function selectPeriod(p){PERIOD=p;localStorage.setItem('hydra-period',p);render();}
+function selectEqLimit(n){EQ_LIMIT=n;localStorage.setItem('hydra-eq-limit',n);render();}
 
 function renderPeriodTabs(){
   let h='';
@@ -1194,7 +1197,8 @@ function renderToday(data){
   const trades=getPeriodTrades(data);
   const periodPnl=trades.reduce((s,t)=>s+(t.pnl||0),0);
   const eqInfo=buildEquity(hist,a.balance||0);
-  let recent=eqInfo.points.slice(-Math.min(100,eqInfo.points.length));
+  const limit=EQ_LIMIT>0?Math.min(EQ_LIMIT,eqInfo.points.length):eqInfo.points.length;
+  let recent=eqInfo.points.slice(-limit);
   let h='';
   // Toujours afficher le chart -- si pas assez d'historique, ligne plate au balance actuel
   let chartTitle;
@@ -1205,7 +1209,13 @@ function renderToday(data){
     recent=[{t:null,e:bal,dd:0},{t:null,e:bal,dd:0}];
     chartTitle='Equity (en attente de trades)';
   }
-  h+=`<div class="card"><div class="card-title">${chartTitle}</div>${renderEquityChart(recent)}</div>`;
+  // Chips selector pour nombre de points
+  let chips='';
+  for(const n of EQ_LIMITS){
+    const lbl=n===0?'Tout':String(n);
+    chips+=`<button class="period-chip ${n===EQ_LIMIT?'active':''}" onclick="selectEqLimit(${n})">${lbl}</button>`;
+  }
+  h+=`<div class="card"><div class="card-title">${chartTitle}</div><div class="eq-chips" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${chips}</div>${renderEquityChart(recent)}</div>`;
   h+=`<div class="card"><div class="card-title">Trades ${range.label}<span class="right">${trades.length} trades &middot; ${fmtUsd(periodPnl,2)}</span></div>`;
   if(trades.length===0)h+='<div class="empty">Aucun trade sur la periode</div>';
   else{
