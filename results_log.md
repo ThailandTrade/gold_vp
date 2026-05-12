@@ -2,6 +2,22 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-12 — compare_today: affiche MM-DD HH:MM dans BT In/Out + LV In/Out
+
+User: "Je vois rien qui matche ! En plus on a meme pas la date, juste l'heure la. On peut rien linker."
+
+### Fix
+Colonnes BT In/Out et LV In/Out affichaient `%H:%M` seul. Avec lookback 14j, impossible de distinguer un trade 14:00 hier vs aujourd'hui.
+
+Modif format `%m-%d %H:%M` (ex: `05-11 16:00`). Largeur colonnes +5 chars.
+
+### Test 5ers
+- JPN225 ALL_FVG_BULL: BT 05-11 16:00 -> 05-12 01:00 matche parfaitement Live 05-11 16:00 -> 05-12 00:57
+- UK100 ALL_HAMMER#1: BT 05-08 13:00 vs Live 05-11 08:00 -> divergence 3j visible (live a manque le signal BT)
+
+### Files
+- compare_today.py: format date+heure dans 4 colonnes (bt_in, bt_out, lv_in, lv_out)
+
 ## 2026-05-12 — compare_today + vps_pusher: filtre par exit_date (trades multi-jour)
 
 User: "Le compare du BT ne prend en compte que les trades qui ont ete declenches today. En fait il faudrait que ca compare tout ce qui a ete ferme today."
