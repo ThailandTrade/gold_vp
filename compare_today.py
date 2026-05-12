@@ -197,18 +197,26 @@ for sym, tf, icfg in UNITS:
     print(f"\n  {sym} [{tf}] -- ATR={atr:.2f} -- {len(portfolio)} strats")
     print(f"  BT: {len(bt_active)} trades ({len(bt_skip)} skipped) | Live: {len(lv)} closed + {len(lo)} open")
 
-    # Build maps -- multiple trades per strat possible (mutex retire 2026-05-02)
-    bt_map = {}
-    for t in bt_trades: bt_map.setdefault(t['strat'], []).append(t)
-    lv_map = {}
-    for t in lv: lv_map.setdefault(t['strat'], []).append(t)
-    lo_map = {}
-    for p in lo: lo_map.setdefault(p['strat'], []).append(p)
-    # Tri par entry_time pour matching ordonne
-    for sn in bt_map: bt_map[sn].sort(key=lambda t: t.get('entry_time', ''))
-    for sn in lv_map: lv_map[sn].sort(key=lambda t: t.get('entry_time', ''))
-    for sn in lo_map: lo_map[sn].sort(key=lambda t: t.get('time', ''))
-    all_sn = sorted(set(list(bt_map.keys()) + list(lv_map.keys()) + list(lo_map.keys())))
+    # Match exact: (strat, dir, entry date + hour) -- evite faux match position-par-position
+    def _date_hour(t):
+        if hasattr(t, 'strftime'): return t.strftime('%Y-%m-%d %H')
+        s = str(t)
+        return s[:13]  # '2026-05-12 06'
+    bt_buckets = {}
+    for t in bt_trades:
+        k = (t['strat'], t['dir'], _date_hour(t['entry_time']))
+        bt_buckets.setdefault(k, []).append(t)
+    lv_buckets = {}
+    for t in lv:
+        k = (t['strat'], t['dir'], _date_hour(t['entry_time']))
+        lv_buckets.setdefault(k, []).append(t)
+    lo_buckets = {}
+    for p in lo:
+        k = (p['strat'], p['dir'], _date_hour(p['time']))
+        lo_buckets.setdefault(k, []).append(p)
+    # Cle de tri: (strat, date_hour, dir)
+    all_keys = sorted(set(bt_buckets) | set(lv_buckets) | set(lo_buckets),
+                      key=lambda k: (k[0], k[2], k[1]))
 
     tbl = PrettyTable()
     tbl.field_names = ['Sym', 'TF', 'Strat', 'Exit', 'BT Dir', 'BT Entry', 'BT Exit', 'BT R', 'BT In', 'BT Out',
@@ -223,10 +231,11 @@ for sym, tf, icfg in UNITS:
     bt_total_pts = 0; lv_total_pts = 0
     table_rows = []
 
-    for sn in all_sn:
-        bts = bt_map.get(sn, [])
-        lvs = lv_map.get(sn, [])
-        los = lo_map.get(sn, [])
+    for key in all_keys:
+        sn, _dir, _dh = key
+        bts = bt_buckets.get(key, [])
+        lvs = lv_buckets.get(key, [])
+        los = lo_buckets.get(key, [])
         n_pairs = max(len(bts), len(lvs), len(los), 1) if (bts or lvs or los) else 0
         exit_cfg = sym_exits.get(sn, DEFAULT_EXIT)
         exit_type = exit_cfg[0]
@@ -235,7 +244,7 @@ for sym, tf, icfg in UNITS:
             lv_t = lvs[idx] if idx < len(lvs) else None
             lo_t = los[idx] if idx < len(los) else None
 
-            # Strat label: ajout suffix #idx si plusieurs trades
+            # Strat label: ajout suffix #idx si plusieurs trades dans le meme bucket
             sn_label = f"{sn}#{idx+1}" if n_pairs > 1 else sn
 
             # BT columns (MM-DD HH:MM pour distinguer jours avec lookback)

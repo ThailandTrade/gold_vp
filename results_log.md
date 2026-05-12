@@ -2,6 +2,36 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-12 — compare_today + vps_pusher: match par bucket (strat, dir, date+hour)
+
+User: "le match doit se faire sur sym, strat, direction, date et heure."
+
+### Probleme
+Apres lookback 14j, le match position-par-position dans le groupage par strat creait des faux matches:
+- BT trades sortes par entry_time: [05-08 short, 05-11 short, 05-12 long]
+- LV trades sortes: [05-12 short, 05-12 long]
+- Match BT[0]=05-08 short vs LV[0]=05-12 short -> "DIR MISMATCH" alors que ce sont des trades differents.
+
+### Fix
+Cle de bucket: `(sym, strat, dir, entry_date_hour)` ou `entry_date_hour = '2026-05-12 06'`.
+- Match exact = meme bucket
+- BT seul dans bucket -> "BT ONLY"
+- LV seul -> "LV ONLY"
+- Les 2 -> comparaison reelle (entry/exit/pnl/ENTRY DIFF si decalage intra-minute)
+- "DIR MISMATCH" disparait comme categorie (directions opposees = buckets differents)
+
+### Test 5ers UK100 (cas reel)
+Avant: "DIR MISMATCH!" sur AVWAP_RECLAIM#2 (BT 05-11 short vs LV 05-12 long).
+Apres: separation propre en 4 lignes:
+- AVWAP_RECLAIM 05-11 05:00 short: BT+LV match (+0.80/+0.81R)
+- AVWAP_RECLAIM 05-12 06:00 long: BT+LV match (-1.00/-1.02R)
+- AVWAP_RECLAIM 05-08 18:00 long: BT ONLY (live a manque)
+- AVWAP_RECLAIM 05-08 13:00 short (ALL_HAMMER): BT ONLY
+
+### Files
+- compare_today.py: bt_buckets/lv_buckets/lo_buckets par (strat, dir, date_hour)
+- vps_pusher.py: meme bucket logic dans compute_compare_today
+
 ## 2026-05-12 — compare_today + vps_pusher: detection "ran out of data" pour trades BT open
 
 User: "on ne sait pas si dans le BT on est vraiment out du trade ou pas."

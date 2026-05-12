@@ -254,14 +254,29 @@ def compute_compare_today():
             sn = t.get('strat', '')
             if sn in portfolio:
                 lv_by_strat.setdefault(sn, []).append(t)
-        # Tri par entry_time pour matching ordonne
-        for sn in bt_by_strat: bt_by_strat[sn].sort(key=lambda b: b.get('entry_time') or '')
-        for sn in lv_by_strat: lv_by_strat[sn].sort(key=lambda l: l.get('time_open') or '')
+
+        # Match par bucket (strat, dir, date_hour) -- evite faux matchs position-par-position
+        def _date_hour(ts):
+            if ts is None: return ''
+            if hasattr(ts, 'strftime'): return ts.strftime('%Y-%m-%d %H')
+            return str(ts)[:13]
+        bt_buckets = {}
+        for sn, bts in bt_by_strat.items():
+            for t in bts:
+                k = (sn, t['dir'], _date_hour(t.get('entry_time')))
+                bt_buckets.setdefault(k, []).append(t)
+        lv_buckets = {}
+        for sn, lvs in lv_by_strat.items():
+            for t in lvs:
+                k = (sn, t['dir'], _date_hour(t.get('time_open')))
+                lv_buckets.setdefault(k, []).append(t)
 
         rows = []
-        for sn in portfolio:
-            bts = bt_by_strat.get(sn, [])
-            lvs = lv_by_strat.get(sn, [])
+        all_keys = sorted(set(bt_buckets) | set(lv_buckets), key=lambda k: (k[0], k[2], k[1]))
+        for key in all_keys:
+            sn = key[0]
+            bts = bt_buckets.get(key, [])
+            lvs = lv_buckets.get(key, [])
             n_pairs = max(len(bts), len(lvs), 1)
             for idx in range(n_pairs):
                 bt = bts[idx] if idx < len(bts) else None
