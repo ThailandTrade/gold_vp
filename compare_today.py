@@ -150,6 +150,7 @@ for sym, tf, icfg in UNITS:
     tf_delta = timedelta(minutes=TF_DELTA_MIN.get(tf, 60))
     bt_closed_today = []
     bt_open_today = []
+    N = len(candles)
     for tup in raw_trades:
         ci, xi, di, pnl_oz, sl_atr, atr_t, mo, sn = tup[:8]
         d_dir = 'long' if di == 1 else 'short'
@@ -158,18 +159,27 @@ for sym, tf, icfg in UNITS:
         risk_1r = sl_atr * atr_t
         # Shift entry/exit time pour aligner sur close de bougie (= live fill time)
         entry_close = candles.iloc[ci]['ts_dt'] + tf_delta
-        xi_safe = min(xi, len(candles) - 1)
+        xi_safe = min(xi, N - 1)
         exit_close = candles.iloc[xi_safe]['ts_dt'] + tf_delta
+        # Detect "ran out of data": xi atteint la derniere bougie ET pas le cap timeout 288
+        # => trade pas vraiment ferme dans la simu, equivalent a une open position
+        ran_out = (xi == N - 1) and (xi - ci < 288)
         t = {
-            'strat': sn, 'tf': tf, 'dir': d_dir, 'entry': entry, 'exit': ex,
-            'pnl_pts': pnl_oz, 'pnl_r': pnl_oz / risk_1r if risk_1r > 0 else 0,
+            'strat': sn, 'tf': tf, 'dir': d_dir, 'entry': entry,
+            'exit': ex if not ran_out else None,
+            'pnl_pts': pnl_oz if not ran_out else None,
+            'pnl_r': (pnl_oz / risk_1r) if (risk_1r > 0 and not ran_out) else None,
             'risk_1r': risk_1r, 'bars': xi - ci,
             'entry_time': str(entry_close),
-            'exit_time': str(exit_close),
+            'exit_time': str(exit_close) if not ran_out else None,
             'skipped': None,
+            'ran_out': ran_out,
         }
         # Split par etat aujourd'hui
-        if exit_close.date() == today:
+        if ran_out:
+            if entry_close.date() <= today:
+                bt_open_today.append(t)
+        elif exit_close.date() == today:
             bt_closed_today.append(t)
         elif entry_close.date() <= today and exit_close.date() > today:
             bt_open_today.append(t)
@@ -233,10 +243,14 @@ for sym, tf, icfg in UNITS:
                 bt_dir = 'SKIP'; bt_entry = f"{bt['entry']:.2f}"; bt_exit = '-'; bt_pts = '-'
                 bt_in = bt['entry_time'][5:16]; bt_out = '-'
             elif bt:
-                bt_dir = bt['dir']; bt_entry = f"{bt['entry']:.2f}"; bt_exit = f"{bt['exit']:.2f}"
-                bt_pts = f"{bt['pnl_r']:+.2f}R"
-                bt_total_pts += bt['pnl_r']
-                bt_in = bt['entry_time'][5:16]; bt_out = bt['exit_time'][5:16]
+                bt_dir = bt['dir']; bt_entry = f"{bt['entry']:.2f}"
+                # ran_out -> trade simu pas vraiment ferme, on cache l'exit
+                bt_exit = f"{bt['exit']:.2f}" if bt.get('exit') is not None else 'OPEN'
+                bt_pts = f"{bt['pnl_r']:+.2f}R" if bt.get('pnl_r') is not None else '...'
+                if bt.get('pnl_r') is not None:
+                    bt_total_pts += bt['pnl_r']
+                bt_in = bt['entry_time'][5:16]
+                bt_out = bt['exit_time'][5:16] if bt.get('exit_time') else '...'
             else:
                 bt_dir = '-'; bt_entry = '-'; bt_exit = '-'; bt_pts = '-'; bt_in = '-'; bt_out = '-'
 

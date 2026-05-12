@@ -2,6 +2,54 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-12 — compare_today + vps_pusher: detection "ran out of data" pour trades BT open
+
+User: "on ne sait pas si dans le BT on est vraiment out du trade ou pas."
+
+### Probleme
+`sim_exit_custom` (strats.py:267) a un fallback quand la simu atteint la fin du sample sans SL/TP touche:
+```python
+n = min(288, N - pos - 1)
+if n > 0: return n, cl[pos + n]
+```
+=> Retourne un "pseudo-exit" au close de la derniere bougie. Le trade est en realite **encore en cours** mais le code aval (compare_today, vps_pusher) le traitait comme un trade ferme avec PnL bidon.
+
+### Heuristique de detection
+Sans modifier sim_exit_custom (13+ callers casses sinon):
+```python
+ran_out = (xi == N - 1) and (xi - ci < 288)
+```
+- `xi == N - 1`: trade atteint la derniere bougie dispo
+- `xi - ci < 288`: pas le vrai cap timeout (288 bars)
+=> Trade simu pas vraiment ferme
+
+### Fix
+**compare_today.py**:
+- Calcule `ran_out` apres collect_trades
+- Si `ran_out`: trade ajoute a `bt_open_today` avec exit/pnl_r/exit_time = None
+- Affichage: 'OPEN' au lieu du prix exit, '...' pour pnl_r et exit_time
+
+**vps_pusher.py**:
+- Idem dans compute_compare_today
+- `row['delta']` calcul protege contre `bt['pnl_r'] = None`
+
+### Test 5ers
+- JPN225 TOK_STOCH#1 entree 05-08 01:00: BT OPEN + LV OPEN = **match parfait** (les 2 toujours en cours)
+- TOK_STOCH#2, #3, ALL_MOM_10#2: idem BT OPEN
+- ALL_EMA_821/921: BT closed today 08:00 (SL/TP hit avec sample dispo), LV OPEN (live pas encore vu)
+- Total BT R passe de +4.05R a +3.73R (sans les pseudo-PnL des ran_out)
+
+### Note: cap 288 absent du live
+Le 288 est hardcoded dans sim_exit_custom (BT only). Live laisse les trades tourner indefiniment. Divergence rare:
+- 1h: 288 bars = 12j (jamais)
+- 15m: 288 = 3j (rare, possible WE)
+- 4h: 288 = 48j (jamais)
+Decision user: pas de fix sur le 288.
+
+### Files
+- compare_today.py: ran_out detection + affichage 'OPEN'/'...'
+- vps_pusher.py: ran_out detection + delta protege
+
 ## 2026-05-12 — compare_today: affiche MM-DD HH:MM dans BT In/Out + LV In/Out
 
 User: "Je vois rien qui matche ! En plus on a meme pas la date, juste l'heure la. On peut rien linker."

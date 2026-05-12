@@ -216,30 +216,36 @@ def compute_compare_today():
         # TF duration pour aligner entry/exit sur close de bougie (= live fill time)
         TF_DELTA_MIN = {'5m': 5, '15m': 15, '1h': 60, '4h': 240, '1d': 1440}
         tf_delta = timedelta(minutes=TF_DELTA_MIN.get(tf, 60))
+        N = len(candles)
         # Multiple trades per (sym, tf, strat) possible (mutex retire 2026-05-02)
         bt_by_strat = {}
         for tup in raw:
             ci, xi, di, pnl_oz, sl_atr, atr_t, mo, sn = tup[:8]
             entry = float(candles.iloc[ci]['close'])
             risk_1r = sl_atr * atr_t
-            xi_safe = min(xi, len(candles) - 1)
+            xi_safe = min(xi, N - 1)
             entry_close = candles.iloc[ci]['ts_dt'] + tf_delta
             exit_close = candles.iloc[xi_safe]['ts_dt'] + tf_delta
-            # Filtre: closed_today OU open_today (entry passe, exit futur)
-            if exit_close.date() == today:
+            # Detect "ran out of data": trade pas vraiment ferme dans la simu
+            ran_out = (xi == N - 1) and (xi - ci < 288)
+            # Filtre: closed_today OU open_today (entry passe, exit futur, OU ran_out)
+            if ran_out:
+                if entry_close.date() > today: continue  # pas encore entre
+            elif exit_close.date() == today:
                 pass  # closed today
             elif entry_close.date() <= today and exit_close.date() > today:
-                pass  # open today
+                pass  # open today (simu future exit)
             else:
                 continue  # ferme avant today ou pas encore entre
             bt_by_strat.setdefault(sn, []).append({
                 'dir': 'long' if di == 1 else 'short',
                 'entry': round(entry, 2),
-                'exit': round(entry + pnl_oz if di == 1 else entry - pnl_oz, 2),
-                'pnl_r': round(pnl_oz / risk_1r, 2) if risk_1r > 0 else 0,
+                'exit': None if ran_out else round(entry + pnl_oz if di == 1 else entry - pnl_oz, 2),
+                'pnl_r': None if ran_out else (round(pnl_oz / risk_1r, 2) if risk_1r > 0 else 0),
                 'risk_1r': round(risk_1r, 4),
                 'entry_time': entry_close.isoformat(),
-                'exit_time': exit_close.isoformat(),
+                'exit_time': None if ran_out else exit_close.isoformat(),
+                'ran_out': ran_out,
             })
         lv_by_strat = {}
         for t in today_trades:
@@ -281,7 +287,7 @@ def compute_compare_today():
                         'exit_time': lv.get('time_close'),
                         'ticket': lv.get('ticket'),
                     }
-                if bt and row['lv']:
+                if bt and row['lv'] and bt.get('pnl_r') is not None:
                     row['delta'] = round(row['lv']['pnl_r'] - bt['pnl_r'], 2)
                 rows.append(row)
         result[_unit_key(sym, tf)] = {'symbol': sym, 'tf': tf, 'atr': round(atr, 2), 'rows': rows}
