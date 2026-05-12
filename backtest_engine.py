@@ -130,7 +130,7 @@ def prev_trading_day(day, trading_days_list):
 #  COLLECT TRADES — signaux + exits + conflict filter
 # ══════════════════════════════════════════════════════════════
 
-def collect_trades(candles, daily_atr, global_atr, trading_days_list, portfolio, sym_exits, date_filter=None, tf='15m'):
+def collect_trades(candles, daily_atr, global_atr, trading_days_list, portfolio, sym_exits, date_filter=None, tf='15m', entry_min_date=None):
     """
     Detecte tous les signaux + simule les exits en temps reel.
     Meme code pour bt_portfolio, compare_today, et live.
@@ -143,6 +143,8 @@ def collect_trades(candles, daily_atr, global_atr, trading_days_list, portfolio,
         portfolio: list de noms de strats a detecter
         sym_exits: dict strat -> (type, p1, p2, p3)
         date_filter: si specifie, ne collecte que les signaux de ce jour (date object)
+        entry_min_date: si specifie, ne collecte que les signaux a partir de ce jour (date object).
+                        Alternative a date_filter pour fenetre [entry_min_date, today].
         tf: timeframe string ('5m', '15m', '1h', '4h', '1d') -- attache a chaque trade
 
     Returns:
@@ -171,6 +173,8 @@ def collect_trades(candles, daily_atr, global_atr, trading_days_list, portfolio,
             day_atr = daily_atr.get(pd_, global_atr) if pd_ else global_atr
 
         # Si date_filter actif, skip les bars hors du jour demande
+        if entry_min_date is not None and today < entry_min_date:
+            continue
         if date_filter is not None and today != date_filter:
             continue
 

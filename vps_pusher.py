@@ -142,13 +142,16 @@ def _get_candle_date():
     return datetime.now(timezone.utc).date()
 
 def get_today_trades():
+    """Trades dont l'EXIT (close) est today UTC -- inclut les trades multi-jour."""
     today_dt = _get_candle_date()
     today = datetime(today_dt.year, today_dt.month, today_dt.day, tzinfo=timezone.utc)
-    from_date = (today - timedelta(days=2) + BROKER_OFFSET).replace(tzinfo=None)
-    to_date = (today.replace(hour=23, minute=59, second=59) + BROKER_OFFSET).replace(tzinfo=None)
+    # Fenetre large: 14j en arriere (entries possibles) + 1j en avant (broker offset)
+    from_date = (today - timedelta(days=14) + BROKER_OFFSET).replace(tzinfo=None)
+    to_date = (today.replace(hour=23, minute=59, second=59) + BROKER_OFFSET + timedelta(days=1)).replace(tzinfo=None)
     deals = mt5.history_deals_get(from_date, to_date) or []
     all_trades = _deals_to_trades(deals)
-    return [t for t in all_trades if t['time_open'][:10] == str(today_dt)]
+    # Filtre: trade FERME aujourd'hui (exit, pas entry)
+    return [t for t in all_trades if t.get('time_close', '')[:10] == str(today_dt)]
 
 def get_all_history():
     from_date = datetime(2020, 1, 1)
@@ -206,8 +209,13 @@ def compute_compare_today():
         if len(candles) == 0: continue
         pd_ = prev_trading_day(today, trading_days)
         atr = daily_atr.get(pd_, global_atr) if pd_ else global_atr
+        # Lookback 14j: catche les trades fermes today entres avant aujourd'hui
+        entry_min_date = today - timedelta(days=14)
         raw = collect_trades(candles, daily_atr, global_atr, trading_days,
-                            portfolio, sym_exits, date_filter=today, tf=tf)
+                            portfolio, sym_exits, entry_min_date=entry_min_date, tf=tf)
+        # TF duration pour aligner entry/exit sur close de bougie (= live fill time)
+        TF_DELTA_MIN = {'5m': 5, '15m': 15, '1h': 60, '4h': 240, '1d': 1440}
+        tf_delta = timedelta(minutes=TF_DELTA_MIN.get(tf, 60))
         # Multiple trades per (sym, tf, strat) possible (mutex retire 2026-05-02)
         bt_by_strat = {}
         for tup in raw:
@@ -215,16 +223,23 @@ def compute_compare_today():
             entry = float(candles.iloc[ci]['close'])
             risk_1r = sl_atr * atr_t
             xi_safe = min(xi, len(candles) - 1)
-            entry_time = candles.iloc[ci]['ts_dt'].isoformat() if ci < len(candles) else None
-            exit_time = candles.iloc[xi_safe]['ts_dt'].isoformat() if xi_safe < len(candles) else None
+            entry_close = candles.iloc[ci]['ts_dt'] + tf_delta
+            exit_close = candles.iloc[xi_safe]['ts_dt'] + tf_delta
+            # Filtre: closed_today OU open_today (entry passe, exit futur)
+            if exit_close.date() == today:
+                pass  # closed today
+            elif entry_close.date() <= today and exit_close.date() > today:
+                pass  # open today
+            else:
+                continue  # ferme avant today ou pas encore entre
             bt_by_strat.setdefault(sn, []).append({
                 'dir': 'long' if di == 1 else 'short',
                 'entry': round(entry, 2),
                 'exit': round(entry + pnl_oz if di == 1 else entry - pnl_oz, 2),
                 'pnl_r': round(pnl_oz / risk_1r, 2) if risk_1r > 0 else 0,
                 'risk_1r': round(risk_1r, 4),
-                'entry_time': entry_time,
-                'exit_time': exit_time,
+                'entry_time': entry_close.isoformat(),
+                'exit_time': exit_close.isoformat(),
             })
         lv_by_strat = {}
         for t in today_trades:

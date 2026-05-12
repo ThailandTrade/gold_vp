@@ -2,6 +2,52 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-12 — compare_today + vps_pusher: filtre par exit_date (trades multi-jour)
+
+User: "Le compare du BT ne prend en compte que les trades qui ont ete declenches today. En fait il faudrait que ca compare tout ce qui a ete ferme today."
+
+### Probleme
+`compare_today.py` et `vps_pusher.py` filtraient les trades par `entry_date == today` (cote BT via date_filter, cote live via time_open[:10]). Consequence: les trades entres hier et fermes aujourd'hui apparaissaient en "LIVE ONLY" cote dashboard, jamais matches avec leur trade BT correspondant.
+
+### Decalage horaire BT vs Live -- aussi corrige
+User: "Dans le BT, l'entree est a la bougie 0h UTC, mais elle sera de 1h UTC en live"
+- BT: `entry_time = ts_dt` = OPEN de la bougie
+- Live: fill au CLOSE de la bougie = ts_dt + tf_duration
+- Match cassait si tri par entry_time desaligne
+
+### Fix
+
+**backtest_engine.py `collect_trades`**:
+- Ajout param `entry_min_date` (range au lieu de date_filter strict)
+- Permet de collecter signaux sur fenetre [entry_min_date, today]
+
+**compare_today.py**:
+- Nouveau flag `--lookback-days` (default 14)
+- Passe `entry_min_date = today - 14j` a collect_trades
+- Shift BT entry/exit time par tf_duration (align sur close = live fill)
+- Split en `bt_closed_today` (exit.date == today) et `bt_open_today` (entry passe, exit futur)
+- Live: filtre `exit_utc.date() == today` (etait entry_utc)
+- Fenetre MT5 deals widened (today-2d, today+2d) avec filtre post-hoc
+
+**vps_pusher.py `get_today_trades`**:
+- Fenetre 14j en arriere (entries possibles)
+- Filtre `time_close[:10] == str(today)` (etait time_open)
+
+**vps_pusher.py compute_compare_today**:
+- entry_min_date = today - 14j passe a collect_trades
+- TF_DELTA_MIN shift entry/exit times
+- Split closed/open today identique a compare_today
+
+### Test pepperstone 1h
+- Trades hier 14:00 fermes today 02:00: matches correctement (BT entry 14:00 + 1h = 15:00 vs live 14:00:0X -- alignement OK, ordre preserve)
+- CHINAH ALL_KC_BRK#1, BOS_FVG: entries 14:00 yesterday, closed today 01:15 (live) / 02:00 (BT) = match avec mismatch d'entry visible
+- "BT ONLY" : strats que live n'a pas pris (cas normaux)
+
+### Files
+- backtest_engine.py: +entry_min_date param
+- compare_today.py: +--lookback-days, shift tf, split closed/open, exit_date filter
+- vps_pusher.py: get_today_trades et compute_compare_today modifies
+
 ## 2026-05-12 — Pepperstone: drop cryptos de ALL_INSTRUMENTS
 
 User: "enleve moi les cryptos des strats 1h sur peppertsone"

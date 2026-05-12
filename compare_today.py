@@ -17,7 +17,12 @@ from config_helpers import iter_sym_tf
 parser = argparse.ArgumentParser()
 parser.add_argument('account', choices=['ftmo','5ers','pepperstone'])
 parser.add_argument('--tf', default=None, help='Filtre: un seul TF (sinon tous LIVE_TIMEFRAMES)')
+parser.add_argument('--lookback-days', type=int, default=14,
+                    help='Fenetre lookback pour catcher les trades fermes today entres avant (default 14)')
 args = parser.parse_args()
+
+# TF duration en minutes (pour aligner entry_time BT sur close de bougie = live fill time)
+TF_DELTA_MIN = {'5m': 5, '15m': 15, '1h': 60, '4h': 240, '1d': 1440}
 
 import os, json
 cfg = importlib.import_module(f'config_{args.account}')
@@ -64,10 +69,12 @@ try:
     import MetaTrader5 as mt5
     if mt5.initialize():
         from datetime import timedelta
-        from_date = datetime(today.year, today.month, today.day, tzinfo=timezone.utc)
-        to_date = from_date + timedelta(days=1)
+        # Fenetre large pour catcher tous les deals dont exit_utc.date() == today
+        # malgre BROKER_OFFSET et trades multi-jour
+        from_date = datetime(today.year, today.month, today.day, tzinfo=timezone.utc) - timedelta(days=2)
+        to_date = datetime(today.year, today.month, today.day, tzinfo=timezone.utc) + timedelta(days=2)
 
-        # Closed deals today
+        # Closed deals today (filtre post-hoc par exit_utc.date() == today)
         deals = mt5.history_deals_get(from_date, to_date) or []
         pos_deals = {}
         for d in deals:
@@ -87,7 +94,8 @@ try:
             entry_utc = entry_broker - BROKER_OFFSET
             exit_broker = datetime.fromtimestamp(dout.time, tz=timezone.utc)
             exit_utc = exit_broker - BROKER_OFFSET
-            if entry_utc.date() != today: continue
+            # Filtre: trade FERME aujourd'hui (exit, pas entry)
+            if exit_utc.date() != today: continue
             decoded = MAGIC_REVERSE.get(din.magic)
             if not decoded: continue
             sym, tf, sn = decoded
@@ -135,25 +143,39 @@ for sym, tf, icfg in UNITS:
     pd_ = prev_trading_day(today, trading_days)
     atr = daily_atr.get(pd_, global_atr) if pd_ else global_atr
 
+    entry_min_date = today - timedelta(days=args.lookback_days)
     raw_trades = collect_trades(candles, daily_atr, global_atr, trading_days,
-                                portfolio, sym_exits, date_filter=today, tf=tf)
+                                portfolio, sym_exits, entry_min_date=entry_min_date, tf=tf)
 
-    bt_trades = []
+    tf_delta = timedelta(minutes=TF_DELTA_MIN.get(tf, 60))
+    bt_closed_today = []
+    bt_open_today = []
     for tup in raw_trades:
         ci, xi, di, pnl_oz, sl_atr, atr_t, mo, sn = tup[:8]
         d_dir = 'long' if di == 1 else 'short'
         entry = float(candles.iloc[ci]['close'])
         ex = entry + pnl_oz if di == 1 else entry - pnl_oz
         risk_1r = sl_atr * atr_t
-        bt_trades.append({
+        # Shift entry/exit time pour aligner sur close de bougie (= live fill time)
+        entry_close = candles.iloc[ci]['ts_dt'] + tf_delta
+        xi_safe = min(xi, len(candles) - 1)
+        exit_close = candles.iloc[xi_safe]['ts_dt'] + tf_delta
+        t = {
             'strat': sn, 'tf': tf, 'dir': d_dir, 'entry': entry, 'exit': ex,
             'pnl_pts': pnl_oz, 'pnl_r': pnl_oz / risk_1r if risk_1r > 0 else 0,
             'risk_1r': risk_1r, 'bars': xi - ci,
-            'entry_time': str(candles.iloc[ci]['ts_dt']),
-            'exit_time': str(candles.iloc[min(xi, len(candles)-1)]['ts_dt']),
+            'entry_time': str(entry_close),
+            'exit_time': str(exit_close),
             'skipped': None,
-        })
+        }
+        # Split par etat aujourd'hui
+        if exit_close.date() == today:
+            bt_closed_today.append(t)
+        elif entry_close.date() <= today and exit_close.date() > today:
+            bt_open_today.append(t)
+        # else: ferme avant today ou pas encore entre -- ignore
 
+    bt_trades = bt_closed_today + bt_open_today
     lv = live_trades.get((sym, tf), [])
     lo = live_open.get((sym, tf), [])
 
