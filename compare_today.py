@@ -228,19 +228,19 @@ for sym, tf, icfg in UNITS:
             # Strat label: ajout suffix #idx si plusieurs trades
             sn_label = f"{sn}#{idx+1}" if n_pairs > 1 else sn
 
-            # BT columns
+            # BT columns (MM-DD HH:MM pour distinguer jours avec lookback)
             if bt and bt['skipped']:
                 bt_dir = 'SKIP'; bt_entry = f"{bt['entry']:.2f}"; bt_exit = '-'; bt_pts = '-'
-                bt_in = bt['entry_time'][11:16]; bt_out = '-'
+                bt_in = bt['entry_time'][5:16]; bt_out = '-'
             elif bt:
                 bt_dir = bt['dir']; bt_entry = f"{bt['entry']:.2f}"; bt_exit = f"{bt['exit']:.2f}"
                 bt_pts = f"{bt['pnl_r']:+.2f}R"
                 bt_total_pts += bt['pnl_r']
-                bt_in = bt['entry_time'][11:16]; bt_out = bt['exit_time'][11:16]
+                bt_in = bt['entry_time'][5:16]; bt_out = bt['exit_time'][5:16]
             else:
                 bt_dir = '-'; bt_entry = '-'; bt_exit = '-'; bt_pts = '-'; bt_in = '-'; bt_out = '-'
 
-            lv_sort_key = '99:99'
+            lv_sort_key = '99-99 99:99'
             if lv_t:
                 lv_dir = lv_t['dir']; lv_entry = f"{lv_t['entry']:.2f}"; lv_exit = f"{lv_t['exit']:.2f}"
                 lv_pnl_pts = (lv_t['exit'] - lv_t['entry']) if lv_t['dir'] == 'long' else (lv_t['entry'] - lv_t['exit'])
@@ -249,13 +249,13 @@ for sym, tf, icfg in UNITS:
                 lv_pts = f"{lv_pnl_r:+.2f}R"
                 lv_total_pts += lv_pnl_r
                 # entry_time/exit_time deja en UTC (converti a la lecture MT5)
-                lv_in = lv_t['entry_time'].strftime('%H:%M') if hasattr(lv_t['entry_time'], 'strftime') else str(lv_t['entry_time'])[11:16]
-                lv_out = lv_t['exit_time'].strftime('%H:%M') if hasattr(lv_t['exit_time'], 'strftime') else str(lv_t['exit_time'])[11:16]
+                lv_in = lv_t['entry_time'].strftime('%m-%d %H:%M') if hasattr(lv_t['entry_time'], 'strftime') else str(lv_t['entry_time'])[5:16]
+                lv_out = lv_t['exit_time'].strftime('%m-%d %H:%M') if hasattr(lv_t['exit_time'], 'strftime') else str(lv_t['exit_time'])[5:16]
                 lv_sort_key = lv_in
             elif lo_t:
                 lv_dir = lo_t['dir']; lv_entry = f"{lo_t['entry']:.2f}"; lv_exit = 'OPEN'
                 lv_pts = '...'
-                lv_in = lo_t['time'].strftime('%H:%M') if hasattr(lo_t['time'], 'strftime') else str(lo_t['time'])[11:16]
+                lv_in = lo_t['time'].strftime('%m-%d %H:%M') if hasattr(lo_t['time'], 'strftime') else str(lo_t['time'])[5:16]
                 lv_out = '...'
                 lv_sort_key = lv_in
             else:
