@@ -285,7 +285,7 @@ for sym, tf, icfg in UNITS:
                 lv_dir = '-'; lv_entry = '-'; lv_exit = '-'; lv_pts = '-'; lv_in = '-'; lv_out = '-'
 
             lv_bt_diff = '-'
-            if bt and not bt['skipped'] and lv_t:
+            if bt and not bt['skipped'] and lv_t and bt.get('pnl_r') is not None:
                 lv_pnl = (lv_t['exit'] - lv_t['entry']) if lv_t['dir'] == 'long' else (lv_t['entry'] - lv_t['exit'])
                 risk_1r_d = bt['risk_1r'] if bt['risk_1r'] > 0 else 1
                 lv_bt_diff = f"{(lv_pnl / risk_1r_d) - bt['pnl_r']:+.2f}R"
