@@ -80,6 +80,44 @@ Decision user: pas de fix sur le 288.
 - compare_today.py: ran_out detection + affichage 'OPEN'/'...'
 - vps_pusher.py: ran_out detection + delta protege
 
+## 2026-05-13 — Exness 1h v1: 47 strats / 19 syms (n>=100, PF>=1.20)
+
+User: "compile je vais lancer un BT"
+
+### Run find_winners exness --tf 1h --n-min 100 --pf-min 1.20
+20 syms en pairs_exness.txt (IN50 retire car 0 bars). 19 syms testes.
+Resultat: **47 strats / 19 syms** (100% des syms avec >=1 strat).
+
+| Catégorie | Sym | Strats |
+|-----------|-----|--------|
+| FX | AUDUSD, EURUSD, GBPUSD, USDCAD | 2 chacun |
+|  | USDCHF, USDJPY | 1 chacun |
+|  | NZDUSD | 3 (nouveau vs autres brokers) |
+| Métaux | XAUUSD | 2 |
+| Indices | UK100, FR40 | 5 chacun |
+|  | US30, JP225 | 4 chacun |
+|  | DE30, BTCUSD | 3 chacun |
+|  | AUS200, STOXX50, US500 | 2 chacun |
+|  | HK50, USTEC | 1 chacun |
+| Crypto | BTCUSD | 3 (nouveau, interessant!) |
+
+vs FTMO PF>=1.20 (32/11): Exness +47% strats et +8 syms.
+
+### Compile (temp/compile_exness_1h_pf120.py)
+- config_exness.py: 19 syms / 47 strats
+- strat_exits.py: 19 sections (exness, sym, '1h')
+- Validation: 47 entries OK / 0 missing
+
+### SYMBOL_ID ajout
+3 syms manquaient: NZDUSD, DE30, FR40 -> ajoutes IDs 61-63 dans strats.py
+(necessaire pour live_mt5.py make_magic, BT marche sans).
+
+### Files
+- config_exness.py: regenere
+- strat_exits.py: +19 sections crypto
+- strats.py: SYMBOL_ID +=NZDUSD/DE30/FR40
+- temp/compile_exness_1h_pf120.py
+
 ## 2026-05-13 — Exness: preparation broker (skeleton, instruments a remplir)
 
 User: "prepare tout ce qu'il faut pour un nouveau broker : exness"
