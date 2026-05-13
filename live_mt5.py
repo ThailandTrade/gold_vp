@@ -23,7 +23,7 @@ from config_helpers import iter_sym_tf
 # CONFIG
 
 parser = argparse.ArgumentParser(description='Live MT5 trading multi-TF')
-parser.add_argument('account', choices=['ftmo','5ers','pepperstone'])
+parser.add_argument('account', choices=['ftmo','5ers','pepperstone','exness'])
 parser.add_argument('--reset', action='store_true', help='Reset state')
 args = parser.parse_args()
 _account = args.account

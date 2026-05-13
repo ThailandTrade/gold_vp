@@ -19,7 +19,7 @@ from backtest_engine import load_data, collect_trades, eval_portfolio
 from config_helpers import iter_sym_tf
 
 parser = argparse.ArgumentParser(description='Backtest portfolio multi-TF')
-parser.add_argument('account', choices=['ftmo', '5ers', 'pepperstone'])
+parser.add_argument('account', choices=['ftmo', '5ers', 'pepperstone', 'exness'])
 parser.add_argument('-c', '--capital', type=float, default=None)
 parser.add_argument('-r', '--risk', type=float, default=None)
 parser.add_argument('--symbol', default=None, help='Filtre: instrument(s), separes par virgule')

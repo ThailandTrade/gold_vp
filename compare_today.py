@@ -15,7 +15,7 @@ from prettytable import PrettyTable
 from config_helpers import iter_sym_tf
 
 parser = argparse.ArgumentParser()
-parser.add_argument('account', choices=['ftmo','5ers','pepperstone'])
+parser.add_argument('account', choices=['ftmo','5ers','pepperstone','exness'])
 parser.add_argument('--tf', default=None, help='Filtre: un seul TF (sinon tous LIVE_TIMEFRAMES)')
 parser.add_argument('--lookback-days', type=int, default=14,
                     help='Fenetre lookback pour catcher les trades fermes today entres avant (default 14)')

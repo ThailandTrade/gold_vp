@@ -20,7 +20,7 @@ import requests
 
 # ── CONFIG ──
 parser = argparse.ArgumentParser()
-parser.add_argument('account', choices=['ftmo', '5ers', 'pepperstone'])
+parser.add_argument('account', choices=['ftmo', '5ers', 'pepperstone', 'exness'])
 parser.add_argument('--url', default='https://dashboard.glorytavern.world')
 parser.add_argument('--interval', type=float, default=1.0)
 args = parser.parse_args()

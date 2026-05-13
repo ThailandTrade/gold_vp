@@ -91,7 +91,7 @@ SYMBOL_ID = {
 }
 # (HK50.cash already in SYMBOL_ID at 15, US2000.cash at 16)
 
-MAGIC_BASES = {'ftmo': 250000, '5ers': 260000, 'pepperstone': 270000}
+MAGIC_BASES = {'ftmo': 250000, '5ers': 260000, 'pepperstone': 270000, 'exness': 280000}
 
 # TF encoding pour magic numbers multi-TF
 TF_ID = {'5m': 0, '15m': 1, '1h': 2, '4h': 3, '1d': 4}

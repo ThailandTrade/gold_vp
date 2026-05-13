@@ -80,6 +80,29 @@ Decision user: pas de fix sur le 288.
 - compare_today.py: ran_out detection + affichage 'OPEN'/'...'
 - vps_pusher.py: ran_out detection + delta protege
 
+## 2026-05-13 — Exness: preparation broker (skeleton, instruments a remplir)
+
+User: "prepare tout ce qu'il faut pour un nouveau broker : exness"
+Server UTC+0 confirme (market watch a 11:31 UTC = 18:31 BKK).
+
+### Fichiers crees/modifies
+- `config_exness.py` (nouveau): BROKER='exness', ALL_INSTRUMENTS={} vide a remplir, LIVE_TIMEFRAMES=['1h'], schema standard.
+- `pairs_exness.txt` (nouveau): header type,pair sans entries.
+- `broker_offsets.json`: +`"exness": 0`
+- `strats.py`: MAGIC_BASES +=`'exness': 280000`
+- find_winners.py, bt_portfolio.py, compare_today.py, vps_pusher.py, live_mt5.py: argparse choices +='exness'
+
+### Reste a faire (cote user)
+- Remplir pairs_exness.txt avec les instruments Exness reels (noms exacts MT5 avec eventuels suffixes).
+- Une fois data fetch via mt5_fetch_clean.py, run find_winners exness --tf 1h.
+
+### Files
+- config_exness.py (nouveau)
+- pairs_exness.txt (nouveau)
+- broker_offsets.json
+- strats.py
+- find_winners.py, bt_portfolio.py, compare_today.py, vps_pusher.py, live_mt5.py
+
 ## 2026-05-13 — FTMO: switch v4 -> v5 (PF>=1.20, 32 strats)
 
 User: "hum je me suis trompe, je crois que c'etait plutot 1.2 le meilleur"
