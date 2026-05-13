@@ -80,6 +80,42 @@ Decision user: pas de fix sur le 288.
 - compare_today.py: ran_out detection + affichage 'OPEN'/'...'
 - vps_pusher.py: ran_out detection + delta protege
 
+## 2026-05-13 — FTMO 1h v4 strict (n>=100, PF>=1.15) -> 40 strats / 11 syms
+
+User: "essaye avec 1.15" (apres PF 1.25 -> 21 strats, trop drastique).
+
+### Run find_winners ftmo --tf 1h --n-min 100 --pf-min 1.15
+12 syms testes, lookback full (~1 an FTMO data).
+Resultat: **40 strats / 11 syms** (entre v3 standard 49/11 et strict 1.25 21/7).
+
+| Sym | n>=60 (v3) | PF>=1.25 | **PF>=1.15** |
+|-----|-----------|----------|--------------|
+| AUS200.cash | 7 | 4 | 6 |
+| US30.cash | 7 | 4 | **8** |
+| GER40.cash | 6 | 3 | 6 |
+| UK100.cash | 5 | 4 | 4 |
+| US500.cash | 6 | 0 | 3 |
+| JP225.cash | 5 | 3 | 4 |
+| US2000.cash | 5 | 1 | 3 |
+| HK50.cash | 2 | 2 | 3 |
+| XAUUSD | 1 | 0 | 1 |
+| EU50.cash | 3 | 0 | 1 |
+| US100.cash | 0 | 0 | 1 |
+| XAGUSD | 2 | 0 | 0 |
+
+### Compile (temp/compile_ftmo_1h_pf115.py)
+- Replace 1h existant par v4 dans config_ftmo.py
+- Preserve 15m heritage (37 strats, non tradees -- LIVE_TIMEFRAMES=['1h'])
+- 11 sections STRAT_EXITS (ftmo, sym, '1h') reconstruites
+- Validation: 77 entries OK / 0 missing
+- 12 syms, 21 units (40 strats 1h + 37 15m)
+- Metaux (XAUUSD/XAGUSD) restent exclus de LIVE_INSTRUMENTS (decision 2026-05-06)
+
+### Files
+- config_ftmo.py: 1h v4 regenere
+- strat_exits.py: 11 sections (ftmo, sym, '1h') reconstruites
+- temp/compile_ftmo_1h_pf115.py
+
 ## 2026-05-12 — compare_today: affiche MM-DD HH:MM dans BT In/Out + LV In/Out
 
 User: "Je vois rien qui matche ! En plus on a meme pas la date, juste l'heure la. On peut rien linker."
