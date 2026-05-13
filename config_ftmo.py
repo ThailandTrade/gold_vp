@@ -1,10 +1,10 @@
 """
-Config FTMO multi-TF -- 1h v4 regenere 2026-05-13 (find_winners n>=100, PF>=1.15, lookback full ~1y).
+Config FTMO multi-TF -- 1h v5 regenere 2026-05-13 (find_winners n>=100, PF>=1.20, lookback full ~1y).
 Schema: ALL_INSTRUMENTS[sym][tf] = {'risk_pct': ..., 'portfolio': [...]}
 LIVE_TIMEFRAMES: TFs trades en live/BT.
 
 Pipeline find_winners:
-- 1h: n>=100, PF>=1.15  <- v4 strict
+- 1h: n>=100, PF>=1.20  <- v5 strict
 - Filtres communs: avg_R>=0.05, avg_R_trim>0, median_R>0, OS<30%, M+>=7/12, h1>0, h2>0
 """
 BROKER = 'FTMO'
@@ -16,11 +16,11 @@ ALL_INSTRUMENTS = {
     },
     'GER40.cash': {
         '15m': {'risk_pct': 0.0004, 'portfolio': ['ALL_CCI_100', 'TOK_TRIX']},
-        '1h': {'risk_pct': 0.0004, 'portfolio': ['ALL_CMO_9', 'ALL_ELDER_BEAR', 'ALL_INSIDE_BRK', 'ALL_MACD_ADX', 'BOS_FVG', 'IDX_CONSEC_REV']},
+        '1h': {'risk_pct': 0.0004, 'portfolio': ['ALL_ELDER_BEAR', 'ALL_INSIDE_BRK', 'ALL_MACD_ADX', 'BOS_FVG', 'IDX_CONSEC_REV']},
     },
     'US500.cash': {
         '15m': {'risk_pct': 0.0004, 'portfolio': ['ALL_MACD_STD_SIG', 'ALL_ENGULF', 'ALL_PIVOT_BOUNCE', 'ALL_TRIX', 'ALL_FVG_BULL', 'TOK_2BAR']},
-        '1h': {'risk_pct': 0.0004, 'portfolio': ['ALL_HMA_CROSS', 'ALL_PIVOT_BOUNCE', 'ALL_WILLR_7']},
+        '1h': {'risk_pct': 0.0004, 'portfolio': ['ALL_HMA_CROSS', 'ALL_PIVOT_BOUNCE']},
     },
     'US100.cash': {
         '15m': {'risk_pct': 0.0004, 'portfolio': ['ALL_AROON_CROSS', 'ALL_LR_BREAK', 'ALL_MACD_RSI', 'ALL_MSTAR', 'TOK_2BAR', 'ALL_FVG_BULL', 'ALL_NR4']},
@@ -28,11 +28,11 @@ ALL_INSTRUMENTS = {
     },
     'US30.cash': {
         '15m': {'risk_pct': 0.0004, 'portfolio': ['TOK_NR4', 'TOK_TRIX', 'ALL_MOM_10']},
-        '1h': {'risk_pct': 0.0004, 'portfolio': ['ALL_3SOLDIERS', 'ALL_CCI_20_ZERO', 'ALL_CMO_9', 'ALL_DPO_14', 'ALL_MACD_ADX', 'ALL_MOM_10', 'IDX_VWAP_BOUNCE', 'TOK_NR4']},
+        '1h': {'risk_pct': 0.0004, 'portfolio': ['ALL_3SOLDIERS', 'ALL_CMO_9', 'ALL_DPO_14', 'IDX_VWAP_BOUNCE', 'TOK_NR4']},
     },
     'AUS200.cash': {
         '15m': {'risk_pct': 0.0004, 'portfolio': ['ALL_RSI_DIV', 'ALL_MACD_DIV', 'ALL_CMO_14', 'ALL_STOCH_OB', 'ALL_WILLR_14', 'ALL_CONSEC_REV', 'ALL_MOM_10']},
-        '1h': {'risk_pct': 0.0004, 'portfolio': ['ALL_BB_TIGHT', 'ALL_ELDER_BULL', 'ALL_FISHER_9', 'ALL_HAMMER', 'ALL_PIVOT_BOUNCE', 'TOK_FISHER']},
+        '1h': {'risk_pct': 0.0004, 'portfolio': ['ALL_BB_TIGHT', 'ALL_ELDER_BULL', 'ALL_FISHER_9', 'ALL_HAMMER', 'TOK_FISHER']},
     },
     'HK50.cash': {
         '15m': {'risk_pct': 0.0004, 'portfolio': ['ALL_ICHI_TK']},
@@ -44,7 +44,7 @@ ALL_INSTRUMENTS = {
     },
     'US2000.cash': {
         '15m': {'risk_pct': 0.0004, 'portfolio': ['ALL_MSTAR']},
-        '1h': {'risk_pct': 0.0004, 'portfolio': ['ALL_DPO_14', 'AVWAP_RECLAIM', 'TOK_NR4']},
+        '1h': {'risk_pct': 0.0004, 'portfolio': ['AVWAP_RECLAIM']},
     },
     'XAGUSD': {
         '15m': {'risk_pct': 0.0004, 'portfolio': ['ALL_NR4', 'TOK_TRIX', 'ALL_AROON_CROSS', 'ALL_ADX_FAST']},

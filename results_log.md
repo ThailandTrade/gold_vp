@@ -80,6 +80,42 @@ Decision user: pas de fix sur le 288.
 - compare_today.py: ran_out detection + affichage 'OPEN'/'...'
 - vps_pusher.py: ran_out detection + delta protege
 
+## 2026-05-13 — FTMO 1h v5 strict (n>=100, PF>=1.20) -> 32 strats / 11 syms
+
+User: "fais moi un find winners a PF 1.2" puis "go" pour compile.
+
+### Run find_winners ftmo --tf 1h --n-min 100 --pf-min 1.20
+12 syms testes. Resultat: **32 strats / 11 syms**.
+
+| Sym | PF>=1.15 | **PF>=1.20** | PF>=1.25 |
+|-----|----------|--------------|----------|
+| US30.cash | 8 | 5 | 4 |
+| AUS200.cash | 6 | 5 | 4 |
+| GER40.cash | 6 | 5 | 3 |
+| UK100.cash | 4 | 4 | 4 |
+| JP225.cash | 4 | 4 | 3 |
+| HK50.cash | 3 | 3 | 2 |
+| US500.cash | 3 | 2 | 0 |
+| US2000.cash | 3 | 1 | 1 |
+| XAUUSD | 1 | 1 | 0 |
+| EU50.cash | 1 | 1 | 0 |
+| US100.cash | 1 | 1 | 0 |
+| XAGUSD | 0 | 0 | 0 |
+
+11/11 syms ramenes (sauf XAG), compromis robuste vs diversification.
+
+### Compile (temp/compile_ftmo_1h_pf120.py)
+- v5 remplace v4 dans config_ftmo.py
+- 15m heritage preserve
+- 11 sections STRAT_EXITS reconstruites
+- Validation: 69 entries OK / 0 missing
+- Strats par TF: 15m=37, 1h=32. 21 units, 12 syms.
+
+### Files
+- config_ftmo.py: 1h v5 regenere
+- strat_exits.py: 11 sections (ftmo, sym, '1h') reconstruites
+- temp/compile_ftmo_1h_pf120.py
+
 ## 2026-05-13 — FTMO 1h v4 strict (n>=100, PF>=1.15) -> 40 strats / 11 syms
 
 User: "essaye avec 1.15" (apres PF 1.25 -> 21 strats, trop drastique).
