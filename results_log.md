@@ -80,6 +80,16 @@ Decision user: pas de fix sur le 288.
 - compare_today.py: ran_out detection + affichage 'OPEN'/'...'
 - vps_pusher.py: ran_out detection + delta protege
 
+## 2026-05-13 — FTMO: rollback v5 (PF>=1.20) -> retour v4 (PF>=1.15, 40 strats)
+
+User: "remets moi la config 1.15"
+
+Re-application de temp/compile_ftmo_1h_pf115.py: config_ftmo.py et
+strat_exits.py reviennent a la version v4 (40 strats / 11 syms).
+v5 (32 strats / PF>=1.20) ecartee.
+
+Validation: 77 entries OK / 0 missing.
+
 ## 2026-05-13 — FTMO 1h v5 strict (n>=100, PF>=1.20) -> 32 strats / 11 syms
 
 User: "fais moi un find winners a PF 1.2" puis "go" pour compile.

@@ -733,11 +733,14 @@ STRAT_EXITS[('pepperstone', 'SWI20', '15m')] = {
 
 # ==== FTMO 1h v4 (find_winners 2026-05-13, n>=100 PF>=1.20, 11 syms / 32 strats) ====
 
+# ==== FTMO 1h v4 (find_winners 2026-05-13, n>=100 PF>=1.15, 11 syms / 40 strats) ====
+
 STRAT_EXITS[('ftmo', 'XAUUSD', '1h')] = {
     'ALL_HMA_CROSS': ('TPSL', 3.0, 4.0, 0.0),
 }
 
 STRAT_EXITS[('ftmo', 'GER40.cash', '1h')] = {
+    'ALL_CMO_9': ('TPSL', 2.0, 2.5, 0.0),
     'ALL_ELDER_BEAR': ('TPSL', 2.5, 2.5, 0.0),
     'ALL_INSIDE_BRK': ('TPSL', 3.0, 2.5, 0.0),
     'ALL_MACD_ADX': ('TPSL', 2.0, 2.5, 0.0),
@@ -750,6 +753,7 @@ STRAT_EXITS[('ftmo', 'AUS200.cash', '1h')] = {
     'ALL_ELDER_BULL': ('TPSL', 1.5, 1.5, 0.0),
     'ALL_FISHER_9': ('TPSL', 2.0, 1.5, 0.0),
     'ALL_HAMMER': ('TPSL', 2.0, 2.5, 0.0),
+    'ALL_PIVOT_BOUNCE': ('BE_TP', 2.5, 0.75, 1.5),
     'TOK_FISHER': ('TPSL', 2.0, 1.5, 0.0),
 }
 
@@ -775,13 +779,18 @@ STRAT_EXITS[('ftmo', 'US100.cash', '1h')] = {
 }
 
 STRAT_EXITS[('ftmo', 'US2000.cash', '1h')] = {
+    'ALL_DPO_14': ('TPSL', 2.0, 2.5, 0.0),
     'AVWAP_RECLAIM': ('TPSL', 1.25, 1.5, 0.0),
+    'TOK_NR4': ('TPSL', 1.5, 1.0, 0.0),
 }
 
 STRAT_EXITS[('ftmo', 'US30.cash', '1h')] = {
     'ALL_3SOLDIERS': ('TPSL', 1.5, 1.5, 0.0),
+    'ALL_CCI_20_ZERO': ('TPSL', 2.5, 1.5, 0.0),
     'ALL_CMO_9': ('TPSL', 2.5, 2.5, 0.0),
     'ALL_DPO_14': ('TPSL', 1.25, 1.5, 0.0),
+    'ALL_MACD_ADX': ('TPSL', 2.5, 2.5, 0.0),
+    'ALL_MOM_10': ('TPSL', 2.5, 2.5, 0.0),
     'IDX_VWAP_BOUNCE': ('TPSL', 2.0, 1.0, 0.0),
     'TOK_NR4': ('TPSL', 1.25, 0.5, 0.0),
 }
@@ -789,6 +798,7 @@ STRAT_EXITS[('ftmo', 'US30.cash', '1h')] = {
 STRAT_EXITS[('ftmo', 'US500.cash', '1h')] = {
     'ALL_HMA_CROSS': ('TPSL', 0.75, 0.75, 0.0),
     'ALL_PIVOT_BOUNCE': ('BE_TP', 1.0, 0.75, 1.0),
+    'ALL_WILLR_7': ('BE_TP', 1.0, 0.75, 1.0),
 }
 
 STRAT_EXITS[('ftmo', 'JP225.cash', '1h')] = {
