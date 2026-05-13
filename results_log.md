@@ -80,6 +80,35 @@ Decision user: pas de fix sur le 288.
 - compare_today.py: ran_out detection + affichage 'OPEN'/'...'
 - vps_pusher.py: ran_out detection + delta protege
 
+## 2026-05-13 — FTMO 1h v6 strict (n>=100, PF>=1.25) -> 21 strats / 7 syms (pour BT)
+
+User: "compile je veux faire un BT" apres re-run identique au precedent (data DB inchangee).
+
+### Run find_winners ftmo --tf 1h --n-min 100 --pf-min 1.25
+21 strats / 7 syms sur 12 testes.
+
+| Sym | Strats |
+|-----|--------|
+| AUS200.cash | 4 |
+| UK100.cash | 4 |
+| US30.cash | 4 |
+| GER40.cash | 3 |
+| JP225.cash | 3 |
+| HK50.cash | 2 |
+| US2000.cash | 1 |
+| XAU/XAG/EU50/US100/US500 | 0 |
+
+### Compile (temp/compile_ftmo_1h_pf125_v2.py)
+- v6 remplace v4 dans config_ftmo.py
+- 15m heritage preserve (37 strats)
+- 7 sections STRAT_EXITS reconstruites
+- Validation: 58 entries OK / 0 missing
+- 11 syms (7 avec 1h, 4 uniquement 15m), 17 units
+
+### Files
+- config_ftmo.py: 1h v6 regenere
+- strat_exits.py: 7 sections (ftmo, sym, '1h') reconstruites
+
 ## 2026-05-13 — FTMO: rollback v5 (PF>=1.20) -> retour v4 (PF>=1.15, 40 strats)
 
 User: "remets moi la config 1.15"
