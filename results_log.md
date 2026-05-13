@@ -80,6 +80,15 @@ Decision user: pas de fix sur le 288.
 - compare_today.py: ran_out detection + affichage 'OPEN'/'...'
 - vps_pusher.py: ran_out detection + delta protege
 
+## 2026-05-13 — FTMO: validation finale, retour v4 (PF>=1.15, 40 strats)
+
+User: "ok so sweet spot seems to be 1.15 anyway."
+
+Apres BT de v6 (PF>=1.25, 21 strats), decision de garder v4 (PF>=1.15, 40 strats).
+Compromis qui maximise diversification + edge tangible.
+
+Re-application temp/compile_ftmo_1h_pf115.py: 77 entries OK / 0 missing.
+
 ## 2026-05-13 — FTMO 1h v6 strict (n>=100, PF>=1.25) -> 21 strats / 7 syms (pour BT)
 
 User: "compile je veux faire un BT" apres re-run identique au precedent (data DB inchangee).
