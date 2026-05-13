@@ -80,6 +80,13 @@ Decision user: pas de fix sur le 288.
 - compare_today.py: ran_out detection + affichage 'OPEN'/'...'
 - vps_pusher.py: ran_out detection + delta protege
 
+## 2026-05-13 — FTMO: switch v4 -> v5 (PF>=1.20, 32 strats)
+
+User: "hum je me suis trompe, je crois que c'etait plutot 1.2 le meilleur"
+
+Re-application temp/compile_ftmo_1h_pf120.py: 32 strats / 11 syms.
+Validation: 69 entries OK / 0 missing.
+
 ## 2026-05-13 — FTMO: validation finale, retour v4 (PF>=1.15, 40 strats)
 
 User: "ok so sweet spot seems to be 1.15 anyway."
