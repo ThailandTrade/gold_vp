@@ -98,7 +98,7 @@ async def icon_svg():
 
 @app.get("/sw.js")
 async def service_worker():
-    sw = """const CACHE='hydra-v6';
+    sw = """const CACHE='hydra-v7';
 self.addEventListener('install',e=>{self.skipWaiting();});
 self.addEventListener('activate',e=>{
   e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));
@@ -436,9 +436,9 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
 <script>
 const API='';
-const ACCOUNTS=['5ers','ftmo','pepperstone'];
+const ACCOUNTS=['5ers','ftmo','exness_standard'];
 const ACCOUNT_TABS=['live',...ACCOUNTS]; // 'live' en premier (vue agregee positions ouvertes)
-const MAX_DD={'5ers':4.0,'ftmo':10.0,'pepperstone':100.0};
+const MAX_DD={'5ers':4.0,'ftmo':10.0,'exness_standard':100.0};
 const PERIODS=[
   {id:'today',label:'Jour'},
   {id:'yesterday',label:'Hier'},

@@ -80,6 +80,15 @@ Decision user: pas de fix sur le 288.
 - compare_today.py: ran_out detection + affichage 'OPEN'/'...'
 - vps_pusher.py: ran_out detection + delta protege
 
+## 2026-05-14 — dashboard: ACCOUNTS exness_standard remplace pepperstone
+
+User: "go pour exness standard. On vire pepperstone pour l'instant"
+
+api_server.py:
+- ACCOUNTS: ['5ers','ftmo','pepperstone'] -> ['5ers','ftmo','exness_standard']
+- MAX_DD: pepperstone:100.0 -> exness_standard:100.0
+- SW cache hydra-v6 -> hydra-v7 (invalidation)
+
 ## 2026-05-14 — exness_standard: risk 0.5% -> 1.0%
 
 User: "prepare moi exness standard a 1% avec les find winners precedents"
