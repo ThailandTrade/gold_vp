@@ -90,10 +90,14 @@ SYMBOL_ID = {
     'LTCUSD': 55, 'ADAUSD': 56, 'AVAXUSD': 57, 'BCHUSD': 58, 'LINKUSD': 59, 'XRPUSD': 60,
     # Exness (2026-05-13 -- find_winners 1h v1)
     'NZDUSD': 61, 'DE30': 62, 'FR40': 63,
+    # Exness Standard suffixe 'm' (2026-05-14)
+    'AUDUSDm': 64, 'EURUSDm': 65, 'GBPUSDm': 66, 'USDCHFm': 67, 'USDJPYm': 68, 'USDCADm': 69,
+    'NZDUSDm': 70, 'XAUUSDm': 71, 'AUS200m': 72, 'DE30m': 73, 'FR40m': 74, 'HK50m': 75,
+    'JP225m': 76, 'STOXX50m': 77, 'UK100m': 78, 'US30m': 79, 'US500m': 80, 'USTECm': 81, 'BTCUSDm': 82,
 }
 # (HK50.cash already in SYMBOL_ID at 15, US2000.cash at 16)
 
-MAGIC_BASES = {'ftmo': 250000, '5ers': 260000, 'pepperstone': 270000, 'exness': 280000}
+MAGIC_BASES = {'ftmo': 250000, '5ers': 260000, 'pepperstone': 270000, 'exness': 280000, 'exness_standard': 290000}
 
 # TF encoding pour magic numbers multi-TF
 TF_ID = {'5m': 0, '15m': 1, '1h': 2, '4h': 3, '1d': 4}

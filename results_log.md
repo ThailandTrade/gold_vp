@@ -80,6 +80,48 @@ Decision user: pas de fix sur le 288.
 - compare_today.py: ran_out detection + affichage 'OPEN'/'...'
 - vps_pusher.py: ran_out detection + delta protege
 
+## 2026-05-14 — Exness Standard 1h v1: 36 strats / 17 syms (suffixe m, PF>=1.20)
+
+User: "fais une copie du fichier de paires exness en exness_standard. Rajoute un m a tous les symboles" puis "compile exness standard. Je vais l'utiliser."
+
+### Run find_winners exness_standard --tf 1h --n-min 100 --pf-min 1.20
+19 syms `m`, data freshly fetched (all 1y dispo).
+Resultat: **36 strats / 17 syms** (USDCHFm et HK50m perdus vs Pro).
+
+### Comparaison Pro vs Standard
+
+| Sym | Pro | Standard | Δ |
+|-----|-----|----------|----|
+| US30 | 4 | 6 | +2 (Std mieux) |
+| US500/USDCAD/USTEC | 2 chacun | 3/3/2 | +1 chacun |
+| **UK100/FR40** | 5 chacun | 2 chacun | -3 (Pro mieux) |
+| DE30 | 3 | 1 | -2 |
+| FX majors (AUD/EUR/GBP/NZD) | 2-3 | 1-2 | -1 |
+| USDCHF/HK50 | 1 | 0 | perdu |
+
+TOTAL: Pro 47/19 vs Standard 36/17. Pro **+30%** strats et +2 syms.
+
+### Lecture
+- Std est meilleur sur US30/US500/USTEC (indices US).
+- Pro nettement meilleur sur indices europeens (UK100, FR40, DE30).
+- FX legerement Pro.
+- User choisit Standard (utilisera compte Standard).
+
+### Compile (temp/compile_exness_std_1h.py)
+- config_exness_standard.py: 17 syms / 36 strats
+- strat_exits.py: 17 sections (exness_standard, sym, '1h')
+- strats.py: SYMBOL_ID += 19 syms 'm' (IDs 64-82), MAGIC_BASES += exness_standard: 290000
+- broker_offsets.json: +"exness_standard": 0
+- bt_portfolio/compare_today/vps_pusher/live_mt5: argparse += 'exness_standard'
+- Validation: 36 entries OK, 36 magics roundtrip OK
+
+### Files
+- config_exness_standard.py (nouveau)
+- strat_exits.py
+- strats.py: +SYMBOL_ID + MAGIC_BASES
+- broker_offsets.json
+- find_winners/bt_portfolio/compare_today/vps_pusher/live_mt5 argparse
+
 ## 2026-05-13 — Exness 1h v1: 47 strats / 19 syms (n>=100, PF>=1.20)
 
 User: "compile je vais lancer un BT"
