@@ -80,6 +80,12 @@ Decision user: pas de fix sur le 288.
 - compare_today.py: ran_out detection + affichage 'OPEN'/'...'
 - vps_pusher.py: ran_out detection + delta protege
 
+## 2026-05-14 — exness_standard: risk 0.5% -> 1.0%
+
+User: "prepare moi exness standard a 1% avec les find winners precedents"
+
+config_exness_standard.py: 17 syms risk_pct 0.005 -> 0.01, RISK_PCT global 0.01.
+
 ## 2026-05-14 — Exness Standard 1h v1: 36 strats / 17 syms (suffixe m, PF>=1.20)
 
 User: "fais une copie du fichier de paires exness en exness_standard. Rajoute un m a tous les symboles" puis "compile exness standard. Je vais l'utiliser."
