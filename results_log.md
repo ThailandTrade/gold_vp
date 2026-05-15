@@ -23,6 +23,11 @@ User: "dans le dashboard, dans les open, on peut trier les trades par ceux qui s
   - **Table drill** (deja faite au fix 1): inchangee.
 - SW cache `hydra-v10` -> `hydra-v11`.
 
+### Fix 3 (commit 607c753) -- user: "je suis sensé voir le % d'avancement des trades ?"
+- Cause: les cards de la tab Open avaient le **tri** par TP% mais aucun **chiffre** affiche. La jauge visuelle SL/TP existait deja mais pas de %.
+- Ajout d'un badge `TP XX%` dans la meta du card (vert >=0, rouge <0).
+- SW cache `hydra-v11` -> `hydra-v12`.
+
 ### Deploiement
 - PWA: Ctrl+Shift+R pour invalider SW cache.
 - VPS: aucune action (modif frontend uniquement).
