@@ -98,7 +98,7 @@ async def icon_svg():
 
 @app.get("/sw.js")
 async def service_worker():
-    sw = """const CACHE='hydra-v14';
+    sw = """const CACHE='hydra-v15';
 self.addEventListener('install',e=>{self.skipWaiting();});
 self.addEventListener('activate',e=>{
   e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));
@@ -1247,7 +1247,7 @@ function renderToday(data){
   h+=`<div class="card"><div class="card-title">Trades ${range.label}<span class="right">${trades.length} trades &middot; ${fmtUsd(periodPnl,2)}</span></div>`;
   if(trades.length===0)h+='<div class="empty">Aucun trade sur la periode</div>';
   else{
-    const sorted=[...trades].sort((a,b)=>(b.time_open||'').localeCompare(a.time_open||''));
+    const sorted=[...trades].sort((a,b)=>(b.time_close||b.time_open||'').localeCompare(a.time_close||a.time_open||''));
     h+='<div class="list">';
     for(const t of sorted){
       const pnl=t.pnl||0;
@@ -1260,7 +1260,7 @@ function renderToday(data){
           <span class="${dirCls(t.dir)}">${(t.dir||'').toUpperCase()}</span>
           <span>${fmtPrice(t.entry)} &rarr; ${fmtPrice(t.exit)}</span>
           <span>${t.volume} lots</span>
-          <span class="tcard-time">${dateD(t.time_open)} ${timeHM(t.time_open)}-${timeHM(t.time_close)}</span>
+          <span class="tcard-time">${dateD(t.time_close)} ${timeHM(t.time_close)}</span>
         </div>
       </div>`;
     }
