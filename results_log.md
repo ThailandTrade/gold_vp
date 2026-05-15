@@ -39,6 +39,30 @@ User: "dans le dashboard, dans les open, on peut trier les trades par ceux qui s
 - Fix: fallback **TP virtuel a 1R** symetrique du SL quand `tp=0`, exactement comme la jauge visuelle de `renderPositionCard` (lignes 1268-1272). Toutes les positions ont desormais une progression comparable (echelle SL -> 1R).
 - SW cache `hydra-v13` -> `hydra-v14`.
 
+## 2026-05-15 — Dashboard: LIVE filtre broker + Open retire des brokers
+
+User: "dans le dashboard, au lieu d'avoir des onglets live par broker, je veux plutot tous les trades live dans l'open général, et pouvoir filtrer par broker. On vire aussi l'equity combinée."
+Clarifications: "Live c'est live. Ce n'est pas un broker. On le garde tel quel mais en pouvant filtrer par broker !" / "On vire juste l'onglet Open dans les brokers"
+
+### Fix (commit 420a83b)
+
+LIVE view (`renderLive()`):
+- Chips filtre broker `ALL | 5ERS | FTMO | EXNESS_STANDARD` au-dessus des positions, avec badge count par broker.
+- Variable globale `LIVE_FILTER` persistee dans `localStorage['hydra-live-filter']`.
+- `selectLiveFilter(f)` setter.
+- Retire la KPI `Equity totale` (addition balance/equity = pas pertinente).
+- Garde `PnL flottant` total (utile aggregé) + KPIs per-broker (count + flot).
+- Flot du card-title bascule sur le subset filtre (au lieu du total).
+
+Vues broker (renderTabs):
+- Retire l'onglet `Open` (existe uniquement dans LIVE desormais).
+- Garde-fou render(): si `TAB === 'open'` (localStorage legacy), fallback sur `'home'`.
+
+SW cache `hydra-v16` -> `hydra-v17`.
+
+### Deploiement
+PWA Ctrl+Shift+R. VPS aucune action (frontend uniquement).
+
 ## 2026-05-15 — exness_standard: retire FR40m + STOXX50m
 
 User: "on vire FR40 et STOXX pour exness standard. Les spreads sont trop élevés."
