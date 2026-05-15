@@ -94,6 +94,8 @@ SYMBOL_ID = {
     'AUDUSDm': 64, 'EURUSDm': 65, 'GBPUSDm': 66, 'USDCHFm': 67, 'USDJPYm': 68, 'USDCADm': 69,
     'NZDUSDm': 70, 'XAUUSDm': 71, 'AUS200m': 72, 'DE30m': 73, 'FR40m': 74, 'HK50m': 75,
     'JP225m': 76, 'STOXX50m': 77, 'UK100m': 78, 'US30m': 79, 'US500m': 80, 'USTECm': 81, 'BTCUSDm': 82,
+    # Exness Standard energies/metals/crypto (2026-05-15)
+    'USOILm': 83,
 }
 # (HK50.cash already in SYMBOL_ID at 15, US2000.cash at 16)
 
