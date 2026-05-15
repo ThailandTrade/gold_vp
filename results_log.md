@@ -67,6 +67,35 @@ SW cache `hydra-v16` -> `hydra-v17`.
 ### Deploiement
 PWA Ctrl+Shift+R. VPS aucune action (frontend uniquement).
 
+## 2026-05-15 — exness_standard: ajout USOILm 1h (3 strats)
+
+User: pipeline d'ajout symbole — discovery + qualite bougies + find_winners + decision.
+
+### Methodologie validee
+1. Discovery MT5 syms 'm' suffixe + spread% courant + check DB
+2. Cross-ref liquidite/cap mondiales (BIS forex top, market cap indices, top commodities, top crypto)
+3. **Critical**: qualite bougies 1h — distribution gaps close[i-1]->open[i] (gaps weekend exclus). Stats: med/p95/p99/max + count >5/10/20bp
+4. find_winners.py exness_standard --tf 1h --symbol X (n>=100, PF>=1.20, filtres complets)
+5. Si WIN: ajout config + STRAT_EXITS + BT validation
+
+### Critical insight gaps qualite
+- HK50m (pairs mais hors portfolio): 16.13% gaps>5bp, MAX 63bp -- pire de tous
+- AUS200m (portfolio actif): 5.71% gaps>5bp, MAX 37bp -- a surveiller
+- FR40m (supprime hier): 9.69% gaps>5bp, MAX 30bp -- confirme decision retrait
+- STOXX50m (supprime hier): 3.56% gaps>5bp, P99=11bp -- borderline
+- Validation: les vrais probleme ne sont PAS le spread instantane mais les gaps close/open
+
+### USOILm 1h (commit d7dbef2)
+Spread: 4.05bp. Gap quality: 0.16% >5bp, MAX 27.6bp -- bon.
+
+find_winners n>=100 PF>=1.20 -> 3 WIN sur 76 testes:
+- ALL_ELDER_BULL TPSL 1.5/2.0 -- n=209 avgR+0.178 M+8/13 h1+0.141/h2+0.227
+- ALL_FISHER_9 TPSL 1.0/0.75 -- n=277 avgR+0.087 M+10/13 h1+0.075/h2+0.149
+- TOK_FISHER BE_TP 1.0/0.75/1.0 -- n=227 avgR+0.091 M+9/13 h1+0.115/h2+0.094
+
+Risk 1% (aligne autres syms exness_standard).
+Pending: BT validation par user.
+
 ## 2026-05-15 — exness_standard: retire FR40m + STOXX50m
 
 User: "on vire FR40 et STOXX pour exness standard. Les spreads sont trop élevés."
