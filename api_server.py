@@ -98,7 +98,7 @@ async def icon_svg():
 
 @app.get("/sw.js")
 async def service_worker():
-    sw = """const CACHE='hydra-v11';
+    sw = """const CACHE='hydra-v12';
 self.addEventListener('install',e=>{self.skipWaiting();});
 self.addEventListener('activate',e=>{
   e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));
@@ -1294,6 +1294,8 @@ function renderPositionCard(p,opts){
   const elapsed=tOpen?Math.round((Date.now()-new Date(tOpen).getTime())/60000):0;
   const elapsedStr=elapsed>=60?`${Math.floor(elapsed/60)}h${(elapsed%60).toString().padStart(2,'0')}`:`${elapsed}m`;
   const accBadge=o.showAcc&&p._acc?`<span class="tcard-time" style="background:#1a1a2e;color:#fff;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase">${p._acc}</span>`:'';
+  const prog=tpProgress(p);
+  const progBadge=isFinite(prog)?`<span class="tcard-pnl ${prog>=0?'pnl-pos':'pnl-neg'}" style="font-size:12px">TP ${(prog*100).toFixed(0)}%</span>`:'';
   return `<div class="tcard pos-card ${cls}" onclick="openTradeByKey('op|${p.ticket}',false)">
     <div class="tcard-head">
       <div>${accBadge?accBadge+' ':''}<span class="tcard-sym">${escapeH(p.symbol)}</span> <span class="tcard-strat">${escapeH(stratOf(p))}<span class="tcard-tf">[${escapeH(tfOf(p))}]</span></span> <span class="${dirCls(p.dir)}">${(p.dir||'').toUpperCase()}</span></div>
@@ -1310,6 +1312,7 @@ function renderPositionCard(p,opts){
     <div class="tcard-meta">
       <span>Now ${fmtPrice(p.current)}</span>
       <span>${p.volume} lots</span>
+      ${progBadge}
       <span class="tcard-time">${elapsedStr}</span>
     </div>
   </div>`;
