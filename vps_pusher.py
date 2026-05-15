@@ -48,11 +48,20 @@ def _unit_key(sym, tf):
     return f"{sym}|{tf}"
 
 
-def _decode_comment(comment):
-    """Comment format: 'STRAT|TF'. Retourne (strat, tf). Fallback (comment, '15m')."""
+from strats import decode_magic
+
+def _decode_comment(comment, magic=None):
+    """Decode (strat, tf) d'une position MT5.
+    Priorite au magic (source de verite deterministe), fallback comment 'STRAT|TF'.
+    Magic encode TF via TF_ID -- robuste aux brokers qui strip le '|' du comment.
+    """
+    if magic is not None:
+        d = decode_magic(magic, args.account)
+        if d: return d[2], d[1]  # (strat_name, tf)
     if comment and '|' in comment:
         parts = comment.split('|')
-        return parts[0], parts[1]
+        if len(parts) >= 2 and parts[1]:
+            return parts[0], parts[1]
     return comment, '15m'
 
 # ── MT5 ──
@@ -67,7 +76,7 @@ def get_positions():
     positions = []
     for sym in SYMBOLS:
         for p in (mt5.positions_get(symbol=sym) or []):
-            strat, tf = _decode_comment(p.comment)
+            strat, tf = _decode_comment(p.comment, p.magic)
             positions.append({
                 'ticket': p.ticket,
                 'symbol': p.symbol,
@@ -110,7 +119,7 @@ def _deals_to_trades(deals):
     for pid, td in pos.items():
         if not td.get('in') or not td.get('out'): continue
         din = td['in']; dout = td['out']
-        strat, tf = _decode_comment(din.comment)
+        strat, tf = _decode_comment(din.comment, din.magic)
         trades.append({
             'ticket': din.order,
             'symbol': din.symbol,
