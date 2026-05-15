@@ -946,6 +946,12 @@ STRAT_EXITS[('exness_standard', 'XAUUSDm', '1h')] = {
     'ALL_TRIX': ('TPSL', 3.0, 3.0, 0.0),
 }
 
+STRAT_EXITS[('exness_standard', 'USOILm', '1h')] = {
+    'ALL_ELDER_BULL': ('TPSL', 1.5, 2.0, 0.0),
+    'ALL_FISHER_9': ('TPSL', 1.0, 0.75, 0.0),
+    'TOK_FISHER': ('BE_TP', 1.0, 0.75, 1.0),
+}
+
 STRAT_EXITS[('exness_standard', 'AUS200m', '1h')] = {
     'ALL_BB_TIGHT': ('TPSL', 3.0, 4.0, 0.0),
     'ALL_PIVOT_BRK': ('TPSL', 2.0, 2.0, 0.0),

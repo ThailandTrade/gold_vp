@@ -27,6 +27,9 @@ ALL_INSTRUMENTS = {
     'XAUUSDm': {
         '1h': {'risk_pct': 0.01, 'portfolio': ['ALL_HMA_CROSS', 'ALL_TRIX']},
     },
+    'USOILm': {
+        '1h': {'risk_pct': 0.01, 'portfolio': ['ALL_ELDER_BULL', 'ALL_FISHER_9', 'TOK_FISHER']},
+    },
     'AUS200m': {
         '1h': {'risk_pct': 0.01, 'portfolio': ['ALL_BB_TIGHT', 'ALL_PIVOT_BRK']},
     },
