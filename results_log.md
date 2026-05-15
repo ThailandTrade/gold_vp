@@ -49,6 +49,16 @@ User 2: "je veux aussi voir dans les trades fermés date / heure entrée et date
 - Affichage meta: `date_close + time_close` (au lieu de `date_open + heures range`).
 - SW cache `hydra-v14` -> `hydra-v15`.
 
+### Fix 2 (commit 3d004f3) -- user: "je veux aussi voir dans les trades fermés date / heure entrée et date / heure sortie partout, MM-DD HH:MM -> MM-DD HH:MM"
+- Helpers ajoutes: `fmtMD(s)` (MM-DD HH:MM) + `fmtRange(t)` (In -> Out).
+- Applique aux 5 vues qui affichent des trades fermes en card/liste/table:
+  - Tab Trades (renderToday)
+  - History cards (renderHistory)
+  - Drill par sym (toplist trades)
+  - Drill par strat (toplist trades)
+  - Drill compte historique (table, header `In -> Out`)
+- SW cache `hydra-v15` -> `hydra-v16`.
+
 ### Deploiement
 - PWA: Ctrl+Shift+R pour invalider SW cache.
 - VPS: aucune action (modif frontend uniquement).
