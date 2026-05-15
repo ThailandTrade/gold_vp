@@ -96,6 +96,8 @@ SYMBOL_ID = {
     'JP225m': 76, 'STOXX50m': 77, 'UK100m': 78, 'US30m': 79, 'US500m': 80, 'USTECm': 81, 'BTCUSDm': 82,
     # Exness Standard energies/metals/crypto (2026-05-15)
     'USOILm': 83,
+    # Exness Standard FX crosses (2026-05-15)
+    'EURJPYm': 84, 'EURGBPm': 85, 'GBPJPYm': 86,
 }
 # (HK50.cash already in SYMBOL_ID at 15, US2000.cash at 16)
 

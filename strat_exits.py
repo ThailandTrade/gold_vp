@@ -952,6 +952,22 @@ STRAT_EXITS[('exness_standard', 'USOILm', '1h')] = {
     'TOK_FISHER': ('BE_TP', 1.0, 0.75, 1.0),
 }
 
+STRAT_EXITS[('exness_standard', 'EURJPYm', '1h')] = {
+    'ALL_DC50': ('TPSL', 2.0, 1.0, 0.0),
+    'ALL_WILLR_14': ('TPSL', 1.5, 2.0, 0.0),
+}
+
+STRAT_EXITS[('exness_standard', 'EURGBPm', '1h')] = {
+    'ALL_ELDER_BULL': ('TPSL', 3.0, 2.5, 0.0),
+    'ALL_HAMMER': ('TPSL', 3.0, 3.0, 0.0),
+    'IDX_BB_REV': ('TPSL', 2.0, 2.5, 0.0),
+}
+
+STRAT_EXITS[('exness_standard', 'GBPJPYm', '1h')] = {
+    'ALL_MACD_DIV': ('TPSL', 3.0, 4.0, 0.0),
+    'ALL_RSI_DIV': ('TPSL', 3.0, 4.0, 0.0),
+}
+
 STRAT_EXITS[('exness_standard', 'AUS200m', '1h')] = {
     'ALL_BB_TIGHT': ('TPSL', 3.0, 4.0, 0.0),
     'ALL_PIVOT_BRK': ('TPSL', 2.0, 2.0, 0.0),

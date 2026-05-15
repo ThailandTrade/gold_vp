@@ -24,6 +24,15 @@ ALL_INSTRUMENTS = {
     'NZDUSDm': {
         '1h': {'risk_pct': 0.01, 'portfolio': ['IDX_VWAP_BOUNCE', 'TOK_BIG']},
     },
+    'EURJPYm': {
+        '1h': {'risk_pct': 0.01, 'portfolio': ['ALL_DC50', 'ALL_WILLR_14']},
+    },
+    'EURGBPm': {
+        '1h': {'risk_pct': 0.01, 'portfolio': ['ALL_ELDER_BULL', 'ALL_HAMMER', 'IDX_BB_REV']},
+    },
+    'GBPJPYm': {
+        '1h': {'risk_pct': 0.01, 'portfolio': ['ALL_MACD_DIV', 'ALL_RSI_DIV']},
+    },
     'XAUUSDm': {
         '1h': {'risk_pct': 0.01, 'portfolio': ['ALL_HMA_CROSS', 'ALL_TRIX']},
     },
