@@ -98,7 +98,7 @@ async def icon_svg():
 
 @app.get("/sw.js")
 async def service_worker():
-    sw = """const CACHE='hydra-v9';
+    sw = """const CACHE='hydra-v10';
 self.addEventListener('install',e=>{self.skipWaiting();});
 self.addEventListener('activate',e=>{
   e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));
@@ -1544,16 +1544,27 @@ function renderLegacy(data){
     <div class="drill-cell"><div class="lbl">PnL Jour</div><div class="val ${(s.today_pnl||0)>=0?'pnl-pos':'pnl-neg'}">${fmtUsd(s.today_pnl||0,2)}</div></div>
     <div class="drill-cell"><div class="lbl">Trades</div><div class="val">${s.today_count||0}</div></div>
   </div>`;
-  // Positions table
+  // Positions table -- tri par progression entry->TP descendante
+  const tpProgress=p=>{
+    if(!p.tp||p.tp===0)return -Infinity;
+    const denom=p.dir==='long'?(p.tp-p.entry):(p.entry-p.tp);
+    if(denom===0)return -Infinity;
+    const num=p.dir==='long'?(p.current-p.entry):(p.entry-p.current);
+    return num/denom;
+  };
+  const posSorted=[...pos].sort((a,b)=>tpProgress(b)-tpProgress(a));
   h+='<div class="drill-section"><h4>Positions ouvertes ('+pos.length+')</h4>';
   if(pos.length===0)h+='<div class="empty">Aucune position</div>';
   else{
-    h+='<div style="overflow-x:auto"><table style="font-size:11px"><tr><th>Sym</th><th>Strat</th><th>Dir</th><th>Entry</th><th>Current</th><th>SL</th><th>TP</th><th>PnL</th><th>Lots</th></tr>';
-    for(const p of pos){
+    h+='<div style="overflow-x:auto"><table style="font-size:11px"><tr><th>Sym</th><th>Strat</th><th>Dir</th><th>Entry</th><th>Current</th><th>SL</th><th>TP</th><th>TP%</th><th>PnL</th><th>Lots</th></tr>';
+    for(const p of posSorted){
+      const prog=tpProgress(p);
+      const progCell=isFinite(prog)?`<span class="${prog>=0?'pnl-pos':'pnl-neg'}">${(prog*100).toFixed(0)}%</span>`:'-';
       h+=`<tr onclick="openTradeByKey('op|${p.ticket}',false)" class="clickable">
         <td class="sym">${escapeH(p.symbol)}</td><td class="strat-name">${escapeH(stratOf(p))}<span class="tcard-tf">[${escapeH(tfOf(p))}]</span></td>
         <td class="${dirCls(p.dir)}">${(p.dir||'').toUpperCase()}</td>
         <td>${fmtPrice(p.entry)}</td><td>${fmtPrice(p.current)}</td><td>${fmtPrice(p.sl)}</td><td>${p.tp?fmtPrice(p.tp):'-'}</td>
+        <td>${progCell}</td>
         <td class="${pnlCls(p.pnl||0)}">${fmtUsd(p.pnl||0,2)}</td><td>${fmt(p.volume,2)}</td>
       </tr>`;
     }
