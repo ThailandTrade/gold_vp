@@ -43,13 +43,14 @@ User: "dans le dashboard, dans les open, on peut trier les trades par ceux qui s
 
 User: "on vire FR40 et STOXX pour exness standard. Les spreads sont trop élevés."
 
-### Fix (commit dc72634)
+### Fix (commits dc72634 + ba7669b)
 - `config_exness_standard.py`: retire `FR40m` (2 strats) et `STOXX50m` (2 strats).
 - `strat_exits.py`: retire les exits `('exness_standard', 'FR40m', '1h')` et `('exness_standard', 'STOXX50m', '1h')`.
+- `pairs_exness_standard.txt`: retire FR40m + STOXX50m du fetch.
 - Total: -4 strats / -2 syms.
 
 ### Deploiement VPS
-`git pull` + relance vps_pusher + live_mt5 exness_standard.
+`git pull` + relance vps_pusher + live_mt5 exness_standard. mt5_fetch_clean ne fetchera plus FR40m/STOXX50m.
 
 ## 2026-05-15 — vps_pusher: decode TF via magic (fallback comment)
 
