@@ -98,7 +98,7 @@ async def icon_svg():
 
 @app.get("/sw.js")
 async def service_worker():
-    sw = """const CACHE='hydra-v12';
+    sw = """const CACHE='hydra-v13';
 self.addEventListener('install',e=>{self.skipWaiting();});
 self.addEventListener('activate',e=>{
   e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));
@@ -1506,7 +1506,8 @@ function renderLive(){
       positions.push({...p,_acc:acc});
     }
   }
-  positions.sort((a,b)=>(a._acc||'').localeCompare(b._acc||'')||(a.time_open||'').localeCompare(b.time_open||''));
+  // Tri par progression entry->TP descendante (au plus proche du TP en haut)
+  positions.sort((a,b)=>tpProgress(b)-tpProgress(a));
 
   let totalFlot=0,totalEquity=0,totalBalance=0;
   const byAcc={};
