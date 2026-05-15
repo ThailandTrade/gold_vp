@@ -80,6 +80,26 @@ Decision user: pas de fix sur le 288.
 - compare_today.py: ran_out detection + affichage 'OPEN'/'...'
 - vps_pusher.py: ran_out detection + delta protege
 
+## 2026-05-15 — dashboard: fmtPrice auto-decimales selon magnitude (FX 4-5, indices 2)
+
+User: "On n'a que 2 decimales alors que le forex la plupart en ont 4"
+
+api_server.py: helpers `fmtPrice(v)` et `fmtPts(v)`:
+- prix >= 1000: 2 decimales (US30, BTC)
+- 100-1000: 3 (USDJPY, BCH)
+- 10-100: 4 (SOL, LTC)
+- 1-10: 5 (XRP, LINK)
+- < 1: 5 (EURUSD, ADA)
+
+Remplace ~20 occurrences `fmt(price, 2)` + `.toFixed(2)` sur prix/pts dans:
+- renderTradeDrill (entry, exit, slippage, ATR)
+- renderPositionDrill (entry, current, sl, tp, ATR, slip)
+- tcards (trade list)
+- legacy tables
+- position progress bar (SL/entry/TP labels)
+
+SW cache hydra-v7 -> hydra-v8.
+
 ## 2026-05-14 — dashboard: ACCOUNTS exness_standard remplace pepperstone
 
 User: "go pour exness standard. On vire pepperstone pour l'instant"

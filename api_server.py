@@ -98,7 +98,7 @@ async def icon_svg():
 
 @app.get("/sw.js")
 async def service_worker():
-    sw = """const CACHE='hydra-v7';
+    sw = """const CACHE='hydra-v8';
 self.addEventListener('install',e=>{self.skipWaiting();});
 self.addEventListener('activate',e=>{
   e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));
@@ -520,6 +520,16 @@ function getPeriodTrades(data){
 
 function fmt(n,d=0){if(n==null||isNaN(n))return'-';return Number(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});}
 function fmtUsd(v,d=0){const s=v>=0?'+':'-';return s+'$'+fmt(Math.abs(v),d);}
+// Decimales auto selon magnitude (FX 5, indices 2, etc.)
+function priceDecimals(v){
+  const a=Math.abs(v||0);
+  if(a>=1000)return 2;
+  if(a>=100)return 3;
+  if(a>=10)return 4;
+  return 5;
+}
+function fmtPrice(v){if(v==null||isNaN(v))return'-';return fmt(v,priceDecimals(v));}
+function fmtPts(v){if(v==null||isNaN(v))return'-';const d=priceDecimals(v);const s=v>=0?'+':'';return s+v.toFixed(d);}
 function pnlCls(v){return v>=0?'pnl-pos':'pnl-neg';}
 function dirCls(d){return d==='long'?'dir-long':'dir-short';}
 function timeHM(s){return s?(s+'').slice(11,16):'';}
@@ -640,10 +650,10 @@ function renderTradeDrill(t,data){
     h+=`<table class="vs-tbl">
       <thead><tr><th></th><th class="h-bt">BACKTEST</th><th class="h-lv">LIVE</th></tr></thead>
       <tbody>
-        <tr><th>Entry</th><td>${fmt(bt.entry,2)}</td><td>${fmt(t.entry,2)}</td></tr>
-        <tr><th>Exit</th><td>${fmt(bt.exit,2)}</td><td>${fmt(t.exit,2)}</td></tr>
+        <tr><th>Entry</th><td>${fmtPrice(bt.entry)}</td><td>${fmtPrice(t.entry)}</td></tr>
+        <tr><th>Exit</th><td>${fmtPrice(bt.exit)}</td><td>${fmtPrice(t.exit)}</td></tr>
         <tr><th>R</th><td class="${pnlCls(bt.pnl_r||0)}">${(bt.pnl_r>=0?'+':'')+(bt.pnl_r||0).toFixed(2)}R</td><td class="${pnlCls((lv||{}).pnl_r||0)}">${lv?(lv.pnl_r>=0?'+':'')+(lv.pnl_r||0).toFixed(2)+'R':'-'}</td></tr>
-        <tr><th>Pts</th><td>${(btPts>=0?'+':'')+btPts.toFixed(2)}</td><td>${(lvPts>=0?'+':'')+lvPts.toFixed(2)}</td></tr>
+        <tr><th>Pts</th><td>${fmtPts(btPts)}</td><td>${fmtPts(lvPts)}</td></tr>
         <tr><th>$</th><td style="color:#9ca3af">-</td><td class="${pnlCls(pnl)}">${fmtUsd(pnl,2)}</td></tr>
         <tr><th>In</th><td>${btIn}</td><td>${lvIn}</td></tr>
         <tr><th>Out</th><td>${btOut}</td><td>${lvOut}</td></tr>
@@ -654,16 +664,16 @@ function renderTradeDrill(t,data){
     const slipExit=isLong?(m.bt.exit-t.exit):(t.exit-m.bt.exit);
     const delta=m.delta||0;
     h+='<div class="drill-section"><h4>Slippage</h4>';
-    h+=`<div class="drill-row"><span class="k">Slippage entree</span><span class="v ${slipEntry<=0?'pnl-pos':'pnl-neg'}">${slipEntry>=0?'+':''}${slipEntry.toFixed(2)} pts</span></div>`;
-    h+=`<div class="drill-row"><span class="k">Slippage sortie</span><span class="v ${slipExit>=0?'pnl-pos':'pnl-neg'}">${slipExit>=0?'+':''}${slipExit.toFixed(2)} pts</span></div>`;
+    h+=`<div class="drill-row"><span class="k">Slippage entree</span><span class="v ${slipEntry<=0?'pnl-pos':'pnl-neg'}">${fmtPts(slipEntry)} pts</span></div>`;
+    h+=`<div class="drill-row"><span class="k">Slippage sortie</span><span class="v ${slipExit>=0?'pnl-pos':'pnl-neg'}">${fmtPts(slipExit)} pts</span></div>`;
     h+=`<div class="drill-row"><span class="k">Delta R (BT - LV)</span><span class="v ${pnlCls(delta)}">${delta>=0?'+':''}${delta.toFixed(2)}R</span></div>`;
-    h+=`<div class="drill-row"><span class="k">ATR du jour</span><span class="v">${fmt(m.atr,2)}</span></div>`;
+    h+=`<div class="drill-row"><span class="k">ATR du jour</span><span class="v">${fmtPrice(m.atr)}</span></div>`;
     h+='</div>';
   }else{
     h+='<div class="drill-section"><h4>Trade Live</h4>';
-    h+=`<div class="drill-row"><span class="k">Entry</span><span class="v">${fmt(t.entry,2)}</span></div>`;
-    h+=`<div class="drill-row"><span class="k">Exit</span><span class="v">${fmt(t.exit,2)}</span></div>`;
-    h+=`<div class="drill-row"><span class="k">Pts</span><span class="v">${fmt(((isLong?t.exit-t.entry:t.entry-t.exit)),2)}</span></div>`;
+    h+=`<div class="drill-row"><span class="k">Entry</span><span class="v">${fmtPrice(t.entry)}</span></div>`;
+    h+=`<div class="drill-row"><span class="k">Exit</span><span class="v">${fmtPrice(t.exit)}</span></div>`;
+    h+=`<div class="drill-row"><span class="k">Pts</span><span class="v">${fmtPts((isLong?t.exit-t.entry:t.entry-t.exit))}</span></div>`;
     h+='<div class="drill-row"><span class="k">BT match</span><span class="v" style="color:#9ca3af">Aucun</span></div>';
     h+='</div>';
   }
@@ -696,23 +706,23 @@ function renderPositionDrill(p,data){
   h+='</div>';
 
   h+='<div class="drill-section"><h4>Position</h4>';
-  h+=`<div class="drill-row"><span class="k">Entry (fill)</span><span class="v">${fmt(p.entry,2)}</span></div>`;
-  h+=`<div class="drill-row"><span class="k">Current</span><span class="v">${fmt(p.current,2)}</span></div>`;
-  h+=`<div class="drill-row"><span class="k">SL</span><span class="v" style="color:#dc2626">${fmt(p.sl,2)}</span></div>`;
-  h+=`<div class="drill-row"><span class="k">TP</span><span class="v" style="color:#059669">${p.tp?fmt(p.tp,2):'-'}</span></div>`;
+  h+=`<div class="drill-row"><span class="k">Entry (fill)</span><span class="v">${fmtPrice(p.entry)}</span></div>`;
+  h+=`<div class="drill-row"><span class="k">Current</span><span class="v">${fmtPrice(p.current)}</span></div>`;
+  h+=`<div class="drill-row"><span class="k">SL</span><span class="v" style="color:#dc2626">${fmtPrice(p.sl)}</span></div>`;
+  h+=`<div class="drill-row"><span class="k">TP</span><span class="v" style="color:#059669">${p.tp?fmtPrice(p.tp):'-'}</span></div>`;
   if(p.swap)h+=`<div class="drill-row"><span class="k">Swap</span><span class="v">${fmtUsd(p.swap,2)}</span></div>`;
   h+='</div>';
 
   if(m&&m.bt){
     h+='<div class="drill-section"><h4>BT (signal)</h4>';
-    h+=`<div class="drill-row"><span class="k">BT Entry (close signal)</span><span class="v">${fmt(m.bt.entry,2)}</span></div>`;
+    h+=`<div class="drill-row"><span class="k">BT Entry (close signal)</span><span class="v">${fmtPrice(m.bt.entry)}</span></div>`;
     const slip=isLong?(p.entry-m.bt.entry):(m.bt.entry-p.entry);
-    h+=`<div class="drill-row"><span class="k">Slippage entree</span><span class="v ${slip<=0?'pnl-pos':'pnl-neg'}">${slip>=0?'+':''}${slip.toFixed(2)} pts</span></div>`;
+    h+=`<div class="drill-row"><span class="k">Slippage entree</span><span class="v ${slip<=0?'pnl-pos':'pnl-neg'}">${fmtPts(slip)} pts</span></div>`;
     if(m.bt.exit&&m.bt.exit!==m.bt.entry){
-      h+=`<div class="drill-row"><span class="k">BT Exit (deja sorti)</span><span class="v">${fmt(m.bt.exit,2)}</span></div>`;
+      h+=`<div class="drill-row"><span class="k">BT Exit (deja sorti)</span><span class="v">${fmtPrice(m.bt.exit)}</span></div>`;
       h+=`<div class="drill-row"><span class="k">BT R</span><span class="v ${pnlCls(m.bt.pnl_r||0)}">${(m.bt.pnl_r>=0?'+':'')+(m.bt.pnl_r||0).toFixed(2)}R</span></div>`;
     }
-    h+=`<div class="drill-row"><span class="k">ATR jour</span><span class="v">${fmt(m.atr,2)}</span></div>`;
+    h+=`<div class="drill-row"><span class="k">ATR jour</span><span class="v">${fmtPrice(m.atr)}</span></div>`;
     h+='</div>';
   }
 
@@ -805,7 +815,7 @@ function openInstrumentDrill(sym,push){
           <div><span class="tcard-strat">${escapeH(stratOf(t))}<span class="tcard-tf">[${escapeH(tfOf(t))}]</span></span> <span class="${dirCls(t.dir)}">${(t.dir||'').toUpperCase()}</span></div>
           <span class="tcard-pnl ${pnlCls(pnl)}">${fmtUsd(pnl,2)}</span>
         </div>
-        <div class="tcard-meta"><span>${fmt(t.entry,2)}&rarr;${fmt(t.exit,2)}</span><span class="tcard-time">${dateD(t.time_close)} ${timeHM(t.time_close)}</span></div>
+        <div class="tcard-meta"><span>${fmtPrice(t.entry)}&rarr;${fmtPrice(t.exit)}</span><span class="tcard-time">${dateD(t.time_close)} ${timeHM(t.time_close)}</span></div>
       </div>`;
     }
     h+='</div></div>';
@@ -858,7 +868,7 @@ function openStratDrill(strat,push){
           <div><span class="tcard-sym">${escapeH(t.symbol)}</span> <span class="${dirCls(t.dir)}">${(t.dir||'').toUpperCase()}</span></div>
           <span class="tcard-pnl ${pnlCls(pnl)}">${fmtUsd(pnl,2)}</span>
         </div>
-        <div class="tcard-meta"><span>${fmt(t.entry,2)}&rarr;${fmt(t.exit,2)}</span><span class="tcard-time">${dateD(t.time_close)} ${timeHM(t.time_close)}</span></div>
+        <div class="tcard-meta"><span>${fmtPrice(t.entry)}&rarr;${fmtPrice(t.exit)}</span><span class="tcard-time">${dateD(t.time_close)} ${timeHM(t.time_close)}</span></div>
       </div>`;
     }
     h+='</div></div>';
@@ -1230,7 +1240,7 @@ function renderToday(data){
         </div>
         <div class="tcard-meta">
           <span class="${dirCls(t.dir)}">${(t.dir||'').toUpperCase()}</span>
-          <span>${fmt(t.entry,2)} &rarr; ${fmt(t.exit,2)}</span>
+          <span>${fmtPrice(t.entry)} &rarr; ${fmtPrice(t.exit)}</span>
           <span>${t.volume} lots</span>
           <span class="tcard-time">${dateD(t.time_open)} ${timeHM(t.time_open)}-${timeHM(t.time_close)}</span>
         </div>
@@ -1282,12 +1292,12 @@ function renderPositionCard(p,opts){
       <div class="zone-loss" style="left:0%;width:${lossWidth}%"></div>
       <div class="zone-profit" style="left:${entryPos}%;width:${profitWidth}%"></div>
       <div class="marker" style="left:${curPos}%"></div>
-      <span class="label-sl">SL ${fmt(sl,2)}</span>
-      <span class="label-entry" style="left:${entryPos}%">${fmt(p.entry,2)}</span>
-      ${tp>0?`<span class="label-tp">TP ${fmt(tp,2)}</span>`:''}
+      <span class="label-sl">SL ${fmtPrice(sl)}</span>
+      <span class="label-entry" style="left:${entryPos}%">${fmtPrice(p.entry)}</span>
+      ${tp>0?`<span class="label-tp">TP ${fmtPrice(tp)}</span>`:''}
     </div>
     <div class="tcard-meta">
-      <span>Now ${fmt(p.current,2)}</span>
+      <span>Now ${fmtPrice(p.current)}</span>
       <span>${p.volume} lots</span>
       <span class="tcard-time">${elapsedStr}</span>
     </div>
@@ -1359,7 +1369,7 @@ function renderHistory(data){
         </div>
         <div class="tcard-meta">
           <span class="${dirCls(t.dir)}">${(t.dir||'').toUpperCase()}</span>
-          <span>${fmt(t.entry,2)} &rarr; ${fmt(t.exit,2)}</span>
+          <span>${fmtPrice(t.entry)} &rarr; ${fmtPrice(t.exit)}</span>
           <span class="tcard-time">${dateD(t.time_close)} ${timeHM(t.time_close)}</span>
         </div>
       </div>`;
@@ -1457,7 +1467,7 @@ function renderBT(data){
     h+=`<div class="tcard" onclick="openInstrumentDrill('${escapeH(realSym)}',false)">
       <div class="tcard-head">
         <span class="tcard-sym">${escapeH(symLbl)}</span>
-        <span class="tcard-time">${rows.length} strats &middot; ATR ${fmt(atr,2)}</span>
+        <span class="tcard-time">${rows.length} strats &middot; ATR ${fmtPrice(atr)}</span>
       </div>
       <div class="tcard-meta">
         <span>BT <b class="${sumBt>=0?'pnl-pos':'pnl-neg'}">${sumBt>=0?'+':''}${sumBt.toFixed(2)}R</b></span>
@@ -1543,7 +1553,7 @@ function renderLegacy(data){
       h+=`<tr onclick="openTradeByKey('op|${p.ticket}',false)" class="clickable">
         <td class="sym">${escapeH(p.symbol)}</td><td class="strat-name">${escapeH(stratOf(p))}<span class="tcard-tf">[${escapeH(tfOf(p))}]</span></td>
         <td class="${dirCls(p.dir)}">${(p.dir||'').toUpperCase()}</td>
-        <td>${fmt(p.entry,2)}</td><td>${fmt(p.current,2)}</td><td>${fmt(p.sl,2)}</td><td>${p.tp?fmt(p.tp,2):'-'}</td>
+        <td>${fmtPrice(p.entry)}</td><td>${fmtPrice(p.current)}</td><td>${fmtPrice(p.sl)}</td><td>${p.tp?fmtPrice(p.tp):'-'}</td>
         <td class="${pnlCls(p.pnl||0)}">${fmtUsd(p.pnl||0,2)}</td><td>${fmt(p.volume,2)}</td>
       </tr>`;
     }
@@ -1563,7 +1573,7 @@ function renderLegacy(data){
     const tf=info.tf||unitKey.split('|')[1]||'15m';
     const symLbl=info._acc?`[${info._acc}] ${sym} [${tf}]`:`${sym} [${tf}]`;
     let totalBtR=0,totalLvR=0,totalDelta=0,totalUsd=0;
-    h+=`<div class="legacy-section-title"><span class="sym">${escapeH(symLbl)}</span><span class="meta">${rows.length} strats &middot; ATR ${fmt(info.atr,2)}</span></div>`;
+    h+=`<div class="legacy-section-title"><span class="sym">${escapeH(symLbl)}</span><span class="meta">${rows.length} strats &middot; ATR ${fmtPrice(info.atr)}</span></div>`;
     h+='<div class="legacy-wrap"><table class="legacy-tbl">';
     h+='<thead><tr>';
     h+='<th class="col-strat" rowspan="2">Strat</th>';
