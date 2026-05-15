@@ -2,6 +2,36 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-15 — Forex decimales: fix complet pipeline (vps_pusher + compare_today + dashboard)
+
+User: "TOUS LES TRADES OPEN SONT EN 2 DECIMALES POUR LE FOREX !!!" / "compare today n'est pas bon non plus !"
+
+### Probleme
+Le fix precedent (`d51c362`) sur vps_pusher ne suffisait pas. Trois zones restantes formataient en 2 dec (ou 1 dec) ce qui rend les prix forex inutilisables:
+- **vps_pusher.py L308**: `'atr': round(atr, 2)` -- ATR EURUSD ~0.005 -> rounded(.,2) = 0.00 (donnee corrompue a la source pour le calcul cote frontend)
+- **compare_today.py**: ~6 occurrences `:.2f` sur entry/exit/atr -- EURUSD affiche `1.07` au lieu de `1.07452`
+- **api_server.py**: 5 zones non migrees vers `fmtPrice`:
+  - L762 ATR jour drill (`fmt(m.atr,2)`)
+  - L1593 BT compare table entry/exit (`fmt(bt.entry,2)`)
+  - L1601 LV compare table entry/exit (`fmt(lv.entry,2)`)
+  - L1647 candles OHLC (`fmt(c.open,1)` -- 1 dec, encore pire)
+  - L1665 historique entry/exit (`fmt(t.entry,2)`)
+
+### Fix (commit dc1e173)
+- `vps_pusher.py`: ATR rounded a 5 dec
+- `compare_today.py`: helper `fmt_price(v)` adaptatif (memes seuils que `priceDecimals` JS: >=1000:2, >=100:3, >=10:4, <10:5), applique partout sur ATR + bt/lv entry/exit + entry_diff dans verdict
+- `api_server.py`: toutes les zones forex passees a `fmtPrice` (5 endroits)
+- SW cache: `hydra-v8` -> `hydra-v9` pour invalider le JS cache cote PWA
+
+### Deploiement
+- VPS: `git pull` + relance des vps_pusher.py
+- PWA: Ctrl+Shift+R pour invalider SW cache
+
+### Notes
+- `fmtUsd(p.pnl,2)` (USD) et `fmt(p.volume,2)` (lots) gardes a 2 dec (corrects).
+- live_mt5_ftmo.py / live_mt5_5ers.py contiennent encore `round(price, 2)` pour SL -- legacy, non actifs. live_mt5.py utilise `sym.digits` (correct).
+- Threshold 0.5/2.0 dans verdict compare_today.py reste tune XAUUSD (pas modifie -- a evaluer separement).
+
 ## 2026-05-12 — compare_today + vps_pusher: match par bucket (strat, dir, date+hour)
 
 User: "le match doit se faire sur sym, strat, direction, date et heure."
