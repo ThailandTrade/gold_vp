@@ -98,7 +98,7 @@ async def icon_svg():
 
 @app.get("/sw.js")
 async def service_worker():
-    sw = """const CACHE='hydra-v15';
+    sw = """const CACHE='hydra-v16';
 self.addEventListener('install',e=>{self.skipWaiting();});
 self.addEventListener('activate',e=>{
   e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));
@@ -550,6 +550,10 @@ function pnlCls(v){return v>=0?'pnl-pos':'pnl-neg';}
 function dirCls(d){return d==='long'?'dir-long':'dir-short';}
 function timeHM(s){return s?(s+'').slice(11,16):'';}
 function dateD(s){return s?(s+'').slice(0,10):'';}
+// "MM-DD HH:MM"
+function fmtMD(s){return s?(s+'').slice(5,10)+' '+(s+'').slice(11,16):'-';}
+// "MM-DD HH:MM -> MM-DD HH:MM" pour trades fermes (entree -> sortie)
+function fmtRange(t){return fmtMD(t.time_open)+' &rarr; '+fmtMD(t.time_close);}
 function escapeH(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
 // === Modal system ===
@@ -831,7 +835,7 @@ function openInstrumentDrill(sym,push){
           <div><span class="tcard-strat">${escapeH(stratOf(t))}<span class="tcard-tf">[${escapeH(tfOf(t))}]</span></span> <span class="${dirCls(t.dir)}">${(t.dir||'').toUpperCase()}</span></div>
           <span class="tcard-pnl ${pnlCls(pnl)}">${fmtUsd(pnl,2)}</span>
         </div>
-        <div class="tcard-meta"><span>${fmtPrice(t.entry)}&rarr;${fmtPrice(t.exit)}</span><span class="tcard-time">${dateD(t.time_close)} ${timeHM(t.time_close)}</span></div>
+        <div class="tcard-meta"><span>${fmtPrice(t.entry)}&rarr;${fmtPrice(t.exit)}</span><span class="tcard-time">${fmtRange(t)}</span></div>
       </div>`;
     }
     h+='</div></div>';
@@ -884,7 +888,7 @@ function openStratDrill(strat,push){
           <div><span class="tcard-sym">${escapeH(t.symbol)}</span> <span class="${dirCls(t.dir)}">${(t.dir||'').toUpperCase()}</span></div>
           <span class="tcard-pnl ${pnlCls(pnl)}">${fmtUsd(pnl,2)}</span>
         </div>
-        <div class="tcard-meta"><span>${fmtPrice(t.entry)}&rarr;${fmtPrice(t.exit)}</span><span class="tcard-time">${dateD(t.time_close)} ${timeHM(t.time_close)}</span></div>
+        <div class="tcard-meta"><span>${fmtPrice(t.entry)}&rarr;${fmtPrice(t.exit)}</span><span class="tcard-time">${fmtRange(t)}</span></div>
       </div>`;
     }
     h+='</div></div>';
@@ -1260,7 +1264,7 @@ function renderToday(data){
           <span class="${dirCls(t.dir)}">${(t.dir||'').toUpperCase()}</span>
           <span>${fmtPrice(t.entry)} &rarr; ${fmtPrice(t.exit)}</span>
           <span>${t.volume} lots</span>
-          <span class="tcard-time">${dateD(t.time_close)} ${timeHM(t.time_close)}</span>
+          <span class="tcard-time">${fmtRange(t)}</span>
         </div>
       </div>`;
     }
@@ -1391,7 +1395,7 @@ function renderHistory(data){
         <div class="tcard-meta">
           <span class="${dirCls(t.dir)}">${(t.dir||'').toUpperCase()}</span>
           <span>${fmtPrice(t.entry)} &rarr; ${fmtPrice(t.exit)}</span>
-          <span class="tcard-time">${dateD(t.time_close)} ${timeHM(t.time_close)}</span>
+          <span class="tcard-time">${fmtRange(t)}</span>
         </div>
       </div>`;
     }
@@ -1682,10 +1686,10 @@ function renderLegacy(data){
     const w=hist.filter(t=>(t.pnl||0)>0).length;
     const wr=(w/hist.length*100).toFixed(0);
     h+=`<div class="drill-section"><h4>Historique (${hist.length} trades) &mdash; WR ${wr}% &mdash; PnL ${fmtUsd(tp,2)}</h4>`;
-    h+='<div style="overflow-x:auto;max-height:400px"><table style="font-size:11px"><tr><th>Date</th><th>Sym</th><th>Strat</th><th>Dir</th><th>Entry</th><th>Exit</th><th>PnL</th></tr>';
+    h+='<div style="overflow-x:auto;max-height:400px"><table style="font-size:11px"><tr><th>In &rarr; Out</th><th>Sym</th><th>Strat</th><th>Dir</th><th>Entry</th><th>Exit</th><th>PnL</th></tr>';
     for(const t of [...hist].sort((a,b)=>(b.time_close||'').localeCompare(a.time_close||'')).slice(0,50)){
       h+=`<tr onclick="openTradeByKey('lv|${t.ticket}',false)" class="clickable">
-        <td>${dateD(t.time_close).slice(5)} ${timeHM(t.time_close)}</td>
+        <td>${fmtRange(t)}</td>
         <td class="sym">${escapeH(t.symbol)}</td><td class="strat-name">${escapeH(stratOf(t))}<span class="tcard-tf">[${escapeH(tfOf(t))}]</span></td>
         <td class="${dirCls(t.dir)}">${(t.dir||'').toUpperCase()}</td>
         <td>${fmtPrice(t.entry)}</td><td>${fmtPrice(t.exit)}</td>
