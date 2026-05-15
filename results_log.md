@@ -2,6 +2,23 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-15 — Dashboard: tri positions ouvertes par progression vers TP
+
+User: "dans le dashboard, dans les open, on peut trier les trades par ceux qui sont le plus proches de TP ?"
+
+### Fix (commit 089e968)
+- Helper `tpProgress(p)`:
+  - Long: `(current - entry) / (tp - entry)`
+  - Short: `(entry - current) / (entry - tp)`
+  - tp=0 ou denom=0 -> `-Infinity` (releguee en bas)
+- Tri descendant: positions au plus proche du TP en haut.
+- Colonne **TP%** ajoutee entre TP et PnL (vert si >=0, rouge si <0).
+- SW cache `hydra-v9` -> `hydra-v10`.
+
+### Deploiement
+- PWA: Ctrl+Shift+R pour invalider SW cache.
+- VPS: aucune action (modif frontend uniquement).
+
 ## 2026-05-15 — Forex decimales: fix complet pipeline (vps_pusher + compare_today + dashboard)
 
 User: "TOUS LES TRADES OPEN SONT EN 2 DECIMALES POUR LE FOREX !!!" / "compare today n'est pas bon non plus !"
