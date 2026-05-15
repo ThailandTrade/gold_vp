@@ -305,7 +305,7 @@ def compute_compare_today():
                 if bt and row['lv'] and bt.get('pnl_r') is not None:
                     row['delta'] = round(row['lv']['pnl_r'] - bt['pnl_r'], 2)
                 rows.append(row)
-        result[_unit_key(sym, tf)] = {'symbol': sym, 'tf': tf, 'atr': round(atr, 2), 'rows': rows}
+        result[_unit_key(sym, tf)] = {'symbol': sym, 'tf': tf, 'atr': round(atr, 5), 'rows': rows}
     conn.close()
     return result
 

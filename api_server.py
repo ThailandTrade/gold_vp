@@ -98,7 +98,7 @@ async def icon_svg():
 
 @app.get("/sw.js")
 async def service_worker():
-    sw = """const CACHE='hydra-v8';
+    sw = """const CACHE='hydra-v9';
 self.addEventListener('install',e=>{self.skipWaiting();});
 self.addEventListener('activate',e=>{
   e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));
@@ -759,7 +759,7 @@ function renderBtRowDrill(sym,strat,m,data){
   if(m.delta!=null){
     h+='<div class="drill-section"><h4>Delta</h4>';
     h+=`<div class="drill-row"><span class="k">BT - LV</span><span class="v ${pnlCls(m.delta)}">${m.delta>=0?'+':''}${m.delta.toFixed(2)}R</span></div>`;
-    h+=`<div class="drill-row"><span class="k">ATR jour</span><span class="v">${fmt(m.atr,2)}</span></div>`;
+    h+=`<div class="drill-row"><span class="k">ATR jour</span><span class="v">${fmtPrice(m.atr)}</span></div>`;
     h+='</div>';
   }
   return h;
@@ -1590,7 +1590,7 @@ function renderLegacy(data){
       let bD=m,bE=m,bX=m,bR=m,bIn=m,bOut=m,lD=m,lE=m,lX=m,lR=m,lUsd=m,lIn=m,lOut=m,dl=m;
       if(bt){
         bD=`<span class="${dirCls(bt.dir)}">${(bt.dir||'').toUpperCase()}</span>`;
-        bE=fmt(bt.entry,2); bX=fmt(bt.exit,2);
+        bE=fmtPrice(bt.entry); bX=fmtPrice(bt.exit);
         const rv=bt.pnl_r||0; totalBtR+=rv;
         bR=`<span class="${rv>=0?'pnl-pos':'pnl-neg'}">${(rv>=0?'+':'')+rv.toFixed(2)}</span>`;
         bIn=bt.entry_time?timeHM(bt.entry_time):m;
@@ -1598,7 +1598,7 @@ function renderLegacy(data){
       }
       if(lv){
         lD=`<span class="${dirCls(lv.dir)}">${(lv.dir||'').toUpperCase()}</span>`;
-        lE=fmt(lv.entry,2); lX=fmt(lv.exit,2);
+        lE=fmtPrice(lv.entry); lX=fmtPrice(lv.exit);
         const rv=lv.pnl_r||0; totalLvR+=rv;
         lR=`<span class="${rv>=0?'pnl-pos':'pnl-neg'}">${(rv>=0?'+':'')+rv.toFixed(2)}</span>`;
         const usd=lv.pnl_usd||0; totalUsd+=usd;
@@ -1640,11 +1640,11 @@ function renderLegacy(data){
   if(syms.length>0){
     h+='<div class="drill-section"><h4>Dernieres bougies</h4>';
     for(const sym of syms){
-      const c=candles[sym]; const rng=(c.high-c.low).toFixed(1);
+      const c=candles[sym]; const rng=fmtPrice(c.high-c.low);
       h+=`<div class="candle-row" style="display:flex;justify-content:space-between;padding:4px 0;font-size:11px;color:#4b5563;border-bottom:1px solid #f9fafb">
         <span style="font-weight:600;color:#1a1a2e;min-width:80px">${escapeH(sym)}</span>
         <span>${timeHM(c.time)}</span>
-        <span>O ${fmt(c.open,1)}</span><span>H ${fmt(c.high,1)}</span><span>L ${fmt(c.low,1)}</span><span>C ${fmt(c.close,1)}</span>
+        <span>O ${fmtPrice(c.open)}</span><span>H ${fmtPrice(c.high)}</span><span>L ${fmtPrice(c.low)}</span><span>C ${fmtPrice(c.close)}</span>
         <span style="font-weight:600">R ${rng}</span>
       </div>`;
     }
@@ -1662,7 +1662,7 @@ function renderLegacy(data){
         <td>${dateD(t.time_close).slice(5)} ${timeHM(t.time_close)}</td>
         <td class="sym">${escapeH(t.symbol)}</td><td class="strat-name">${escapeH(stratOf(t))}<span class="tcard-tf">[${escapeH(tfOf(t))}]</span></td>
         <td class="${dirCls(t.dir)}">${(t.dir||'').toUpperCase()}</td>
-        <td>${fmt(t.entry,2)}</td><td>${fmt(t.exit,2)}</td>
+        <td>${fmtPrice(t.entry)}</td><td>${fmtPrice(t.exit)}</td>
         <td class="${pnlCls(t.pnl||0)}">${fmtUsd(t.pnl||0,2)}</td>
       </tr>`;
     }

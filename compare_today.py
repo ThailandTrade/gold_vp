@@ -24,6 +24,16 @@ args = parser.parse_args()
 # TF duration en minutes (pour aligner entry_time BT sur close de bougie = live fill time)
 TF_DELTA_MIN = {'5m': 5, '15m': 15, '1h': 60, '4h': 240, '1d': 1440}
 
+def fmt_price(v):
+    """Decimales adaptatives selon magnitude (FX 5, indices 2, etc.) -- aligne sur priceDecimals JS."""
+    if v is None: return '-'
+    a = abs(v)
+    if a >= 1000: d = 2
+    elif a >= 100: d = 3
+    elif a >= 10: d = 4
+    else: d = 5
+    return f"{v:.{d}f}"
+
 import os, json
 cfg = importlib.import_module(f'config_{args.account}')
 BROKER = cfg.BROKER
@@ -194,7 +204,7 @@ for sym, tf, icfg in UNITS:
 
     if not bt_active and not bt_skip and not lv and not lo: continue
 
-    print(f"\n  {sym} [{tf}] -- ATR={atr:.2f} -- {len(portfolio)} strats")
+    print(f"\n  {sym} [{tf}] -- ATR={fmt_price(atr)} -- {len(portfolio)} strats")
     print(f"  BT: {len(bt_active)} trades ({len(bt_skip)} skipped) | Live: {len(lv)} closed + {len(lo)} open")
 
     # Match exact: (strat, dir, entry date + hour) -- evite faux match position-par-position
@@ -249,12 +259,12 @@ for sym, tf, icfg in UNITS:
 
             # BT columns (MM-DD HH:MM pour distinguer jours avec lookback)
             if bt and bt['skipped']:
-                bt_dir = 'SKIP'; bt_entry = f"{bt['entry']:.2f}"; bt_exit = '-'; bt_pts = '-'
+                bt_dir = 'SKIP'; bt_entry = fmt_price(bt['entry']); bt_exit = '-'; bt_pts = '-'
                 bt_in = bt['entry_time'][5:16]; bt_out = '-'
             elif bt:
-                bt_dir = bt['dir']; bt_entry = f"{bt['entry']:.2f}"
+                bt_dir = bt['dir']; bt_entry = fmt_price(bt['entry'])
                 # ran_out -> trade simu pas vraiment ferme, on cache l'exit
-                bt_exit = f"{bt['exit']:.2f}" if bt.get('exit') is not None else 'OPEN'
+                bt_exit = fmt_price(bt['exit']) if bt.get('exit') is not None else 'OPEN'
                 bt_pts = f"{bt['pnl_r']:+.2f}R" if bt.get('pnl_r') is not None else '...'
                 if bt.get('pnl_r') is not None:
                     bt_total_pts += bt['pnl_r']
@@ -265,7 +275,7 @@ for sym, tf, icfg in UNITS:
 
             lv_sort_key = '99-99 99:99'
             if lv_t:
-                lv_dir = lv_t['dir']; lv_entry = f"{lv_t['entry']:.2f}"; lv_exit = f"{lv_t['exit']:.2f}"
+                lv_dir = lv_t['dir']; lv_entry = fmt_price(lv_t['entry']); lv_exit = fmt_price(lv_t['exit'])
                 lv_pnl_pts = (lv_t['exit'] - lv_t['entry']) if lv_t['dir'] == 'long' else (lv_t['entry'] - lv_t['exit'])
                 risk_1r = bt['risk_1r'] if bt and not bt['skipped'] else 3.0 * atr
                 lv_pnl_r = lv_pnl_pts / risk_1r if risk_1r > 0 else 0
@@ -276,7 +286,7 @@ for sym, tf, icfg in UNITS:
                 lv_out = lv_t['exit_time'].strftime('%m-%d %H:%M') if hasattr(lv_t['exit_time'], 'strftime') else str(lv_t['exit_time'])[5:16]
                 lv_sort_key = lv_in
             elif lo_t:
-                lv_dir = lo_t['dir']; lv_entry = f"{lo_t['entry']:.2f}"; lv_exit = 'OPEN'
+                lv_dir = lo_t['dir']; lv_entry = fmt_price(lo_t['entry']); lv_exit = 'OPEN'
                 lv_pts = '...'
                 lv_in = lo_t['time'].strftime('%m-%d %H:%M') if hasattr(lo_t['time'], 'strftime') else str(lo_t['time'])[5:16]
                 lv_out = '...'
@@ -299,7 +309,7 @@ for sym, tf, icfg in UNITS:
                     entry_diff = abs(bt['entry'] - lv_e)
                     if entry_diff < 0.5: verdict = ''
                     elif entry_diff < 2.0: verdict = ''
-                    else: verdict = f'!! ENTRY DIFF {entry_diff:.1f}'
+                    else: verdict = f'!! ENTRY DIFF {fmt_price(entry_diff)}'
             elif bt and bt['skipped'] and (lv_t or lo_t):
                 verdict = '!! BT=SKIP LV=PRIS'
             elif bt and not bt['skipped'] and not lv_t and not lo_t:
