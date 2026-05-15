@@ -6,14 +6,22 @@
 
 User: "dans le dashboard, dans les open, on peut trier les trades par ceux qui sont le plus proches de TP ?"
 
-### Fix (commit 089e968)
+### Fix 1 (commit 089e968) -- incomplet
 - Helper `tpProgress(p)`:
   - Long: `(current - entry) / (tp - entry)`
   - Short: `(entry - current) / (entry - tp)`
   - tp=0 ou denom=0 -> `-Infinity` (releguee en bas)
-- Tri descendant: positions au plus proche du TP en haut.
-- Colonne **TP%** ajoutee entre TP et PnL (vert si >=0, rouge si <0).
+- Tri descendant + colonne TP% applique uniquement a la **table drill** (deep dive par compte).
 - SW cache `hydra-v9` -> `hydra-v10`.
+
+### Fix 2 (commit 3ea7a92) -- user: "ca n'a pas l'air de fonctionner"
+- Cause: les **vues principales** ("tab Open" cards + teaser dashboard toplist) iteraient `pos` sans tri. Le fix 1 ne touchait que la table drill.
+- Promote `tpProgress` + nouveau helper `sortByTpProgress` en globaux.
+- Applique aux 3 vues:
+  - **Tab Open** (cards avec jauge SL/TP): tri par TP%.
+  - **Teaser dashboard** (toplist): tri + affichage TP% inline.
+  - **Table drill** (deja faite au fix 1): inchangee.
+- SW cache `hydra-v10` -> `hydra-v11`.
 
 ### Deploiement
 - PWA: Ctrl+Shift+R pour invalider SW cache.
