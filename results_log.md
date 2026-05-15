@@ -39,6 +39,36 @@ User: "dans le dashboard, dans les open, on peut trier les trades par ceux qui s
 - Fix: fallback **TP virtuel a 1R** symetrique du SL quand `tp=0`, exactement comme la jauge visuelle de `renderPositionCard` (lignes 1268-1272). Toutes les positions ont desormais une progression comparable (echelle SL -> 1R).
 - SW cache `hydra-v13` -> `hydra-v14`.
 
+## 2026-05-15 — vps_pusher: decode TF via magic (fallback comment)
+
+User: "j'en ai une autre qui marque 15m, mais qui a été ouverte aujourd'hui... US500.cash [1h] ALL_PIVOT_BOUNCE"
+
+### Probleme
+`vps_pusher._decode_comment` parsait le TF depuis le commentaire MT5 (`STRAT|TF`). Quand le `|` est absent (legacy trades pre 2026-05-02, OU broker qui strip le caractere comme FTMO semble le faire), fallback hardcode `'15m'` → mauvais TF dans dashboard.
+
+Confirmation: trade ouvert aujourd'hui via `live_mt5.py` avec `comment='ALL_PIVOT_BOUNCE|1h'` (19 chars, sous limite 31) → dashboard affichait `[15m]`. Donc FTMO modifie le comment.
+
+### Fix (commit c59bba7)
+Source de verite passe du **comment** au **magic number** (deterministe, encode TF via `TF_ID = {5m:0, 15m:1, 1h:2, 4h:3, 1d:4}`):
+```python
+def _decode_comment(comment, magic=None):
+    if magic is not None:
+        d = decode_magic(magic, args.account)
+        if d: return d[2], d[1]
+    if comment and '|' in comment:
+        ...
+    return comment, '15m'
+```
+
+Call sites:
+- `get_positions`: `_decode_comment(p.comment, p.magic)`
+- `_deals_to_trades`: `_decode_comment(din.comment, din.magic)`
+
+Comment devient fallback uniquement (pour trades manuels avec magic inconnu).
+
+### Deploiement VPS
+`git pull` + relance vps_pusher pour chaque broker. Les positions existantes seront re-decodees au prochain push avec le bon TF.
+
 ## 2026-05-15 — Dashboard: trades fermes (tab Trades) tri + entree/sortie
 
 User 1: "dans les trades fermés le tri doit se faire sur date / heure de sortie desc"
