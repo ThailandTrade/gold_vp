@@ -98,7 +98,7 @@ async def icon_svg():
 
 @app.get("/sw.js")
 async def service_worker():
-    sw = """const CACHE='hydra-v16';
+    sw = """const CACHE='hydra-v17';
 self.addEventListener('install',e=>{self.skipWaiting();});
 self.addEventListener('activate',e=>{
   e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));
@@ -450,6 +450,7 @@ let SELECTED=localStorage.getItem('hydra-acc')||'live';
 let TAB=localStorage.getItem('hydra-tab')||'home';
 let PERIOD=localStorage.getItem('hydra-period')||'today';
 let EQ_LIMIT=parseInt(localStorage.getItem('hydra-eq-limit'))||100;
+let LIVE_FILTER=localStorage.getItem('hydra-live-filter')||'all';  // 'all'|'5ers'|'ftmo'|'exness_standard'
 const EQ_LIMITS=[20,50,100,200,500,0];  // 0 = tout
 let LAST={};
 let MODAL_STACK=[]; // pour bouton retour
@@ -950,6 +951,7 @@ function selectAcc(acc){SELECTED=acc;localStorage.setItem('hydra-acc',acc);rende
 function selectTab(t){TAB=t;localStorage.setItem('hydra-tab',t);render();}
 function selectPeriod(p){PERIOD=p;localStorage.setItem('hydra-period',p);render();}
 function selectEqLimit(n){EQ_LIMIT=n;localStorage.setItem('hydra-eq-limit',n);render();}
+function selectLiveFilter(f){LIVE_FILTER=f;localStorage.setItem('hydra-live-filter',f);render();}
 
 function renderPeriodTabs(){
   let h='';
@@ -1005,7 +1007,6 @@ function renderTabs(data){
   const tabs=[
     {id:'home',label:'Home',n:0},
     {id:'today',label:'Trades',n:periodTrades.length},
-    {id:'open',label:'Open',n:pos.length},
     {id:'history',label:'Histo',n:hist.length},
     {id:'bt',label:'BT/LV',n:btCount},
     {id:'logs',label:'Logs',n:pos.length+periodTrades.length},
@@ -1509,33 +1510,41 @@ function renderBT(data){
 // === Render: LIVE (positions ouvertes toutes props, presentation cards style Open) ===
 function renderLive(){
   const root=document.getElementById('tab-live');
-  const positions=[];
+  const allPositions=[];
   for(const acc of ACCOUNTS){
     const d=LAST[acc]||{};
     if(!d.state)continue;
     for(const p of (d.state.positions||[])){
-      positions.push({...p,_acc:acc});
+      allPositions.push({...p,_acc:acc});
     }
   }
+  // Filtre broker
+  const positions=LIVE_FILTER==='all'?allPositions:allPositions.filter(p=>p._acc===LIVE_FILTER);
   // Tri par progression entry->TP descendante (au plus proche du TP en haut)
   positions.sort((a,b)=>tpProgress(b)-tpProgress(a));
 
-  let totalFlot=0,totalEquity=0,totalBalance=0;
+  let totalFlot=0;
   const byAcc={};
   for(const acc of ACCOUNTS){
     const d=LAST[acc]||{};
-    const a=d.state?.account_info||{};
     const flot=(d.state?.positions||[]).reduce((s,p)=>s+(p.pnl||0),0);
-    byAcc[acc]={count:(d.state?.positions||[]).length,flot,equity:a.equity||0,balance:a.balance||0};
+    byAcc[acc]={count:(d.state?.positions||[]).length,flot};
     totalFlot+=flot;
-    totalEquity+=a.equity||0;
-    totalBalance+=a.balance||0;
   }
+  const filteredFlot=positions.reduce((s,p)=>s+(p.pnl||0),0);
 
   let h='';
+  // Chips filtre broker
+  h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">';
+  const filterOpts=[['all','ALL'],...ACCOUNTS.map(a=>[a,a.toUpperCase()])];
+  for(const [v,lbl] of filterOpts){
+    const n=v==='all'?allPositions.length:(byAcc[v]?.count||0);
+    h+=`<button class="period-chip ${v===LIVE_FILTER?'active':''}" onclick="selectLiveFilter('${v}')">${lbl}<span class="badge">${n}</span></button>`;
+  }
+  h+='</div>';
+  // KPIs (PnL flottant total + per-broker)
   h+='<div class="kpis" style="margin-bottom:14px">';
-  h+=`<div class="kpi"><div class="lbl">Equity totale</div><div class="val">$${fmt(totalEquity,0)}</div><div class="sub">balance $${fmt(totalBalance,0)}</div></div>`;
-  h+=`<div class="kpi"><div class="lbl">PnL flottant</div><div class="val ${totalFlot>=0?'green':'red'}">${fmtUsd(totalFlot,2)}</div><div class="sub">${positions.length} positions</div></div>`;
+  h+=`<div class="kpi"><div class="lbl">PnL flottant</div><div class="val ${totalFlot>=0?'green':'red'}">${fmtUsd(totalFlot,2)}</div><div class="sub">${allPositions.length} positions</div></div>`;
   for(const acc of ACCOUNTS){
     const a=byAcc[acc];
     h+=`<div class="kpi"><div class="lbl">${acc.toUpperCase()}</div><div class="val">${a.count}</div><div class="sub ${a.flot>=0?'pnl-pos':'pnl-neg'}">${fmtUsd(a.flot,2)} flot</div></div>`;
@@ -1543,12 +1552,13 @@ function renderLive(){
   h+='</div>';
 
   if(positions.length===0){
-    h+='<div class="card"><div class="empty">Aucune position ouverte sur aucune prop</div></div>';
+    const msg=LIVE_FILTER==='all'?'Aucune position ouverte sur aucune prop':`Aucune position ouverte sur ${LIVE_FILTER.toUpperCase()}`;
+    h+=`<div class="card"><div class="empty">${msg}</div></div>`;
     root.innerHTML=h;
     return;
   }
 
-  h+=`<div class="card"><div class="card-title">${positions.length} position(s) ouverte(s)<span class="right ${totalFlot>=0?'pnl-pos':'pnl-neg'}">${fmtUsd(totalFlot,2)} flot</span></div><div class="list">`;
+  h+=`<div class="card"><div class="card-title">${positions.length} position(s) ouverte(s)<span class="right ${filteredFlot>=0?'pnl-pos':'pnl-neg'}">${fmtUsd(filteredFlot,2)} flot</span></div><div class="list">`;
   for(const p of positions){h+=renderPositionCard(p,{showAcc:true});}
   h+='</div></div>';
 
@@ -1761,10 +1771,11 @@ function render(){
   const data=getAccData();
   renderKpis(data);
   renderTabs(data);
+  // Garde-fou: 'open' n'existe plus en vue broker, retombe sur 'home'
+  if(TAB==='open'){TAB='home';localStorage.setItem('hydra-tab','home');}
   document.getElementById('tab-'+TAB).classList.add('active');
   if(TAB==='home')renderHome(data);
   else if(TAB==='today')renderToday(data);
-  else if(TAB==='open')renderOpen(data);
   else if(TAB==='history')renderHistory(data);
   else if(TAB==='bt')renderBT(data);
   else if(TAB==='logs')renderLogs(data);
