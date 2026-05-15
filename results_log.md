@@ -60,6 +60,10 @@ Vues broker (renderTabs):
 
 SW cache `hydra-v16` -> `hydra-v17`.
 
+### Fix complementaire (commit 164073c) -- user: "le pnl flottant n'est pas filtré avec les brokers"
+- KPI `PnL flottant` utilisait `totalFlot` (somme tous brokers). Switch vers `filteredFlot` + sous-titre indique le broker filtre.
+- SW cache `hydra-v17` -> `hydra-v18`.
+
 ### Deploiement
 PWA Ctrl+Shift+R. VPS aucune action (frontend uniquement).
 
