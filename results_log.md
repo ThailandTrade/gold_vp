@@ -39,6 +39,18 @@ User: "dans le dashboard, dans les open, on peut trier les trades par ceux qui s
 - Fix: fallback **TP virtuel a 1R** symetrique du SL quand `tp=0`, exactement comme la jauge visuelle de `renderPositionCard` (lignes 1268-1272). Toutes les positions ont desormais une progression comparable (echelle SL -> 1R).
 - SW cache `hydra-v13` -> `hydra-v14`.
 
+## 2026-05-15 — exness_standard: retire FR40m + STOXX50m
+
+User: "on vire FR40 et STOXX pour exness standard. Les spreads sont trop élevés."
+
+### Fix (commit dc72634)
+- `config_exness_standard.py`: retire `FR40m` (2 strats) et `STOXX50m` (2 strats).
+- `strat_exits.py`: retire les exits `('exness_standard', 'FR40m', '1h')` et `('exness_standard', 'STOXX50m', '1h')`.
+- Total: -4 strats / -2 syms.
+
+### Deploiement VPS
+`git pull` + relance vps_pusher + live_mt5 exness_standard.
+
 ## 2026-05-15 — vps_pusher: decode TF via magic (fallback comment)
 
 User: "j'en ai une autre qui marque 15m, mais qui a été ouverte aujourd'hui... US500.cash [1h] ALL_PIVOT_BOUNCE"
