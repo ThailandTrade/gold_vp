@@ -98,7 +98,7 @@ async def icon_svg():
 
 @app.get("/sw.js")
 async def service_worker():
-    sw = """const CACHE='hydra-v13';
+    sw = """const CACHE='hydra-v14';
 self.addEventListener('install',e=>{self.skipWaiting();});
 self.addEventListener('activate',e=>{
   e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));
@@ -530,12 +530,19 @@ function priceDecimals(v){
 }
 function fmtPrice(v){if(v==null||isNaN(v))return'-';return fmt(v,priceDecimals(v));}
 function fmtPts(v){if(v==null||isNaN(v))return'-';const d=priceDecimals(v);const s=v>=0?'+':'';return s+v.toFixed(d);}
-// Progression entry->TP (0=entry, 1=TP, <0=mauvaise direction). Sans TP -> -Infinity.
+// Progression entry->TP (0=entry, 1=TP, <0=mauvaise direction).
+// Sans TP fixe (strats TRAIL), TP virtuel a 1R (symetrique du SL, aligne sur la jauge visuelle).
 function tpProgress(p){
-  if(!p||!p.tp||p.tp===0)return -Infinity;
-  const denom=p.dir==='long'?(p.tp-p.entry):(p.entry-p.tp);
+  if(!p||p.entry==null||p.current==null)return -Infinity;
+  const isLong=p.dir==='long';
+  let tp=p.tp;
+  if(!tp||tp===0){
+    if(p.sl==null||p.sl===0)return -Infinity;
+    tp=isLong?(p.entry+(p.entry-p.sl)):(p.entry-(p.sl-p.entry));
+  }
+  const denom=isLong?(tp-p.entry):(p.entry-tp);
   if(denom===0)return -Infinity;
-  const num=p.dir==='long'?(p.current-p.entry):(p.entry-p.current);
+  const num=isLong?(p.current-p.entry):(p.entry-p.current);
   return num/denom;
 }
 function sortByTpProgress(arr){return [...arr].sort((a,b)=>tpProgress(b)-tpProgress(a));}
