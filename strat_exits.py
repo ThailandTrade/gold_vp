@@ -955,20 +955,10 @@ STRAT_EXITS[('exness_standard', 'DE30m', '1h')] = {
     'BOS_FVG': ('TPSL', 3.0, 1.0, 0.0),
 }
 
-STRAT_EXITS[('exness_standard', 'FR40m', '1h')] = {
-    'ALL_FISHER_9': ('TPSL', 2.5, 2.5, 0.0),
-    'ALL_HMA_CROSS': ('TPSL', 2.0, 1.5, 0.0),
-}
-
 STRAT_EXITS[('exness_standard', 'JP225m', '1h')] = {
     'ALL_EMA_821': ('TPSL', 2.0, 1.0, 0.0),
     'ALL_EMA_921': ('TPSL', 2.0, 1.0, 0.0),
     'ALL_FISHER_9': ('TPSL', 3.0, 4.0, 0.0),
-}
-
-STRAT_EXITS[('exness_standard', 'STOXX50m', '1h')] = {
-    'ALL_DOJI_REV': ('TPSL', 2.0, 2.5, 0.0),
-    'ALL_MACD_FAST_SIG': ('TPSL', 2.0, 2.5, 0.0),
 }
 
 STRAT_EXITS[('exness_standard', 'UK100m', '1h')] = {

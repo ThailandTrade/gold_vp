@@ -33,14 +33,8 @@ ALL_INSTRUMENTS = {
     'DE30m': {
         '1h': {'risk_pct': 0.01, 'portfolio': ['BOS_FVG']},
     },
-    'FR40m': {
-        '1h': {'risk_pct': 0.01, 'portfolio': ['ALL_FISHER_9', 'ALL_HMA_CROSS']},
-    },
     'JP225m': {
         '1h': {'risk_pct': 0.01, 'portfolio': ['ALL_EMA_821', 'ALL_EMA_921', 'ALL_FISHER_9']},
-    },
-    'STOXX50m': {
-        '1h': {'risk_pct': 0.01, 'portfolio': ['ALL_DOJI_REV', 'ALL_MACD_FAST_SIG']},
     },
     'UK100m': {
         '1h': {'risk_pct': 0.01, 'portfolio': ['ALL_DOJI_REV', 'ALL_MACD_DIV']},
