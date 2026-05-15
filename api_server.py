@@ -98,7 +98,7 @@ async def icon_svg():
 
 @app.get("/sw.js")
 async def service_worker():
-    sw = """const CACHE='hydra-v17';
+    sw = """const CACHE='hydra-v18';
 self.addEventListener('install',e=>{self.skipWaiting();});
 self.addEventListener('activate',e=>{
   e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));
@@ -1542,9 +1542,9 @@ function renderLive(){
     h+=`<button class="period-chip ${v===LIVE_FILTER?'active':''}" onclick="selectLiveFilter('${v}')">${lbl}<span class="badge">${n}</span></button>`;
   }
   h+='</div>';
-  // KPIs (PnL flottant total + per-broker)
+  // KPIs (PnL flottant -- filtre LIVE_FILTER -- + per-broker)
   h+='<div class="kpis" style="margin-bottom:14px">';
-  h+=`<div class="kpi"><div class="lbl">PnL flottant</div><div class="val ${totalFlot>=0?'green':'red'}">${fmtUsd(totalFlot,2)}</div><div class="sub">${allPositions.length} positions</div></div>`;
+  h+=`<div class="kpi"><div class="lbl">PnL flottant</div><div class="val ${filteredFlot>=0?'green':'red'}">${fmtUsd(filteredFlot,2)}</div><div class="sub">${positions.length} positions${LIVE_FILTER==='all'?'':' ('+LIVE_FILTER.toUpperCase()+')'}</div></div>`;
   for(const acc of ACCOUNTS){
     const a=byAcc[acc];
     h+=`<div class="kpi"><div class="lbl">${acc.toUpperCase()}</div><div class="val">${a.count}</div><div class="sub ${a.flot>=0?'pnl-pos':'pnl-neg'}">${fmtUsd(a.flot,2)} flot</div></div>`;
