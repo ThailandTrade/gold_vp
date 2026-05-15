@@ -34,6 +34,11 @@ User: "dans le dashboard, dans les open, on peut trier les trades par ceux qui s
 - SW cache `hydra-v12` -> `hydra-v13`.
 - Lecon: chercher TOUTES les vues de positions avant de declarer le fix complet. 4 lieux differents au final (tab Open, teaser dashboard, drill table, **vue Live**).
 
+### Fix 5 (commit 416c31a) -- user: "le tri dans open doit se faire sur le %. Pas de tri sur le broker. Juste sur le %"
+- Cause: les strats `TRAIL` n'envoient pas de TP fixe (`tp=0` dans MT5). `tpProgress` retournait `-Infinity` pour elles -> sort stable preservait l'ordre original (= broker) sur tout le groupe sans TP.
+- Fix: fallback **TP virtuel a 1R** symetrique du SL quand `tp=0`, exactement comme la jauge visuelle de `renderPositionCard` (lignes 1268-1272). Toutes les positions ont desormais une progression comparable (echelle SL -> 1R).
+- SW cache `hydra-v13` -> `hydra-v14`.
+
 ### Deploiement
 - PWA: Ctrl+Shift+R pour invalider SW cache.
 - VPS: aucune action (modif frontend uniquement).
