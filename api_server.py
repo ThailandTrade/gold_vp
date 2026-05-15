@@ -98,7 +98,7 @@ async def icon_svg():
 
 @app.get("/sw.js")
 async def service_worker():
-    sw = """const CACHE='hydra-v10';
+    sw = """const CACHE='hydra-v11';
 self.addEventListener('install',e=>{self.skipWaiting();});
 self.addEventListener('activate',e=>{
   e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));
@@ -530,6 +530,15 @@ function priceDecimals(v){
 }
 function fmtPrice(v){if(v==null||isNaN(v))return'-';return fmt(v,priceDecimals(v));}
 function fmtPts(v){if(v==null||isNaN(v))return'-';const d=priceDecimals(v);const s=v>=0?'+':'';return s+v.toFixed(d);}
+// Progression entry->TP (0=entry, 1=TP, <0=mauvaise direction). Sans TP -> -Infinity.
+function tpProgress(p){
+  if(!p||!p.tp||p.tp===0)return -Infinity;
+  const denom=p.dir==='long'?(p.tp-p.entry):(p.entry-p.tp);
+  if(denom===0)return -Infinity;
+  const num=p.dir==='long'?(p.current-p.entry):(p.entry-p.current);
+  return num/denom;
+}
+function sortByTpProgress(arr){return [...arr].sort((a,b)=>tpProgress(b)-tpProgress(a));}
 function pnlCls(v){return v>=0?'pnl-pos':'pnl-neg';}
 function dirCls(d){return d==='long'?'dir-long':'dir-short';}
 function timeHM(s){return s?(s+'').slice(11,16):'';}
@@ -1148,13 +1157,15 @@ function renderHome(data){
     </div>
   </div>`;
 
-  // Open positions teaser
+  // Open positions teaser -- tri par progression entry->TP
   if(pos.length>0){
     h+=`<div class="card"><div class="card-title">Positions ouvertes (${pos.length})<span class="right ${pnlCls(flot)}">${fmtUsd(flot,2)} flot</span></div><div class="toplist">`;
-    for(const p of pos){
+    for(const p of sortByTpProgress(pos)){
+      const prog=tpProgress(p);
+      const progStr=isFinite(prog)?`<span class="${prog>=0?'pnl-pos':'pnl-neg'}">${(prog*100).toFixed(0)}%</span>`:'<span style="color:#9ca3af">-</span>';
       h+=`<div class="toprow" onclick="openTradeByKey('op|${p.ticket}',false)">
         <span class="name">${escapeH(p.symbol)}</span>
-        <span class="stats">${escapeH(stratOf(p))}<span class="tcard-tf">[${escapeH(tfOf(p))}]</span> &middot; <span class="${dirCls(p.dir)}">${(p.dir||'').toUpperCase()}</span></span>
+        <span class="stats">${escapeH(stratOf(p))}<span class="tcard-tf">[${escapeH(tfOf(p))}]</span> &middot; <span class="${dirCls(p.dir)}">${(p.dir||'').toUpperCase()}</span> &middot; TP ${progStr}</span>
         <span class="pnl ${pnlCls(p.pnl||0)}">${fmtUsd(p.pnl||0,2)}</span>
       </div>`;
     }
@@ -1316,7 +1327,7 @@ function renderOpen(data){
     h+=`<div class="card"><div class="card-title">${pos.length} position(s) ouverte(s)<span class="right ${flot>=0?'pnl-pos':'pnl-neg'}">${fmtUsd(flot,2)} flot</span></div>`;
     h+='<div class="list">';
     const showAcc=SELECTED==='live';
-    for(const p of pos){h+=renderPositionCard(p,{showAcc});}
+    for(const p of sortByTpProgress(pos)){h+=renderPositionCard(p,{showAcc});}
     h+='</div></div>';
   }
   root.innerHTML=h;
@@ -1545,14 +1556,7 @@ function renderLegacy(data){
     <div class="drill-cell"><div class="lbl">Trades</div><div class="val">${s.today_count||0}</div></div>
   </div>`;
   // Positions table -- tri par progression entry->TP descendante
-  const tpProgress=p=>{
-    if(!p.tp||p.tp===0)return -Infinity;
-    const denom=p.dir==='long'?(p.tp-p.entry):(p.entry-p.tp);
-    if(denom===0)return -Infinity;
-    const num=p.dir==='long'?(p.current-p.entry):(p.entry-p.current);
-    return num/denom;
-  };
-  const posSorted=[...pos].sort((a,b)=>tpProgress(b)-tpProgress(a));
+  const posSorted=sortByTpProgress(pos);
   h+='<div class="drill-section"><h4>Positions ouvertes ('+pos.length+')</h4>';
   if(pos.length===0)h+='<div class="empty">Aucune position</div>';
   else{
