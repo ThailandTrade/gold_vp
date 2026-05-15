@@ -75,10 +75,10 @@ def get_positions():
                 'strat': strat,
                 'dir': 'long' if p.type == 0 else 'short',
                 'volume': p.volume,
-                'entry': round(p.price_open, 2),
-                'current': round(p.price_current, 2),
-                'sl': round(p.sl, 2),
-                'tp': round(p.tp, 2),
+                'entry': round(p.price_open, 5),
+                'current': round(p.price_current, 5),
+                'sl': round(p.sl, 5),
+                'tp': round(p.tp, 5),
                 'pnl': round(p.profit, 2),
                 'swap': round(p.swap, 2),
                 'comment': p.comment,
@@ -117,8 +117,8 @@ def _deals_to_trades(deals):
             'tf': tf,
             'strat': strat,
             'dir': 'long' if din.type == 0 else 'short',
-            'entry': round(din.price, 2),
-            'exit': round(dout.price, 2),
+            'entry': round(din.price, 5),
+            'exit': round(dout.price, 5),
             'volume': din.volume,
             'pnl': round(dout.profit, 2),
             'comment': din.comment,
@@ -171,10 +171,10 @@ def get_last_candle(symbol, tf='15m'):
     r = rates[0]
     return {
         'time': mt5_time_to_utc(r[0]).isoformat(),
-        'open': round(float(r[1]), 2),
-        'high': round(float(r[2]), 2),
-        'low': round(float(r[3]), 2),
-        'close': round(float(r[4]), 2),
+        'open': round(float(r[1]), 5),
+        'high': round(float(r[2]), 5),
+        'low': round(float(r[3]), 5),
+        'close': round(float(r[4]), 5),
         'volume': int(r[5]),
     }
 
@@ -239,8 +239,8 @@ def compute_compare_today():
                 continue  # ferme avant today ou pas encore entre
             bt_by_strat.setdefault(sn, []).append({
                 'dir': 'long' if di == 1 else 'short',
-                'entry': round(entry, 2),
-                'exit': None if ran_out else round(entry + pnl_oz if di == 1 else entry - pnl_oz, 2),
+                'entry': round(entry, 5),
+                'exit': None if ran_out else round(entry + pnl_oz if di == 1 else entry - pnl_oz, 5),
                 'pnl_r': None if ran_out else (round(pnl_oz / risk_1r, 2) if risk_1r > 0 else 0),
                 'risk_1r': round(risk_1r, 4),
                 'entry_time': entry_close.isoformat(),

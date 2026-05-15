@@ -80,6 +80,21 @@ Decision user: pas de fix sur le 288.
 - compare_today.py: ran_out detection + affichage 'OPEN'/'...'
 - vps_pusher.py: ran_out detection + delta protege
 
+## 2026-05-15 — vps_pusher: round 5 decimales (etait 2) pour preserver precision FX
+
+User: "Dans live j'ai encore 2 decimales pour NZDUSD"
+
+Cause: vps_pusher.py arrondissait les prix a 2 decimales avant l'envoi
+au dashboard. NZDUSD 0.5912 -> 0.59 cote frontend (perdu).
+
+Fix: round(x, 2) -> round(x, 5) pour:
+- positions: entry/current/sl/tp (l.78-81)
+- deals closed: entry/exit (l.120-121)
+- BT compare: entry/exit (l.242-243)
+- candles: open/high/low/close (l.174-177)
+
+Le frontend fmtPrice() v8 reduit ensuite a 2-5 decimales selon magnitude.
+
 ## 2026-05-15 — dashboard: fmtPrice auto-decimales selon magnitude (FX 4-5, indices 2)
 
 User: "On n'a que 2 decimales alors que le forex la plupart en ont 4"
