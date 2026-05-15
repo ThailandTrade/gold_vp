@@ -39,6 +39,16 @@ User: "dans le dashboard, dans les open, on peut trier les trades par ceux qui s
 - Fix: fallback **TP virtuel a 1R** symetrique du SL quand `tp=0`, exactement comme la jauge visuelle de `renderPositionCard` (lignes 1268-1272). Toutes les positions ont desormais une progression comparable (echelle SL -> 1R).
 - SW cache `hydra-v13` -> `hydra-v14`.
 
+## 2026-05-15 — Dashboard: trades fermes (tab Trades) tri + entree/sortie
+
+User 1: "dans les trades fermés le tri doit se faire sur date / heure de sortie desc"
+User 2: "je veux aussi voir dans les trades fermés date / heure entrée et date / heure sortie"
+
+### Fix 1 (commit 307cde1)
+- `renderToday` ligne 1250 triait par `time_open` -> incoherent pour trades multi-jour. Switch vers `time_close` desc (aligne sur History/Logs/drill).
+- Affichage meta: `date_close + time_close` (au lieu de `date_open + heures range`).
+- SW cache `hydra-v14` -> `hydra-v15`.
+
 ### Deploiement
 - PWA: Ctrl+Shift+R pour invalider SW cache.
 - VPS: aucune action (modif frontend uniquement).
