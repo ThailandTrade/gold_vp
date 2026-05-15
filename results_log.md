@@ -67,6 +67,50 @@ SW cache `hydra-v16` -> `hydra-v17`.
 ### Deploiement
 PWA Ctrl+Shift+R. VPS aucune action (frontend uniquement).
 
+## 2026-05-15 — exness_standard: ajout 3 FX crosses (EURJPYm, EURGBPm, GBPJPYm)
+
+User: "fais ces 3 deja" -> diversification anti-USD (portfolio etait ultra US-centric).
+
+### Discovery v2 (commit f113f7f)
+Re-scan exhaustif Exness Standard avec enable systematique MarketWatch (les FX crosses n'apparaissaient pas dans la 1ere discovery car NO_TICK par defaut). Decouverte de 273 syms supplementaires dont 100+ FX crosses, leveraged indices, stocks individuels, metaux mineurs.
+
+Top FX crosses retenus (non-USD, tight spread, gap quality excellente):
+- **EURJPYm** 0.87bp -- gap 0.15% >5bp
+- **EURGBPm** 1.49bp -- gap 0.05% >5bp (presque identique a EURUSDm)
+- **GBPJPYm** 1.04bp -- gap 0.35% >5bp
+
+find_winners 1h (n>=100, PF>=1.20):
+
+**EURJPYm**: 2 WIN
+- ALL_DC50 TPSL 2.0/1.0
+- ALL_WILLR_14 TPSL 1.5/2.0
+
+**EURGBPm**: 3 WIN
+- ALL_ELDER_BULL TPSL 3.0/2.5
+- ALL_HAMMER TPSL 3.0/3.0
+- IDX_BB_REV TPSL 2.0/2.5
+
+**GBPJPYm**: 2 WIN
+- ALL_MACD_DIV TPSL 3.0/4.0
+- ALL_RSI_DIV TPSL 3.0/4.0
+
+Total: +7 strats sur 3 syms, risk 1% (aligne autres exness_standard).
+SYMBOL_ID 84/85/86.
+
+### Bilan session add syms (2026-05-15)
+| Sym | WIN | Statut config |
+|---|---|---|
+| USOILm | 3 | ajoute (d7dbef2) |
+| USDCNHm | 0 | DB fetched, skip (peg) |
+| ETHUSDm | 0 | DB fetched, skip (medR<=0, correl BTC 0.895) |
+| EURJPYm | 2 | ajoute (f113f7f) |
+| EURGBPm | 3 | ajoute (f113f7f) |
+| GBPJPYm | 2 | ajoute (f113f7f) |
+
+Pipeline ajout sym = discovery + cap/liquidite mondiale + gap quality bougies + find_winners + decision sequentielle 1 par 1.
+
+Pending: BT validation user.
+
 ## 2026-05-15 — exness_standard: ajout USOILm 1h (3 strats)
 
 User: pipeline d'ajout symbole — discovery + qualite bougies + find_winners + decision.
