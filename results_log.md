@@ -28,6 +28,12 @@ User: "dans le dashboard, dans les open, on peut trier les trades par ceux qui s
 - Ajout d'un badge `TP XX%` dans la meta du card (vert >=0, rouge <0).
 - SW cache `hydra-v11` -> `hydra-v12`.
 
+### Fix 4 (commit 9459391) -- user: "le tri ne fonctionne pas du tout"
+- Cause: la vue **Live** (multi-comptes, `renderLive()`) avait son propre `positions.sort((a,b)=>(a._acc||'').localeCompare...)` ligne 1509 qui sortait par account+time_open et ignorait `sortByTpProgress`.
+- Remplace par `tpProgress(b)-tpProgress(a)`.
+- SW cache `hydra-v12` -> `hydra-v13`.
+- Lecon: chercher TOUTES les vues de positions avant de declarer le fix complet. 4 lieux differents au final (tab Open, teaser dashboard, drill table, **vue Live**).
+
 ### Deploiement
 - PWA: Ctrl+Shift+R pour invalider SW cache.
 - VPS: aucune action (modif frontend uniquement).
