@@ -169,60 +169,48 @@ STRAT_EXITS[('ftmo', 'US2000.cash', '15m')] = {
 
 STRAT_EXITS[('5ers', 'XAUUSD', '1h')] = {
     'ALL_HMA_CROSS': ('TPSL', 3.0, 4.0, 0),
-    'ALL_NR4': ('TPSL', 2.5, 3.0, 0),
-    'ALL_TRIX': ('TPSL', 3.0, 3.0, 0),
 }
 
 STRAT_EXITS[('5ers', 'XAGUSD', '1h')] = {
-    'ALL_DC10': ('TPSL', 2.5, 2.5, 0),
-    'ALL_DC10_EMA': ('TPSL', 2.5, 2.5, 0),
     'ALL_FVG_BULL': ('TPSL', 3.0, 5.0, 0),
     'ALL_KC_BRK': ('TPSL', 2.5, 2.5, 0),
-    'ALL_MTF_BRK': ('TPSL', 2.5, 2.5, 0),
 }
 
 STRAT_EXITS[('5ers', 'NAS100', '1h')] = {
-    'TOK_STOCH': ('TPSL', 1.25, 1.5, 0),
+    'BOS_FVG': ('BE_TP', 2.0, 0.3, 1.0),
 }
 
 STRAT_EXITS[('5ers', 'SP500', '1h')] = {
-    'ALL_FVG_BULL': ('TPSL', 1.5, 1.5, 0),
-    'ALL_HAMMER': ('BE_TP', 1.5, 0.3, 1.0),
-    'ALL_MACD_HIST': ('TPSL', 1.5, 2.0, 0),
     'ALL_PIVOT_BOUNCE': ('BE_TP', 1.0, 0.75, 1.0),
-    'ALL_STOCH_RSI': ('TPSL', 2.0, 2.0, 0),
-    'IDX_3SOLDIERS': ('TPSL', 1.25, 1.5, 0),
-    'TOK_STOCH': ('TPSL', 3.0, 1.5, 0),
 }
 
 STRAT_EXITS[('5ers', 'UK100', '1h')] = {
+    'ALL_3SOLDIERS': ('TRAIL', 1.0, 0.3, 0.3),
     'ALL_CMO_9': ('TPSL', 2.5, 2.0, 0),
+    'ALL_ELDER_BULL': ('TPSL', 1.25, 1.5, 0),
     'ALL_HAMMER': ('TPSL', 1.5, 2.0, 0),
-    'AVWAP_RECLAIM': ('TPSL', 2.5, 2.0, 0),
+    'ALL_MACD_DIV': ('TPSL', 1.5, 1.0, 0),
 }
 
 STRAT_EXITS[('5ers', 'JPN225', '1h')] = {
-    'ALL_EMA_821': ('BE_TP', 1.5, 0.75, 1.0),
-    'ALL_EMA_921': ('TPSL', 1.5, 1.0, 0),
-    'ALL_FVG_BULL': ('TPSL', 1.25, 1.5, 0),
-    'ALL_MOM_10': ('TPSL', 2.5, 3.0, 0),
-    'TOK_STOCH': ('TPSL', 3.0, 4.0, 0),
+    'ALL_EMA_821': ('BE_TP', 2.0, 0.75, 1.0),
+    'ALL_FVG_BULL': ('BE_TP', 2.0, 0.5, 1.5),
+    'BOS_FVG': ('BE_TP', 2.5, 0.75, 1.5),
+    'TOK_NR4': ('TPSL', 1.25, 0.75, 0),
 }
 
 STRAT_EXITS[('5ers', 'US30', '1h')] = {
+    'ALL_ADX_RSI50': ('BE_TP', 3.0, 0.3, 0.75),
+    'ALL_CMO_9': ('TPSL', 2.5, 2.0, 0),
     'ALL_MACD_ADX': ('TPSL', 2.5, 2.5, 0),
-    'ALL_MOM_10': ('TPSL', 2.5, 2.5, 0),
-    'ALL_STOCH_RSI': ('TPSL', 1.25, 1.5, 0),
-    'IDX_3SOLDIERS': ('TPSL', 1.5, 1.5, 0),
+    'ALL_RSI_50': ('BE_TP', 3.0, 0.3, 0.75),
     'TOK_NR4': ('TPSL', 1.25, 0.5, 0),
 }
 
 STRAT_EXITS[('5ers', 'DAX40', '1h')] = {
+    'ALL_CCI_100': ('TPSL', 2.0, 2.5, 0),
     'ALL_MACD_HIST': ('TPSL', 2.5, 3.0, 0),
     'BOS_FVG': ('TPSL', 3.0, 3.0, 0),
-    'IDX_VWAP_BOUNCE': ('TPSL', 2.0, 1.5, 0),
-    'TOK_STOCH': ('TRAIL', 2.5, 1.0, 0.75),
-    'TOK_TRIX': ('TPSL', 2.5, 1.5, 0),
 }
 
 # ==== FTMO 1h (find_winners 2026-05-01) ====

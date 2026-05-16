@@ -42,6 +42,8 @@ parser.add_argument('--avgr-min', type=float, default=0.05, help='Edge tangible 
 parser.add_argument('--pf-min', type=float, default=None, help='Profit factor minimum (default: pas de filtre)')
 parser.add_argument('--lookback-years', type=float, default=None,
                     help='Restreint la donnee aux N dernieres annees (default: full)')
+parser.add_argument('--date-max', default=None,
+                    help='Exclut les donnees >= YYYY-MM-DD (walk-forward holdout)')
 parser.add_argument('--tpsl-only', action='store_true')
 args = parser.parse_args()
 
@@ -200,6 +202,15 @@ for sym in INSTRUMENTS:
         trading_days = sorted(d for d in trading_days if d >= cutoff.date())
         daily_atr = {d: v for d, v in daily_atr.items() if d >= cutoff.date()}
         print(f"  Lookback {args.lookback_years}y -> {len(candles)} bars (etait {before})")
+
+    if args.date_max and len(candles) > 0:
+        cutoff_ts = pd.Timestamp(args.date_max, tz='UTC')
+        cutoff_date = cutoff_ts.date()
+        before = len(candles)
+        candles = candles[candles['ts_dt'] < cutoff_ts].reset_index(drop=True)
+        trading_days = sorted(d for d in trading_days if d < cutoff_date)
+        daily_atr = {d: v for d, v in daily_atr.items() if d < cutoff_date}
+        print(f"  Date-max {args.date_max} -> {len(candles)} bars (etait {before})")
 
     if len(candles) < 500:
         print(f"  Sample trop court ({len(candles)} bars), skip"); continue

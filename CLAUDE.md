@@ -5,7 +5,7 @@
 | Compte | TF live | Instruments | Strats | Risk | Methode |
 |---|---|---|---|---|---|
 | **Pepperstone** | 1h | 24 | 98 | 0.5% | find_winners |
-| **5ers** | 1h | 6 (sans metaux) | 26 | 0.01% | find_winners |
+| **5ers** | 1h | 6 (sans metaux) | 19 | 0.01% | find_winners n>=100 PF>=1.20 (holdout May) |
 | **FTMO** | 1h | 11 (toutes) | 49 | 0.04% | find_winners |
 
 ICM supprime (2026-05-01, compte non actif).
