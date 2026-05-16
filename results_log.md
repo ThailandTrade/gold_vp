@@ -2,6 +2,86 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-16 — 5ers 1h: switch find_winners n>=60 -> n>=100 PF>=1.20 (holdout May, walk-forward)
+
+User: "switche la prod sur les 22 strats PF>=1.20"
+
+### Methodologie walk-forward
+1. `find_winners.py 5ers --tf 1h --n-min 100 --pf-min 1.20 --date-max 2026-05-01` (training sur data < May 2026)
+2. Script temp `bt_5ers_pf120_holdout_may.py` (override portfolio+exits, sans toucher prod)
+3. BT global 13 mois, focus ligne May 2026 = validation out-of-sample
+
+### Modif find_winners.py
+- Flag `--date-max YYYY-MM-DD` ajoute (filtre candles >= cutoff, exclu de la fenetre training)
+- Complementaire a `--lookback-years` (cutoff trailing edge)
+- Permet walk-forward propre sans modifier load_data ni bt_portfolio
+
+### Resultats find_winners holdout May
+22 strats / 8 syms (vs 26 / 8 avec n>=60 sans PF). Reduction marquee sur SP500 (7->1) et XAGUSD (5->2), augmentation UK100 (3->5).
+
+| Sym | Avant (n>=60) | PF>=1.20 holdout |
+|---|---|---|
+| XAUUSD | 3 | 1 (ALL_HMA_CROSS) |
+| XAGUSD | 5 | 2 (ALL_FVG_BULL, ALL_KC_BRK) |
+| NAS100 | 1 (TOK_STOCH) | 1 (BOS_FVG) |
+| SP500 | 7 | 1 (ALL_PIVOT_BOUNCE) |
+| UK100 | 3 | 5 (3SOLDIERS, CMO_9, ELDER_BULL, HAMMER, MACD_DIV) |
+| JPN225 | 5 | 4 (EMA_821, FVG_BULL, BOS_FVG, TOK_NR4) |
+| US30 | 5 | 5 (ADX_RSI50, CMO_9, MACD_ADX, RSI_50, TOK_NR4) |
+| DAX40 | 5 | 3 (CCI_100, MACD_HIST, BOS_FVG) |
+
+LIVE (sans XAUUSD/XAGUSD): 19 strats (vs 18 avant car UK100 passe de 3 a 5).
+
+### BT comparatif May 2026 (out-of-sample, $100k, cost-r 0.05)
+
+| Metric | Baseline (26 strats) | **PF>=1.20 (22 strats)** |
+|---|---|---|
+| Trades May | 277 | **191** (-31%) |
+| WR May | 54% | **60%** |
+| PF May | 1.12 | **1.17** |
+| PnL May | +$162 | **+$131** |
+| DD May | -0.16% | **-0.11%** |
+
+Mai par sym:
+| Sym | Baseline | PF1.20 | Delta |
+|---|---|---|---|
+| XAUUSD | -$54 | -$22 | +$32 |
+| XAGUSD | +$169 | +$62 | -$107 |
+| NAS100 | -$21 | -$50 | -$29 |
+| **SP500** | **-$165** | **+$14** | **+$179** (filtre PF evite crash) |
+| UK100 | -$82 | -$6 | +$76 |
+| JPN225 | +$117 | +$12 | -$105 |
+| US30 | +$109 | +$61 | -$48 |
+| DAX40 | +$68 | +$21 | -$47 |
+
+### BT comparatif 13 mois (May 2025 - May 2026)
+
+| Metric | Baseline | PF1.20 |
+|---|---|---|
+| Trades | 6 355 | 4 361 (-31%) |
+| WR | 57% | **61%** |
+| PF | 1.22 | **1.30** |
+| Rend | **+6.4%** | +4.9% |
+| MaxDD | -0.33% | **-0.28%** |
+| Mois+ | 13/13 | 13/13 |
+
+### Verdict
+PF>=1.20 donne ~25% moins de PnL absolu mais 31% moins de trades, **meilleur risk-adjusted** (PF 1.30 vs 1.22), DD plus contenu. May out-of-sample valide: positif, regulier, evite crash SP500.
+
+### Modifs prod
+- `config_5ers.py`: 8 portfolios 1h regeneres (XAUUSD/XAGUSD restent dans ALL_INSTRUMENTS pour BT, exclus de LIVE_INSTRUMENTS via filter metaux)
+- `strat_exits.py`: 8 sections (5ers, sym, '1h') reconstruites
+- `find_winners.py`: +flag --date-max (walk-forward holdout)
+- `CLAUDE.md`: tableau "Etat actuel" 5ers passe 26 -> 19 strats LIVE
+
+### Deploiement VPS
+`git pull` + relance live_mt5 5ers + vps_pusher 5ers.
+
+### Files
+- temp/find_winners_5ers_1h_pf120_hold_may.log
+- temp/bt_5ers_pf120_holdout_may.py (script BT override portfolio+exits)
+- commit aafaaa4
+
 ## 2026-05-15 — Dashboard: tri positions ouvertes par progression vers TP
 
 User: "dans le dashboard, dans les open, on peut trier les trades par ceux qui sont le plus proches de TP ?"
