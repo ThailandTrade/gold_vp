@@ -2,6 +2,32 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-17 — 5ers: risk 0.01% -> 0.015% + LIVE_INSTRUMENTS = tous syms
+
+User: "augmente le risque a 0.015% pour 5ers. On met tous les symboles live. Si trop cher ce sera bloque automatiquement."
+
+### Modifs (commit d08c8c5)
+- `config_5ers.py`: `risk_pct: 0.0001` -> `0.00015` (toutes TFs, tous syms)
+- `LIVE_INSTRUMENTS = list(ALL_INSTRUMENTS.keys())` — etait filter sans XAUUSD/XAGUSD
+- 22 strats LIVE (etait 19) — ajout XAUUSD (1 strat) + XAGUSD (2 strats)
+- `CLAUDE.md`: tableau "Etat actuel" 5ers -> 8 syms / 22 strats / 0.015%
+
+### Mecanisme auto-skip metaux
+Le risque +50% (0.01% -> 0.015%) eleve le risk target de $10 -> $15 sur $100k. Si min_lot_risk d'un trade XAUUSD/XAGUSD reste > $15 selon ATR jour, `live_mt5.mt5_lot_size` retourne 0 et `open_position` skip silencieusement (mecanisme existant depuis 2026-05-07).
+
+Les jours ou les metaux peuvent etre pris a 0.01 lot (volume_min) avec risk acceptable, ils seront actifs. Sinon, skip.
+
+### Test BT prochain
+Recommencer le BT 5ers (avec metals activated) sera necessaire pour estimer l'impact sur PnL/DD. Le BT n'a pas la logique auto-skip donc surestimera l'activite metals (mais bornable a ~700 trades XAUUSD + 1093 XAGUSD sur 13 mois historique).
+
+### Files
+- config_5ers.py
+- CLAUDE.md
+
+### Deploiement VPS
+- `git pull`
+- Relance `live_mt5.py 5ers` (pour appliquer nouveau risk + activation metals)
+
 ## 2026-05-16 — 5ers 1h: switch find_winners n>=60 -> n>=100 PF>=1.20 (holdout May, walk-forward)
 
 User: "switche la prod sur les 22 strats PF>=1.20"
