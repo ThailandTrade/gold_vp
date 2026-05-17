@@ -1,12 +1,17 @@
-# CLAUDE.md — VP Swing Explorer (multi-instrument multi-TF)
+# CLAUDE.md — VP Swing Explorer (1h only, multi-broker)
 
-## Etat actuel (2026-05-02)
+## Etat actuel (2026-05-17)
 
-| Compte | TF live | Instruments | Strats | Risk | Methode |
+| Compte | TF live | Syms LIVE | Strats | Risk | Methode |
 |---|---|---|---|---|---|
-| **Pepperstone** | 1h | 24 | 98 | 0.5% | find_winners |
-| **5ers** | 1h | 8 (toutes) | 22 | 0.015% | find_winners n>=100 PF>=1.20 (holdout May), metaux auto-skip si min_lot_risk > target |
-| **FTMO** | 1h | 11 (toutes) | 49 | 0.04% | find_winners |
+| **Pepperstone** | 1h | 23 | 104 | 0.5% | find_winners 1h v3 (n>=60) |
+| **5ers** | 1h | 8 | 22 | 0.015% | find_winners n>=100 PF>=1.20 (holdout May) |
+| **FTMO** | 1h | 11 | 32 | 0.04% | find_winners n>=100 PF>=1.20 (v5) |
+| **Exness Standard** | 1h | 19 | 42 | 1.0% | find_winners n>=100 PF>=1.20 |
+
+Tous brokers: **LIVE_INSTRUMENTS = ALL** syms. `live_mt5.mt5_lot_size` auto-skip si min_lot_risk > target (mecanisme depuis 2026-05-07).
+
+15m et 4h supprimes des configs 2026-05-17 (1h only pour le moment).
 
 ICM supprime (2026-05-01, compte non actif).
 
