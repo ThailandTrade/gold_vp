@@ -2,6 +2,14 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-17 — pairs_pepperstone: retire 11 cryptos
+
+User: "ok ceux la on peut les enlever des pairs"
+
+Commit 93433e3: retire BTCUSD, ETHUSD, LTCUSD, ADAUSD, AVAXUSD, BCHUSD, BNBUSD, DOGEUSD, LINKUSD, SOLUSD, XRPUSD de pairs_pepperstone.txt.
+
+Cryptos deja desactivees du config 2026-05-09 (spreads Standard rhedibitoires) puis retirees de ALL_INSTRUMENTS 2026-05-12. Restaient dans pairs_pepperstone.txt = fetch DB inutile.
+
 ## 2026-05-17 — Tous brokers: 1h only + LIVE_INSTRUMENTS = ALL syms
 
 User: "fais la meme chose pour les autres configs (pas de restriction live, le filtre risque live est suffisant). + on enleve les configs 15m et 4h. On garde que 1h pour le moment"
