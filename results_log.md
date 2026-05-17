@@ -2,6 +2,45 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-17 — Tous brokers: 1h only + LIVE_INSTRUMENTS = ALL syms
+
+User: "fais la meme chose pour les autres configs (pas de restriction live, le filtre risque live est suffisant). + on enleve les configs 15m et 4h. On garde que 1h pour le moment"
+
+### Modifs (commit 8f7471b)
+- `config_5ers.py`: drop 15m + 4h sections (etait 8 syms x 3 TFs)
+- `config_ftmo.py`: drop 15m sections, LIVE_INSTRUMENTS = ALL (etait filter metals XAUUSD/XAGUSD). XAGUSD drop entierement (n'avait que 15m, plus de 1h apres v5 PF1.20)
+- `config_pepperstone.py`: drop 15m + 4h sections. NETH25 drop (n'avait que 4h)
+- `strat_exits.py`: 64 sections 15m/4h supprimees pour les 3 brokers
+- `CLAUDE.md`: tableau "Etat actuel" refresh
+
+### Etat final
+| Broker | Syms LIVE | Strats |
+|---|---|---|
+| Pepperstone | 23 (etait 24, -NETH25) | 104 |
+| 5ers | 8 (toutes, deja fait au commit precedent) | 22 |
+| FTMO | 11 (etait 9 LIVE +metaux reactives, -XAGUSD qui n'avait pas 1h) | 32 |
+| Exness Standard | 19 (deja propre, intact) | 42 |
+
+Total: 4 brokers / 200 strats / 61 unique sym (LIVE).
+
+### Mecanisme auto-skip
+Tous brokers: si un trade triggere mais min_lot_risk > risk target, `live_mt5.mt5_lot_size` retourne 0 et `open_position` skip silencieusement. Concerne typiquement XAUUSD/XAGUSD avec ATR jour eleve sur petits comptes.
+
+### Pourquoi 1h only
+User: "on garde que 1h pour le moment". Les 15m/4h restaient dans ALL_INSTRUMENTS pour BT historique mais non tradees live (LIVE_TIMEFRAMES = ['1h']). Cleanup pour reduire le bruit dans les fichiers config. Reactivable facilement via find_winners ulterieurement si besoin.
+
+### Files
+- config_5ers.py, config_ftmo.py, config_pepperstone.py: regenerated 1h only
+- strat_exits.py: -64 sections
+- CLAUDE.md
+- temp/clean_configs_1h_only.py (script de regeneration)
+
+### Deploiement VPS
+`git pull` + relance live_mt5 pour les 3 brokers concernes (pas exness_standard, deja propre):
+- `live_mt5.py 5ers`
+- `live_mt5.py ftmo`
+- `live_mt5.py pepperstone`
+
 ## 2026-05-17 — 5ers: risk 0.01% -> 0.015% + LIVE_INSTRUMENTS = tous syms
 
 User: "augmente le risque a 0.015% pour 5ers. On met tous les symboles live. Si trop cher ce sera bloque automatiquement."
