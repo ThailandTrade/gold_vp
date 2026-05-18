@@ -81,7 +81,7 @@ ALL_INSTRUMENTS = {
     },
 }
 
-LIVE_TIMEFRAMES = ['1h']
+LIVE_TIMEFRAMES = ['15m', '1h']
 
 LIVE_INSTRUMENTS = list(ALL_INSTRUMENTS.keys())
 INSTRUMENTS = {k: v for k, v in ALL_INSTRUMENTS.items() if k in LIVE_INSTRUMENTS}

@@ -2,6 +2,81 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-18 — exness_standard: activation 15m + 1h en LIVE_TIMEFRAMES (BT)
+
+User: "je lance un backtest avec les 2 TF" puis "Je veux BT sur les 2 TF".
+
+`config_exness_standard.py`: `LIVE_TIMEFRAMES = ['1h']` -> `['15m', '1h']`. Permet bt_portfolio sans `--tf` de prendre les 2 TF combines (compound multi-sym multi-TF).
+
+LIVE reel inchange tant que VPS pas redeploye. Si push prod, 15m sera trade.
+
+## 2026-05-18 — exness_standard 15m: compile find_winners (31 strats / 14 syms)
+
+User: "ok compile ca je veux faire un BT" apres find_winners 15m termine.
+
+### find_winners exness_standard --tf 15m --n-min 100 --pf-min 1.20
+23 syms testes, **31 strats WIN sur 14 syms** (9 syms 0 WIN).
+
+| Sym | 15m WIN |
+|---|---|
+| AUDUSDm | 2 |
+| EURUSDm | 1 |
+| GBPUSDm | 2 |
+| USDCHFm | 1 (n'avait pas 1h, ajoute) |
+| USDCADm | 3 |
+| XAUUSDm | 1 |
+| USOILm | 2 |
+| **AUS200m** | **7** (sym le plus fertile en 15m) |
+| DE30m | 1 |
+| JP225m | 2 |
+| UK100m | 1 |
+| US500m | 4 |
+| USTECm | 1 |
+| BTCUSDm | 3 |
+
+9 syms 0 WIN: USDJPYm, NZDUSDm, USDCNHm, EURJPYm, EURGBPm, GBPJPYm, HK50m, US30m, ETHUSDm.
+
+### Comparaison 1h vs 15m (memes filtres n>=100 PF>=1.20)
+| TF | Syms | Strats |
+|---|---|---|
+| 1h (prod) | 19 | 42 |
+| 15m (nouveau) | 14 | 31 |
+
+Syms ou 15m domine 1h: AUS200m (7 vs 2), US500m (4 vs 3), USDCHFm (1 vs 0, nouveau).
+Syms ou 1h domine: US30m (6 vs 0), tous les FX crosses EURJPYm/EURGBPm/GBPJPYm/NZDUSDm/USDJPYm absents en 15m.
+
+### Compile (commit 7dbb623)
+- `config_exness_standard.py`: 14 syms recoivent une section '15m' (risk 0.01 match 1h)
+- `strat_exits.py`: +14 sections `('exness_standard', sym, '15m')`
+- Validation: 0 missing exits
+
+### BT comparatif 1h vs 15m (capital $100k, risk default 1%, cost-r 0.05)
+| Metric | 1h (19 syms / 42 strats) | 15m (14 syms / 31 strats) |
+|---|---|---|
+| Trades | 8 284 | 6 797 |
+| WR | 59% | 61% |
+| PF | 1.38 | 1.41 |
+| MaxDD | -16.78% | -7.90% |
+| Rend | +46 012% | +15 089% |
+| MaxRisk simul | 18-25% pic | 5-8% typique |
+| Duree avg | 18.8h | 3.3h |
+| Multi-day | 19.8% | 1.1% |
+| Weekend cross | 8.3% | 0.7% |
+| Mois+ | 13/13 | 13/13 |
+
+1h gagne en rendement absolu (compound + R/trade plus eleve). 15m gagne en risk-adjusted (DD/2, exposure/6, MaxRisk simultane/3).
+
+Syms 15m surperformants:
+- AUS200m +201R (vs 71R 1h, 2.8x)
+- US500m +180R (vs 93R 1h, 2x)
+- JP225m +86R (vs 61R 1h)
+
+### Files
+- temp/find_winners_exness_standard_15m.log
+- temp/compile_exness_standard_15m.py
+- config_exness_standard.py: +14 sections 15m
+- strat_exits.py: +14 sections (exness_standard, sym, '15m')
+
 ## 2026-05-18 — Dashboard: progression vers le cote actif (TP profit, SL loss)
 
 User: "Quand un trade est negatif, on ne veut pas TP -40%, on veut mesurer la distance au SL. Ensuite on trie par distance au cote (TP ou SL). En haut les trades pas loin de se fermer."
