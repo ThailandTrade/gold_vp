@@ -2,6 +2,30 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-18 — Dashboard: progression vers le cote actif (TP profit, SL loss)
+
+User: "Quand un trade est negatif, on ne veut pas TP -40%, on veut mesurer la distance au SL. Ensuite on trie par distance au cote (TP ou SL). En haut les trades pas loin de se fermer."
+
+### Fix (commit dee24c4)
+`tpProgress(p)` refactore: renvoie `{pct, side}` au lieu d'un simple number signe.
+- En profit (current >= entry long, current <= entry short): side='TP', pct = (current-entry)/(tp-entry)
+- En perte: side='SL', pct = (entry-current)/(entry-sl) — fraction du SL consommee
+- Sans TP fixe (TRAIL): TP virtuel 1R conserve
+
+Affichage badge: "TP X%" vert ou "SL X%" rouge.
+Tri descendant par `pct` -> trades proches de se fermer (peu importe le cote) en haut.
+
+### Vues impactees (5)
+- Teaser dashboard (toplist positions)
+- Position card (tab Open + vue Live)
+- Table drill (header "TP%" -> "Cote%")
+- Sort renderLive
+
+SW cache `hydra-v18` -> `hydra-v19`.
+
+### Deploiement
+PWA: Ctrl+Shift+R. VPS: aucune action.
+
 ## 2026-05-17 — pairs_pepperstone: retire 11 cryptos
 
 User: "ok ceux la on peut les enlever des pairs"
