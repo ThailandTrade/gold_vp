@@ -98,7 +98,7 @@ async def icon_svg():
 
 @app.get("/sw.js")
 async def service_worker():
-    sw = """const CACHE='hydra-v18';
+    sw = """const CACHE='hydra-v19';
 self.addEventListener('install',e=>{self.skipWaiting();});
 self.addEventListener('activate',e=>{
   e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));
@@ -531,22 +531,32 @@ function priceDecimals(v){
 }
 function fmtPrice(v){if(v==null||isNaN(v))return'-';return fmt(v,priceDecimals(v));}
 function fmtPts(v){if(v==null||isNaN(v))return'-';const d=priceDecimals(v);const s=v>=0?'+':'';return s+v.toFixed(d);}
-// Progression entry->TP (0=entry, 1=TP, <0=mauvaise direction).
-// Sans TP fixe (strats TRAIL), TP virtuel a 1R (symetrique du SL, aligne sur la jauge visuelle).
+// Progression vers le cote actif: TP si en profit, SL si en perte.
+// Renvoie {pct: 0->1, side: 'TP'|'SL'}. pct=1 = trade sur le point de se fermer.
+// Sans TP fixe (TRAIL): TP virtuel 1R symetrique du SL (aligne sur jauge visuelle).
 function tpProgress(p){
-  if(!p||p.entry==null||p.current==null)return -Infinity;
+  if(!p||p.entry==null||p.current==null)return {pct:-Infinity,side:'TP'};
   const isLong=p.dir==='long';
-  let tp=p.tp;
-  if(!tp||tp===0){
-    if(p.sl==null||p.sl===0)return -Infinity;
-    tp=isLong?(p.entry+(p.entry-p.sl)):(p.entry-(p.sl-p.entry));
+  const inProfit=isLong?(p.current>=p.entry):(p.current<=p.entry);
+  if(inProfit){
+    let tp=p.tp;
+    if(!tp||tp===0){
+      if(p.sl==null||p.sl===0)return {pct:-Infinity,side:'TP'};
+      tp=isLong?(p.entry+(p.entry-p.sl)):(p.entry-(p.sl-p.entry));
+    }
+    const denom=isLong?(tp-p.entry):(p.entry-tp);
+    if(denom===0)return {pct:-Infinity,side:'TP'};
+    const num=isLong?(p.current-p.entry):(p.entry-p.current);
+    return {pct:num/denom,side:'TP'};
+  } else {
+    if(p.sl==null||p.sl===0)return {pct:-Infinity,side:'SL'};
+    const denom=isLong?(p.entry-p.sl):(p.sl-p.entry);
+    if(denom===0)return {pct:-Infinity,side:'SL'};
+    const num=isLong?(p.entry-p.current):(p.current-p.entry);
+    return {pct:num/denom,side:'SL'};
   }
-  const denom=isLong?(tp-p.entry):(p.entry-tp);
-  if(denom===0)return -Infinity;
-  const num=isLong?(p.current-p.entry):(p.entry-p.current);
-  return num/denom;
 }
-function sortByTpProgress(arr){return [...arr].sort((a,b)=>tpProgress(b)-tpProgress(a));}
+function sortByTpProgress(arr){return [...arr].sort((a,b)=>tpProgress(b).pct-tpProgress(a).pct);}
 function pnlCls(v){return v>=0?'pnl-pos':'pnl-neg';}
 function dirCls(d){return d==='long'?'dir-long':'dir-short';}
 function timeHM(s){return s?(s+'').slice(11,16):'';}
@@ -1174,10 +1184,11 @@ function renderHome(data){
     h+=`<div class="card"><div class="card-title">Positions ouvertes (${pos.length})<span class="right ${pnlCls(flot)}">${fmtUsd(flot,2)} flot</span></div><div class="toplist">`;
     for(const p of sortByTpProgress(pos)){
       const prog=tpProgress(p);
-      const progStr=isFinite(prog)?`<span class="${prog>=0?'pnl-pos':'pnl-neg'}">${(prog*100).toFixed(0)}%</span>`:'<span style="color:#9ca3af">-</span>';
+      const sideCls=prog.side==='TP'?'pnl-pos':'pnl-neg';
+      const progStr=isFinite(prog.pct)?`<span class="${sideCls}">${prog.side} ${(prog.pct*100).toFixed(0)}%</span>`:'<span style="color:#9ca3af">-</span>';
       h+=`<div class="toprow" onclick="openTradeByKey('op|${p.ticket}',false)">
         <span class="name">${escapeH(p.symbol)}</span>
-        <span class="stats">${escapeH(stratOf(p))}<span class="tcard-tf">[${escapeH(tfOf(p))}]</span> &middot; <span class="${dirCls(p.dir)}">${(p.dir||'').toUpperCase()}</span> &middot; TP ${progStr}</span>
+        <span class="stats">${escapeH(stratOf(p))}<span class="tcard-tf">[${escapeH(tfOf(p))}]</span> &middot; <span class="${dirCls(p.dir)}">${(p.dir||'').toUpperCase()}</span> &middot; ${progStr}</span>
         <span class="pnl ${pnlCls(p.pnl||0)}">${fmtUsd(p.pnl||0,2)}</span>
       </div>`;
     }
@@ -1307,7 +1318,7 @@ function renderPositionCard(p,opts){
   const elapsedStr=elapsed>=60?`${Math.floor(elapsed/60)}h${(elapsed%60).toString().padStart(2,'0')}`:`${elapsed}m`;
   const accBadge=o.showAcc&&p._acc?`<span class="tcard-time" style="background:#1a1a2e;color:#fff;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase">${p._acc}</span>`:'';
   const prog=tpProgress(p);
-  const progBadge=isFinite(prog)?`<span class="tcard-pnl ${prog>=0?'pnl-pos':'pnl-neg'}" style="font-size:12px">TP ${(prog*100).toFixed(0)}%</span>`:'';
+  const progBadge=isFinite(prog.pct)?`<span class="tcard-pnl ${prog.side==='TP'?'pnl-pos':'pnl-neg'}" style="font-size:12px">${prog.side} ${(prog.pct*100).toFixed(0)}%</span>`:'';
   return `<div class="tcard pos-card ${cls}" onclick="openTradeByKey('op|${p.ticket}',false)">
     <div class="tcard-head">
       <div>${accBadge?accBadge+' ':''}<span class="tcard-sym">${escapeH(p.symbol)}</span> <span class="tcard-strat">${escapeH(stratOf(p))}<span class="tcard-tf">[${escapeH(tfOf(p))}]</span></span> <span class="${dirCls(p.dir)}">${(p.dir||'').toUpperCase()}</span></div>
@@ -1521,7 +1532,7 @@ function renderLive(){
   // Filtre broker
   const positions=LIVE_FILTER==='all'?allPositions:allPositions.filter(p=>p._acc===LIVE_FILTER);
   // Tri par progression entry->TP descendante (au plus proche du TP en haut)
-  positions.sort((a,b)=>tpProgress(b)-tpProgress(a));
+  positions.sort((a,b)=>tpProgress(b).pct-tpProgress(a).pct);
 
   let totalFlot=0;
   const byAcc={};
@@ -1585,10 +1596,10 @@ function renderLegacy(data){
   h+='<div class="drill-section"><h4>Positions ouvertes ('+pos.length+')</h4>';
   if(pos.length===0)h+='<div class="empty">Aucune position</div>';
   else{
-    h+='<div style="overflow-x:auto"><table style="font-size:11px"><tr><th>Sym</th><th>Strat</th><th>Dir</th><th>Entry</th><th>Current</th><th>SL</th><th>TP</th><th>TP%</th><th>PnL</th><th>Lots</th></tr>';
+    h+='<div style="overflow-x:auto"><table style="font-size:11px"><tr><th>Sym</th><th>Strat</th><th>Dir</th><th>Entry</th><th>Current</th><th>SL</th><th>TP</th><th>Cote%</th><th>PnL</th><th>Lots</th></tr>';
     for(const p of posSorted){
       const prog=tpProgress(p);
-      const progCell=isFinite(prog)?`<span class="${prog>=0?'pnl-pos':'pnl-neg'}">${(prog*100).toFixed(0)}%</span>`:'-';
+      const progCell=isFinite(prog.pct)?`<span class="${prog.side==='TP'?'pnl-pos':'pnl-neg'}">${prog.side} ${(prog.pct*100).toFixed(0)}%</span>`:'-';
       h+=`<tr onclick="openTradeByKey('op|${p.ticket}',false)" class="clickable">
         <td class="sym">${escapeH(p.symbol)}</td><td class="strat-name">${escapeH(stratOf(p))}<span class="tcard-tf">[${escapeH(tfOf(p))}]</span></td>
         <td class="${dirCls(p.dir)}">${(p.dir||'').toUpperCase()}</td>
