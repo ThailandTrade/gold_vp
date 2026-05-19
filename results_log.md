@@ -2,6 +2,119 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-19 — Branche test-4h: import Dukascopy 4h pour 23 syms exness_standard
+
+User: "On va creer une nouvelle branche de test sur du 4h. Regarde comment on peut recuperer le plus d'historique (duskacopy?)"
+
+### Architecture cible
+Source de donnees unique (Dukascopy OTC bid) -> 1 DB -> signaux dispatches aux brokers. Sur 4h, differences inter-broker (spreads, OHLC) negligeables vs amplitude des bars. Avantage: BT cleaner, 1 source de verite, infra plus simple.
+
+### Branche
+`git checkout -b test-4h`. Pas mergee.
+
+### Script dukascopy_fetch.py
+Lib `dukascopy-python` 4.0.1 (pip). Map 23 syms exness_standard -> instruments Dukascopy (FX majors, FX crosses, metals, USOIL, indices US/EU/AS, BTC, ETH). Bars 4h via `INTERVAL_HOUR_4`, side `BID`. Stocke dans tables `candles_<sym>_4h` (sym lowercase, sans suffix 'm' broker).
+
+Usage:
+```
+python dukascopy_fetch.py                       # 5y back
+python dukascopy_fetch.py --since 1970-01-01    # full history
+python dukascopy_fetch.py --symbol EURUSD
+```
+
+### Fetch full historique (--since 1970-01-01)
+**Total 658 614 bars sur 23 syms**.
+
+| Sym | bars 4h | depuis |
+|---|---|---|
+| EURUSD | 39 299 | 2003-05 |
+| GBPUSD | 39 422 | 2003-05 |
+| USDCHF | 39 424 | 2003-05 |
+| USDCAD | 39 014 | 2003-05 |
+| EURGBP | 39 015 | 2003-05 |
+| EURJPY | 39 010 | 2003-05 |
+| AUDUSD | 39 040 | 2003-05 |
+| USDJPY | 38 161 | 2003-05 |
+| XAUUSD | 37 542 | 2003-05 |
+| NZDUSD | 30 741 | 2007-04 |
+| GBPJPY | 30 772 | 2007-04 |
+| USOIL  | 23 292 | 2015-12 |
+| US500  | 22 595 | 2012-01 |
+| USTEC  | 22 513 | 2012-01 |
+| JP225  | 22 591 | 2012-04 |
+| US30   | 22 353 | 2012-04 |
+| DE30   | 21 733 | 2012-04 |
+| UK100  | 21 672 | 2012-04 |
+| AUS200 | 20 048 | 2013-01 |
+| USDCNH | 19 438 | 2017 |
+| BTCUSD | 18 647 | 2017-05 |
+| ETHUSD | 17 669 | 2018 |
+| HK50   | 14 623 | 2017 |
+
+### Verifications
+- TS stocke en `TIMESTAMPTZ` (UTC). Tous formats coherents.
+- Bougies fermees seulement: derniere bougie partout = 2026-05-18 20:00 UTC (bar 20h-24h). Bougie en cours (2026-05-19 00:00) absente. Wrapper `fetch()` documente comme "delayed data" sur intervals non-tick, mais pas garanti par doc explicite. Empiriquement OK.
+- Doc Dukascopy `live_fetch()` est la fonction faite pour bars en cours (generator), pas `fetch()`.
+
+### Files
+- dukascopy_fetch.py (nouveau, branche test-4h)
+- DB: 23 tables `candles_<sym>_4h`
+
+## 2026-05-18/19 — exness_standard: explorations holdout (find_winners --date-max)
+
+User a explore plusieurs scenarios walk-forward sur exness_standard:
+
+### Compile + BT 1h+15m holdout AprMay (training < 2026-04-01, OOS sur Avril+Mai)
+- 1h: 20 syms / 46 strats, PF>=1.20
+- 15m: 18 syms / 44 strats, PF>=1.20
+- BT lance par user. Backup `temp/config_exness_standard_BAK_holdaprmay.py` + `temp/strat_exits_BAK_holdaprmay.py`.
+
+### Compile + BT 1h+15m holdout May (training < 2026-05-01, OOS sur Mai)
+- 1h: 20 syms / 42 strats, PF>=1.20
+- 15m: 15 syms / 39 strats, PF>=1.20
+
+### Comparaison 3 configs (prod / holdAprMay / holdMay)
+| TF | prod (in-sample) | holdAprMay | holdMay | 3-way commun |
+|---|---|---|---|---|
+| 1h | 42/19 | 46/20 | 42/20 | 16 (38%) |
+| 15m | 31/14 | 44/18 | 39/15 | 15 (38%) |
+
+Overlap holdMay vs prod: 64% (1h), 59% (15m).
+Overlap holdMay vs holdAprMay: 55% (1h), 56% (15m).
+
+**38% des strats sont stables 3-way** = 1/3 robuste, 2/3 depend de la fenetre.
+
+Strats les plus volatiles:
+- 1h UK100m: prod 2 → AprMay 1 → May 5 (0 commun)
+- 1h USDJPYm: 1 → 5 → 3 (0 commun)
+- 15m EURUSDm: 1 → 8 → 2 (0 commun)
+
+### Tests durcissement PF (1h only, 1h only LIVE_TIMEFRAMES)
+| Filtre | holdAprMay | holdMay |
+|---|---|---|
+| PF>=1.20 | 46 / 20 syms | 42 / 20 syms |
+| PF>=1.30 | 20 / 13 syms | 14 / 9 syms |
+
+Durcissement a 1.30 = ~65% strats en moins. Trop drastique pour conserver de la diversification.
+
+### Files
+- temp/find_winners_exness_standard_1h_hold_aprmay.log
+- temp/find_winners_exness_standard_15m_hold_aprmay.log
+- temp/find_winners_exness_standard_1h_hold_may.log
+- temp/find_winners_exness_standard_15m_hold_may.log
+- temp/find_winners_exness_standard_1h_pf130_hold_aprmay.log
+- temp/find_winners_exness_standard_1h_pf130_hold_may.log
+- temp/compile_exness_standard_holdout_aprmay.py
+- temp/compile_exness_standard_holdout_may.py
+- temp/compile_pf130_holdaprmay_1h.py
+- temp/compile_pf130_holdmay_1h.py
+- temp/compare_prod_vs_holdout.py
+- temp/compare_3configs.py
+- temp/config_exness_standard_BAK_prod.py (snapshot prod du 18 mai)
+- temp/strat_exits_BAK_prod.py
+- temp/config_exness_standard_BAK_holdaprmay.py
+- temp/strat_exits_BAK_holdaprmay.py
+
 ## 2026-05-18 — exness_standard: activation 15m + 1h en LIVE_TIMEFRAMES (BT)
 
 User: "je lance un backtest avec les 2 TF" puis "Je veux BT sur les 2 TF".
