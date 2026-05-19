@@ -2,6 +2,36 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-20 — test-4h: walk-forward 12m IS / 1m OOS, critere WR>=58% RR=1 (echec confirme)
+
+find_winners.py: flags `--wr-min` (filtre win rate) et `--rr1` (grille exit RR=1 -- TP=SL
+sur 8 valeurs ATR uniquement). Univers reduit a 19 syms (7 majors FX + XAU + USOIL +
+8 indices + 2 crypto ; crosses FX USDCNH/EURJPY/EURGBP/GBPJPY retires).
+
+Walk-forward 12 fenetres, IS 12 mois glissant, OOS chaque mois 2025, selection WR>=58%
+(n>=100, M+>=7/12), exits RR=1.
+
+| OOS | trades | WR | PF | Rend | Capital (b100) |
+|---|---|---|---|---|---|
+| Jan | 487 | 53% | 0.98 | -1.9% | 98.1 |
+| Fev | 643 | 52% | 0.97 | -5.1% | 93.1 |
+| Mars | 821 | 58% | 1.21 | +45.1% | 135.1 |
+| Avr | 1060 | 51% | 0.94 | -14.8% | 115.1 |
+| Mai | 957 | 54% | 1.00 | -0.6% | 114.4 |
+| Juin | 851 | 47% | 0.79 | -39.0% | 69.8 |
+| Juil | 797 | 52% | 0.97 | -6.2% | 65.5 |
+| Aout | 966 | 48% | 0.85 | -34.0% | 43.2 |
+| Sep | 547 | 50% | 0.89 | -14.7% | 36.9 |
+| Oct | 720 | 50% | 0.90 | -17.3% | 30.5 |
+| Nov | 607 | 53% | 1.01 | +1.5% | 31.0 |
+| Dec | 542 | 53% | 1.00 | +0.3% | 31.1 |
+
+**Annee: 100 -> 31 = -69%. 9 mois negatifs / 12.** WR OOS 47-58%, moyenne ~51-52% =
+breakeven (52.5%). Le critere WR>=58% IS ne produit pas WR>52.5% OOS -- la selection
+n'ajoute rien. Mars +45% = queue chanceuse (~3 sigma), Juin -39% = queue symetrique.
+7e angle teste de la methode find_winners (selection sur perf passee), 7e echec OOS.
+Conclusion stable: aucun seuil (PF / WR / RR) sur une metrique in-sample ne predit l'OOS.
+
 ## 2026-05-19 — test-4h: walk-forward 12m IS + test d'inversion des signaux
 
 ### Walk-forward 12m IS / 1m OOS, PF>=1.20, TPSL-only (arrete a 3/12)

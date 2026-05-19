@@ -40,6 +40,8 @@ parser.add_argument('--mpos-min', type=int, default=7)
 parser.add_argument('--outlier-max', type=float, default=0.30)
 parser.add_argument('--avgr-min', type=float, default=0.05, help='Edge tangible minimum (apres cost)')
 parser.add_argument('--pf-min', type=float, default=None, help='Profit factor minimum (default: pas de filtre)')
+parser.add_argument('--wr-min', type=float, default=0.0, help='Win rate minimum en pourcent (default: pas de filtre)')
+parser.add_argument('--rr1', action='store_true', help='Grille exit RR=1 (TP=SL) sur valeurs ATR uniquement')
 parser.add_argument('--lookback-years', type=float, default=None,
                     help='Restreint la donnee aux N dernieres annees (default: full)')
 parser.add_argument('--date-max', default=None,
@@ -79,7 +81,8 @@ if args.symbol:
 DUPLICATE_STRATS = {'IDX_KC_BRK','IDX_ENGULF','ALL_ROC_ZERO','IDX_NR4'}
 
 # Grilles d'exits (memes que optimize_all)
-TPSL_GRID = [(sl, tp) for sl in [0.5,0.75,1.0,1.25,1.5,2.0,2.5,3.0] for tp in [0.5,0.75,1.0,1.5,2.0,2.5,3.0,4.0,5.0]]
+TPSL_GRID = ([(x, x) for x in [0.5,0.75,1.0,1.25,1.5,2.0,2.5,3.0]] if args.rr1
+             else [(sl, tp) for sl in [0.5,0.75,1.0,1.25,1.5,2.0,2.5,3.0] for tp in [0.5,0.75,1.0,1.5,2.0,2.5,3.0,4.0,5.0]])
 TRAIL_GRID = [] if args.tpsl_only else [(sl, act, trail) for sl in [1.0,1.5,2.0,2.5,3.0]
               for act in [0.3,0.5,0.75,1.0] for trail in [0.3,0.5,0.75]]
 BE_TP_GRID = [] if args.tpsl_only else [(sl, be_act, tp) for sl in [1.0,1.5,2.0,2.5,3.0]
@@ -277,6 +280,7 @@ for sym in INSTRUMENTS:
               and m['outlier_share'] < args.outlier_max
               and m['m_pos'] >= args.mpos_min
               and (args.pf_min is None or m['pf'] >= args.pf_min)
+              and m['wr'] >= args.wr_min
               and h1 > 0
               and h2 > 0)
         status = ''
@@ -292,6 +296,7 @@ for sym in INSTRUMENTS:
             if m['outlier_share'] >= args.outlier_max: r.append(f"OS={m['outlier_share']:.0%}")
             if m['m_pos'] < args.mpos_min: r.append(f"M+<{args.mpos_min}")
             if args.pf_min is not None and m['pf'] < args.pf_min: r.append(f"PF<{args.pf_min}")
+            if m['wr'] < args.wr_min: r.append(f"WR={m['wr']:.0f}<{args.wr_min:.0f}")
             if h1 <= 0: r.append("h1<=0")
             if h2 <= 0: r.append("h2<=0")
             status = ' / '.join(r)
