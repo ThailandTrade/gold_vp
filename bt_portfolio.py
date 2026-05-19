@@ -19,7 +19,7 @@ from backtest_engine import load_data, collect_trades, eval_portfolio
 from config_helpers import iter_sym_tf
 
 parser = argparse.ArgumentParser(description='Backtest portfolio multi-TF')
-parser.add_argument('account', choices=['ftmo', '5ers', 'pepperstone', 'exness', 'exness_standard'])
+parser.add_argument('account', choices=['ftmo', '5ers', 'pepperstone', 'exness', 'exness_standard', 'dukascopy'])
 parser.add_argument('-c', '--capital', type=float, default=None)
 parser.add_argument('-r', '--risk', type=float, default=None)
 parser.add_argument('--symbol', default=None, help='Filtre: instrument(s), separes par virgule')
@@ -27,7 +27,14 @@ parser.add_argument('--tf', default=None, help='Filtre: un seul TF (5m/15m/1h/4h
 parser.add_argument('--weekly', action='store_true', help='Affichage hebdomadaire')
 parser.add_argument('--spread', action='store_true', help='Spread legacy -0.1R/trade')
 parser.add_argument('--cost-r', type=float, default=0.0, help='Penalite R par trade')
+parser.add_argument('--date-min', default=None, help='Entry date min YYYY-MM-DD (warmup auto en amont)')
+parser.add_argument('--date-max', default=None, help='Entry date max YYYY-MM-DD (exclu)')
+parser.add_argument('--warmup-bars', type=int, default=250, help='Bars warmup avant date_min (default 250)')
 args = parser.parse_args()
+
+from datetime import date as _date_cls, datetime as _dt_cls, timezone as _tz
+DATE_MIN = _dt_cls.fromisoformat(args.date_min).replace(tzinfo=_tz.utc) if args.date_min else None
+DATE_MAX = _dt_cls.fromisoformat(args.date_max).replace(tzinfo=_tz.utc) if args.date_max else None
 
 cfg = importlib.import_module(f'config_{args.account}')
 BROKER = cfg.BROKER
@@ -76,7 +83,10 @@ W = 100
 print(f"\n{'='*W}")
 COST_R = args.cost_r if args.cost_r > 0 else (0.1 if args.spread else 0.0)
 cost_tag = f' -- COST -{COST_R}R/trade' if COST_R > 0 else ''
-print(f"  BACKTEST {BROKER} -- ${CAPITAL:,.0f} -- {'hebdo' if args.weekly else 'mensuel'}{cost_tag}")
+date_tag = ''
+if DATE_MIN or DATE_MAX:
+    date_tag = f" -- DATE [{args.date_min or '*'} .. {args.date_max or '*'}] warmup {args.warmup_bars}b"
+print(f"  BACKTEST {BROKER} -- ${CAPITAL:,.0f} -- {'hebdo' if args.weekly else 'mensuel'}{cost_tag}{date_tag}")
 print(f"{'='*W}")
 
 conn = get_conn()
@@ -94,11 +104,24 @@ for sym, tf, icfg in sym_tf_pairs:
     sym_exits = STRAT_EXITS.get((args.account, sym, tf), {})
 
     print(f"\n  Loading {sym} [{tf}]...", end='', flush=True)
-    candles, daily_atr, global_atr, trading_days = load_data(conn, sym, tf=tf)
+    candles, daily_atr, global_atr, trading_days = load_data(
+        conn, sym, tf=tf,
+        date_min=DATE_MIN, date_max=DATE_MAX,
+        warmup_bars=args.warmup_bars,
+    )
     print(f" {len(candles)} bars, {len(trading_days)} days", flush=True)
     candles_cache[(sym, tf)] = candles
 
     trades = collect_trades(candles, daily_atr, global_atr, trading_days, portfolio, sym_exits, tf=tf)
+    # Filtre trades dont entry < DATE_MIN (warmup) ou >= DATE_MAX
+    if DATE_MIN or DATE_MAX:
+        kept = []
+        for tup in trades:
+            ets = candles.iloc[tup[0]]['ts_dt']
+            if DATE_MIN and ets < DATE_MIN: continue
+            if DATE_MAX and ets >= DATE_MAX: continue
+            kept.append(tup)
+        trades = kept
     r = eval_portfolio(trades, risk, CAPITAL, spread=(COST_R > 0), cost_r=COST_R)
     if not r:
         print(f"  {sym} [{tf}]: 0 trades"); continue

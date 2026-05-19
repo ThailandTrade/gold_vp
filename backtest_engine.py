@@ -34,17 +34,31 @@ def _table_name(symbol, tf=None):
     import re
     if tf is None: tf = TF
     sym_san = re.sub(r'[^a-z0-9]+', '_', symbol.lower()).strip('_')
-    return f"candles_mt5_{sym_san}_{tf}"
+    # Branche test-4h: tables Dukascopy `candles_<sym>_<tf>` (sans prefix mt5_)
+    return f"candles_{sym_san}_{tf}"
 
 
-def _load_candles_raw(conn, symbol, tf=None, limit=None):
-    """Charge candles brutes depuis DB. Si limit=None, charge tout."""
+def _load_candles_raw(conn, symbol, tf=None, limit=None, date_min=None, date_max=None):
+    """Charge candles brutes depuis DB.
+    date_min / date_max: filtres SQL (inclus / exclu). limit: derniers N bars."""
     table = _table_name(symbol, tf)
     cur = conn.cursor()
+    where = []
+    params = []
+    if date_min is not None:
+        where.append('ts >= %s')
+        params.append(date_min)
+    if date_max is not None:
+        where.append('ts < %s')
+        params.append(date_max)
+    where_sql = f" WHERE {' AND '.join(where)}" if where else ''
     if limit:
-        cur.execute(f"SELECT ts, open, high, low, close FROM {table} ORDER BY ts DESC LIMIT %s", (limit,))
+        sql = f"SELECT ts, open, high, low, close FROM {table}{where_sql} ORDER BY ts DESC LIMIT %s"
+        params2 = list(params) + [limit]
+        cur.execute(sql, tuple(params2))
     else:
-        cur.execute(f"SELECT ts, open, high, low, close FROM {table} ORDER BY ts")
+        sql = f"SELECT ts, open, high, low, close FROM {table}{where_sql} ORDER BY ts"
+        cur.execute(sql, tuple(params) if params else None)
     rows = cur.fetchall(); cur.close()
     if not rows:
         return pd.DataFrame()
@@ -77,17 +91,26 @@ def _get_trading_days_from_df(candles):
     return sorted(candles['date'].unique())
 
 
-def load_data(conn, symbol, tf=None):
-    """Charge candles FULL history + ATR + trading_days + indicateurs precalcules.
+_TF_MINUTES = {'5m': 5, '15m': 15, '1h': 60, '4h': 240, '1d': 1440}
+
+def load_data(conn, symbol, tf=None, date_min=None, date_max=None, warmup_bars=250):
+    """Charge candles + ATR + trading_days + indicateurs.
+    date_min / date_max: filtres date pour eviter de charger full history.
+    warmup_bars: bars supplementaires chargees avant date_min pour caler indicateurs.
     Retourne (candles_df, daily_atr_dict, global_atr_float, trading_days_list).
     """
     if tf is None: tf = TF
+    # Etend date_min vers le passe pour warmup indicateurs (defaut 250 bars)
+    actual_date_min = date_min
+    if date_min is not None and tf in _TF_MINUTES:
+        from datetime import timedelta as _td
+        actual_date_min = date_min - _td(minutes=warmup_bars * _TF_MINUTES[tf])
     if tf == '5m':
         candles = load_candles_5m(conn, symbol=symbol.lower())
         daily_atr, global_atr = compute_atr(conn, symbol=symbol.lower())
         trading_days_list = get_trading_days(conn, symbol=symbol.lower())
     else:
-        candles = _load_candles_raw(conn, symbol, tf=tf)
+        candles = _load_candles_raw(conn, symbol, tf=tf, date_min=actual_date_min, date_max=date_max)
         daily_atr, global_atr = _compute_atr_from_df(candles)
         trading_days_list = _get_trading_days_from_df(candles)
     candles = compute_indicators(candles)

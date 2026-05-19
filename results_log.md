@@ -2,6 +2,74 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-19 — test-4h: nouvelle arsenal swing (32 strats) + compile sur 7 winners
+
+User: "On va oublier les strats actuelles. On recree notre arsenal de strat avec ce qu'on a dans le reflexion.md" puis "Code les nouvelles strats. C'est tout."
+
+### Constat declencheur
+`reflexion.md` (28 KB, par user): diagnostic du systeme actuel. ~50% des 82 strats existantes (TOK_*, IDX_intraday, FVG/PO3/EXH_GAP, oscillators courts WR_7/STOCH_OB/CCI_*) sont structurellement intraday-natives, donc inadaptees au 4h. L'OOS Apr+May / Mai a degrade fortement parce que l'arsenal est mal aligne avec le TF.
+
+Plan reflexion.md: keep ~20 universelles + drop ~28 intraday + develop ~35 nouvelles swing-pensees.
+
+### Nouveau module `strats_swing.py`
+Cree depuis zero (arsenal swing 4h):
+- 32 detecteurs single-instrument (A1..A10, B1..B8, C1..C5, D1..D5, F1..F4)
+- 8 cross-sectional/overlay (E + G) PAS implementees (operent au niveau portfolio)
+- `compute_indicators_swing(c)`: EMAs 8/13/20/21/50/55/100/200, ATR14, Donchian 10/20/55, ADX/PDI/MDI 14, RSI14, returns 30/60/120, LR slope 50, BB50 + squeeze, KC50/2ATR, KAMA(10,2,30), wicks, AVWAP daily, weekly H/L (30b), monthly H/L (120b)
+- `detect_swing(candles, ci, add)`: dispatcher emettant via add(sn, dir, entry)
+
+### Detail des 32 strats
+
+**A — Trend following (10)**: A1 DC20 brk / A2 DC55 brk (Turtle) / A3 EMA20/50 + ADX>25 / A4 EMA50/200 cross + retest / A5 TSMOM 3M (60b) / A6 TSMOM 6M (120b) / A7 Multi-speed (30+60+120) / A8 Triple MA 8/21/55 / A9 LR slope 50 / A10 KAMA cross
+
+**B — Breakout structurel (8)**: B1 Weekly H/L / B2 Monthly H/L / B3 N-day consolidation / B4 Triangle brk / B5 BB50 squeeze brk / B6 Keltner 50 brk / B7 Failed breakout reversal / B8 Asian range break
+
+**C — Pullback (5)**: C1 Pullback EMA20 in trend / C2 Fib 38/50/61 / C3 3-bar pullback ADX>30 / C4 R/S retest / C5 AVWAP daily reclaim
+
+**D — Reversal (5)**: D1 Double top/bottom / D2 Triple top/bottom / D3 Engulf au weekly H/L / D4 Pin bar sur EMA200 / D5 RSI divergence + BB extreme
+
+**F — Patterns (4)**: F1 Flag brk / F2 Cup & Handle / F3 Head & Shoulders / F4 Symmetrical triangle
+
+### Script `temp/find_winners_swing.py`
+Reuse load_data + sim_exit_custom. Ajout filtre **Monthly Sharpe >= 0.80** (en plus de PF>=1.20, M+>=7/12, h1+h2>0). 73 strats evaluees sur echantillon 4 syms: rejets dominants Sharpe<0.80 (77%) et PF<1.20 (64%).
+
+### Run find_winners_swing sur 23 syms (2021-2025)
+**7 strats WIN / 6 syms** (1/3 univers):
+| Sym | Strat | Exit | n | PF | Shr |
+|---|---|---|---|---|---|
+| EURJPY | B2_MONTHLY_HL | TPSL 2.0/2.0 | 391 | ~1.4 | 0.86 |
+| EURGBP | A9_LR_SLOPE_50 | TPSL 2.0/1.0 | 168 | ~1.5 | 1.17 |
+| EURGBP | D3_ENGULF_WHL | TPSL 2.5/1.0 | 130 | ~1.5 | 1.06 |
+| XAUUSD | B6_KC_BRK_50 | TPSL 2.0/2.5 | 427 | ~1.3 | 0.80 |
+| JP225 | A5_TSMOM_3M | TPSL 0.75/1.0 | 130 | ~1.6 | 0.92 |
+| UK100 | D4_PIN_LEVEL | TPSL 3.0/1.5 | 165 | ~1.3 | 0.93 |
+| US30 | B6_KC_BRK_50 | TPSL 2.5/1.5 | 409 | ~1.2 | 0.81 |
+
+Familles representees: B (breakout) 3/7, A (trend) 2/7, D (reversal) 2/7. Pas de C (pullback), pas de F (patterns).
+
+### Compile `config_dukascopy.py` + `strat_exits.py`
+6 syms / 7 strats 4h, risk 0.5%, source data Dukascopy.
+
+**Caveat integration**: les strat names viennent de `strats_swing.py`. `bt_portfolio.py` utilise `strats.detect_all` qui ne connait pas ces strats. Pour BT il faudra soit (a) adapter collect_trades pour rerouter sur detect_swing, soit (b) ecrire un BT separe.
+
+### Ajouts find_winners.py / bt_portfolio.py / backtest_engine.py
+- `find_winners.py`: fix anchor lookback (date-max appliquee AVANT lookback)
+- `find_winners.py`: ajout 'dukascopy' aux choices
+- `bt_portfolio.py`: ajout 'dukascopy' aux choices + flags `--date-min`, `--date-max`, `--warmup-bars`
+- `backtest_engine.py`: `_load_candles_raw` accepte `date_min`/`date_max`; `load_data` etend automatiquement vers le passe pour warmup indicateurs (250b default)
+- `backtest_engine.py`: `_table_name` modifie sur branche test-4h: `candles_<sym>_<tf>` (drop prefix mt5_) pour pointer sur tables Dukascopy
+
+### Files
+- strats_swing.py (nouveau)
+- temp/find_winners_swing.py
+- temp/find_winners_swing_sample.log
+- temp/find_winners_swing_sharpe.log
+- temp/find_winners_swing_all.log
+- config_dukascopy.py (rewrite: 6 syms / 7 strats swing)
+- strat_exits.py: -14 anciennes sections dukascopy / +6 nouvelles
+- find_winners.py, bt_portfolio.py, backtest_engine.py (mods)
+- reflexion.md (par user, document strategique)
+
 ## 2026-05-19 — Branche test-4h: import Dukascopy 4h pour 23 syms exness_standard
 
 User: "On va creer une nouvelle branche de test sur du 4h. Regarde comment on peut recuperer le plus d'historique (duskacopy?)"

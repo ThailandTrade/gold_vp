@@ -31,7 +31,7 @@ from backtest_engine import load_data, prev_trading_day, _make_day_data
 from strats import detect_all, sim_exit_custom, compute_indicators, REMOVED_STRATS
 
 parser = argparse.ArgumentParser()
-parser.add_argument('account', choices=['ftmo','5ers','pepperstone','exness','exness_standard'])
+parser.add_argument('account', choices=['ftmo','5ers','pepperstone','exness','exness_standard','dukascopy'])
 parser.add_argument('--tf', default='15m')
 parser.add_argument('--symbol', default=None)
 parser.add_argument('--cost-r', type=float, default=0.05)
@@ -193,16 +193,7 @@ for sym in INSTRUMENTS:
         conn.close(); continue
     conn.close()
 
-    # Lookback filter (ATR deja calcule avec full lookback, on coupe juste apres)
-    if args.lookback_years and len(candles) > 0:
-        from datetime import timedelta as _td
-        cutoff = candles['ts_dt'].max() - _td(days=int(args.lookback_years * 365))
-        before = len(candles)
-        candles = candles[candles['ts_dt'] >= cutoff].reset_index(drop=True)
-        trading_days = sorted(d for d in trading_days if d >= cutoff.date())
-        daily_atr = {d: v for d, v in daily_atr.items() if d >= cutoff.date()}
-        print(f"  Lookback {args.lookback_years}y -> {len(candles)} bars (etait {before})")
-
+    # Date-max d'abord (anchor pour lookback)
     if args.date_max and len(candles) > 0:
         cutoff_ts = pd.Timestamp(args.date_max, tz='UTC')
         cutoff_date = cutoff_ts.date()
@@ -211,6 +202,16 @@ for sym in INSTRUMENTS:
         trading_days = sorted(d for d in trading_days if d < cutoff_date)
         daily_atr = {d: v for d, v in daily_atr.items() if d < cutoff_date}
         print(f"  Date-max {args.date_max} -> {len(candles)} bars (etait {before})")
+
+    # Lookback trailing du max actuel (= date-max si fourni, sinon dernier candle)
+    if args.lookback_years and len(candles) > 0:
+        from datetime import timedelta as _td
+        cutoff = candles['ts_dt'].max() - _td(days=int(args.lookback_years * 365))
+        before = len(candles)
+        candles = candles[candles['ts_dt'] >= cutoff].reset_index(drop=True)
+        trading_days = sorted(d for d in trading_days if d >= cutoff.date())
+        daily_atr = {d: v for d, v in daily_atr.items() if d >= cutoff.date()}
+        print(f"  Lookback {args.lookback_years}y -> {len(candles)} bars (etait {before})")
 
     if len(candles) < 500:
         print(f"  Sample trop court ({len(candles)} bars), skip"); continue

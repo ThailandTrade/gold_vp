@@ -429,176 +429,82 @@ STRAT_EXITS[('exness', 'BTCUSD', '1h')] = {
 
 # ==== Exness Standard 1h v1 (find_winners 2026-05-14, n>=100 PF>=1.20, 17 syms / 36 strats) ====
 
-STRAT_EXITS[('exness_standard', 'AUDUSDm', '1h')] = {
-    'TOK_BIG': ('TPSL', 3.0, 2.0, 0.0),
-}
+# ==== Exness Standard 15m (find_winners 2026-05-18, n>=100, PF>=1.20) ====
 
-STRAT_EXITS[('exness_standard', 'EURUSDm', '1h')] = {
-    'ALL_MACD_STD_SIG': ('TPSL', 0.75, 1.0, 0.0),
-}
+# ==== Exness Standard holdout Apr+May (find_winners 2026-05-18, < 2026-04-01) ====
 
-STRAT_EXITS[('exness_standard', 'GBPUSDm', '1h')] = {
-    'ALL_FISHER_9': ('BE_TP', 1.5, 0.5, 1.0),
-}
+# ==== Exness Standard holdout May (find_winners 2026-05-18, < 2026-05-01) ====
 
-STRAT_EXITS[('exness_standard', 'USDJPYm', '1h')] = {
-    'ALL_FVG_BULL': ('TPSL', 3.0, 4.0, 0.0),
-}
+# ==== Exness Standard 1h PF>=1.30 holdout AprMay (find_winners 2026-05-19) ====
 
-STRAT_EXITS[('exness_standard', 'USDCADm', '1h')] = {
-    'ALL_ADX_FAST': ('TPSL', 2.0, 2.0, 0.0),
-    'ALL_MACD_FAST_SIG': ('TPSL', 2.5, 1.5, 0.0),
-    'ALL_MACD_HIST': ('TPSL', 3.0, 3.0, 0.0),
-}
+# ==== Exness Standard 1h PF>=1.30 holdout May (find_winners 2026-05-19) ====
 
 STRAT_EXITS[('exness_standard', 'NZDUSDm', '1h')] = {
-    'IDX_VWAP_BOUNCE': ('TPSL', 2.0, 2.5, 0.0),
-    'TOK_BIG': ('TPSL', 1.0, 1.5, 0.0),
-}
-
-STRAT_EXITS[('exness_standard', 'XAUUSDm', '1h')] = {
-    'ALL_HMA_CROSS': ('TPSL', 3.0, 4.0, 0.0),
-    'ALL_TRIX': ('TPSL', 3.0, 3.0, 0.0),
-}
-
-STRAT_EXITS[('exness_standard', 'USOILm', '1h')] = {
-    'ALL_ELDER_BULL': ('TPSL', 1.5, 2.0, 0.0),
-    'ALL_FISHER_9': ('TPSL', 1.0, 0.75, 0.0),
-    'TOK_FISHER': ('BE_TP', 1.0, 0.75, 1.0),
-}
-
-STRAT_EXITS[('exness_standard', 'EURJPYm', '1h')] = {
-    'ALL_DC50': ('TPSL', 2.0, 1.0, 0.0),
-    'ALL_WILLR_14': ('TPSL', 1.5, 2.0, 0.0),
+    'TOK_BIG': ('TPSL', 1.0, 1.5, 0),
 }
 
 STRAT_EXITS[('exness_standard', 'EURGBPm', '1h')] = {
-    'ALL_ELDER_BULL': ('TPSL', 3.0, 2.5, 0.0),
-    'ALL_HAMMER': ('TPSL', 3.0, 3.0, 0.0),
-    'IDX_BB_REV': ('TPSL', 2.0, 2.5, 0.0),
+    'IDX_BB_REV': ('BE_TP', 2.0, 0.5, 1.5),
 }
 
-STRAT_EXITS[('exness_standard', 'GBPJPYm', '1h')] = {
-    'ALL_MACD_DIV': ('TPSL', 3.0, 4.0, 0.0),
-    'ALL_RSI_DIV': ('TPSL', 3.0, 4.0, 0.0),
+STRAT_EXITS[('exness_standard', 'XAUUSDm', '1h')] = {
+    'ALL_HMA_CROSS': ('TPSL', 3.0, 4.0, 0),
 }
 
-STRAT_EXITS[('exness_standard', 'AUS200m', '1h')] = {
-    'ALL_BB_TIGHT': ('TPSL', 3.0, 4.0, 0.0),
-    'ALL_PIVOT_BRK': ('TPSL', 2.0, 2.0, 0.0),
+STRAT_EXITS[('exness_standard', 'USOILm', '1h')] = {
+    'ALL_ELDER_BULL': ('TPSL', 1.5, 2.0, 0),
 }
 
 STRAT_EXITS[('exness_standard', 'DE30m', '1h')] = {
-    'BOS_FVG': ('TPSL', 3.0, 1.0, 0.0),
+    'ALL_ELDER_BEAR': ('TPSL', 2.5, 2.5, 0),
 }
 
 STRAT_EXITS[('exness_standard', 'JP225m', '1h')] = {
-    'ALL_EMA_821': ('TPSL', 2.0, 1.0, 0.0),
-    'ALL_EMA_921': ('TPSL', 2.0, 1.0, 0.0),
-    'ALL_FISHER_9': ('TPSL', 3.0, 4.0, 0.0),
+    'ALL_AROON_CROSS': ('TPSL', 2.0, 1.5, 0),
+    'ALL_EMA_821': ('TPSL', 2.0, 1.0, 0),
 }
 
 STRAT_EXITS[('exness_standard', 'UK100m', '1h')] = {
-    'ALL_DOJI_REV': ('TPSL', 1.5, 2.0, 0.0),
-    'ALL_MACD_DIV': ('TPSL', 1.5, 1.5, 0.0),
+    'ALL_DOJI_REV': ('TPSL', 1.5, 2.5, 0),
+    'ALL_HAMMER': ('TPSL', 2.0, 2.5, 0),
+    'BOS_FVG': ('TRAIL', 2.5, 1.0, 0.5),
 }
 
 STRAT_EXITS[('exness_standard', 'US30m', '1h')] = {
-    'ALL_ADX_RSI50': ('TPSL', 3.0, 1.0, 0.0),
-    'ALL_MACD_ADX': ('TPSL', 2.5, 2.5, 0.0),
+    'ALL_ADX_RSI50': ('BE_TP', 3.0, 0.3, 0.75),
     'ALL_RSI_50': ('BE_TP', 3.0, 0.3, 0.75),
-    'IDX_PREV_HL': ('BE_TP', 1.0, 0.5, 1.0),
-    'IDX_VWAP_BOUNCE': ('TPSL', 3.0, 2.5, 0.0),
-    'TOK_NR4': ('TPSL', 1.25, 0.5, 0.0),
-}
-
-STRAT_EXITS[('exness_standard', 'US500m', '1h')] = {
-    'ALL_AROON_CROSS': ('TPSL', 2.5, 1.5, 0.0),
-    'ALL_HMA_CROSS': ('TPSL', 0.5, 0.5, 0.0),
-    'IDX_BB_REV': ('TPSL', 3.0, 4.0, 0.0),
-}
-
-STRAT_EXITS[('exness_standard', 'USTECm', '1h')] = {
-    'ALL_WILLR_7': ('TPSL', 1.5, 2.0, 0.0),
-    'TOK_FISHER': ('TPSL', 1.5, 1.5, 0.0),
+    'TOK_NR4': ('TPSL', 1.25, 0.5, 0),
 }
 
 STRAT_EXITS[('exness_standard', 'BTCUSDm', '1h')] = {
-    'ALL_ICHI_TK': ('TPSL', 3.0, 5.0, 0.0),
     'IDX_VWAP_BOUNCE': ('BE_TP', 1.0, 0.3, 1.0),
 }
 
-# ==== Exness Standard 15m (find_winners 2026-05-18, n>=100, PF>=1.20) ====
+# ==== Dukascopy 4h (find_winners 2026-05-19, 2021-2025) ====
 
-STRAT_EXITS[('exness_standard', 'AUDUSDm', '15m')] = {
-    'ALL_ADX_FAST': ('TPSL', 2.0, 2.5, 0),
-    'ALL_MACD_ADX': ('BE_TP', 2.0, 0.3, 1.5),
+# ==== Dukascopy 4h swing (strats_swing, find_winners 2026-05-19, 2021-2025) ====
+
+STRAT_EXITS[('dukascopy', 'EURJPY', '4h')] = {
+    'B2_MONTHLY_HL': ('TPSL', 2.0, 2.0, 0),
 }
 
-STRAT_EXITS[('exness_standard', 'EURUSDm', '15m')] = {
-    'ALL_3SOLDIERS': ('TPSL', 3.0, 3.0, 0),
+STRAT_EXITS[('dukascopy', 'EURGBP', '4h')] = {
+    'A9_LR_SLOPE_50': ('TPSL', 2.0, 1.0, 0),
+    'D3_ENGULF_WHL': ('TPSL', 2.5, 1.0, 0),
 }
 
-STRAT_EXITS[('exness_standard', 'GBPUSDm', '15m')] = {
-    'ALL_STOCH_OB': ('TPSL', 3.0, 3.0, 0),
-    'TOK_BIG': ('TPSL', 2.5, 2.0, 0),
+STRAT_EXITS[('dukascopy', 'XAUUSD', '4h')] = {
+    'B6_KC_BRK_50': ('TPSL', 2.0, 2.5, 0),
 }
 
-STRAT_EXITS[('exness_standard', 'USDCHFm', '15m')] = {
-    'ALL_WILLR_7': ('TPSL', 2.0, 1.5, 0),
+STRAT_EXITS[('dukascopy', 'JP225', '4h')] = {
+    'A5_TSMOM_3M': ('TPSL', 0.75, 1.0, 0),
 }
 
-STRAT_EXITS[('exness_standard', 'USDCADm', '15m')] = {
-    'ALL_FIB_618': ('TPSL', 3.0, 2.5, 0),
-    'ALL_TRIX': ('TRAIL', 2.5, 0.5, 0.3),
-    'TOK_TRIX': ('TRAIL', 1.5, 0.5, 0.3),
+STRAT_EXITS[('dukascopy', 'UK100', '4h')] = {
+    'D4_PIN_LEVEL': ('TPSL', 3.0, 1.5, 0),
 }
 
-STRAT_EXITS[('exness_standard', 'XAUUSDm', '15m')] = {
-    'ALL_MACD_STD_SIG': ('TPSL', 2.0, 2.5, 0),
-}
-
-STRAT_EXITS[('exness_standard', 'USOILm', '15m')] = {
-    'ALL_HAMMER': ('TPSL', 2.5, 2.5, 0),
-    'IDX_VWAP_BOUNCE': ('TPSL', 1.5, 2.0, 0),
-}
-
-STRAT_EXITS[('exness_standard', 'AUS200m', '15m')] = {
-    'ALL_CMO_9': ('TPSL', 3.0, 1.5, 0),
-    'ALL_CONSEC_REV': ('TPSL', 3.0, 1.5, 0),
-    'ALL_MACD_DIV': ('TPSL', 1.5, 2.0, 0),
-    'ALL_RSI_DIV': ('TPSL', 2.0, 1.5, 0),
-    'ALL_RSI_EXTREME': ('TPSL', 2.0, 2.0, 0),
-    'ALL_STOCH_PIVOT': ('BE_TP', 2.0, 0.75, 1.5),
-    'IDX_RSI_REV': ('TPSL', 2.0, 2.0, 0),
-}
-
-STRAT_EXITS[('exness_standard', 'DE30m', '15m')] = {
-    'ALL_ENGULF': ('TRAIL', 3.0, 0.5, 0.3),
-}
-
-STRAT_EXITS[('exness_standard', 'JP225m', '15m')] = {
-    'ALL_PSAR_EMA': ('TPSL', 3.0, 2.5, 0),
-    'ALL_SUPERTREND': ('TPSL', 3.0, 2.5, 0),
-}
-
-STRAT_EXITS[('exness_standard', 'UK100m', '15m')] = {
-    'ALL_HAMMER': ('BE_TP', 3.0, 0.75, 1.5),
-}
-
-STRAT_EXITS[('exness_standard', 'US500m', '15m')] = {
-    'ALL_DC10_EMA': ('TPSL', 1.25, 1.5, 0),
-    'ALL_LR_BREAK': ('TPSL', 1.25, 1.5, 0),
-    'ALL_MOM_10': ('TPSL', 3.0, 4.0, 0),
-    'ALL_MSTAR': ('TPSL', 2.0, 3.0, 0),
-}
-
-STRAT_EXITS[('exness_standard', 'USTECm', '15m')] = {
-    'ALL_ICHI_TK': ('TPSL', 1.0, 1.0, 0),
-}
-
-STRAT_EXITS[('exness_standard', 'BTCUSDm', '15m')] = {
-    'ALL_MACD_ADX': ('TPSL', 1.25, 0.75, 0),
-    'ALL_PSAR_EMA': ('BE_TP', 2.5, 0.75, 2.0),
-    'ALL_SUPERTREND': ('BE_TP', 2.5, 0.75, 2.0),
+STRAT_EXITS[('dukascopy', 'US30', '4h')] = {
+    'B6_KC_BRK_50': ('TPSL', 2.5, 1.5, 0),
 }
