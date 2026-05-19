@@ -44,8 +44,14 @@ parser.add_argument('--lookback-years', type=float, default=None,
                     help='Restreint la donnee aux N dernieres annees (default: full)')
 parser.add_argument('--date-max', default=None,
                     help='Exclut les donnees >= YYYY-MM-DD (walk-forward holdout)')
+parser.add_argument('--date-min', default=None,
+                    help='Exclut les donnees < YYYY-MM-DD (borne basse: load_data ne lit que la fenetre + warmup)')
 parser.add_argument('--tpsl-only', action='store_true')
 args = parser.parse_args()
+
+# Bornes fenetre -> timestamps UTC. Si fournies, load_data ne charge que [date_min - warmup, date_max).
+DATE_MIN_TS = pd.Timestamp(args.date_min, tz='UTC') if args.date_min else None
+DATE_MAX_TS = pd.Timestamp(args.date_max, tz='UTC') if args.date_max else None
 
 # Source de verite: pairs_<account>.txt (= tous les instruments disponibles)
 pairs_file = f'pairs_{args.account}.txt'
@@ -125,12 +131,16 @@ def split_metrics(pnls_R_arr, dates_arr, cost_r):
     return (h1['avg_R_trim'] if h1 else 0), (h2['avg_R_trim'] if h2 else 0)
 
 
-def collect_signals(candles, daily_atr, global_atr, trading_days, all_strats):
-    """Detect all signals per strat. Returns SIG dict {sn: [(ci, di, entry, atr, date)]}."""
+def collect_signals(candles, daily_atr, global_atr, trading_days, all_strats, date_min=None):
+    """Detect all signals per strat. Returns SIG dict {sn: [(ci, di, entry, atr, date)]}.
+
+    date_min: si fourni, les bars avant cette date servent uniquement au warmup
+    (indicateurs + prev_day_data) et n'emettent aucun signal selectionnable."""
     SIG = defaultdict(list)
     prev_d = None; trig = {}; day_atr = None
     prev_day_data = None; prev2_day_data = None
     portfolio_set = set(all_strats)
+    dmin_date = date_min.date() if date_min is not None else None
 
     for ci in range(200, len(candles)):
         row = candles.iloc[ci]; ct = row['ts_dt']; today = ct.date()
@@ -155,7 +165,7 @@ def collect_signals(candles, daily_atr, global_atr, trading_days, all_strats):
         lon = tv[(tv['ts_dt'] >= ls) & (tv['ts_dt'] < ns)]
 
         def add_sig(sn, d_dir, e):
-            if sn in portfolio_set:
+            if sn in portfolio_set and (dmin_date is None or today >= dmin_date):
                 di = 1 if d_dir == 'long' else -1
                 SIG[sn].append((ci, di, e, atr, today))
 
@@ -187,7 +197,8 @@ for sym in INSTRUMENTS:
     print(f"\n{'='*100}\n{sym}\n{'='*100}", flush=True)
     conn = get_conn()
     try:
-        candles, daily_atr, global_atr, trading_days = load_data(conn, sym, tf=args.tf)
+        candles, daily_atr, global_atr, trading_days = load_data(
+            conn, sym, tf=args.tf, date_min=DATE_MIN_TS, date_max=DATE_MAX_TS, warmup_bars=500)
     except Exception as e:
         print(f"  Skip {sym} [{args.tf}]: {e}")
         conn.close(); continue
@@ -221,7 +232,7 @@ for sym in INSTRUMENTS:
     all_strats = [s for s in STRAT_NAMES if s not in REMOVED_STRATS and s not in DUPLICATE_STRATS]
 
     print(f"  Detect signals ({len(all_strats)} strats)...", flush=True)
-    SIG = collect_signals(candles, daily_atr, global_atr, trading_days, all_strats)
+    SIG = collect_signals(candles, daily_atr, global_atr, trading_days, all_strats, date_min=DATE_MIN_TS)
     print(f"  {len(SIG)} strats avec >=1 signal", flush=True)
 
     sym_winners = []

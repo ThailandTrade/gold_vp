@@ -2,6 +2,48 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-19 — test-4h: Dukascopy 1h + walk-forward systematique (echec de la methode find_winners)
+
+Pivot: abandon du 4h swing (winners qui s'effondrent OOS), retour sur 1h avec l'arsenal standard `strats.py` et l'historique long Dukascopy.
+
+### Fetch Dukascopy 1h
+`dukascopy_fetch.py --tf 1h --since 1970-01-01`: **2 508 205 bars** sur 23 syms, tables `candles_<sym>_1h`. FX majors depuis 2003, indices ~2012, crypto 2017+. 0 erreur.
+
+### find_winners.py: ajout `--date-min`
+Avant: `--date-max` + `--lookback-years` seulement -> `load_data` chargeait tout l'historique (152k bars) puis trimmait. Inutile.
+Apres: `--date-min` ajoute; `load_data(date_min, date_max, warmup_bars=500)` ne charge que la fenetre + warmup. `collect_signals` recoit `date_min` et ne retient que les signaux >= date_min (les bars warmup servent indicateurs + prev_day_data). Verifie: load borne a ~3 400 bars/sym au lieu de 152k.
+
+### find_winners 1h selection Jan-Jun 2025
+- PF>=1.30, n>=100, M+>=4/6: **68 strats WIN / 20 syms** (DE30/HK50/JP225 -> 0). Domine par oscillateurs courts (CCI_*_ZERO, CMO, MOM, STOCH_RSI, MACD_FAST_ZERO).
+- PF>=1.60: **7 strats WIN / 5 syms** (GBPUSD, USDJPY, USOIL, UK100, USTEC).
+- `config_dukascopy.py` + `strat_exits.py` reecrits (20 puis 5 syms). BT OOS lances par user: **catastrophiques** dans les deux cas. Durcir le PF ne corrige pas l'OOS (selection plus collee a la fenetre, pas plus robuste).
+
+### Walk-forward systematique (`temp/walkforward.py`)
+Orchestrateur: pour chaque fenetre, find_winners sur l'IS -> ecrit config -> bt_portfolio sur le mois OOS. Reutilise les scripts de prod en sous-processus. Backup/restore de config_dukascopy.py + strat_exits.py.
+
+**Run 6m IS / 1m OOS, PF>=1.30** (interrompu apres 3 fenetres):
+| OOS | strats IS | trades | PF | Rend |
+|---|---|---|---|---|
+| Juil 2025 | 68 | 1 280 | 0.85 | -35.7% |
+| Aout 2025 | 69 | 1 260 | 0.78 | -49.7% |
+| Sep 2025 | 48 | 822 | 0.84 | -28.0% |
+
+3/3 effondrements. Detail: `temp/walkforward_results.txt`.
+
+### Analyse par classe d'actifs (3 mois OOS)
+| Classe | n | Total R | R/trade |
+|---|---|---|---|
+| FOREX | 2 085 | -174.5 | -0.084 |
+| INDICES | 826 | -67.9 | -0.082 |
+| ENERGIE (USOIL) | 186 | -20.9 | -0.112 |
+| METAUX (XAUUSD) | 79 | -16.3 | -0.206 |
+| CRYPTO | 186 | +2.8 | +0.015 |
+
+Echec **uniforme**: FX et indices (87% des trades) saignent au meme taux. Pas une mauvaise classe, pas un mauvais mois. Conclusion: la selection find_winners ne produit aucun edge OOS (avg -0.082R/trade ~= cost-r + bruit negatif). On ne mesurait que du surapprentissage.
+
+### Walk-forward 12m IS / 1m OOS, PF>=1.20, TPSL-only — EN COURS
+12 fenetres (OOS Jan->Dec 2025), IS = 12 mois glissants, M+>=7/12, exits TPSL uniquement (TRAIL et BE_TP retires pour simplifier). Resultats -> `temp/walkforward_1y_results.txt`.
+
 ## 2026-05-19 — test-4h: BT OOS 2026 catastrophique sur les 7 swing winners
 
 Integration `strats_swing.detect_swing` dans `strats.detect_all` via wrapper trig per-day. Verifie: signaux swing emis correctement dans bt_portfolio (4 signaux sur 5 bars EURJPY).
