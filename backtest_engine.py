@@ -153,7 +153,7 @@ def prev_trading_day(day, trading_days_list):
 #  COLLECT TRADES — signaux + exits + conflict filter
 # ══════════════════════════════════════════════════════════════
 
-def collect_trades(candles, daily_atr, global_atr, trading_days_list, portfolio, sym_exits, date_filter=None, tf='15m', entry_min_date=None):
+def collect_trades(candles, daily_atr, global_atr, trading_days_list, portfolio, sym_exits, date_filter=None, tf='15m', entry_min_date=None, invert=False):
     """
     Detecte tous les signaux + simule les exits en temps reel.
     Meme code pour bt_portfolio, compare_today, et live.
@@ -169,6 +169,8 @@ def collect_trades(candles, daily_atr, global_atr, trading_days_list, portfolio,
         entry_min_date: si specifie, ne collecte que les signaux a partir de ce jour (date object).
                         Alternative a date_filter pour fenetre [entry_min_date, today].
         tf: timeframe string ('5m', '15m', '1h', '4h', '1d') -- attache a chaque trade
+        invert: si True, chaque trade est pris en miroir -- sens oppose + SL<->TP echanges
+                (le trade inverse surveille les memes niveaux de prix que l'original).
 
     Returns:
         list of (ci, xi, di, pnl_oz, sl_atr, atr, mo, sn, tf) -- format trade unifie multi-TF
@@ -230,6 +232,10 @@ def collect_trades(candles, daily_atr, global_atr, trading_days_list, portfolio,
         exit_cfg = sym_exits.get(sn, DEFAULT_EXIT)
         etype = exit_cfg[0]; p1 = exit_cfg[1]; p2 = exit_cfg[2]
         p3 = exit_cfg[3] if len(exit_cfg) > 3 else 0
+
+        if invert:
+            d_dir = 'short' if d_dir == 'long' else 'long'
+            p1, p2 = p2, p1
 
         b, ex = sim_exit_custom(candles, ci, entry, d_dir, atr,
                                 etype, p1, p2, p3, check_entry_candle=is_open)

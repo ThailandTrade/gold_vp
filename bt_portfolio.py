@@ -30,6 +30,7 @@ parser.add_argument('--cost-r', type=float, default=0.0, help='Penalite R par tr
 parser.add_argument('--date-min', default=None, help='Entry date min YYYY-MM-DD (warmup auto en amont)')
 parser.add_argument('--date-max', default=None, help='Entry date max YYYY-MM-DD (exclu)')
 parser.add_argument('--warmup-bars', type=int, default=250, help='Bars warmup avant date_min (default 250)')
+parser.add_argument('--invert', action='store_true', help='Trade miroir: sens oppose + SL<->TP echanges')
 args = parser.parse_args()
 
 from datetime import date as _date_cls, datetime as _dt_cls, timezone as _tz
@@ -112,7 +113,7 @@ for sym, tf, icfg in sym_tf_pairs:
     print(f" {len(candles)} bars, {len(trading_days)} days", flush=True)
     candles_cache[(sym, tf)] = candles
 
-    trades = collect_trades(candles, daily_atr, global_atr, trading_days, portfolio, sym_exits, tf=tf)
+    trades = collect_trades(candles, daily_atr, global_atr, trading_days, portfolio, sym_exits, tf=tf, invert=args.invert)
     # Filtre trades dont entry < DATE_MIN (warmup) ou >= DATE_MAX
     if DATE_MIN or DATE_MAX:
         kept = []

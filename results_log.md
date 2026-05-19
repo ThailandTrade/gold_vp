@@ -2,6 +2,27 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-19 — test-4h: walk-forward 12m IS + test d'inversion des signaux
+
+### Walk-forward 12m IS / 1m OOS, PF>=1.20, TPSL-only (arrete a 3/12)
+IS = 12 mois glissants, OOS chaque mois de 2025. Arrete apres Mars sur demande user.
+| OOS | trades | PF | Rend |
+|---|---|---|---|
+| Jan 2025 | 817 | 0.91 | -15.6% |
+| Fev 2025 | 808 | 0.99 | -1.8% |
+| Mars 2025 | 1 005 | 0.91 | -19.7% |
+
+3/3 negatifs. Moins violent que le run 6m mais conclusion identique. La methode find_winners (selection par perf passee) testee sous toutes les coutures — 6m/12m IS, PF 1.2/1.3/1.6, avec/sans TRAIL+BE_TP, 4h swing et 1h standard — echoue OOS a chaque fois. Cause = la methode elle-meme (data-mining / multiple testing), pas le TF ni l'arsenal ni le filtre.
+
+### Test d'inversion des signaux
+Hypothese user: et si on prenait le miroir de chaque trade?
+- `backtest_engine.collect_trades`: param `invert` — sens oppose + SL<->TP echanges (trade miroir, memes niveaux de prix surveilles).
+- `bt_portfolio.py`: flag `--invert`.
+- Walk-forward 6m IS, OOS BT lance normal ET inverse cote a cote.
+
+**OOS Juil 2025: NORMAL -34.4% (PF 0.84) | INVERSE -33.5% (PF 0.88).** Identiques.
+Confirme l'analyse: inverser un systeme sans edge donne un systeme sans edge. Le coût (~30%/mois, ~1000+ trades/mois) domine et frappe pareil dans les deux sens. La direction n'est pas le levier — le nombre de trades et l'absence d'edge brut le sont.
+
 ## 2026-05-19 — test-4h: Dukascopy 1h + walk-forward systematique (echec de la methode find_winners)
 
 Pivot: abandon du 4h swing (winners qui s'effondrent OOS), retour sur 1h avec l'arsenal standard `strats.py` et l'historique long Dukascopy.
