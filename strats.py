@@ -591,6 +591,12 @@ def compute_indicators(candles):
             n = len(x); xs = np.arange(n)
             return (n * np.dot(xs, x) - xs.sum() * x.sum()) / (n * (xs**2).sum() - xs.sum()**2 + 1e-10)
         c['lr_slope'] = c['close'].rolling(20).apply(_lr_slope, raw=True)
+    # Indicateurs arsenal swing (strats_swing)
+    try:
+        from strats_swing import compute_indicators_swing
+        c = compute_indicators_swing(c)
+    except Exception:
+        pass
     return c
 
 def detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_day_data, add, prev2_day_data=None):
@@ -599,6 +605,17 @@ def detect_all(candles, ci, row, ct, today, hour, atr, trig, tv, tok, lon, prev_
     _orig_add = add
     def add(sn, d, e):
         if sn not in REMOVED_STRATS: _orig_add(sn, d, e)
+
+    # Arsenal swing (strats_swing.py) -- 1 trigger / strat / jour via trig
+    try:
+        from strats_swing import detect_swing as _detect_swing
+        def _add_swing(sn, dir_, entry):
+            if sn not in trig:
+                add(sn, dir_, entry)
+                trig[sn] = True
+        _detect_swing(candles, ci, _add_swing)
+    except Exception:
+        pass
     ds = pd.Timestamp(today.year,today.month,today.day,0,0,tz='UTC')
     te = pd.Timestamp(today.year,today.month,today.day,6,0,tz='UTC')
     ls = pd.Timestamp(today.year,today.month,today.day,8,0,tz='UTC')

@@ -2,6 +2,19 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-19 — test-4h: BT OOS 2026 catastrophique sur les 7 swing winners
+
+Integration `strats_swing.detect_swing` dans `strats.detect_all` via wrapper trig per-day. Verifie: signaux swing emis correctement dans bt_portfolio (4 signaux sur 5 bars EURJPY).
+
+BT OOS sur Jan-Mai 2026 avec les 7 strats: **resultat catastrophique** (user). Causes possibles a evaluer:
+1. Selection biaisee fenetre training 2021-2025 (artefacts specifiques cette periode)
+2. Filtres pas assez stricts malgre PF/Sharpe/h1+h2 — 7 winners sur 23 syms reste peu pour diversifier
+3. Mismatch detecteur/realite: B7 failed brk, F3 H&S, D1 double top sont approximatifs
+4. Cost-r 0.03 sous-estime
+5. Concentration: 2 strats sur B6 (Keltner) = portfolio peu diversifie
+
+Status: a creuser dans session suivante avec numeros BT precis.
+
 ## 2026-05-19 — test-4h: nouvelle arsenal swing (32 strats) + compile sur 7 winners
 
 User: "On va oublier les strats actuelles. On recree notre arsenal de strat avec ce qu'on a dans le reflexion.md" puis "Code les nouvelles strats. C'est tout."
