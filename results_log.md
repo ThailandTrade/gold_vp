@@ -2,6 +2,46 @@
 
 **Regle**: entrees anti-chronologiques (plus recentes en haut).
 
+## 2026-05-20 — test-4h: test Donchian 55/20 ZERO selection (verdict definitif: pas d'edge brut 1h)
+
+Test "thesis-driven, zero selection" pour repondre une bonne fois a la question:
+*y a-t-il un edge brut accessible sur ce binome (23 syms + 1h)*, hors de tout filtre / cherry-pick.
+
+Script `temp/donchian_test.py`: regle fixe, aucun parametre tunable.
+- Entree long: close > max(high) des 55 dernieres bougies; short symetrique.
+- Sortie long: close < min(low) des 20 dernieres bougies; short symetrique.
+- Sizing R: R = pnl / ATR(20) a l'entree (sizing-norme Carver/Turtle).
+- Une position par sym a la fois, pas de pyramidage. Cost 0.05R/trade. R winsorise +-20.
+
+Run: 23 syms, tout l'histo Dukascopy (FX 2003+, indices 2012+, crypto 2017+).
+
+| Metrique | Valeur |
+|---|---|
+| Trades | 33 437 |
+| WR | 36.9% |
+| Mean R (winsorise) | -0.28R/trade |
+| Total R | -9 296 |
+| t-stat | **-8.76** |
+
+Par decennie: 2003-2009 -0.04, 2010-2016 -0.63, 2017-2026 -0.13. Toutes negatives.
+Par annee: 4 positives sur 24 (2007, 2008, 2018, 2020) -- toutes annees crise/haute vol
+("crisis alpha" classique du trend-following). 20 annees qui bleed.
+
+Decomposition: WR 37% avec loss moyenne ~-1R implique win moyenne ~+0.95R. Pour qu'un
+trend-following a WR 37% gagne il faut win ~+1.7R. **Les trends 1h ne tiennent pas assez
+longtemps pour produire les gros gagnants.** Theoriquement attendu (Carver/AQR documentent
+l'edge sur daily/weekly, pas intraday).
+
+**Verdict combine de la session:**
+- Selection (find_winners x7 variations: 6m/12m IS, PF 1.2/1.3/1.6, WR>=58/70, RR=1, inversion)
+  -> aucun edge OOS.
+- These pure (Donchian 55/20, 23 ans, zero selection) -> negatif brut t = -8.76.
+
+La conclusion n'est plus "telle methode ne marche pas". C'est: **ce binome (univers + 1h
++ couts retail) n'a pas d'edge systematique accessible**, quelle que soit la methode.
+
+Files: `temp/donchian_test.py`, `temp/donchian_test.png`, `temp/donchian_trades.csv`.
+
 ## 2026-05-20 — test-4h: walk-forward 12m IS / 1m OOS, critere WR>=58% RR=1 (echec confirme)
 
 find_winners.py: flags `--wr-min` (filtre win rate) et `--rr1` (grille exit RR=1 -- TP=SL
